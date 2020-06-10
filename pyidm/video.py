@@ -719,85 +719,7 @@ def pre_process_hls(d):
     # ---------------------------------------------------------------------------------------------------------
 
     # process remote m3u8 files -------------------------------------------------------------------------------
-    def process_m3u8(file, stream_type='video'):
-        """
-        process m3u8 file, extract urls, build local m3u8 file, and build segments for download item
-        :param file: m3u8 as a file object
-        :param stream_type: 'video' or 'audio'
-        :return: None
-        """
-
-        base_url = d.eff_url if stream_type == 'video' else d.audio_url
-        name_prefix = 'v' if stream_type == 'video' else 'a'
-
-        url_list = []
-        lines_with_local_paths = []
-        lines_with_abs_urls = []
-        lines = file.splitlines()
-        segments = []
-        merge = 'encrypted' not in d.subtype_list  # merge non-encrypted streams only
-
-        # iterate over all m3u8 file lines
-        for i, line in enumerate(lines[:]):
-            url = ''
-            seg_name = os.path.join(d.temp_folder, f'{name_prefix}{i + 1}')
-            line_with_abs_url = line
-            line_with_local_path = line
-
-            # remove ads in m3u8 file
-            if line.startswith('#ANVATO-SEGMENT-INFO') and 'type=ad' in line \
-                    or line.startswith('#UPLYNK-SEGMENT') and line.endswith(',ad'):
-                continue
-
-            # lines doesn't start with # is a media links
-            if line and not line.startswith('#'):
-                url = line
-
-            # handle buried urls inside lines ex: # '#EXT-X-KEY:METHOD=AES-128,URI="https://content-aus...62a9",IV=0x0000'
-            elif line.startswith('#'):
-                match = re.search(r'URI="(.*)"', line)
-                if match:
-                    url = match.group(1)
-
-            if url:
-                # get absolute url, and append it to url list for later use to build segments
-                if url.startswith('skd://'):
-                    # replace skd:// with https://
-                    abs_url = url.replace('skd://', 'https://')
-                else:
-                    abs_url = urljoin(base_url, url)
-                url_list.append(abs_url)
-
-                # build line with absolute url instead of relative url
-                line_with_abs_url = line.replace(url, abs_url)
-
-                # build line with local file path instead of url
-                line_with_local_path = line.replace(url, seg_name)
-                line_with_local_path = line_with_local_path.replace('\\', '/')  # required for ffmpeg to work properly
-
-                # create segment object
-                segment = [Segment(name=seg_name, num=i, range=None, size=0, url=abs_url, tempfile=d.temp_file, merge=merge)]
-                segments += segment
-
-            # append to list
-            lines_with_abs_urls.append(line_with_abs_url)
-            lines_with_local_paths.append(line_with_local_path)
-
-        d.segments += segments
-
-        # write m3u8 file with absolute paths for debugging
-        name = 'remote_video2.m3u8' if stream_type == 'video' else 'remote_audio2.m3u8'
-        file_path = os.path.join(d.temp_folder, name)
-        with open(os.path.join(d.temp_folder, file_path), 'w') as f:
-            f.write('\n'.join(lines_with_abs_urls))
-
-        # write local m3u8 file
-        name = 'local_video.m3u8' if stream_type == 'video' else 'local_audio.m3u8'
-        file_path = os.path.join(d.temp_folder, name)
-        with open(os.path.join(d.temp_folder, file_path), 'w') as f:
-            f.write('\n'.join(lines_with_local_paths))
-
-    def process_m3u8_test(m3u8_doc, stream_type='video'):
+    def process_m3u8(m3u8_doc, stream_type='video'):
         """
         process m3u8 file, extract urls, build local m3u8 file, and build segments for download item
         :param m3u8_doc: m3u8 as a text
@@ -828,13 +750,11 @@ def pre_process_hls(d):
     d.segments = []
 
     # send video m3u8 file for processing
-    # process_m3u8(video_m3u8, stream_type='video')
-    process_m3u8_test(video_m3u8, stream_type='video')
+    process_m3u8(video_m3u8, stream_type='video')
 
     # send audio m3u8 file for processing
     if 'dash' in d.subtype_list:
-        # process_m3u8(audio_m3u8, stream_type='audio')
-        process_m3u8_test(audio_m3u8, stream_type='audio')
+        process_m3u8(audio_m3u8, stream_type='audio')
 
     log('pre_process_hls()> done processing', d.name)
 
@@ -1089,6 +1009,7 @@ class MediaPlaylist:
         self.parse_m3u8_doc()
 
     def parse_m3u8_doc(self):
+        """read m3u8 file and build segments and encryption keys"""
         lines = self.m3u8_doc.splitlines()
         lines = [line.strip() for line in lines if line.strip()]
 
