@@ -3713,6 +3713,11 @@ class SysTray:
         return self._tray_icon_path
 
     def run(self):
+        # not supported on mac
+        if config.operating_system == 'Darwin':
+            log('Systray is not supported on mac yet')
+            return
+
         # make our own Gtk statusIcon, since pystray failed to run icon properly on Gtk 3.0 from a thread
         if config.operating_system == 'Linux':
             try:
