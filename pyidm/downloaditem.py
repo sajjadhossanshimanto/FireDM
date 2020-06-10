@@ -40,6 +40,7 @@ class Segment:
         self.key = None
         self.locked = False  # set True by the worker which is currently downloading this segment
         self.media_type = media_type
+        self.retries = 0  # number of download retries
 
         # override size if range available
         if range:
@@ -614,7 +615,7 @@ class DownloadItem:
                 try:
                     size_on_disk = os.path.getsize(item.get('name'))
                     downloaded += size_on_disk
-                    if size_on_disk == item.get('size'):
+                    if size_on_disk > 0 and size_on_disk == item.get('size'):
                         item['downloaded'] = True
                 except:
                     continue

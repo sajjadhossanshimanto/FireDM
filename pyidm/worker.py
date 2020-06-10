@@ -11,7 +11,7 @@
 import os
 import pycurl
 
-from .config import Status, error_q, jobs_q
+from .config import Status, error_q, jobs_q, max_seg_retries
 from .utils import log, set_curl_options, size_format
 
 
@@ -128,7 +128,12 @@ class Worker:
     def verify(self):
         """check if segment completed"""
         # print('self.current_filesize =', self.current_filesize,  "self.seg.size", self.seg.size)
-        if self.current_filesize == self.seg.size or self.seg.size == 0:
+        if self.seg.size == 0:
+            if self.seg.retries < max_seg_retries:
+                log('seg:', self.seg.basename, 'has zero size, will try again, number of retries:', self.seg.retries)
+                return False
+            return True
+        elif self.current_filesize == self.seg.size:
             return True
         else:
             return False
@@ -230,6 +235,9 @@ class Worker:
         try:
             # set lock
             self.seg.locked = True
+
+            # record retries
+            self.seg.retries += 1
 
             # set options
             self.set_options()
