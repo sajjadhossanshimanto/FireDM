@@ -40,10 +40,6 @@ class Worker:
     def __repr__(self):
         return f"worker_{self.tag}"
 
-    @property
-    def current_filesize(self):
-        return self.seg.current_size
-
     def reuse(self, seg=None, speed_limit=0, minimum_speed=None, timeout=None):
         """Recycle same object again, better for performance as recommended by curl docs"""
         self.reset()
@@ -78,7 +74,7 @@ class Worker:
     def check_previous_download(self):
         def overwrite():
             # reset start size and remove value from d.downloaded
-            self.d.downloaded -= self.current_filesize
+            self.d.downloaded -= self.seg.current_size
             self.mode = 'wb'
             log('Seg', self.seg.basename, 'overwrite the previous part-downloaded segment', ' - worker', self.tag,
                 log_level=3)
@@ -95,31 +91,31 @@ class Worker:
 
         # at this point file exists and resume is possible
         # case-1: segment is completed before
-        if self.current_filesize == self.seg.size:
+        if self.seg.current_size == self.seg.size:
             log('Seg', self.seg.basename, 'already completed before', ' - worker', self.tag, log_level=3)
             self.seg.downloaded = True
 
         # Case-2: over-sized, in case the server sent extra bytes from last session by mistake, truncate file
-        elif self.current_filesize > self.seg.size:
-            log('Seg', self.seg.basename, 'over-sized', self.current_filesize, 'will be truncated to:',
+        elif self.seg.current_size > self.seg.size:
+            log('Seg', self.seg.basename, 'over-sized', self.seg.current_size, 'will be truncated to:',
                 size_format(self.seg.size), ' - worker', self.tag, log_level=3)
 
             # truncate file
             with open(self.seg.name, 'rb+') as f:
                 f.truncate(self.seg.size)
             self.seg.downloaded = True
-            self.d.downloaded -= self.current_filesize - self.seg.size
+            self.d.downloaded -= self.seg.current_size - self.seg.size
 
         # Case-3: Resume, with new range
-        elif self.seg.range and self.current_filesize < self.seg.size:
+        elif self.seg.range and self.seg.current_size < self.seg.size:
             # set new range and file open mode
             a, b = self.seg.range
-            self.resume_range = [a + self.current_filesize, b]
+            self.resume_range = [a + self.seg.current_size, b]
             self.mode = 'ab'  # open file for append
 
             # report
             log('Seg', self.seg.basename, 'resuming, new range:', self.resume_range,
-                'current segment size:', size_format(self.current_filesize), ' - worker', self.tag, log_level=3)
+                'current segment size:', size_format(self.seg.current_size), ' - worker', self.tag, log_level=3)
 
         # case-x: overwrite
         else:
@@ -127,22 +123,30 @@ class Worker:
 
     def verify(self):
         """check if segment completed"""
-        # print('self.current_filesize =', self.current_filesize,  "self.seg.size", self.seg.size)
-        if self.current_filesize == 0:
+        # Case-1, unknown segment size, will report done if there is any downloaded data > 0
+        if self.seg.size == 0 and self.seg.current_size > 0:
+            return True
+
+        # Case-2, unknown segment size, and zero downloaded data, will retry a couple of times, ignore it if failed
+        elif self.seg.size == 0 and self.seg.current_size == 0:
             if self.seg.retries < max_seg_retries:
                 log('seg:', self.seg.basename, 'has zero size, will try again, number of retries:', self.seg.retries)
                 return False
+            else:
+                log('seg:', self.seg.basename, 'exceeded max. retries:', self.seg.retries, 'it has zero size, and will be ignored')
+                return True
+
+        # Case-3, segment has a known size
+        elif self.seg.current_size == self.seg.size:
             return True
-        elif self.current_filesize > 0 and self.seg.size == 0:
-            return True
-        elif self.current_filesize == self.seg.size:
-            return True
+
+        # Case-x, report failed
         else:
             return False
 
     def report_not_completed(self):
-        log('Seg', self.seg.basename, 'did not complete', '- done', size_format(self.current_filesize), '- target size:',
-            size_format(self.seg.size), '- left:', size_format(self.seg.size - self.current_filesize), '- worker', self.tag, log_level=3)
+        log('Seg', self.seg.basename, 'did not complete', '- done', size_format(self.seg.current_size), '- target size:',
+            size_format(self.seg.size), '- left:', size_format(self.seg.size - self.seg.current_size), '- worker', self.tag, log_level=3)
 
     def report_completed(self):
         # self.debug('worker', self.tag, 'completed', self.seg.name)
@@ -152,7 +156,7 @@ class Worker:
 
         # in case couldn't fetch segment size from headers
         if not self.seg.size:
-            self.seg.size = self.current_filesize
+            self.seg.size = self.seg.current_size
         # print(self.headers)
 
     def set_options(self):
@@ -326,10 +330,10 @@ class Worker:
         # check if we getting over sized
         if self.seg.current_size > self.seg.size > 0:
             log('Seg', self.seg.basename, 'oversized:',
-                'current segment size:', self.current_filesize, ' - worker', self.tag, log_level=3)
+                'current segment size:', self.seg.current_size, ' - worker', self.tag, log_level=3)
 
             # re-adjust value of total downloaded data
-            self.d.downloaded -= self.current_filesize - self.seg.size
+            self.d.downloaded -= self.seg.current_size - self.seg.size
             self.report_completed()
             return -1  # abort
 
