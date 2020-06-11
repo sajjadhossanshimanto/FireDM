@@ -23,7 +23,7 @@ from .config import MediaType
 
 
 class Segment:
-    def __init__(self, name=None, num=None, range=None, size=None, url=None, tempfile=None, seg_type='', merge=True,
+    def __init__(self, name=None, num=None, range=None, size=0, url=None, tempfile=None, seg_type='', merge=True,
                  media_type=MediaType.general):
         self.name = name  # full path file name
         # self.basename = os.path.basename(self.name)

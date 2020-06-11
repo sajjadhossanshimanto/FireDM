@@ -128,10 +128,12 @@ class Worker:
     def verify(self):
         """check if segment completed"""
         # print('self.current_filesize =', self.current_filesize,  "self.seg.size", self.seg.size)
-        if self.seg.size == 0:
+        if self.current_filesize == 0:
             if self.seg.retries < max_seg_retries:
                 log('seg:', self.seg.basename, 'has zero size, will try again, number of retries:', self.seg.retries)
                 return False
+            return True
+        elif self.current_filesize > 0 and self.seg.size == 0:
             return True
         elif self.current_filesize == self.seg.size:
             return True
