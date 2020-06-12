@@ -100,6 +100,9 @@ def load_d_list():
         for d in d_list:
             d.live_connections = 0
 
+            if d.status != config.Status.completed:
+                d.status = config.Status.cancelled
+
             # use encode() to convert base64 string to byte, however it does work without it, will keep it to be safe
             d.thumbnail = thumbnails.get(str(d.id), '').encode()
 
