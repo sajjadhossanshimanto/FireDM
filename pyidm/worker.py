@@ -84,6 +84,10 @@ class Worker:
             self.mode = 'wb'
             return
 
+        if self.seg.current_size == 0:
+            self.mode = 'wb'
+            return
+
         # if no seg.size, we will overwrite current file because resume is not possible
         if not self.seg.size:
             overwrite()
@@ -267,7 +271,7 @@ class Worker:
             # get response code and check for connection errors
             response_code = self.c.getinfo(pycurl.RESPONSE_CODE)
             if response_code in range(400, 512):
-                log('server refuse connection', response_code, 'content type:', self.headers.get('content-type'), log_level=3)
+                log('server refuse connection', response_code, 'content type:', self.headers.get('content-type'), self.seg.url, log_level=3)
 
                 # send error to thread manager, it will reduce connections number to fix this error
                 self.report_error(f'server refuse connection: {response_code}')
@@ -306,10 +310,11 @@ class Worker:
         if content_type and 'text/html' in content_type:
             # some video encryption keys has content-type 'text/html'
             try:
-                if '<html' in data.decode('utf-8') and not self.d.accept_html:
-                    log('Seg', self.seg.basename, '- worker', self.tag, 'received html contents, aborting', log_level=3)
+                decoded_data = data.decode('utf-8').lower()
+                if not self.d.accept_html and ('<html' in decoded_data or '<!doctype html' in decoded_data):
+                    log('Seg', self.seg.basename, '- worker', self.tag, 'received html contents, aborting', self.seg.url, log_level=3)
 
-                    log('=' * 20, '\n', data, '=' * 20, '\n', log_level=3)
+                    log('=' * 20, data, '=' * 20, sep='\n', start='', log_level=3)
 
                     # report server error to thread manager
                     self.report_error('received html contents')
