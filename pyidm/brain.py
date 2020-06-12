@@ -382,14 +382,13 @@ def thread_manager(d):
 
                         # create new segment
                         start = current_seg.range[1] + 1
-                        i = len(d.segments)
-                        seg = Segment(name=os.path.join(d.temp_folder, str(i)), url=d.eff_url,
+                        seg = Segment(name=os.path.join(d.temp_folder, f'{current_seg.basename}_2'), url=current_seg.url,
                                       tempfile=current_seg.tempfile, range=[start, end])
 
                         # add to segments
                         d.segments.append(seg)
                         print('-' * 20,
-                              f'new segment {i} created from {current_seg.basename} with range {current_seg.range}')
+                              f'new segment {seg.basename} created from {current_seg.basename} with range {current_seg.range}')
 
                 if seg and not seg.downloaded and not seg.locked:
                     worker = free_workers.pop()

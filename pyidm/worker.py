@@ -12,7 +12,7 @@ import os
 import pycurl
 
 from .config import Status, error_q, jobs_q, max_seg_retries
-from .utils import log, set_curl_options, size_format
+from .utils import log, set_curl_options, size_format, translate_server_code
 
 
 class Worker:
@@ -36,6 +36,8 @@ class Worker:
         # minimum speed and timeout, abort if download speed slower than n byte/sec during n seconds
         self.minimum_speed = None
         self.timeout = None
+
+        self.print_headers = True
 
     def __repr__(self):
         return f"worker_{self.tag}"
@@ -70,6 +72,9 @@ class Worker:
         self.mode = 'wb'  # file opening mode default to new write binary
         self.downloaded = 0
         self.resume_range = None
+        self.headers = {}
+
+        self.print_headers = True
 
     def check_previous_download(self):
         def overwrite():
@@ -137,7 +142,8 @@ class Worker:
                 log('seg:', self.seg.basename, 'has zero size, will try again, number of retries:', self.seg.retries)
                 return False
             else:
-                log('seg:', self.seg.basename, 'exceeded max. retries:', self.seg.retries, 'it has zero size, and will be ignored')
+                log('seg:', self.seg.basename, 'exceeded max. retries:', self.seg.retries,
+                    'it has zero size, and will be ignored')
                 return True
 
         # Case-3, segment has a known size
@@ -156,12 +162,12 @@ class Worker:
         # self.debug('worker', self.tag, 'completed', self.seg.name)
         self.seg.downloaded = True
 
-        log('downloaded segment: ',  self.seg.basename, '- worker', self.tag, log_level=2)
-
         # in case couldn't fetch segment size from headers
         if not self.seg.size:
             self.seg.size = self.seg.current_size
         # print(self.headers)
+
+        log('downloaded segment: ',  self.seg.basename, self.seg.range, size_format(self.seg.size), '- worker', self.tag, log_level=2)
 
     def set_options(self):
 
@@ -223,6 +229,11 @@ class Worker:
         if self.d.status != Status.downloading:
             return -1  # abort
 
+        if self.headers and self.headers.get('content-range') and self.print_headers:
+            log('Seg', self.seg.basename, 'range:', self.seg.range, 'server headers, range, size',
+                self.headers.get('content-range'), self.headers.get('content-length'), log_level=3)
+            self.print_headers = False
+
     def report_error(self, description='unspecified error'):
         # report server error to thread manager, to dynamically control connections number
         error_q.put(description)
@@ -271,10 +282,11 @@ class Worker:
             # get response code and check for connection errors
             response_code = self.c.getinfo(pycurl.RESPONSE_CODE)
             if response_code in range(400, 512):
-                log('server refuse connection', response_code, 'content type:', self.headers.get('content-type'), self.seg.url, log_level=3)
+                log('Seg', self.seg.basename, 'server refuse connection', response_code, translate_server_code(response_code),
+                    'content type:', self.headers.get('content-type'), log_level=3)
 
                 # send error to thread manager, it will reduce connections number to fix this error
-                self.report_error(f'server refuse connection: {response_code}')
+                self.report_error(f'server refuse connection: {response_code}, {translate_server_code(response_code)}')
 
         except Exception as e:
             # this error generated when user cancel download, or write function abort
@@ -283,7 +295,7 @@ class Worker:
                 log('Seg', self.seg.basename, error, 'worker', self.tag, log_level=3)
             else:
                 error = repr(e)
-                log('Seg', self.seg.basename, '- worker', self.tag, 'quitting ...', error, self.seg.url,  log_level=3)
+                log('Seg', self.seg.basename, '- worker', self.tag, 'quitting ...', error, log_level=3)
 
                 # report server error to thread manager
                 self.report_error(repr(e))

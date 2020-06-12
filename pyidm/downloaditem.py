@@ -573,7 +573,7 @@ class DownloadItem:
             # append to main list
             _segments += audio_segments
 
-        seg_names = [seg.basename for seg in _segments]
+        seg_names = [f'{seg.basename}:{seg.range}' for seg in _segments]
         log(f'Segments-{self.name}, ({len(seg_names)}):', seg_names, log_level=3)
 
         self.segments = _segments
