@@ -267,6 +267,7 @@ def thread_manager(d):
     errors_descriptions = set()  # store unique errors
     error_timer = 0
     error_timer2 = 0
+    conn_increase_interval = 0.5
     errors_check_interval = 0.2  # in seconds
 
     # speed limit
@@ -332,12 +333,13 @@ def thread_manager(d):
                 log('--------------------------------- errors ---------------------------------:', total_errors)
                 log('Errors descriptions:', errors_descriptions, log_level=3)
 
-            if total_errors >= 10 and limited_connections > 1:
+            if total_errors >= 1 and limited_connections > 1:
                 limited_connections -= 1
+                conn_increase_interval += 0.5
                 log('Thread Manager: received server errors, connections limited to:', limited_connections)
 
             else:
-                if limited_connections < config.max_connections and time.time() - error_timer2 >= 1:
+                if limited_connections < config.max_connections and time.time() - error_timer2 >= conn_increase_interval:
                     error_timer2 = time.time()
                     limited_connections += 1
                     log('Thread Manager: allowable connections:', limited_connections)
@@ -382,13 +384,13 @@ def thread_manager(d):
 
                         # create new segment
                         start = current_seg.range[1] + 1
-                        seg = Segment(name=os.path.join(d.temp_folder, f'{current_seg.basename}_2'), url=current_seg.url,
+                        seg = Segment(name=os.path.join(d.temp_folder, f'{len(d.segments)}'), url=current_seg.url,
                                       tempfile=current_seg.tempfile, range=[start, end])
 
                         # add to segments
                         d.segments.append(seg)
-                        print('-' * 20,
-                              f'new segment {seg.basename} created from {current_seg.basename} with range {current_seg.range}')
+                        log('-' * 10, f'new segment {seg.basename} created from {current_seg.basename} '
+                                      f'with range {current_seg.range}', log_level=3)
 
                 if seg and not seg.downloaded and not seg.locked:
                     worker = free_workers.pop()
@@ -399,15 +401,15 @@ def thread_manager(d):
                     else:
                         minimum_speed = timeout = None  # default as in utils.set_curl_option
 
-                    worker.reuse(seg=seg, speed_limit=worker_sl, minimum_speed=minimum_speed, timeout=timeout)
-
-                    if config.use_thread_pool_executor:
-                        thread = executor.submit(worker.run)
-                        thread.add_done_callback(on_completion_callback)
-                    else:
-                        thread = Thread(target=worker.run, daemon=True)
-                        thread.start()
-                    threads_to_workers[thread] = worker
+                    ready = worker.reuse(seg=seg, speed_limit=worker_sl, minimum_speed=minimum_speed, timeout=timeout)
+                    if ready:
+                        if config.use_thread_pool_executor:
+                            thread = executor.submit(worker.run)
+                            thread.add_done_callback(on_completion_callback)
+                        else:
+                            thread = Thread(target=worker.run, daemon=True)
+                            thread.start()
+                        threads_to_workers[thread] = worker
 
         # check thread completion
         if not config.use_thread_pool_executor:

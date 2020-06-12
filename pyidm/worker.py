@@ -44,9 +44,17 @@ class Worker:
 
     def reuse(self, seg=None, speed_limit=0, minimum_speed=None, timeout=None):
         """Recycle same object again, better for performance as recommended by curl docs"""
+        if seg.locked:
+            log('Seg', self.seg.basename, 'segment in use by another worker', '- worker', {self.tag}, log_level=2)
+            return False
+
         self.reset()
 
         self.seg = seg
+
+        # set lock
+        self.seg.locked = True
+
         self.speed_limit = speed_limit
 
         # minimum speed and timeout, abort if download speed slower than n byte/sec during n seconds
@@ -62,6 +70,8 @@ class Worker:
         log(msg, ' - worker', self.tag, log_level=2)
 
         self.check_previous_download()
+
+        return True
 
     def reset(self):
         # reset curl options "only", other info cache stay intact, https://curl.haxx.se/libcurl/c/curl_easy_reset.html
@@ -109,11 +119,12 @@ class Worker:
             log('Seg', self.seg.basename, 'over-sized', self.seg.current_size, 'will be truncated to:',
                 size_format(self.seg.size), ' - worker', self.tag, log_level=3)
 
+            self.seg.downloaded = True
+            self.d.downloaded -= self.seg.current_size - self.seg.size
+
             # truncate file
             with open(self.seg.name, 'rb+') as f:
                 f.truncate(self.seg.size)
-            self.seg.downloaded = True
-            self.d.downloaded -= self.seg.current_size - self.seg.size
 
         # Case-3: Resume, with new range
         elif self.seg.range and self.seg.current_size < self.seg.size:
@@ -230,7 +241,8 @@ class Worker:
             return -1  # abort
 
         if self.headers and self.headers.get('content-range') and self.print_headers:
-            log('Seg', self.seg.basename, 'range:', self.seg.range, 'server headers, range, size',
+            range_ = self.resume_range or self.seg.range
+            log('Seg', self.seg.basename, 'range:', range_, 'server headers, range, size',
                 self.headers.get('content-range'), self.headers.get('content-length'), log_level=3)
             self.print_headers = False
 
@@ -239,23 +251,15 @@ class Worker:
         error_q.put(description)
 
     def run(self):
-        # check if file completed before and exit
-        if self.seg.downloaded or self.seg.locked:
-            return
-
-        # check if segment in use by another worker
-        if self.seg.locked:
-            log('Seg', self.seg.basename, 'segment in use by another worker', '- worker', {self.tag}, log_level=2)
-            return
-
-        if not self.seg.url:
-            log('Seg', self.seg.basename, 'segment has no valid url', '- worker', {self.tag}, log_level=2)
-            self.report_error('invalid_url')
-            return
-
         try:
-            # set lock
-            self.seg.locked = True
+
+            # check if file completed before and exit
+            if self.seg.downloaded:
+                raise Exception('completed before')
+
+            if not self.seg.url:
+                log('Seg', self.seg.basename, 'segment has no valid url', '- worker', {self.tag}, log_level=2)
+                raise Exception('invalid url')
 
             # record retries
             self.seg.retries += 1
@@ -273,11 +277,6 @@ class Worker:
 
             # Main Libcurl operation
             self.c.perform()
-
-            # check if download completed
-            completed = self.verify()
-            if completed:
-                self.report_completed()
 
             # get response code and check for connection errors
             response_code = self.c.getinfo(pycurl.RESPONSE_CODE)
@@ -305,8 +304,12 @@ class Worker:
             if self.file:
                 self.file.close()
 
-            # finally if segment not fully downloaded send it back to thread manager to try again
-            if not self.seg.downloaded:
+            # check if download completed
+            completed = self.verify()
+            if completed:
+                self.report_completed()
+            else:
+                # if segment not fully downloaded send it back to thread manager to try again
                 self.report_not_completed()
 
                 # put back to jobs queue to try again
@@ -324,7 +327,7 @@ class Worker:
             try:
                 decoded_data = data.decode('utf-8').lower()
                 if not self.d.accept_html and ('<html' in decoded_data or '<!doctype html' in decoded_data):
-                    log('Seg', self.seg.basename, '- worker', self.tag, 'received html contents, aborting', self.seg.url, log_level=3)
+                    log('Seg', self.seg.basename, '- worker', self.tag, 'received html contents, aborting', log_level=3)
 
                     log('=' * 20, data, '=' * 20, sep='\n', start='', log_level=3)
 
