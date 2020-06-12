@@ -22,7 +22,9 @@ APP_TITLE = f'{APP_NAME} version {APP_VERSION} .. an open source download manage
 DEFAULT_DOWNLOAD_FOLDER = os.path.join(os.path.expanduser("~"), 'Downloads')
 DEFAULT_THEME = 'DarkGrey2'
 DEFAULT_CONNECTIONS = 10
-DEFAULT_SEGMENT_SIZE = 524288  # in bytes  = 512 KB
+
+# minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.
+DEFAULT_SEGMENT_SIZE = 204800  # 204800 bytes == 200 KB
 DEFAULT_CONCURRENT_CONNECTIONS = 3
 APP_URL = 'https://github.com/pyIDM/pyIDM'
 LATEST_RELEASE_URL = 'https://github.com/pyIDM/pyIDM/releases/latest'
