@@ -170,7 +170,8 @@ class MainWindow:
             return new_init_func
 
         # redefine Button constructor
-        sg.Button.__init__ = button_decorator(sg.Button.__init__)
+        if not config.operating_system == 'Darwin':  # disabled for mac
+            sg.Button.__init__ = button_decorator(sg.Button.__init__)
 
         # download folder
         if not self.d.folder:
@@ -297,7 +298,6 @@ class MainWindow:
         folder_btn = sg.Button('', key='Folder', tooltip=' open download folder ', image_data=folder_icon, **transparent)
         sched_btn = sg.B('', key='schedule_item', tooltip=' Schedule current item ', image_data=sched_icon, **transparent)
         del_btn = sg.Button('', key='delete_btn', tooltip=' Delete item from list (Del) ', image_data=delete_icon, **transparent)
-        # sg.Button('', key='D.Window', tooltip=' Show download window ', image_data=dwindow_icon, **transparent)
 
         resume_all_btn = sg.Button('', key='Resume All', tooltip=' Resume All ', image_data=resumeall_icon, **transparent)
         stop_all_btn = sg.Button('', key='Stop All', tooltip=' Stop All ', image_data=stopall_icon, **transparent)
