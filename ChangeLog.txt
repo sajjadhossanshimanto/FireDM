@@ -1,3 +1,19 @@
+2020.6.8:
+- Dynamic file segmentation, to improve speed issue #97
+- Instant Theme change without restarting the application main window issue #87
+- Added frame rate "fps" to streams description in quality drop down list issue #92
+- Auto rename file if same name exists in download folder "Settings>General".
+- Added md5 and sha256 checksum calculators, "Settings>Advanced"
+- use proxy dns "LibCurl socks5h and socks4a" issue #95 "Settings>Network"
+- Fixed empty downloads table after theme change.
+- Fixed Application freeze on linux when using "open file" or "open download folder".
+- Fixed some Application update issues for windows portable version.
+- Fixed Truncated File size after done downloading issue #86
+- Fixed audio manual selection for dash videos issue #90
+- Fixed downloading direct HLS/m3u8 media playlist issue #91
+- Fixed file corruption on download resume
+- disable "video search" for non-video urls issue #102
+
 2020.5.18:
 - Fixed pyperclip error using gtk on Linux.
 - Fixed systray icon on Linux

@@ -158,7 +158,7 @@ class Worker:
                 return True
 
         # Case-3, segment has a known size
-        elif self.seg.current_size == self.seg.size:
+        elif self.seg.current_size >= self.seg.size:
             return True
 
         # Case-x, report failed
@@ -354,7 +354,6 @@ class Worker:
 
             # re-adjust value of total downloaded data
             self.d.downloaded -= self.seg.current_size - self.seg.size
-            self.report_completed()
             return -1  # abort
 
 

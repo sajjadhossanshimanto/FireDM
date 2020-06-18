@@ -16,23 +16,22 @@ Developed in Python, based on "pyCuRL/libcurl", "youtube_dl", and "PySimpleGUI"
 **Features**:
 * High download speeds "based on libcurl"   -  [See Speed test of: aria2 vs PyIDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif).
 * Multi-connection downloading "Multithreading"
-* Scan and resume uncompleted downloads.
+* Automatic file segmentation.
+* Resume uncompleted downloads, and Refresh expired urls.
 * Support for Youtube, and a lot of stream websites "using youtube-dl to fetch info and libcurl to download data".
 * download entire video playlist or selected videos.
-* support for fragmented video streams.
-* support for encrypted/nonencrypted HLS media streams.
+* download fragmented video streams, and encrypted/nonencrypted HLS media streams.
 * watch videos while downloading*   "some videos will have no audio until finish downloading"
-* Auto check for application updates.
+* check for application updates.
 * Scheduling downloads
 * Re-using existing connection to remote server.
 * Clipboard Monitor.
-* Refresh expired urls.
 * Simple GUI interface with 140 themes available.
 * proxy support (http, https, socks4, and socks5).
+* user/pass authentication, referee link, use cookies, video thumbnail, subtitles, MD5 and SHA256 checksums
 * user can control a lot of options:
     - select theme.
     - set proxy.
-    - selecting Segment size.
     - Speed limit.
     - Max. Concurrent downloads.
     - Max. connections per download.
@@ -73,6 +72,11 @@ if PyIDM failed to install required packages, you should install it manually, re
 
     - run PyIDM from Terminal by typing:<br>
         `python -m pyidm`     or  just `pyidm`   
+
+
+**important note on Tkinter for mac users**:<br>
+- as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
+refer to [issue #113](https://github.com/pyIDM/PyIDM/issues/113)
 
 
 ---
@@ -135,7 +139,7 @@ why not just use youtube-dl from command line? the answer is multithreading / mu
 ### note for pycurl: <br>
 for windows users:
 normal pip install i.e `python -m pip install pycurl` might fail on windows because you need to build libcurl on your system first which is a headache. 
-your best choice if pip fail is to download exe file for pycurl from its official download [link](https://dl.bintray.com/pycurl/pycurl/), find the file that match your windows system and python version installed on your system, last checked on 28-01-2020, found available files for almost all Python versions upto version 3.7
+your best choice if pip fail is to download exe file for pycurl from its official download [link](https://dl.bintray.com/pycurl/pycurl/), find the file that match your windows system and python version installed on your system, last checked on 12-06-2020, found available files for almost all Python versions upto version 3.8
 
 example: if you have python 3.6 installed on windows 32bit, you should download "pycurl-7.43.0.2.win32-py3.6.exe" file and install it, 
 another example: if you have python 3.7 running on windows 64 bit, you should choose and download "pycurl-7.43.0.3.win-amd64-py3.7.exe" file

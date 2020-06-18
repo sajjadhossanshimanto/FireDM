@@ -114,18 +114,24 @@ def brain(d=None, downloader=None):
     log('=' * 106, '\n')
 
 
-def file_manager(d, keep_segments=False):
+def file_manager(d, keep_segments=True):
     # create temp files
     temp_files = set([seg.tempfile for seg in d.segments])
     for file in temp_files:
         open(file, 'ab').close()
+
+    target_files = {}
+    for file in temp_files:
+        target_files[file] = open(file, 'rb+')
 
     while True:
         time.sleep(0.1)
 
         job_list = [seg for seg in d.segments if not seg.completed]
 
-        # print(job_list)
+        # sort segments based on ranges, faster in writing to target file
+        if job_list and job_list[0].range:
+            job_list = sorted(job_list, key=lambda seg: seg.range[0])
 
         for seg in job_list:
 
@@ -140,16 +146,20 @@ def file_manager(d, keep_segments=False):
             # append downloaded segment to temp file, mark as completed
             try:
                 if seg.merge:
-                    if seg.range:
-                        # use 'rb+' mode if we use seek, 'ab' doesn't work, but it will raise error if file doesn't exist
-                        with open(seg.tempfile, 'rb+') as trgt_file:
-                            with open(seg.name, 'rb') as src_file:
-                                trgt_file.seek(seg.range[0])
-                                trgt_file.write(src_file.read(seg.size))
-                    else:
-                        with open(seg.tempfile, 'ab') as trgt_file:
-                            with open(seg.name, 'rb') as src_file:
-                                trgt_file.write(src_file.read())
+                    target_file = target_files[seg.tempfile]
+                    with open(seg.name, 'rb') as src_file:
+                        if seg.range:
+                            # use 'rb+' mode if we use seek, 'ab' doesn't work, but it will raise error if file doesn't exist
+                            target_file.seek(seg.range[0])
+                            contents = src_file.read(seg.size)
+                        else:
+                            contents = src_file.read()
+
+                    # write data
+                    target_file.write(contents)
+
+                    # flush contents, required for watching while downloading feature
+                    target_file.flush()
 
                 seg.completed = True
                 log('completed segment: ',  seg.basename)
@@ -164,6 +174,9 @@ def file_manager(d, keep_segments=False):
 
         # all segments already merged
         if not job_list:
+
+            for file_handle in target_files.values():
+                file_handle.close()
 
             # handle HLS streams
             if 'hls' in d.subtype_list:
@@ -263,7 +276,7 @@ def thread_manager(d):
     # error track, if receive many errors with no downloaded data, abort
     downloaded = 0
     total_errors = 0
-    max_errors = 500
+    max_errors = 100
     errors_descriptions = set()  # store unique errors
     error_timer = 0
     error_timer2 = 0
@@ -272,6 +285,9 @@ def thread_manager(d):
 
     # speed limit
     sl_timer = time.time()
+
+    # for compatibility reasons will reset segment size
+    config.segment_size = config.DEFAULT_SEGMENT_SIZE
 
     log('Thread Manager()> concurrency method:', 'ThreadPoolExecutor' if config.use_thread_pool_executor else 'Individual Threads')
 
