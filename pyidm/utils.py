@@ -675,11 +675,11 @@ def open_file(file):
 
         elif config.operating_system == 'Linux':
             cmd = f'xdg-open "{file}"'
-            run_command(cmd, nonblocking=True, verbose=False)
+            subprocess.Popen(shlex.split(cmd))
 
         elif config.operating_system == 'Darwin':
             cmd = f'open "{file}"'
-            run_command(cmd, nonblocking=True, verbose=False)
+            subprocess.Popen(shlex.split(cmd))
     except Exception as e:
         log('open_file(): ', e, log_level=2)
 
@@ -691,6 +691,7 @@ def open_folder(path):
     :return: None
     """
 
+    log('utils> open_folder()> ', path, log_level=2)
     try:
         if os.path.isdir(path):
             file = None
@@ -708,14 +709,14 @@ def open_folder(path):
             if file:
                 # open folder and select the file
                 cmd = f'explorer /select, "{file}"'
-                run_command(cmd, nonblocking=True, verbose=False)
+                subprocess.Popen(shlex.split(cmd))
             else:
                 os.startfile(folder)
 
         else:
             # linux
             cmd = f'xdg-open "{folder}"'
-            run_command(cmd, nonblocking=True, verbose=False)
+            subprocess.Popen(shlex.split(cmd))
     except Exception as e:
         log('utils> open_folder()> ', e, log_level=2)
         if config.TEST_MODE:
