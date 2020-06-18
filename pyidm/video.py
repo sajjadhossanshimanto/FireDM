@@ -671,6 +671,12 @@ def pre_process_hls(d):
         master_m3u8 = None
 
     if master_m3u8:
+        # save master m3u8 file for debugging, and update subtitles
+        name = 'master.m3u8'
+        local_file = os.path.join(d.temp_folder, name)
+        with open(os.path.join(d.temp_folder, local_file), 'w') as f:
+            f.write(master_m3u8)
+
         # master playlist doesn't have "#EXT-X-TARGETDURATION" tag, only media playlist has it
         if not "#EXT-X-TARGETDURATION" in master_m3u8:
             refresh_urls(master_m3u8, d.manifest_url)
@@ -687,13 +693,6 @@ def pre_process_hls(d):
     if 'dash' in d.subtype_list:
         log('audio m3u8:        ', d.audio_url)
         audio_m3u8 = download_m3u8(d.audio_url)
-
-    # save master m3u8 file for debugging, and update subtitles
-    if master_m3u8:
-        name = 'master.m3u8'
-        local_file = os.path.join(d.temp_folder, name)
-        with open(os.path.join(d.temp_folder, local_file), 'w') as f:
-            f.write(master_m3u8)
 
     # save remote m3u8 files to disk
     with open(os.path.join(d.temp_folder, 'remote_video.m3u8'), 'w') as f:
