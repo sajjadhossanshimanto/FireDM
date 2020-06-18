@@ -670,6 +670,9 @@ class MainWindow:
             if self.selected_row_num != row_num:
                 self.selected_row_num = row_num
 
+                # update selected item in widget
+                self.window['table'](select_rows=(self.selected_row_num,))
+
                 # get instant gui update, don't wait for scheduled update
                 self.update_gui()
 
