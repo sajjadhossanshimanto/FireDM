@@ -227,8 +227,9 @@ def file_manager(d, keep_segments=True):
 
             else:
                 rename_file(d.temp_file, d.target_file)
-                # delete temp files
-                d.delete_tempfiles()
+                if os.path.isfile(d.target_file):
+                    # delete temp files
+                    d.delete_tempfiles()
 
             # download subtitles
             download_subtitles(d.selected_subtitles, d)
