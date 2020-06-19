@@ -6,7 +6,6 @@
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
-import io
 import os
 import time
 from threading import Thread
@@ -115,14 +114,10 @@ def brain(d=None, downloader=None):
 
 
 def file_manager(d, keep_segments=True):
-    # create temp files
+    # create temp files, needed for future opening in 'rb+' mode otherwise it will raise file not found error
     temp_files = set([seg.tempfile for seg in d.segments])
     for file in temp_files:
         open(file, 'ab').close()
-
-    target_files = {}
-    for file in temp_files:
-        target_files[file] = open(file, 'rb+')
 
     while True:
         time.sleep(0.1)
@@ -135,7 +130,7 @@ def file_manager(d, keep_segments=True):
 
         for seg in job_list:
 
-            # for segments which have no range, it must be appended to temp file in order otherwise final file will be
+            # for segments which have no range, it must be appended to temp file in order, or final file will be
             # corrupted, therefore if the first non completed segment is not "downloaded", will exit loop
             if not seg.downloaded:
                 if not seg.range:
@@ -146,20 +141,23 @@ def file_manager(d, keep_segments=True):
             # append downloaded segment to temp file, mark as completed
             try:
                 if seg.merge:
-                    target_file = target_files[seg.tempfile]
-                    with open(seg.name, 'rb') as src_file:
+
+                    # use 'rb+' mode if we use seek, 'ab' doesn't work, 'rb+' will raise error if file doesn't exist
+                    # open/close target file with every segment will avoid operating system buffering,
+                    # which cause almost 90 sec wait on some windows machine to be able to rename the file, after close it
+                    # fd.flush() and os.fsync(fd) didn't solve the problem
+                    with open(seg.name, 'rb') as src_file, open(seg.tempfile, 'rb+') as target_file:
                         if seg.range:
-                            # use 'rb+' mode if we use seek, 'ab' doesn't work, but it will raise error if file doesn't exist
+                            # must seek exact position, segments are not in order for simple append
                             target_file.seek(seg.range[0])
+
+                            # read the exact segment size, sometimes segment has extra data as a side effect from auto segmentation
                             contents = src_file.read(seg.size)
                         else:
                             contents = src_file.read()
 
-                    # write data
-                    target_file.write(contents)
-
-                    # flush contents, required for watching while downloading feature
-                    target_file.flush()
+                        # write data
+                        target_file.write(contents)
 
                 seg.completed = True
                 log('completed segment: ',  seg.basename)
@@ -174,9 +172,6 @@ def file_manager(d, keep_segments=True):
 
         # all segments already merged
         if not job_list:
-
-            for file_handle in target_files.values():
-                file_handle.close()
 
             # handle HLS streams
             if 'hls' in d.subtype_list:
@@ -226,10 +221,16 @@ def file_manager(d, keep_segments=True):
                     d.delete_tempfiles()
 
             else:
-                rename_file(d.temp_file, d.target_file)
+                # final / target file might be created by ffmpeg in case of dash video for example
                 if os.path.isfile(d.target_file):
                     # delete temp files
                     d.delete_tempfiles()
+                else:
+                    # rename temp file
+                    success = rename_file(d.temp_file, d.target_file)
+                    if success:
+                        # delete temp files
+                        d.delete_tempfiles()
 
             # download subtitles
             download_subtitles(d.selected_subtitles, d)
