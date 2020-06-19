@@ -895,10 +895,14 @@ class MainWindow:
 
     def change_theme(self, theme_name):
         """
-        change theme on the fly (dynamically) without a need to restart main window, unfortunately PySimpleGui doesn't
-        offer this functionality yet. https://github.com/PySimpleGUI/PySimpleGUI/issues/2437
+        change theme on the fly (dynamically) without a need to restart main window,
         :param theme_name: string represent theme name same parameter which passed to PySimpleGUI ChangeLookAndFeel()
         """
+
+        # unfortunately PySimpleGui doesn't offer this functionality yet.
+        # https://github.com/PySimpleGUI/PySimpleGUI/issues/2437
+        # there is a known theme bug with tkinter 8.6.9 shipped with python 3.7.4+ affecting TreeView "Table",
+        # bug url: https://core.tcl-lang.org/tk/info/509cafafae
 
         # set global theme for new windows
         self.select_theme(theme_name)
