@@ -256,7 +256,7 @@ class DownloadItem:
 
             time_passed = time.time() - self.speed_timer
             if time_passed >= self.speed_refresh_rate:
-                self.speed_timer= time.time()
+                self.speed_timer = time.time()
                 delta = self.downloaded - self.prev_downloaded_value
                 self.prev_downloaded_value = self.downloaded
                 _speed = delta / time_passed
@@ -264,11 +264,10 @@ class DownloadItem:
                 # to get a stable speed reading will use an average of multiple speed readings
                 self.speed_buffer.append(_speed)
                 avg_speed = sum(self.speed_buffer) / len(self.speed_buffer)
-                if len(self.speed_buffer) > 10:
+                if len(self.speed_buffer) >= 10:
                     self.speed_buffer.popleft()
 
-                if avg_speed:
-                    self._speed = avg_speed if avg_speed > 0 else 0
+                self._speed = avg_speed if avg_speed > 0 else 0
 
         return self._speed
 

@@ -1,4 +1,4 @@
-2020.6.8:
+2020.6.15:
 - Dynamic file segmentation, to improve speed issue #97
 - Instant Theme change without restarting the application main window issue #87
 - Added frame rate "fps" to streams description in quality drop down list issue #92
