@@ -146,18 +146,23 @@ def file_manager(d, keep_segments=True):
                     # open/close target file with every segment will avoid operating system buffering,
                     # which cause almost 90 sec wait on some windows machine to be able to rename the file, after close it
                     # fd.flush() and os.fsync(fd) didn't solve the problem
-                    with open(seg.name, 'rb') as src_file, open(seg.tempfile, 'rb+') as target_file:
+                    with open(seg.name, 'rb') as src_file:
                         if seg.range:
+                            target_file = open(seg.tempfile, 'rb+')
                             # must seek exact position, segments are not in order for simple append
                             target_file.seek(seg.range[0])
 
                             # read the exact segment size, sometimes segment has extra data as a side effect from auto segmentation
                             contents = src_file.read(seg.size)
                         else:
+                            target_file = open(seg.tempfile, 'ab')
                             contents = src_file.read()
 
                         # write data
                         target_file.write(contents)
+
+                        # close file
+                        target_file.close()
 
                 seg.completed = True
                 log('completed segment: ',  seg.basename)
