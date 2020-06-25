@@ -137,6 +137,12 @@ class Video(DownloadItem):
         self.subtitles = self.vid_info.get('subtitles', {})
         self.automatic_captions = self.vid_info.get('automatic_captions', {})
 
+        # use youtube-dl headers
+        self.http_headers = self.vid_info.get('http_headers') or config.HEADERS
+
+        # don't accept compressed contents
+        self.http_headers['Accept-Encoding'] = '*;q=0'
+
         # build streams
         self._process_streams()
 
@@ -665,7 +671,7 @@ def pre_process_hls(d):
     # maybe the playlist is a direct media playlist and not a master playlist
     if d.manifest_url:
         log('master manifest:   ', d.manifest_url)
-        master_m3u8 = download_m3u8(d.manifest_url)
+        master_m3u8 = download_m3u8(d.manifest_url, http_headers=d.http_headers)
     else:
         log('No master manifest')
         master_m3u8 = None
@@ -682,7 +688,7 @@ def pre_process_hls(d):
             refresh_urls(master_m3u8, d.manifest_url)
 
     log('video m3u8:        ', d.eff_url)
-    video_m3u8 = download_m3u8(d.eff_url)
+    video_m3u8 = download_m3u8(d.eff_url, http_headers=d.http_headers)
 
     # abort if no video_m3u8
     if not video_m3u8:
@@ -692,7 +698,7 @@ def pre_process_hls(d):
     audio_m3u8 = None
     if 'dash' in d.subtype_list:
         log('audio m3u8:        ', d.audio_url)
-        audio_m3u8 = download_m3u8(d.audio_url)
+        audio_m3u8 = download_m3u8(d.audio_url, http_headers=d.http_headers)
 
     # save remote m3u8 files to disk
     with open(os.path.join(d.temp_folder, 'remote_video.m3u8'), 'w') as f:
@@ -855,6 +861,8 @@ def parse_subtitles(m3u8_doc, m3u8_url):
             # get absolute url
             url = urljoin(m3u8_url, url)
 
+            log('subtitle-link:', url)
+
             # url might refer to another m3u8 file :(
             sub_m3u8 = download_m3u8(url)
             if sub_m3u8:
@@ -888,17 +896,20 @@ def parse_subtitles(m3u8_doc, m3u8_url):
     return subtitles
 
 
-def download_m3u8(url):
-    # download the manifest from m3u8 file descriptor located at url
-    buffer = download(url, verbose=False)  # get BytesIO object
+def download_m3u8(url, http_headers=config.HEADERS):
+    try:
+        # download the manifest from m3u8 file descriptor located at url
+        buffer = download(url, verbose=False, http_headers=http_headers)  # get BytesIO object
 
-    if buffer:
-        # convert to string
-        buffer = buffer.getvalue().decode()
+        if buffer:
+            # convert to string
+            buffer = buffer.getvalue().decode()
 
-        # verify file is m3u8 format
-        if '#EXT' in repr(buffer):
-            return buffer
+            # verify file is m3u8 format
+            if '#EXT' in repr(buffer):
+                return buffer
+    except Exception as e:
+        log(e)
 
     log('received invalid m3u8 file from server')
     if config.log_level >= 3:
@@ -906,12 +917,13 @@ def download_m3u8(url):
     return None
 
 
-def download_subtitles(subs, d, ext='srt'):
+def download_subtitles(subs, d, ext='srt', http_headers=config.HEADERS):
     """
     download subtitles
     :param subs: expecting format template: {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'xxx', 'ext': 'xxx'}
     :param d: DownloadItem object that has the subtitles
     :param ext: subtitle format / extension
+    :param http_headers: request http headers
     :return: True if it completed successfully, else False
     """
 
@@ -922,7 +934,7 @@ def download_subtitles(subs, d, ext='srt'):
         file_name = f'{os.path.splitext(d.target_file)[0]}_{lang}.{ext}'
 
         log('downloading subtitle', file_name)
-        buffer = download(url, file_name)
+        buffer = download(url, file_name, http_headers=http_headers)
 
         if not buffer:
             log('downloading subtitle', file_name, 'failed')

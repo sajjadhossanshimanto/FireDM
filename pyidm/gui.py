@@ -2161,7 +2161,6 @@ class MainWindow:
             with video.ytdl.YoutubeDL(get_ytdl_options()) as ydl:
                 # process=False is faster and youtube-dl will not download every videos webpage in the playlist
                 info = ydl.extract_info(self.d.url, download=False, process=False)
-                log('Media info:', info, log_level=3)
 
                 # don't process direct links, youtube-dl warning message "URL could be a direct video link, returning it as such."
                 # refer to youtube-dl/extractor/generic.py
@@ -2176,10 +2175,12 @@ class MainWindow:
                 # 50% done
                 self.m_bar = 50
 
-                # check results if _type is a playlist / multi_video -------------------------------------------------
                 result_type = info.get('_type', 'video')
+
+                # check results if _type is a playlist / multi_video -------------------------------------------------
                 if result_type in ('playlist', 'multi_video') or 'entries' in info:
                     log('youtube-func()> start processing playlist')
+                    log('Media info:', info, log_level=3)
 
                     # videos info
                     pl_info = list(info.get('entries'))
@@ -2264,19 +2265,14 @@ class MainWindow:
                                 num += 1
 
                 else:
-                        # one video, not a playlist, processing info
-                        # process_video_info() will fail to get formats for some videos
-                        # https://vod.tvp.pl/video/rozmowy-przy-wycinaniu-lasu,rozmowy-przy-wycinaniu-lasu,21765408
+                    # one video, not a playlist, processing info
+                    # process_video_info() will fail to get formats for some videos
+                    # https://vod.tvp.pl/video/rozmowy-przy-wycinaniu-lasu,rozmowy-przy-wycinaniu-lasu,21765408
 
-                        # process info
-                        info = ydl.process_ie_result(info, download=False)
+                    # process info
+                    info = ydl.process_ie_result(info, download=False)
 
-                        # if returned None
-                        if not info:
-                            log('youtube_func()> No streams found')
-                            self.reset_video_controls()
-                            return
-
+                    if info:
                         # check for formats, and inform user
                         if not info.get('formats'):
                             log('youtube func: missing formats, re-downloading webpage')
@@ -2284,20 +2280,27 @@ class MainWindow:
                             # to avoid missing formats will call youtube-dl again with process=True 're-downloading webpage'
                             info = ydl.extract_info(self.d.url, download=False, process=True)
 
-                        vid = Video(self.d.url, vid_info=info)
+                        log('processed media info:', info, log_level=3)
 
-                        # report done processing
-                        vid.processed = True
+                    else:  # if returned None
+                        log('youtube_func()> No streams found')
+                        self.reset_video_controls()
+                        return
 
-                        # add to playlist
-                        self.playlist = [vid]
+                    vid = Video(self.d.url, vid_info=info)
 
-                        # update playlist menu
-                        execute_command('update_pl_menu')
-                        # self.update_pl_menu()
+                    # report done processing
+                    vid.processed = True
 
-                        # get thumbnail
-                        Thread(target=vid.get_thumbnail, daemon=True).start()
+                    # add to playlist
+                    self.playlist = [vid]
+
+                    # update playlist menu
+                    execute_command('update_pl_menu')
+                    # self.update_pl_menu()
+
+                    # get thumbnail
+                    Thread(target=vid.get_thumbnail, daemon=True).start()
 
             # quit if we couldn't extract any videos info (playlist or single video)
             if not self.playlist:
@@ -2490,7 +2493,7 @@ class MainWindow:
             log('trying to get a subtitle')
 
             # download master m3u8 file
-            m3u8_doc = download_m3u8(self.d.manifest_url)
+            m3u8_doc = download_m3u8(self.d.manifest_url, http_headers=self.d.http_headers)
 
             if m3u8_doc:
                 log('parsing subs')

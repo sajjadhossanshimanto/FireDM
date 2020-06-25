@@ -70,13 +70,13 @@ def handle_exceptions(error):
         log(error)
 
 
-def set_curl_options(c):
+def set_curl_options(c, http_headers=config.HEADERS):
     """take pycurl object as an argument and set basic options"""
 
     # c.setopt(pycurl.USERAGENT, config.USER_AGENT)
 
     # http headers must be in a list format
-    headers = [f'{k}:{v}' for k, v in config.HEADERS.items()]
+    headers = [f'{k}:{v}' for k, v in http_headers.items()]
 
     c.setopt(pycurl.HTTPHEADER, headers)
 
@@ -127,7 +127,7 @@ def set_curl_options(c):
     c.setopt(pycurl.AUTOREFERER, 1)
 
 
-def get_headers(url, verbose=False):
+def get_headers(url, verbose=False, http_headers=config.HEADERS):
     """return dictionary of headers"""
 
     log('get_headers()> getting headers for:', url, log_level=3)
@@ -167,7 +167,7 @@ def get_headers(url, verbose=False):
     c = pycurl.Curl()
 
     # set general curl options
-    set_curl_options(c)
+    set_curl_options(c, http_headers)
 
     # set special curl options
     c.setopt(pycurl.URL, url)
@@ -189,12 +189,13 @@ def get_headers(url, verbose=False):
     return curl_headers
 
 
-def download(url, file_name=None, verbose=True):
+def download(url, file_name=None, verbose=True, http_headers=config.HEADERS):
     """
     simple file download, into bytesio buffer and store it on disk if file_name is given
     :param url: string url/link
     :param file_name: string type for file path
     :param verbose: bool, log events if true
+    :param http_headers: key, value dict for http headers to be sent to the server
     :return: bytesIo buffer or None
     """
 
@@ -207,7 +208,7 @@ def download(url, file_name=None, verbose=True):
 
     def set_options():
         # set general curl options
-        set_curl_options(c)
+        set_curl_options(c, http_headers)
 
         # set special curl options
         c.setopt(pycurl.URL, url)
