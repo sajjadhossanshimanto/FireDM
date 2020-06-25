@@ -16,7 +16,7 @@ from .video import merge_video_audio, unzip_ffmpeg, pre_process_hls, post_proces
 from . import config
 from .config import Status, active_downloads, APP_NAME
 from .utils import (log, size_format, popup, notify, delete_folder, delete_file, rename_file, load_json, save_json,
-                    print_object, calc_md5, calc_sha256)
+                    print_object, calc_md5, calc_sha256, run_command)
 from .worker import Worker
 from .downloaditem import Segment
 
@@ -238,7 +238,28 @@ def file_manager(d, keep_segments=True):
                         d.delete_tempfiles()
 
             # download subtitles
-            download_subtitles(d.selected_subtitles, d)
+            if d.selected_subtitles:
+                Thread(target=download_subtitles, args=(d.selected_subtitles, d)).start()
+
+            # if type is subtitle, will convert vtt to srt
+            if d.type == 'subtitle' and 'hls' not in d.subtype_list and d.name.endswith('srt'):
+                # ffmpeg file full location
+                ffmpeg = config.ffmpeg_actual_path
+
+                input_file = d.target_file
+                output_file = f'{d.target_file}2.srt'  # must end with srt for ffmpeg to recognize output format
+
+                log('verifying "srt" subtitle:', input_file)
+                cmd = f'"{ffmpeg}" -y -i "{input_file}" "{output_file}"'
+
+                error, _ = run_command(cmd, verbose=True)
+                if not error:
+                    delete_file(d.target_file)
+                    rename_file(oldname=output_file, newname=input_file)
+                    log('verified subtitle successfully:', input_file)
+                else:
+                    # if failed to convert
+                    log("couldn't convert subtitle to srt, check file format might be corrupted")
 
             # at this point all done successfully
             d.status = Status.completed

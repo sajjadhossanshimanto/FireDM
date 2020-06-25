@@ -775,21 +775,33 @@ def post_process_hls(d):
     local_audio_m3u8_file = os.path.join(d.temp_folder, 'local_audio.m3u8')
 
     cmd = f'"{config.ffmpeg_actual_path}" -loglevel error -stats -y -protocol_whitelist "file,http,https,tcp,tls,crypto"  ' \
-          f'-allowed_extensions ALL -i "{local_video_m3u8_file}" -c copy -f mp4 "file:{d.temp_file}"'
-
+          f'-allowed_extensions ALL -i "{local_video_m3u8_file}" -c copy "file:{d.temp_file}"'
     error, output = run_command(cmd, d=d)
+
     if error:
-        log('post_process_hls()> ffmpeg failed:', output)
-        return False
-
-    if 'dash' in d.subtype_list:
+        # retry without "-c copy" parameter, takes longer time
         cmd = f'"{config.ffmpeg_actual_path}" -loglevel error -stats -y -protocol_whitelist "file,http,https,tcp,tls,crypto"  ' \
-              f'-allowed_extensions ALL -i "{local_audio_m3u8_file}" -c copy -f mp4 "file:{d.audio_file}"'
-
+              f'-allowed_extensions ALL -i "{local_video_m3u8_file}" "file:{d.temp_file}"'
         error, output = run_command(cmd, d=d)
+
         if error:
             log('post_process_hls()> ffmpeg failed:', output)
             return False
+
+    if 'dash' in d.subtype_list:
+        cmd = f'"{config.ffmpeg_actual_path}" -loglevel error -stats -y -protocol_whitelist "file,http,https,tcp,tls,crypto"  ' \
+              f'-allowed_extensions ALL -i "{local_audio_m3u8_file}" -c copy "file:{d.audio_file}"'
+        error, output = run_command(cmd, d=d)
+
+        if error:
+            # retry without "-c copy" parameter, takes longer time
+            cmd = f'"{config.ffmpeg_actual_path}" -loglevel error -stats -y -protocol_whitelist "file,http,https,tcp,tls,crypto"  ' \
+                  f'-allowed_extensions ALL -i "{local_audio_m3u8_file}" "file:{d.audio_file}"'
+            error, output = run_command(cmd, d=d)
+
+            if error:
+                log('post_process_hls()> ffmpeg failed:', output)
+                return False
 
     log('post_process_hls()> done processing', d.name)
 
@@ -840,62 +852,6 @@ def parse_m3u8_line(line):
     return info
 
 
-def parse_subtitles(m3u8_doc, m3u8_url):
-    # check subtitles in master m3u8, for some reasons youtube-dl doesn't recognize subtitles in m3u8 files
-    # link: https://www.dplay.co.uk/show/ghost-loop/video/dead-and-breakfast/EHD_297528B
-    # github issue: https://github.com/pyIDM/pyIDM/issues/77
-    # if youtube-dl fixes this problem in future, there is no need for this batch
-    subtitles = {}
-    lines = m3u8_doc.splitlines()
-    for i, line in enumerate(lines):
-        info = parse_m3u8_line(line)
-
-        # example line with subtitle: #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="100wvtt.vtt",LANGUAGE="en",NAME="en",AUTOSELECT=YES,DEFAULT=NO,FORCED=NO,URI="exp=1587480854~ac....."
-        # example parsed info: {'TYPE': 'SUBTITLES', 'GROUP-ID': '100wvtt.vtt', 'LANGUAGE': 'en', 'NAME': 'en', 'AUTOSELECT': 'YES', 'DEFAULT': 'NO', 'FORCED': 'NO', 'URI': 'exp=1587480854~ac.....'}
-        if info.get('TYPE', '').lower() in ('subtitle', 'subtitles'):
-            # subtitles = {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'http://x.com/s2', 'ext': 'vtt'}
-            language = info.get('LANGUAGE') or info.get('NAME') or f'sub{i}'
-            url = info.get('URI')
-            if not url: continue
-
-            # get absolute url
-            url = urljoin(m3u8_url, url)
-
-            log('subtitle-link:', url)
-
-            # url might refer to another m3u8 file :(
-            sub_m3u8 = download_m3u8(url)
-            if sub_m3u8:
-                # will exract first url we see
-                lines = sub_m3u8.splitlines()
-                sub_url = ''
-                for i, line in enumerate(lines):
-                    if line.startswith('#EXT-X-MEDIA'):
-                        info = parse_m3u8_line(line)
-                        sub_url = info.get('URI')
-                    elif line.startswith('#EXTINF'):
-                        sub_url = lines[i + 1]
-
-                    if sub_url:
-                        url = urljoin(m3u8_url, sub_url)
-                        break
-                    else:
-                        continue
-
-            # get extension
-            group_id = info.get('GROUP-ID', '')  # 'GROUP-ID': '100wvtt.vtt'
-            ext = os.path.splitext(group_id)[-1] if group_id else 'vtt'
-            # remove "." from extension
-            ext = ext.replace('.', '')
-
-            # add sub
-            subtitles.setdefault(language, [])  # set default key value if not exist
-            subtitles[language].append({'url': url, 'ext': ext})
-            print("{'url': url, 'ext': ext}:", {'url': url, 'ext': ext})
-
-    return subtitles
-
-
 def download_m3u8(url, http_headers=config.HEADERS):
     try:
         # download the manifest from m3u8 file descriptor located at url
@@ -917,7 +873,68 @@ def download_m3u8(url, http_headers=config.HEADERS):
     return None
 
 
-def download_subtitles(subs, d, ext='srt', http_headers=config.HEADERS):
+def parse_subtitles(m3u8_doc, m3u8_url):
+    # check subtitles in master m3u8, for some reasons youtube-dl doesn't recognize subtitles in m3u8 files
+    # link: https://www.dplay.co.uk/show/ghost-loop/video/dead-and-breakfast/EHD_297528B
+    # github issue: https://github.com/pyIDM/pyIDM/issues/77
+    # if youtube-dl fixes this problem in future, there is no need for this batch
+    subtitles = {}
+    lines = m3u8_doc.splitlines()
+    for i, line in enumerate(lines):
+        info = parse_m3u8_line(line)
+
+        # example line with subtitle: #EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="100wvtt.vtt",LANGUAGE="en",NAME="en",AUTOSELECT=YES,DEFAULT=NO,FORCED=NO,URI="exp=1587480854~ac....."
+        # example parsed info: {'TYPE': 'SUBTITLES', 'GROUP-ID': '100wvtt.vtt', 'LANGUAGE': 'en', 'NAME': 'en', 'AUTOSELECT': 'YES', 'DEFAULT': 'NO', 'FORCED': 'NO', 'URI': 'exp=1587480854~ac.....'}
+        if info.get('TYPE', '').lower() in ('subtitle', 'subtitles'):
+            # subtitles = {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'http://x.com/s2', 'ext': 'vtt'}
+            language = info.get('LANGUAGE') or info.get('NAME') or f'sub{i}'
+            url = info.get('URI')
+            if not url: continue
+
+            # get absolute url
+            url = urljoin(m3u8_url, url)
+
+            # add sub
+            subtitles.setdefault(language, [])  # set default key value if not exist
+            subtitles[language].append({'url': url, 'ext': 'vtt'})
+            print("{'url': url, 'ext': ext}:", {'url': url, 'ext': 'vtt'})
+
+    return subtitles
+
+
+def download_sub(lang_name, url, extension, d):
+    try:
+        file_name = f'{os.path.splitext(d.target_file)[0]}_{lang_name}.{extension}'
+
+        # create download item object for subtitle
+        sub_d = DownloadItem()
+        sub_d.name = os.path.basename(file_name)
+        sub_d.folder = os.path.dirname(file_name)
+        sub_d.url = d.url
+        sub_d.eff_url = url
+        sub_d.type = 'subtitle'
+        sub_d.http_headers = d.http_headers
+
+        # if d type is hls video will download file to check if it's m3u8 or not
+        if 'hls' in d.subtype_list:
+            log('downloading subtitle', file_name)
+            buffer = download(url, http_headers=d.http_headers)
+
+            if buffer:
+                # convert to string
+                buffer = buffer.getvalue().decode()
+
+                # check if downloaded file is an m3u8 file
+                if '#EXT' in repr(buffer):
+                    sub_d.subtype_list.append('hls')
+
+        execute_command('start_download', sub_d)
+
+    except Exception as e:
+        log('download_subtitle() error', e)
+
+
+def download_subtitles(subs, d, ext='srt'):
     """
     download subtitles
     :param subs: expecting format template: {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'xxx', 'ext': 'xxx'}
@@ -926,38 +943,6 @@ def download_subtitles(subs, d, ext='srt', http_headers=config.HEADERS):
     :param http_headers: request http headers
     :return: True if it completed successfully, else False
     """
-
-    def download_sub(lang, sub):
-        # sub = {'url': 'xxx', 'ext': 'xxx'}
-        ext = sub.get('ext', 'txt')
-        url = sub.get('url')
-        file_name = f'{os.path.splitext(d.target_file)[0]}_{lang}.{ext}'
-
-        log('downloading subtitle', file_name)
-        buffer = download(url, file_name, http_headers=http_headers)
-
-        if not buffer:
-            log('downloading subtitle', file_name, 'failed')
-            return
-
-        # post processing 'srt' subtitle, it might be a 'vtt' file
-        if ext == 'srt':
-            # ffmpeg file full location
-            ffmpeg = config.ffmpeg_actual_path
-
-            output = f'{file_name}2.srt'
-            log('downloading subtitle', file_name,'Ffmpeg check convert subtitle format to srt')
-
-            cmd = f'"{ffmpeg}" -y -i "{file_name}" "{output}"'
-
-            error, _ = run_command(cmd, verbose=False, shell=True)
-            if not error:
-                delete_file(file_name)
-                rename_file(oldname=output, newname=file_name)
-                log('created subtitle:', file_name)
-            else:
-                # if failed to convert
-                log("couldn't convert subtitle to srt, check file format might be corrupted")
 
     for lang, lang_subs in subs.items():
         selected_sub = None
@@ -973,7 +958,7 @@ def download_subtitles(subs, d, ext='srt', http_headers=config.HEADERS):
             selected_sub = lang_subs[0]
 
         if selected_sub:
-            download_sub(lang, selected_sub)
+            download_sub(lang, selected_sub.get('url'), selected_sub.get('ext'), d)
 
 
 class Key(Segment):

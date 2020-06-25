@@ -70,8 +70,11 @@ def handle_exceptions(error):
         log(error)
 
 
-def set_curl_options(c, http_headers=config.HEADERS):
+def set_curl_options(c, http_headers=None):
     """take pycurl object as an argument and set basic options"""
+
+    # use default headers if no http-headers assigned or passed empty headers
+    http_headers = http_headers or config.HEADERS
 
     # c.setopt(pycurl.USERAGENT, config.USER_AGENT)
 
@@ -127,7 +130,7 @@ def set_curl_options(c, http_headers=config.HEADERS):
     c.setopt(pycurl.AUTOREFERER, 1)
 
 
-def get_headers(url, verbose=False, http_headers=config.HEADERS):
+def get_headers(url, verbose=False, http_headers=None):
     """return dictionary of headers"""
 
     log('get_headers()> getting headers for:', url, log_level=3)
@@ -189,7 +192,7 @@ def get_headers(url, verbose=False, http_headers=config.HEADERS):
     return curl_headers
 
 
-def download(url, file_name=None, verbose=True, http_headers=config.HEADERS):
+def download(url, file_name=None, verbose=True, http_headers=None):
     """
     simple file download, into bytesio buffer and store it on disk if file_name is given
     :param url: string url/link

@@ -27,7 +27,7 @@ from . import update
 from .brain import brain
 from . import video
 from .video import Video, check_ffmpeg, download_ffmpeg, unzip_ffmpeg, get_ytdl_options, process_video_info, \
-    download_m3u8, parse_subtitles
+    download_m3u8, parse_subtitles, download_sub
 from .downloaditem import DownloadItem
 from .iconsbase64 import *
 
@@ -2991,10 +2991,6 @@ class SubtitleWindow:
         self.window = None
         self.active = True
         self.subtitles = {}
-        self.selected_subs = {}
-        self.threads = []
-        self.threads_num = 0
-        self.enable_download = True
 
         self.setup()
 
@@ -3042,7 +3038,7 @@ class SubtitleWindow:
                            sg.T('*sub' if lang in self.d.subtitles else '*caption')])
 
         layout = [[sg.Column(layout, scrollable=True, vertical_scroll_only=True, size=(433, 195), key='col')],
-                  [sg.Button('Download'), sg.Button('Close'), sg.ProgressBar(100, size=(25, 10), key='bar')]]
+                  [sg.Button('Download'), sg.Button('Close')]]
 
         window = sg.Window('Subtitles window', layout, finalize=True)
         self.window = window
@@ -3054,111 +3050,30 @@ class SubtitleWindow:
     def focus(self):
         self.window.BringToFront()
 
-    @staticmethod
-    def download_subtitle(url, file_name):
-        try:
-            download(url, file_name)
-            name, ext = os.path.splitext(file_name)
-
-            # post processing 'srt' subtitle, it might be a 'vtt' file
-            if ext == '.srt':
-                # ffmpeg file full location
-                ffmpeg = config.ffmpeg_actual_path
-
-                output = f'{name}2.srt'
-
-                cmd = f'"{ffmpeg}" -y -i "{file_name}" "{output}"'
-
-                error, _ = run_command(cmd, verbose=False, shell=True)
-                if not error:
-                    delete_file(file_name)
-                    rename_file(oldname=f'{name}2.srt', newname=f'{name}.srt')
-                    log('created subtitle:', output)
-                else:
-                    # if failed to convert
-                    log("couldn't convert subtitle to srt, check file format might be corrupted")
-
-        except Exception as e:
-            log('download_subtitle() error', e)
-
-    def set_cursor(self, cursor='default'):
-        # can't be called before window.Read()
-        if cursor == 'busy':
-            cursor_name = 'watch'
-        else:  # default
-            cursor_name = 'arrow'
-
-        try:
-            self.window.TKroot['cursor'] = cursor_name
-        except:
-            pass
-
     def run(self):
 
         event, values = self.window.read(timeout=10, timeout_key='_TIMEOUT_')
 
         if event in ('Close', None):
             self.close()
-            return
 
-        if event == 'Download':
-            # disable download button
-            if self.enable_download:
-                self.enable_download = False
+        elif event == 'Download':
+            self.close()
 
-                # reset selected subtitles
-                self.selected_subs.clear()
+            # get selected subs,
+            # subtitles = {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'xxx', 'ext': 'xxx'}
+            for i, lang in enumerate(self.subtitles):
+                if values[f'lang_{i}']:  # selected language checkbox, true if selected
+                    # get selected extension
+                    ext = values[f'ext_{i}']
 
-                # get selected subs,
-                # subtitles = {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'xxx', 'ext': 'xxx'}
-                for i, lang in enumerate(self.subtitles):
-                    if values[f'lang_{i}']:  # selected language checkbox, true if selected
-                        # get selected extension
-                        ext = values[f'ext_{i}']
+                    # language subs list
+                    lang_subs = self.subtitles[lang]
 
-                        # language subs list
-                        lang_subs = self.subtitles[lang]
+                    # get url
+                    url = [sub['url'] for sub in lang_subs if sub['ext'] == ext][0]
 
-                        # get url
-                        url = [sub['url'] for sub in lang_subs if sub['ext'] == ext][0]
-                        name = f'{os.path.splitext(self.d.target_file)[0]}_{lang}.{ext}'
-
-                        self.selected_subs[name] = url
-
-                # download selected self.subtitles in separate threads
-                self.threads = []
-                for file_name, url in self.selected_subs.items():
-                    log('downloading subtitle', file_name)
-                    t = Thread(target=self.download_subtitle, args=(url, file_name))
-                    self.threads.append(t)
-                    t.start()
-                self.threads_num = len(self.threads)
-
-        # check download threads and update progress bar
-        if self.threads:
-            # change cursor to busy
-            self.set_cursor('busy')
-
-            self.threads = [t for t in self.threads if t.is_alive()]
-            percent = (self.threads_num - len(self.threads)) * 100 // self.threads_num
-            self.window['bar'].update_bar(percent)
-
-            if percent >= 100:
-                # reset cursor
-                self.set_cursor()
-
-                # notify user
-                window = sg.Window('Subtitles', [[sg.T(f'Done downloading subtitles at: {self.d.folder}')], [sg.Ok(), sg.B('Show me')]])
-                event, values = window()
-                if event == 'Show me':
-                    open_folder(self.d.folder)
-
-                window.close()
-
-
-        else:
-            # enable download button again
-            self.enable_download = True
+                    download_sub(lang, url, ext, self.d)
 
     def close(self):
         self.window.close()
