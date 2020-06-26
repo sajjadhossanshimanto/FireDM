@@ -143,6 +143,9 @@ class Video(DownloadItem):
         # don't accept compressed contents
         self.http_headers['Accept-Encoding'] = '*;q=0'
 
+        # get metadata
+        self.metadata_file_content = get_metadata(self.vid_info)
+
         # build streams
         self._process_streams()
 
@@ -959,6 +962,91 @@ def download_subtitles(subs, d, ext='srt'):
 
         if selected_sub:
             download_sub(lang, selected_sub.get('url'), selected_sub.get('ext'), d)
+
+
+def get_metadata(info):
+    # Modified from youtube-dl ffmpeg.py file
+    # source: https://github.com/ytdl-org/youtube-dl/blob/9a7e5cb88aa3a80f7b4d37424ca7cb3bd144cdc8/youtube_dl/postprocessor/ffmpeg.py#L433
+    metadata = {}
+
+    def add(meta_list, info_list=None):
+        if not info_list:
+            info_list = meta_list
+        if not isinstance(meta_list, (list, tuple)):
+            meta_list = (meta_list,)
+        if not isinstance(info_list, (list, tuple)):
+            info_list = (info_list,)
+        for info_f in info_list:
+            if info.get(info_f) is not None:
+                for meta_f in meta_list:
+                    metadata[meta_f] = info[info_f]
+                break
+
+    # See [1-4] for some info on media metadata/metadata supported
+    # by ffmpeg.
+    # 1. https://kdenlive.org/en/project/adding-meta-data-to-mp4-video/
+    # 2. https://wiki.multimedia.cx/index.php/FFmpeg_Metadata
+    # 3. https://kodi.wiki/view/Video_file_tagging
+    # 4. http://atomicparsley.sourceforge.net/mpeg-4files.html
+
+    add('title', ('track', 'title'))
+    add('date', 'upload_date')
+    add(('description', 'comment'), 'description')
+    add('purl', 'webpage_url')
+    add('track', 'track_number')
+    add('artist', ('artist', 'creator', 'uploader', 'uploader_id'))
+    add('genre')
+    add('album')
+    add('album_artist')
+    add('disc', 'disc_number')
+    add('show', 'series')
+    add('season_number')
+    add('episode_id', ('episode', 'episode_id'))
+    add('episode_sort', 'episode_number')
+
+    # prepare all metadata as a file content https://ffmpeg.org/ffmpeg-all.html#AC_002d3-Metadata
+
+    def ffmpeg_escape(text):
+        # Metadata keys or values containing special characters (‘=’, ‘;’, ‘#’, ‘\’ and a newline) must be escaped with a backslash ‘\’.
+        return re.sub(r'(=|;|#|\\|\n)', r'\\\1', text)
+
+    metadata_file_content = ';FFMETADATA1\n'  # file must start with this tag
+
+    # add above tags
+    for (name, value) in metadata.items():
+        metadata_file_content += f'{ffmpeg_escape(name)}={ffmpeg_escape(value)}\n'
+
+    # add empty line, not necessary, just for better viewing file while debugging
+    metadata_file_content += '\n'
+
+    # chapters
+    chapters = info.get('chapters', [])
+    if chapters:
+        for chapter in chapters:
+            metadata_file_content += '[CHAPTER]\nTIMEBASE=1/1000\n'
+            metadata_file_content += 'START=%d\n' % (chapter['start_time'] * 1000)
+            metadata_file_content += 'END=%d\n' % (chapter['end_time'] * 1000)
+            chapter_title = chapter.get('title')
+            if chapter_title:
+                metadata_file_content += 'title=%s\n' % ffmpeg_escape(chapter_title)
+
+            # add empty line, not necessary, just for better viewing file while debugging
+            metadata_file_content += '\n'
+
+    return metadata_file_content
+
+
+def write_metadata(input_file, meta_file):
+    file, ext = os.path.splitext(input_file)
+    out_file = file + '_2' + ext
+    cmd = f'"{config.ffmpeg_actual_path}" -loglevel error -stats -y -i "{input_file}"  -i "{meta_file}" -map_metadata 1 -codec copy "{out_file}"'
+    error, output = run_command(cmd, verbose=True)
+    if error:
+        return False
+    else:
+        delete_file(input_file)
+        rename_file(out_file, input_file)
+        return True
 
 
 class Key(Segment):

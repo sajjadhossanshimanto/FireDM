@@ -12,7 +12,7 @@ from threading import Thread
 import concurrent.futures
 
 from .video import merge_video_audio, unzip_ffmpeg, pre_process_hls, post_process_hls, \
-    convert_audio, download_subtitles  # unzip_ffmpeg required here for ffmpeg callback
+    convert_audio, download_subtitles, write_metadata  # unzip_ffmpeg required here for ffmpeg callback
 from . import config
 from .config import Status, active_downloads, APP_NAME
 from .utils import (log, size_format, popup, notify, delete_folder, delete_file, rename_file, load_json, save_json,
@@ -260,6 +260,23 @@ def file_manager(d, keep_segments=True):
                 else:
                     # if failed to convert
                     log("couldn't convert subtitle to srt, check file format might be corrupted")
+
+            # write metadata
+            if d.metadata_file_content and config.write_metadata:
+                log('file manager()> writing metadata info to:', d.name)
+                try:
+                    # create metadata file
+                    metadata_filename = d.target_file + '.meta'
+                    with open(metadata_filename, 'w') as f:
+                        f.write(d.metadata_file_content)
+
+                    # let ffmpeg write metadata to file
+                    write_metadata(d.target_file, metadata_filename)
+
+                    # delete meta file
+                    delete_file(metadata_filename)
+                except Exception as e:
+                    log('file manager()> writing metada error:', e)
 
             # at this point all done successfully
             d.status = Status.completed

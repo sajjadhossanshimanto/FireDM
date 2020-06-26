@@ -210,6 +210,9 @@ class DownloadItem:
         # http-headers
         self.http_headers = {}
 
+        # metadata
+        self.metadata_file_content = ''
+
         # properties names that will be saved on disk
         self.saved_properties = ['id', '_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
                                  'resumable', 'selected_quality', '_segment_size', '_downloaded', '_status',
@@ -217,7 +220,7 @@ class DownloadItem:
                                  'fragment_base_url', 'audio_fragments', 'audio_fragment_base_url',
                                  '_total_size', 'protocol', 'manifest_url', 'selected_subtitles',
                                  'abr', 'tbr', 'format_id', 'audio_format_id', 'resolution', 'audio_quality',
-                                 'http_headers']
+                                 'http_headers', 'metadata_file_content']
 
         # property to indicate that there is a time consuming operation is running on download item now
         self.busy = False

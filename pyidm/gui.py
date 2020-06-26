@@ -393,7 +393,9 @@ class MainWindow:
                          enable_events=True, key='manually_select_dash_audio')],
 
             [sg.Checkbox('Auto rename file if same name exists in download folder', default=config.auto_rename,
-                         enable_events=True, key='auto_rename')]
+                         enable_events=True, key='auto_rename')],
+            [sg.Checkbox('Write metadata to media files', default=config.write_metadata,
+                         enable_events=True, key='write_metadata')]
         ]
 
         network = [
@@ -542,7 +544,7 @@ class MainWindow:
         ]
 
         # window
-        window = sg.Window(title=config.APP_TITLE, layout=layout, size=(700, 450), margins=(2, 2),
+        window = sg.Window(title=config.APP_TITLE, layout=layout, size=(700, 460), margins=(2, 2),
                            return_keyboard_events=True)
         return window
 
@@ -1363,6 +1365,9 @@ class MainWindow:
 
             elif event == 'auto_rename':
                 config.auto_rename = values['auto_rename']
+
+            elif event == 'write_metadata':
+                config.write_metadata = values['write_metadata']
 
             # elif event == 'segment_size':
             #     user_input = values['segment_size']

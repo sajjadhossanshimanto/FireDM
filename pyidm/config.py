@@ -71,6 +71,7 @@ process_playlist = False  # fetch videos info only if selected, since big playli
 big_playlist_length = 50  # minimum number of videos in big playlist, it will ignore "process_playlist"
 manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
+write_metadata = True  # write metadata to video file
 
 # connection / network
 speed_limit = 0  # in bytes, zero == no limit
@@ -159,7 +160,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'update_frequency', 'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy',
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
-                 'use_proxy_dns', 'use_thread_pool_executor']
+                 'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata']
 
 
 # -------------------------------------------------------------------------------------
