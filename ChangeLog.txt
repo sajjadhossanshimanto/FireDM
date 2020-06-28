@@ -1,3 +1,9 @@
+2020.6.27:
+- Write metadata info to media files issue #124, Settings>General
+- fixed fragmented video download
+- fixed downloads for itv.com
+- revamp subtitles download, and fixes for issue #125
+
 2020.6.15:
 - Dynamic file segmentation, to improve speed issue #97
 - Instant Theme change without restarting the application main window issue #87
