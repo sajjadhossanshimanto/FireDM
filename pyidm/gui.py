@@ -1787,6 +1787,7 @@ class MainWindow:
         Thread(target=brain, daemon=True, args=(d, downloader)).start()
 
         # select row in downloads table
+        self.update_table()
         self.select_row(d.id)
 
         return None
@@ -2158,7 +2159,7 @@ class MainWindow:
             if video.ytdl is None:
                 log('youtube-dl module still not loaded completely, please wait')
                 while not video.ytdl:
-                    time.sleep(0.1)  # wait until module gets imported
+                    time.sleep(1)  # wait until module gets imported
 
             # youtube-dl process
             timer1 = time.time()
@@ -2620,6 +2621,7 @@ class MainWindow:
     def fetch_info(self, url):
         self.d.update(url)
 
+        # searching for videos
         # use size to identify a direct download links
         # can't depend on mime-type sent by server since it is not reliable
         # this HLS link will send mime-type as "application" https://dash.akamaized.net/dash264/TestCasesIOP33/multiplePeriods/2/manifest_multiple_Periods_Add_Remove_AdaptationSet.mpd
