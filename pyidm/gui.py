@@ -913,10 +913,24 @@ class MainWindow:
         # get theme dict
         theme = sg.LOOK_AND_FEEL_TABLE[theme_name]
 
+        # get correct values for default theme
+        default_bg = self.window.TKroot.config('bg')[-2]
+        theme['BACKGROUND'] = theme['BACKGROUND'] if theme['BACKGROUND'] != '1234567890' else default_bg
+
+        default_text_color = self.window['file_properties'].Widget.config('fg')[-2]
+        theme['TEXT'] = theme['TEXT'] if theme['TEXT'] != '1234567890' else default_text_color
+
+        default_input_color = self.window['url'].Widget.config('fg')[-2]
+        theme['TEXT_INPUT'] = theme['TEXT_INPUT'] if theme['TEXT_INPUT'] != '1234567890' else default_input_color
+
+        default_input_bg = self.window['url'].Widget.config('bg')[-2]
+        theme['INPUT'] = theme['INPUT'] if theme['INPUT'] != '1234567890' else default_input_bg
+
+
         # handle a non friendly color values
-        if theme['BACKGROUND'] == '1234567890':  # PySimpleGUI flag for default themes
-            log('can not set this theme dynamically,', theme_name)
-            return
+        # if theme['BACKGROUND'] == '1234567890':  # PySimpleGUI flag for default themes
+        #     log('can not set this theme dynamically,', theme_name)
+        #     return
 
         # Set main window background
         self.window.TKroot.config(bg=theme['BACKGROUND'])
