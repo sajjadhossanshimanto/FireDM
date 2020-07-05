@@ -357,7 +357,9 @@ class DownloadItem:
     def rendered_name(self):
         # fix tkinter bad arabic in linux
         if config.operating_system == 'Linux':
-            return arabic_renderer(self.name)
+            # isolate extension
+            name, ext = os.path.splitext(self.name)
+            return arabic_renderer(name) + ext
         else:
             return self.name
 

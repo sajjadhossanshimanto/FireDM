@@ -2353,7 +2353,7 @@ class MainWindow:
             self.window['playlist_frame'](value=f'Playlist ({num} {"videos" if num > 1 else "video"}):')
 
             # update playlist menu items
-            self.pl_menu = [str(i + 1) + '- ' + video.title for i, video in enumerate(self.playlist)]
+            self.pl_menu = [str(i + 1) + '- ' + video.rendered_name for i, video in enumerate(self.playlist)]
 
             # choose first item in playlist
             self.window['pl_menu'].Widget.current(0)
