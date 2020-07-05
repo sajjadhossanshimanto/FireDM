@@ -1031,6 +1031,86 @@ def get_range_list(file_size):
     return range_list
 
 
+char_map = {
+    # mapping for rendering arabic letters on linux
+        '\u0628': '\ufe91',
+        '\u062A': '\ufe97',
+        '\u062B': '\ufe9b',
+        '\u062C': '\ufe9f',
+        '\u062d': '\ufea3',
+        '\u062e': '\ufeA7',
+        '\u0633': '\ufeb3',
+        '\u0634': '\ufeb7',
+        '\u0635': '\ufebb',
+        '\u0636': '\ufebf',
+        '\u0637': '\ufec3',
+        '\u0638': '\ufec7',
+        '\u0639': '\ufeCb',
+        '\u063A': '\ufeCF',
+        '\u0641': '\ufeD3',
+        '\u0642': '\ufeD7',
+        '\u0643': '\ufeDb',
+        '\u0644': '\ufedf',
+        '\u0645': '\ufee3',
+        '\u0646': '\ufee7',
+        '\u0647': '\ufeeb',
+        '\u064A': '\ufef3',
+        '\u0626': '\ufe8b'
+        }
+
+
+def arabic_renderer(msg):
+    """Takes a mix of english and arabic sentences and render arabic only"""
+
+    def is_arabic_word(word):
+        if [x for x in word if x in char_map]:
+            return True
+        else:
+            return False
+
+    def process_sentence(words):
+        """takes list of arabic words and return it as a rendered joined sentence"""
+        # handle each word
+        for n, word in enumerate(words):
+            letters = list(word)
+
+            # replace letters with open type
+            for i, letter in enumerate(letters[:-1]):
+                letters[i] = char_map.get(letter) or letter
+            
+            # join word letters
+            word = ''.join(reversed(letters)) 
+            words[n] = word
+        
+        processed_msg = ' '.join(reversed(words)) 
+        return processed_msg
+
+
+    processed = []
+
+    # split to words
+    words = msg.split()
+
+    # group sentense in case of mixing arabic with english
+    buffer = []
+    for word in words:
+        if is_arabic_word(word):
+            buffer.append(word)
+        else:
+            if buffer:
+                processed.append(process_sentence(buffer))
+                # sentences.append(buffer)
+                buffer = []
+      
+            processed.append(word)
+  
+    # for arabic at the end
+    if buffer:
+        processed.append(process_sentence(buffer))
+
+    return ' '.join(processed)
+
+
 __all__ = [
     'notify', 'handle_exceptions', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name',
     'size_splitter', 'delete_folder', 'get_seg_size', 'run_command', 'print_object', 'update_object', 'truncate',
@@ -1038,6 +1118,6 @@ __all__ = [
     'rename_file', 'load_json', 'save_json', 'echo_stdout', 'echo_stderr', 'log_recorder', 'natural_sort', 'is_pkg_exist',
     'process_thumbnail', 'parse_bytes', 'set_curl_options', 'execute_command', 'clipboard', 'version_value',
     'reset_queue', 'flip_visibility', 'alternative_to_gtk_clipboard', 'open_folder', 'auto_rename', 'calc_md5',
-    'calc_sha256', 'get_range_list'
+    'calc_sha256', 'get_range_list', 'arabic_renderer'
 
 ]

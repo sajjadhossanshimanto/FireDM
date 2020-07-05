@@ -89,7 +89,7 @@ class MainWindow:
         self.pending = deque()  # todo: use normal queue
 
         # download list
-        self.d_headers = ['i', 'name', 'progress', 'speed', 'time_left', 'downloaded', 'total_size', 'status']
+        self.d_headers = ['i', 'rendered_name', 'progress', 'speed', 'time_left', 'downloaded', 'total_size', 'status']
         self.d_list = []  # list of DownloadItem() objects
         self.selected_row_num = None
         self._selected_d = None
@@ -791,8 +791,8 @@ class MainWindow:
             self.window['status_code'](f'status: {self.d.status_code}')
 
             # file name
-            if self.window['name'].get() != self.d.name:  # it will prevent cursor jump to end when modifying name
-                self.window['name'](self.d.name)
+            if self.window['name'].get() != self.d.rendered_name:  # it will prevent cursor jump to end when modifying name
+                self.window['name'](self.d.rendered_name)
 
             file_properties = f'Size: {size_format(self.d.total_size)} - Type: {self.d.type} - ' \
                               f'{", ".join(self.d.subtype_list)} - ' \
@@ -835,7 +835,7 @@ class MainWindow:
 
             if d:
                 speed = f"Speed: {size_format(d.speed, '/s') }  {time_format(d.time_left)} left"   # if d.speed else ''
-                out = f"{self.selected_row_num + 1}- {self.fit_text(d.name, 75)}\n" \
+                out = f"{self.selected_row_num + 1}- {self.fit_text(d.rendered_name, 75)}\n" \
                       f"Done: {size_format(d.downloaded)} of {size_format(d.total_size)}\n" \
                       f"{speed} \n" \
                       f"Live connections: {d.live_connections} - Remaining parts: {d.remaining_parts} - ({d.type}, {', '.join(d.subtype_list)}) \n" \
@@ -2942,7 +2942,8 @@ class DownloadWindow:
 
     def update_gui(self):
         # trim name and folder length
-        name = truncate(self.d.name, 50)
+        name = truncate(self.d.rendered_name, 50)
+
         # folder = truncate(self.d.folder, 50)
         errors = f' ..connection errors!.. {self.d.errors}' if self.d.errors and self.d.status == Status.downloading else ''
 

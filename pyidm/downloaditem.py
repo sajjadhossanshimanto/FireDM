@@ -17,7 +17,7 @@ from queue import Queue
 from threading import Thread, Lock
 from urllib.parse import urljoin
 from .utils import (validate_file_name, get_headers, translate_server_code, size_splitter, get_seg_size, log,
-                    delete_file, delete_folder, save_json, load_json, size_format, get_range_list)
+                    delete_file, delete_folder, save_json, load_json, size_format, get_range_list, arabic_renderer)
 from . import config
 from .config import MediaType
 
@@ -352,6 +352,14 @@ class DownloadItem:
     def name(self, new_value):
         # validate new name
         self._name = validate_file_name(new_value)
+
+    @property
+    def rendered_name(self):
+        # fix tkinter bad arabic in linux
+        if config.operating_system == 'Linux':
+            return arabic_renderer(self.name)
+        else:
+            return self.name
 
     @property
     def target_file(self):
