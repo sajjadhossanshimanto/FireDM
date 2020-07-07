@@ -1938,8 +1938,8 @@ class MainWindow:
 
         # todo: should be able to delete items anytime by making download item id unique and number changeable
         # abort if there is items in progress or paused
-        if self.active_downloads:
-            msg = "Can't delete items while downloading.\nStop or cancel all downloads first!"
+        if self.selected_d.status in (Status.downloading, Status.processing):
+            msg = "Can't delete items while downloading.\nStop or cancel downloading first!"
             sg.Popup(msg)
             return
 
@@ -1972,35 +1972,37 @@ class MainWindow:
             pass
 
     def delete_all_downloads(self):
-        # abort if there is items in progress or paused
-        if self.active_downloads:
-            msg = "Can't delete items while downloading.\nStop or cancel all downloads first!"
-            sg.Popup(msg)
-            return
+        """delete all items in downloads table including their temp files, active items 
+        which has "downloading" or "processing status" will be execluded"""
 
         # warning / confirmation dialog, user has to write ok to proceed
-        msg = 'Delete all items and their progress temp files\n' \
-              'Type the word "delete" and hit ok\n'
+        msg = 'Delete all -"non active"- items and their progress temp files\n' \
+              'Type the word "delete" or letter "d" and hit ok\n'
         response = sg.PopupGetText(msg, title='Warning!!', keep_on_top=True)
-        if response == 'delete':
+        if response in ('delete', 'd'):
             log('start deleting all download items')
         else:
             return
 
-        self.stop_all_downloads()
-
         # selected item number
         self.selected_row_num = None
 
-        # pop item
-        n = len(self.d_list)
-
         # delete temp files
-        for i in range(n):
-            d = self.d_list[i]
-            Thread(target=d.delete_tempfiles, args=[True], daemon=True).start()
+        for d in self.d_list:
+            if d.status not in (Status.downloading, Status.processing):
+                Thread(target=d.delete_tempfiles, args=[True], daemon=True).start()
+        
+        # update d_list
+        self.d_list = config.d_list = [d for d in self.d_list if d.status in (Status.downloading, Status.processing)]
+        
+        if self.d_list:
+            # correct id's
+            for i, d in enumerate(self.d_list):
+                d.id = i
 
-        self.d_list.clear()
+            # selected item number
+            self.selected_row_num = self.d_list[-1].id
+
 
     def refresh_link_btn(self):
         if self.selected_row_num is None:
