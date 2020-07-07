@@ -621,6 +621,15 @@ class MainWindow:
         # un hide active windows, if any
         self.un_hide_active_windows()
 
+        # scrollbar for Multiline
+        multiline_widget = self.window['log'].Widget
+        scrollbar_frame = self.window['log'].Widget.master.master.master
+
+        s = sg.ttk.Scrollbar(scrollbar_frame, orient='horizontal', command=multiline_widget.xview)
+        # s.pack(anchor='w', fill='x', expand=True, padx=5)
+        multiline_widget.config(xscrollcommand=s.set)
+        s.place(in_=multiline_widget, relx=0, x=0, rely=1.0, y=0, width=660)
+
     def restart_window(self):
         try:
             # store log temporarily
