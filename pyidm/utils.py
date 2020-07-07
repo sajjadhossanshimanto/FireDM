@@ -1060,7 +1060,9 @@ char_map = {
 
 
 def arabic_renderer(msg):
-    """Takes a mix of english and arabic sentences and render arabic only"""
+    """Takes a mix of english and arabic sentences and render arabic only
+    Parts of This fix is inspired by "Rani Fayez Ahmad" at
+    https://wiki.tcl-lang.org/page/Arabic+Character+Renderer+For+Readability+In+TCL%2FTk"""
 
     def is_arabic_word(word):
         if [x for x in word if x in char_map]:
