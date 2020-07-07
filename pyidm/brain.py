@@ -194,7 +194,7 @@ def file_manager(d, keep_segments=True):
             if 'dash' in d.subtype_list:
                 log('handling dash videos')
                 # merge audio and video
-                output_file = d.target_file.replace(' ', '_')  # remove spaces from target file
+                output_file = d.target_file 
 
                 # set status to processing
                 d.status = Status.processing
@@ -202,8 +202,6 @@ def file_manager(d, keep_segments=True):
 
                 if not error:
                     log('done merging video and audio for: ', d.target_file)
-
-                    rename_file(output_file, d.target_file)
 
                     # delete temp files
                     d.delete_tempfiles()
