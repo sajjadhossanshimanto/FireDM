@@ -623,19 +623,39 @@ class MainWindow:
         # un hide active windows, if any
         self.un_hide_active_windows()
 
-        # scrollbar for Multiline
+        # Horizontal scrollbar for Multiline ----------------------------------------------------
         multiline_widget = self.window['log'].Widget
         scrollbar_frame = self.window['log'].Widget.master.master.master
 
         s = sg.tk.Scrollbar(scrollbar_frame, orient='horizontal', command=multiline_widget.xview)
-        # s.pack(anchor='w', fill='x', expand=True, padx=5)
+        # s.pack(side='bottom', anchor='w', fill='x', expand=True, padx=5)
         multiline_widget.config(xscrollcommand=s.set)
         s.place(in_=multiline_widget, relx=0, x=0, rely=1.0, y=0, width=660)
 
-        # print tkinter version and patch
+        # disable vertical autoscroll if user moves scrollbar up and enable when moved to bottom ------------------------
+        vertical_scrollbar = multiline_widget.vbar
+
+        self.window['log'].lastv = 1
+        def vscroll(*args):
+            multiline_widget.yview(*args)
+
+            position = int(vertical_scrollbar.get()[-1])
+            if position != self.window['log'].lastv:
+                self.window['log'].lastv = position
+                if position == 1:  # at the end/bottom
+                    autoscroll = True
+                else:
+                    autoscroll = False
+                
+                self.window['log'](autoscroll=autoscroll)
+
+        vertical_scrollbar.config(command=vscroll)
+
+        # print tkinter version and patch ------------------------------------------------------------------------------
         root = self.window.TKroot
         log('tkinter version:', root.tk.call("info", "patchlevel"))
 
+        # fix for table colors in tkinter 8.6.9 -----------------------------------------------------------------------------
         self.apply_theme_fix()
 
     def apply_theme_fix(self):
