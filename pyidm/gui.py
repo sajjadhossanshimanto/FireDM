@@ -524,14 +524,17 @@ class MainWindow:
 
         # log tab ------------------------------------------------------------------------------------------------
         log_layout = [[sg.T('Details events:')],
-                      [sg.Multiline(default_text='', size=(70, 20), key='log', font='any 8', autoscroll=True)],
+                      [sg.Multiline(default_text='', size=(70, 22), key='log', font='any 8', autoscroll=True)],
+                      [sg.T('')],
 
                       [sg.T('Log Level:'), sg.Combo([1, 2, 3], default_value=config.log_level, enable_events=True,
                                                     size=(3, 1), key='log_level',
                                                     tooltip='*(1=Standard, 2=Verbose, 3=Debugging)'),
-                       sg.T(f'Log Path: {config.sett_folder}', font='any 8', size=(20, 1), key='log_text_path',
-                            tooltip=config.current_directory),
-                       sg.Button('Clear', key='Clear Log', tooltip=' Clear Log ')]]
+                       sg.T(' ', size=(10, 1), key='log_spacer'),
+                       sg.Button('copy Log', key='copy_log', tooltip=' copy Log to clipboard '),
+                       sg.Button('open Log', key='open_log_file', tooltip=' open Log file '),
+                       sg.Button('folder', key='open_log_folder', tooltip=' open Log folder '),
+                       sg.Button('Clear', key='clear_log', tooltip=' Clear Log ')]]
 
         layout = [[sg.TabGroup(
             [[sg.Tab('Main', main_layout), sg.Tab('Downloads', downloads_layout), sg.Tab('Settings', settings_layout),
@@ -562,7 +565,7 @@ class MainWindow:
 
         # expand elements to fit
         elements = ['url', 'name', 'folder', 'm_bar', 'pl_menu', 'file_properties', 'stream_menu', 'log',
-                    'cookie_file_path', 'referer_url', 'log_text_path']  # elements to be expanded
+                    'cookie_file_path', 'referer_url', 'log_spacer']  # elements to be expanded
         for element in elements:
             self.window[element].expand(expand_x=True)
 
@@ -1598,11 +1601,21 @@ class MainWindow:
                 config.log_level = int(values['log_level'])
                 log('Log Level changed to:', config.log_level)
 
-            elif event == 'Clear Log':
+            elif event == 'clear_log':
                 try:
                     self.window['log']('')
                 except:
                     pass
+            elif event in ['copy_log', 'open_log_file', 'open_log_folder']:
+                file = os.path.join(config.sett_folder, 'log.txt')
+                if event == 'open_log_file':
+                    open_file(file)
+                elif event == 'open_log_folder':
+                    open_folder(file)
+                elif event == 'copy_log':
+                    with open(file) as f:
+                        clipboard.copy(f.read())
+                        log('Log text copied to clipboard', showpopup=True)
 
             # Run every n seconds -----------------------------------------------------------------------------------
             if time.time() - self.timer1 >= 0.5:
