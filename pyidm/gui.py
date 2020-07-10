@@ -117,6 +117,8 @@ class MainWindow:
         log('-' * 50, 'PyIDM', '-' * 50)
         log('Starting PyIDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
         log('operating system:', config.operating_system_info)
+        log('Python version:', sys.version)
+        log('PySimpleGUI:', sg.version)
 
         log('current working directory:', config.current_directory)
         os.chdir(config.current_directory)
@@ -522,7 +524,7 @@ class MainWindow:
 
         # log tab ------------------------------------------------------------------------------------------------
         log_layout = [[sg.T('Details events:')],
-                      [sg.Multiline(default_text='', size=(70, 22), key='log', font='any 8', autoscroll=True)],
+                      [sg.Multiline(default_text='', size=(70, 20), key='log', font='any 8', autoscroll=True)],
 
                       [sg.T('Log Level:'), sg.Combo([1, 2, 3], default_value=config.log_level, enable_events=True,
                                                     size=(3, 1), key='log_level',
@@ -625,10 +627,29 @@ class MainWindow:
         multiline_widget = self.window['log'].Widget
         scrollbar_frame = self.window['log'].Widget.master.master.master
 
-        s = sg.ttk.Scrollbar(scrollbar_frame, orient='horizontal', command=multiline_widget.xview)
+        s = sg.tk.Scrollbar(scrollbar_frame, orient='horizontal', command=multiline_widget.xview)
         # s.pack(anchor='w', fill='x', expand=True, padx=5)
         multiline_widget.config(xscrollcommand=s.set)
         s.place(in_=multiline_widget, relx=0, x=0, rely=1.0, y=0, width=660)
+
+        # print tkinter version and patch
+        root = self.window.TKroot
+        log('tkinter version:', root.tk.call("info", "patchlevel"))
+
+        self.apply_theme_fix()
+
+    def apply_theme_fix(self):
+        # fix for table colors in tkinter 8.6.9
+        style = sg.ttk.Style()
+        def fixed_map(option):
+            new_map = [elm for elm in style.map('Treeview', query_opt=option) if not ("!disabled" in elm[0] or "!selected" in elm[0])]
+            
+            if option == 'background':
+                new_map.append(('selected', 'SystemHighlight'))
+
+            return new_map
+
+        style.map('Treeview', foreground=fixed_map("foreground"), background=fixed_map("background"))
 
     def restart_window(self):
         try:
@@ -935,14 +956,11 @@ class MainWindow:
         default_input_bg = self.window['url'].Widget.config('bg')[-2]
         theme['INPUT'] = theme['INPUT'] if theme['INPUT'] != '1234567890' else default_input_bg
 
-
-        # handle a non friendly color values
-        # if theme['BACKGROUND'] == '1234567890':  # PySimpleGUI flag for default themes
-        #     log('can not set this theme dynamically,', theme_name)
-        #     return
-
         # Set main window background
         self.window.TKroot.config(bg=theme['BACKGROUND'])
+
+        # create style object
+        style = sg.ttk.Style()
 
         # set theme for individual widgets
         def set_widget_theme(widgets_dict):
@@ -981,19 +999,17 @@ class MainWindow:
                         widget.config(fg=theme['TEXT_INPUT'], bg=theme['INPUT'])
 
                     elif widget.winfo_class() == 'TProgressbar':
-                        s = sg.ttk.Style()
                         BarColor = theme['PROGRESS']
-                        s.configure("my.Horizontal.TProgressbar", background=BarColor[0], troughcolor=BarColor[1],
+                        style.configure("my.Horizontal.TProgressbar", background=BarColor[0], troughcolor=BarColor[1],
                                     borderwidth=0, thickness=9)  # troughrelief=relief
                         widget.config(style="my.Horizontal.TProgressbar")
 
                     elif widget.winfo_class() == 'TCombobox':
-                        s = sg.ttk.Style()
                         style_name = 'combo.TCombobox'
                         fg = theme['TEXT_INPUT']
                         bg = theme['INPUT']
 
-                        s.configure(style_name, foreground=fg, selectforeground=fg, selectbackground=bg, fieldbackground=bg)
+                        style.configure(style_name, foreground=fg, selectforeground=fg, selectbackground=bg, fieldbackground=bg)
                         widget.config(style=style_name)
 
                     elif widget.winfo_class() == 'Radiobutton':
@@ -1015,13 +1031,13 @@ class MainWindow:
                         custom_style = widget.tab(0, "text").strip() + '.TNotebook'
                         tabposition = 'nw' if widget.tab(0, "text").strip() == 'Main' else 'wn'
 
-                        s = sg.ttk.Style()
-                        s.configure(custom_style, foreground=fg, background=bg, tabposition=tabposition, font=default_font)
-                        s.configure(custom_style + '.Tab', background=tab_bg, foreground=tab_fg, font=default_font)
-                        s.map(custom_style + '.Tab', foreground=[("selected", selected_tab_fg)], background=[("selected", selected_tab_bg)])
+                        style.configure(custom_style, foreground=fg, background=bg, tabposition=tabposition, font=default_font)
+                        style.configure(custom_style + '.Tab', background=tab_bg, foreground=tab_fg, font=default_font)
+                        style.map(custom_style + '.Tab', foreground=[("selected", selected_tab_fg)], background=[("selected", selected_tab_bg)])
                         widget.config(style=custom_style)
 
                     elif widget.winfo_class() == 'Treeview':  # our table in Downloads Tab
+
                         fg = theme['TEXT']
                         bg = theme['BACKGROUND']
 
@@ -1030,9 +1046,8 @@ class MainWindow:
 
                         custom_style = 'my.Treeview'
 
-                        s = sg.ttk.Style()
-                        s.configure(custom_style, foreground=fg, background=bg, fieldbackground=bg, font='any 9', rowheight=22)
-                        s.configure(custom_style +'.Heading', foreground=heading_fg, background=heading_bg)
+                        style.configure(custom_style, foreground=fg, background=bg, fieldbackground=bg, font='any 9', rowheight=22)
+                        style.configure(custom_style +'.Heading', foreground=heading_fg, background=heading_bg)
                         widget.config(style=custom_style)
 
                         # required for future added rows to the table

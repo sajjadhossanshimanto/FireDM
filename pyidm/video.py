@@ -586,7 +586,7 @@ def import_ytdl():
 
         # calculate loading time
         load_time = time.time() - start
-        log(f'youtube-dl load_time= {int(load_time)} seconds')
+        log(f'youtube-dl version: {config.ytdl_VERSION}, load_time= {int(load_time)} seconds')
 
         # override urlopen in YoutubeDl for interrupting youtube-dl session anytime
         def foo(func):
