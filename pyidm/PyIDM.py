@@ -93,8 +93,8 @@ def clipboard_listener():
         if config.shutdown:
             break
 
-        # good boy
-        time.sleep(0.2)
+        # decrease cpu load
+        time.sleep(1)
 
 
 def is_solo():
@@ -106,7 +106,7 @@ def is_solo():
         clipboard.copy(QUERY_MSG)
 
         # wait to get a reply
-        time.sleep(0.3)
+        time.sleep(1.2)
 
         # get the current clipboard content
         answer = clipboard.paste()

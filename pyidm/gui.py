@@ -665,7 +665,7 @@ class MainWindow:
         # fix for table colors in tkinter 8.6.9
         style = sg.ttk.Style()
         def fixed_map(option):
-            new_map = [elm for elm in style.map('Treeview', query_opt=option) if not ("!disabled" in elm[0] or "!selected" in elm[0])]
+            new_map = [elm for elm in style.map('Treeview', query_opt=option) if not ("!disabled" in elm or "!selected" in elm)]
             
             if option == 'background':
                 new_map.append(('selected', 'SystemHighlight'))
@@ -829,10 +829,11 @@ class MainWindow:
         if not self.active:
             return
 
-        # handle url text change, time since last change only after 0.3 seconds, this prevent processing url with every
+        # handle url text change, time since last change only after 2 seconds, this prevent processing url with every
         # letter typed by user
-        if 5 > time.time() - self.url_timer > 0.3:
-            # set timer to negative value guarantee above condition to be false, i.e. execute one time only
+        if 5 > time.time() - self.url_timer > 2:
+            # set timer to negative value guarantee above condition to be false, i.e. execute one time only, 
+            # until self.url_timer get reset when url text change
             self.url_timer = -10
             self.on_url_text_change()
 
@@ -1618,7 +1619,7 @@ class MainWindow:
                         log('Log text copied to clipboard', showpopup=True)
 
             # Run every n seconds -----------------------------------------------------------------------------------
-            if time.time() - self.timer1 >= 0.5:
+            if time.time() - self.timer1 >= 1:
                 self.timer1 = time.time()
 
                 # gui update
