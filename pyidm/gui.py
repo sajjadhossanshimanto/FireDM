@@ -665,13 +665,7 @@ class MainWindow:
         # fix for table colors in tkinter 8.6.9
         style = sg.ttk.Style()
         def fixed_map(option):
-            new_map = [elm for elm in style.map('Treeview', query_opt=option) if not ("!disabled" in elm or "!selected" in elm)]
-            
-            if option == 'background':
-                new_map.append(('selected', 'SystemHighlight'))
-
-            return new_map
-
+            return [elm for elm in style.map('Treeview', query_opt=option) if '!' not in elm[0]]
         style.map('Treeview', foreground=fixed_map("foreground"), background=fixed_map("background"))
 
     def restart_window(self):
