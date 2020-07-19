@@ -83,6 +83,7 @@ class Video(DownloadItem):
 
     def __init__(self, url, vid_info=None):
         super().__init__(folder=config.download_folder)
+        self.type = 'video'
         self.resumable = True
         self.vid_info = vid_info  # a youtube-dl dictionary contains video information
 
@@ -104,6 +105,8 @@ class Video(DownloadItem):
         self.stream_menu = []  # streams names
         self.stream_menu_map = []  # actual stream objects in same order like streams names in stream_menu
         self.names_map = {'mp4_videos': [], 'other_videos': [], 'audio_streams': [], 'extra_streams': []}
+        self.audio_streams = []
+        self.video_streams = []
 
         self._selected_stream = None
 
@@ -116,7 +119,7 @@ class Video(DownloadItem):
         self.setup()
 
     def __repr__(self):
-        return f'Video object( name: {self.name}, url:{self.url}'
+        return f'Video_object(name:{self.name}, url:{self.url})'
 
     def setup(self):
         # url = self.vid_info.get('url', None) or self.vid_info.get('webpage_url', None) or self.vid_info.get('id', None)
@@ -148,6 +151,10 @@ class Video(DownloadItem):
 
         # build streams
         self._process_streams()
+
+        # select default stream
+        if self.all_streams:
+            self.selected_stream = self.all_streams[0]
 
     def _process_streams(self):
         all_streams = [Stream(x) for x in self.vid_info['formats']]
@@ -215,8 +222,10 @@ class Video(DownloadItem):
         self.stream_menu = stream_menu
         self.stream_menu_map = stream_menu_map
         self.names_map = names_map  # {'mp4_videos': [], 'other_videos': [], 'audio_streams': [], 'extra_streams': []}
+        self.audio_streams = audio_streams
+        self.video_streams = video_streams
 
-    def select_stream(self, index=None, name=None, raw_name=None, update=True):
+    def select_stream(self, index=None, name=None, raw_name=None, update=True):  
         """
         search for a stream in self.stream_menu_map
         :param index: index number from stream menu
@@ -227,7 +236,7 @@ class Video(DownloadItem):
         """
         stream = None
         try:
-            if index:
+            if index is not None:
                 stream = self.stream_menu_map[index]
 
             elif name:  # select first match
@@ -242,6 +251,7 @@ class Video(DownloadItem):
             # update selected stream
             if update and stream:
                 self.selected_stream = stream
+            # print('select stream', stream)
 
             return stream
 
@@ -268,6 +278,7 @@ class Video(DownloadItem):
 
     def update_param(self):
         """Mainly used when select a stream for current video object"""
+        log('Video_object.update_param', log_level=3)
         # reset segments first
         self.segments.clear()
         self.total_size = 0
@@ -336,7 +347,7 @@ class Video(DownloadItem):
             self.audio_fragments = audio_stream.fragments
             self.audio_format_id = audio_stream.format_id
 
-            print('downloaditem.select_audio:', self.audio_quality)
+            log('downloaditem.select_audio:', self.audio_quality, log_level=3)
         else:
             self.audio_url = None
             self.audio_fragment_base_url = None
@@ -421,7 +432,7 @@ class Stream:
     def get_size(self):
         headers = get_headers(self.url)
         size = int(headers.get('content-length', 0))
-        print('stream.get_size()>', self.name)
+        log('stream.get_size()>', self.name, log_level=3)
         return size
 
     @property
@@ -1007,14 +1018,19 @@ def get_metadata(info):
     # prepare all metadata as a file content https://ffmpeg.org/ffmpeg-all.html#AC_002d3-Metadata
 
     def ffmpeg_escape(text):
-        # Metadata keys or values containing special characters (‘=’, ‘;’, ‘#’, ‘\’ and a newline) must be escaped with a backslash ‘\’.
+        # Metadata keys or values containing special characters 
+        # (‘=’, ‘;’, ‘#’, ‘\’ and a newline) must be escaped with a backslash ‘\’.
+        text = str(text)  # fix passed integers or non string types
         return re.sub(r'(=|;|#|\\|\n)', r'\\\1', text)
 
     metadata_file_content = ';FFMETADATA1\n'  # file must start with this tag
 
     # add above tags
     for (name, value) in metadata.items():
-        metadata_file_content += f'{ffmpeg_escape(name)}={ffmpeg_escape(value)}\n'
+        try:
+            metadata_file_content += f'{ffmpeg_escape(name)}={ffmpeg_escape(value)}\n'
+        except Exception as e:
+            log('get_metadata()> error:', 'name, type:', name, type(name), 'value, type:', value, type(value), 'error:', e)
 
     # add empty line, not necessary, just for better viewing file while debugging
     metadata_file_content += '\n'
