@@ -436,7 +436,7 @@ def rename_file(oldname=None, newname=None, verbose=False):
         return False
     try:
         os.rename(oldname, newname)
-        log('done renaming file:', oldname, '... to:', newname)
+        log('done renaming file:', oldname, '... to:', newname, start='\n')
         return True
     except Exception as e:
         if verbose:
@@ -819,7 +819,8 @@ def process_thumbnail(url):
         bg = Image.open(bg_buffer)
 
         # downloading thumbnail
-        buffer = download(url)  # get BytesIO object
+        log('downloading Thumbnail', log_level=2)
+        buffer = download(url, verbose=False)  # get BytesIO object
         if not buffer:
             return None
 
