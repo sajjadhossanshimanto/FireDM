@@ -41,7 +41,7 @@ def brain(d=None, downloader=None):
 
     log('\n')
     log('=' * 106)
-    log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder}')
+    log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder} \n')
 
     # hls / m3u8 protocols
     if 'hls' in d.subtype_list:
@@ -97,7 +97,7 @@ def brain(d=None, downloader=None):
         globals()[d.callback]()
 
     # report quitting
-    log(f'brain {d.num}: quitting')
+    log(f'brain {d.num}: quitting', log_level=2)
 
     if d.status == Status.completed:
         if config.checksum:
@@ -165,7 +165,7 @@ def file_manager(d, keep_segments=True):
                         target_file.close()
 
                 seg.completed = True
-                log('completed segment: ',  seg.basename)
+                log('completed segment: ',  seg.basename, log_level=2)
 
                 if not keep_segments and not config.keep_temp:
                     delete_file(seg.name)
@@ -291,7 +291,7 @@ def file_manager(d, keep_segments=True):
         d.save_progress_info()
 
     # Report quitting
-    log(f'file_manager {d.num}: quitting')
+    log(f'file_manager {d.num}: quitting', log_level=2)
 
 
 def thread_manager(d):
@@ -332,7 +332,9 @@ def thread_manager(d):
     # for compatibility reasons will reset segment size
     config.segment_size = config.DEFAULT_SEGMENT_SIZE
 
-    log('Thread Manager()> concurrency method:', 'ThreadPoolExecutor' if config.use_thread_pool_executor else 'Individual Threads')
+    log('Thread Manager()> concurrency method:', 
+        'ThreadPoolExecutor' if config.use_thread_pool_executor else 'Individual Threads', 
+        log_level=2)
 
     def clear_error_q():
         # clear error queue
@@ -389,8 +391,8 @@ def thread_manager(d):
             clear_error_q()
 
             if total_errors:
-                log('--------------------------------- errors ---------------------------------:', total_errors)
-                log('Errors descriptions:', errors_descriptions, log_level=3)
+                log('Errors:', errors_descriptions, 'Total:', total_errors)
+                # log('Errors descriptions:', errors_descriptions, log_level=3)
 
             if total_errors >= 1 and limited_connections > 1:
                 limited_connections -= 1
@@ -401,7 +403,7 @@ def thread_manager(d):
                 if limited_connections < config.max_connections and time.time() - error_timer2 >= conn_increase_interval:
                     error_timer2 = time.time()
                     limited_connections += 1
-                    log('Thread Manager: allowable connections:', limited_connections)
+                    log('Thread Manager: allowable connections:', limited_connections, log_level=2)
 
             # reset total errors if received any data
             if downloaded != d.downloaded:
@@ -502,4 +504,4 @@ def thread_manager(d):
     # update d param
     d.live_connections = 0
     d.remaining_parts = num_live_threads + len(job_list) + config.jobs_q.qsize()
-    log(f'thread_manager {d.num}: quitting')
+    log(f'thread_manager {d.num}: quitting', log_level=2)
