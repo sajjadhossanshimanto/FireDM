@@ -52,6 +52,9 @@ from . import config
 from . import video
 from .gui import MainWindow, SysTray, sg
 
+from .controller import Controller
+from .cmdview import CmdView
+
 
 # messages will be written to clipboard to check for any PyIDM instance with the same version running
 QUERY_MSG = f'PyIDM "{config.APP_VERSION}", any one there?'
@@ -190,5 +193,31 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        # calling PyIDM from command line / terminal with any arguments it will enter interactive mode 
+        # without gui
+        # usage: pyidm "url" --folder "/home/downloads/"
+
+        import argparse
+        parser = argparse.ArgumentParser(description='PyIDM open source internet download manager')
+
+        parser.add_argument('url', type=str, 
+                            help="""url / link of the file you want to download, 
+                            url must be included inside single or double quotation 
+                            example: "www.linktomyfile" to avoid shell capture special characters
+                            may be found in url like "&" """)
+
+        parser.add_argument('-f', '--folder', default=config.download_folder, type=str,
+                            help=f'destination download folder/dir (default: {config.download_folder})')
+
+        args = parser.parse_args()
+        url = args.url
+        folder = args.folder
+
+        controller = Controller(view_class=CmdView, custom_settings={'log_level': 1})
+        controller.interactive_download(url, folder=folder)
+    
+    else:
+        # this is old application logic, will be upgraded when creating new gui 
+        main()
 

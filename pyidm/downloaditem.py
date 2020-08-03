@@ -222,11 +222,11 @@ class DownloadItem:
                                  'abr', 'tbr', 'format_id', 'audio_format_id', 'resolution', 'audio_quality',
                                  'http_headers', 'metadata_file_content']
 
-        # property to indicate that there is a time consuming operation is running on download item now
+        # property to indicate a time consuming operation is running on download item now
         self.busy = False
 
     def __repr__(self):
-        return f'DownloadItem object( name: {self.name}, url:{self.url}'
+        return f'DownloadItem object(name:{self.name}, url:{self.url})'
 
     @property
     def remaining_parts(self):
@@ -477,8 +477,9 @@ class DownloadItem:
         # print('update d parameters:', headers)
 
         # update headers only if no other update thread created with different url
-        if url == self.url:
+        if True:  #url == self.url:
             # print('update()> url, self.url', url, self.url)
+            self.url = url
             self.eff_url = headers.get('eff_url')
             self.status_code = headers.get('status_code', '')
             self.status_code_description = f"{self.status_code} - {translate_server_code(self.status_code)}"
