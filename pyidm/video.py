@@ -154,7 +154,7 @@ class Video(DownloadItem):
 
         # select default stream
         if self.all_streams:
-            self.selected_stream = self.all_streams[0]
+            self.select_stream(index=1)
 
     def _process_streams(self):
         all_streams = [Stream(x) for x in self.vid_info['formats']]
@@ -570,7 +570,7 @@ def merge_video_audio(video, audio, output, d):
     # slow, mix different formats
     cmd2 = f'"{ffmpeg}" -loglevel error -stats -y -i "{video}" -i "{audio}" "{output}"'
 
-    verbose = True if config.log_level >= 2 else False
+    verbose = True if config.log_level >= 1 else False
 
     # run command with shell=False if failed will use shell=True option
     error, output = run_command(cmd1, verbose=verbose, hide_window=True, d=d)
