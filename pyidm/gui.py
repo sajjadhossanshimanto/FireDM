@@ -531,9 +531,9 @@ class MainWindow:
                                                     size=(3, 1), key='log_level',
                                                     tooltip='*(1=Standard, 2=Verbose, 3=Debugging)'),
                        sg.T(' ', size=(10, 1), key='log_spacer'),
-                       sg.Button('copy Log', key='copy_log', tooltip=' copy Log to clipboard '),
-                       sg.Button('open Log', key='open_log_file', tooltip=' open Log file '),
-                       sg.Button('folder', key='open_log_folder', tooltip=' open Log folder '),
+                       # sg.Button('copy Log', key='copy_log', tooltip=' copy Log to clipboard '),
+                       sg.Button('Log file', key='open_log_file', tooltip=' open Log file '),
+                       sg.Button('Folder', key='open_log_folder', tooltip=' open Log folder '),
                        sg.Button('Clear', key='clear_log', tooltip=' Clear Log ')]]
 
         layout = [[sg.TabGroup(
