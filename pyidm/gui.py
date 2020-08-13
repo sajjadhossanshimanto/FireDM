@@ -1912,6 +1912,15 @@ class MainWindow:
             sg.PopupOK(msg)
             return
 
+        # check if name has a proper extension
+        name, ext = os.path.splitext(self.d.name)
+        if ext != self.d.extension:
+            response = sg.popup_ok_cancel('File name does not have a correct extension', 'New name will be:',
+                                          name + self.d.extension)
+            if response != 'OK':
+                return
+            self.d.name = validate_file_name(name + self.d.extension)
+
         # get copy of current download item
         d = copy.copy(self.d)
         d.folder = config.download_folder

@@ -285,7 +285,8 @@ class Video(DownloadItem):
 
         # do some parameters updates
         stream = self.selected_stream
-        self.name = self.title + '.' + stream.extension
+        self.extension = '.' + stream.extension
+        self.name = self.title + self.extension
         self.eff_url = stream.url
         self.size = stream.size
         self.fragment_base_url = stream.fragment_base_url

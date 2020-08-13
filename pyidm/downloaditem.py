@@ -100,7 +100,7 @@ class DownloadItem:
     def __init__(self, id_=0, url='', name='', folder=''):
         self.id = id_
         self._name = name
-        self.ext = ''
+        self.extension = ''  # note: filename extension include dot, ex: '.mp4'
 
         self.folder = os.path.abspath(folder)
 
@@ -520,7 +520,7 @@ class DownloadItem:
             resumable = headers.get('accept-ranges', 'none') != 'none'
 
             self.name = name
-            self.ext = ext
+            self.extension = ext
             self.size = size
             self.type = content_type
             self.resumable = resumable
