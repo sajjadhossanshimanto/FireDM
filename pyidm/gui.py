@@ -2132,8 +2132,13 @@ class MainWindow:
     def reset_video_controls(self):
         try:
             self.reset_progress_bar()
+
             self.pl_menu = ['Playlist']
+            self.window['pl_menu'](value='Playlist')
+
             self.stream_menu = ['Video quality']
+            self.window['stream_menu'](value='Video quality')
+
             self.window['playlist_frame'](value='Playlist/video:')
             self.window['format_id']('')
 
