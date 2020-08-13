@@ -278,7 +278,7 @@ class Video(DownloadItem):
 
     def update_param(self):
         """Mainly used when select a stream for current video object"""
-        log('Video_object.update_param', log_level=3)
+        # log('Video_object.update_param', log_level=3)
         # reset segments first
         self.segments.clear()
         self.total_size = 0
@@ -347,7 +347,7 @@ class Video(DownloadItem):
             self.audio_fragments = audio_stream.fragments
             self.audio_format_id = audio_stream.format_id
 
-            log('downloaditem.select_audio:', self.audio_quality, log_level=3)
+            # log('downloaditem.select_audio:', self.audio_quality, log_level=3)
         else:
             self.audio_url = None
             self.audio_fragment_base_url = None

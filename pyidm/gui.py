@@ -2103,9 +2103,12 @@ class MainWindow:
     def pl_menu(self, rows):
         """video playlist menu"""
         self._pl_menu = rows
+
         try:
-            # fit text into widget
-            rows = [self.fit_text(text, self.window['pl_menu'].Size[0]) for text in rows]
+            # fit text into widget  FIXME:(killing and time consuming code)
+            # rows = [self.fit_text(text, self.window['pl_menu'].Size[0]) for text in rows]
+
+            # update widget
             self.window['pl_menu'](values=rows)
         except:
             pass
@@ -2246,13 +2249,57 @@ class MainWindow:
                 # set playlist / video title
                 self.pl_title = info.get('title', '')
 
+                # 25% done
+                self.m_bar = 25
+
+                """
+                _type key:
+                
+                _type "playlist" indicates multiple videos.
+                    There must be a key "entries", which is a list, an iterable, or a PagedList
+                    object, each element of which is a valid dictionary by this specification.
+                    Additionally, playlists can have "id", "title", "description", "uploader",
+                    "uploader_id", "uploader_url" attributes with the same semantics as videos
+                    (see above).
+                
+                _type "multi_video" indicates that there are multiple videos that
+                    form a single show, for examples multiple acts of an opera or TV episode.
+                    It must have an entries key like a playlist and contain all the keys
+                    required for a video at the same time.
+                
+                _type "url" indicates that the video must be extracted from another
+                    location, possibly by a different extractor. Its only required key is:
+                    "url" - the next URL to extract.
+                    The key "ie_key" can be set to the class name (minus the trailing "IE",
+                    e.g. "Youtube") if the extractor class is known in advance.
+                    Additionally, the dictionary may have any properties of the resolved entity
+                    known in advance, for example "title" if the title of the referred video is
+                    known ahead of time.
+                
+                _type "url_transparent" entities have the same specification as "url", but
+                    indicate that the given additional information is more precise than the one
+                    associated with the resolved URL.
+                    This is useful when a site employs a video service that hosts the video and
+                    its technical metadata, but that video service does not embed a useful
+                    title, description etc.
+                """
+                _type = info.get('_type', 'video')
+
+                # handle types: url and url transparent
+                if _type in ('url', 'url_transparent'):
+                    # handle youtube user links ex: https://www.youtube.com/c/MOTORIZADO/videos
+                    # issue: https://github.com/pyIDM/PyIDM/issues/146
+                    # info: {'_type': 'url', 'url': 'https://www.youtube.com/playlist?list=UUK32F9z7s_JhACkUdVoWdag',
+                    # 'ie_key': 'YoutubePlaylist', 'extractor': 'youtube:user', 'webpage_url': 'https://www.youtube.com/c/MOTORIZADO/videos',
+                    # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
+
+                    info = ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
+
                 # 50% done
                 self.m_bar = 50
 
-                result_type = info.get('_type', 'video')
-
                 # check results if _type is a playlist / multi_video -------------------------------------------------
-                if result_type in ('playlist', 'multi_video') or 'entries' in info:
+                if _type in ('playlist', 'multi_video') or 'entries' in info:
                     log('youtube-func()> start processing playlist')
                     log('Media info:', info, log_level=3)
 
@@ -2407,6 +2454,7 @@ class MainWindow:
             self.window['playlist_frame'](value=f'Playlist ({num} {"videos" if num > 1 else "video"}):')
 
             # update playlist menu items
+            log('preparing playlist menu...')
             self.pl_menu = [str(i + 1) + '- ' + video.rendered_name for i, video in enumerate(self.playlist)]
 
             # choose first item in playlist
