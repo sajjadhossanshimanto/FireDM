@@ -276,7 +276,7 @@ class MainWindow:
                       text_color=text_color), sg.Text('      ')],
 
             # file properties
-            [sg.T('-' * 300, key='file_properties', font='any 9'),
+            [sg.T('-' * 100, key='file_properties', font='any 9'),
              sg.T('', key='critical_settings_warning', visible=False, font='any 9', size=(30, 1))],
 
             # download button
@@ -536,20 +536,23 @@ class MainWindow:
                        sg.Button('Folder', key='open_log_folder', tooltip=' open Log folder '),
                        sg.Button('Clear', key='clear_log', tooltip=' Clear Log ')]]
 
+        # status bar relief
+        sb_relief = sg.RELIEF_SUNKEN
         layout = [[sg.TabGroup(
             [[sg.Tab('Main', main_layout), sg.Tab('Downloads', downloads_layout), sg.Tab('Settings', settings_layout),
               sg.Tab('Log', log_layout)]],
             key='tab_group')],
             [
-             sg.T('', size=(73, 1), relief=sg.RELIEF_SUNKEN, font='any 8', key='status_bar'),
-             sg.Text('', size=(10, 1), key='status_code', relief=sg.RELIEF_SUNKEN, font='any 8'),
-             sg.T('5 ▼  |  6 ⏳', size=(12, 1), key='active_downloads', relief=sg.RELIEF_SUNKEN, font='any 8', tooltip=' active downloads | pending downloads '),
-             sg.T('⬇350 bytes/s', font='any 8', relief=sg.RELIEF_SUNKEN, size=(12, 1), key='total_speed'),
+             sg.T('', size=(73, 1), relief=sb_relief, font='any 8', key='status_bar'),
+             sg.Text('', size=(10, 1), key='status_code', relief=sb_relief, font='any 8'),
+             sg.T('5 ▼  |  6 ⏳', size=(12, 1), key='active_downloads', relief=sb_relief, font='any 8',
+                  tooltip=' active downloads | pending downloads '),
+             sg.T('⬇350 bytes/s', font='any 8', relief=sb_relief, size=(12, 1), key='total_speed'),
             ]
         ]
 
         # window
-        window = sg.Window(title=config.APP_TITLE, layout=layout, size=(700, 460), margins=(2, 2),
+        window = sg.Window(title=config.APP_TITLE, layout=layout, size=(700, 465), margins=(2, 2),
                            return_keyboard_events=True)
         return window
 
