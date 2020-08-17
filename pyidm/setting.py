@@ -57,7 +57,7 @@ def locate_setting_folder():
         os.unlink(os.path.join(folder, 'test'))
         return config.current_directory
 
-    except PermissionError:
+    except (PermissionError, OSError):
         log("No enough permission to store setting at local folder:", folder)
         log('Global setting folder will be selected:', config.global_sett_folder)
 
