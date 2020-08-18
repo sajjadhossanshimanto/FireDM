@@ -14,19 +14,23 @@ Developed in Python, based on "pyCuRL/libcurl", "youtube_dl", and "PySimpleGUI"
 
 ---
 **Features**:
-* High download speeds "based on libcurl"   -  [See Speed test of: aria2 vs PyIDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif).
+* High download speeds "based on libcurl" -
+  [See Speed test of: aria2 vs PyIDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif)
 * Multi-connection downloading "Multithreading"
 * Automatic file segmentation.
 * Resume uncompleted downloads, and Refresh expired urls.
 * Support for Youtube, and a lot of stream websites "using youtube-dl to fetch info and libcurl to download data".
 * download entire video playlist or selected videos.
 * download fragmented video streams, and encrypted/nonencrypted HLS media streams.
-* watch videos while downloading*   "some videos will have no audio until finish downloading"
+* watch videos while downloading* "some videos will have no audio until
+  finish downloading".
+* download video subtitles.
+* write video metadata to downloaded files.
 * check for application updates.
 * Scheduling downloads
 * Re-using existing connection to remote server.
 * Clipboard Monitor.
-* Simple GUI interface with 140 themes available.
+* Simple GUI interface with 140 themes available. "90s-looking GUI"
 * proxy support (http, https, socks4, and socks5).
 * user/pass authentication, referee link, use cookies, video thumbnail, subtitles, MD5 and SHA256 checksums
 * user can control a lot of options:
@@ -129,12 +133,30 @@ python -m pip install --user --upgrade certifi PySimpleGUI pyperclip plyer youtu
 
 ---
 # Why another download manager?:
-With all free and paid download manager why someone may need another one?
-I believe in one term, **"if the product is free, then you are the product"**, most (if not all) free applications collect data about you, some of them are toxic and plant trojans and spyware in your system, then I decided to make my own download manager based on python with 👉 **"--GUI--"** relies only on open source tools and libraries, nothing hidden, with source code exposed to thousands of programmers, no one can play dirty games here 😉.
+Originally, I made this project to help myself download some youtube
+videos, then decided to share it thinking it might be useful for someone
+else, so please don't put your fire on me if you find a mistake in code
+or stupid approach to solve a problem, or an ugly gui design, instead
+try to fix it (this is the soul of open source software, it is open for
+everyone to participate and improve).
 
-why not just use youtube-dl from command line? the answer is multithreading / multiconnection is not available in youtube-dl, most of the time streaming servers like youtube limit speed per connection and you end up with slow download speeds.
+what is the benefit of open source, compared to
+closed-source/Proprietary software if both are free?  
+I believe that, **"if the product is free, then you are the product"**,
+most free closed-source software collect data about you, some of them
+are toxic and plant trojans and spy-wares in your system, with open
+source, nothing hidden, and source code exposed to thousands of
+programmers, no one can play dirty games.
 
----
+
+Need to mention that, during working on this project I found a lot of
+amazing open source "download managers" projects, which are more
+professional than this one, and this project is never made to compete
+with other download managers, it is just a "hopefully useful" addition.
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### note for pycurl: <br>
 for windows users:
@@ -184,13 +206,24 @@ ChangeLog.txt is included in source code.
 
 ---
 # How to contribute to this project:
-1- by testing the application and opening [new issue](https://github.com/pyIDM/PyIDM/issues/new) for bug reporting, feature request, or suggestions. <br>
-2- fork this repo and pull request
+1- by testing the application and opening
+[new issue](https://github.com/pyIDM/PyIDM/issues/new) for bug
+reporting, feature request, or suggestions.  
+2- check developer guidelines.  
+3- fork this repo and pull request  
+4- improve this readme file
 
 <br><br>
 
 ---
 
+# Some recent articles/reviews on this project*:
+- [ghacks](https://www.ghacks.net/2020/08/13/pyidm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
+- [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/PyIDM.shtml)
+
+  *help edit this list
+
+---
 
 # Feedback:
 your feedback is most welcomed by filling a [new issue](https://github.com/pyIDM/PyIDM/issues/new) <br>
