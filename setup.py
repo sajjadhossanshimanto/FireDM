@@ -1,7 +1,7 @@
 """
     PyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
@@ -27,7 +27,7 @@ try:
     with open(f"{current_directory}/requirements.txt", "r") as fh:
         requirements = fh.readlines()
 except:
-    requirements = ['PySimpleGUI>=4.18', 'pyperclip', 'plyer', 'certifi', 'youtube_dl', 'pycurl', 'pillow', 'pystray']
+    requirements = ['plyer', 'certifi', 'youtube_dl', 'pycurl', 'pillow', 'pystray']
 
 setuptools.setup(
     name="PyIDM",
@@ -40,7 +40,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/pyIDM/PyIDM ",
     packages=setuptools.find_packages(),
-    keywords="internet download manager youtube downloader pycurl curl youtube-dl PySimpleGUI",
+    keywords="internet download manager youtube downloader pycurl curl youtube-dl",
     project_urls={
         'Source': 'https://github.com/pyIDM/PyIDM',
         'Tracker': 'https://github.com/pyIDM/PyIDM/issues',

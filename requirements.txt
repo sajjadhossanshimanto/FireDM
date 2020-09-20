@@ -1,8 +1,7 @@
-PySimpleGUI>=4.18
-pyperclip
 plyer
 certifi
 youtube_dl
 pycurl
 pillow
 pystray
+awesometkinter
