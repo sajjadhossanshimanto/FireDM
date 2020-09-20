@@ -533,27 +533,6 @@ class Combobox(ttk.Combobox):
             self.callback()
 
 
-class Progressbar(ttk.Progressbar):
-    styles = []
-
-    def __init__(self, parent, orient='horizontal', **kwargs):
-
-        s = ttk.Style()
-        custome_style = f'custom{len(Progressbar.styles)}.{orient.capitalize()}.TProgressbar'
-        Progressbar.styles.append(custome_style)
-
-        style_options = {k: kwargs.pop(k) for k in ['background', 'bordercolor', 'darkcolor', 'lightcolor', 'maxphase',
-                                                'period', 'troughcolor', 'thickness'] if k in kwargs}
-
-        s.configure("TProgressbar", **style_options)
-
-        options = {'style': custome_style}
-        options = {**options, **kwargs}
-
-        # initialize master
-        ttk.Progressbar.__init__(self, parent, orient=orient, **options)
-
-
 class AutoWrappingLabel(tk.Label):
     """auto-wrapping label
     wrap text based on widget changing size
@@ -1698,6 +1677,8 @@ class PlaylistWindow(tk.Toplevel):
         # initialize super
         tk.Toplevel.__init__(self, self.parent)
 
+        self.s = ttk.Style()
+
         # bind window close
         self.protocol("WM_DELETE_WINDOW", self.close)
 
@@ -1818,8 +1799,9 @@ class PlaylistWindow(tk.Toplevel):
                                        command=lambda: self.video_select_callback(item.idx))
 
         # progressbar
-        item.bar = Progressbar(item, orient='horizontal', mode='indeterminate', thickness=3, background=PBAR_FG,
-                               troughcolor=SF_BG, )
+        custom_style = 'custom_playlist_bar.Horizontal.TProgressbar'
+        self.s.configure(custom_style, thickness=3, background=PBAR_FG, troughcolor=SF_BG)
+        item.bar = ttk.Progressbar(item, orient='horizontal', mode='indeterminate', style=custom_style)
 
         # stream menu
         item.combobox = Combobox(item, [], width=40, callback=lambda: self.stream_select_callback(item.idx))
