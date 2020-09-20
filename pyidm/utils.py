@@ -1,7 +1,7 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
@@ -12,6 +12,8 @@ import hashlib
 import importlib
 import os
 import io
+from threading import Thread
+
 import pycurl
 import time
 import plyer
@@ -21,14 +23,12 @@ import subprocess
 import shlex
 import re
 import json
-import pyperclip as clipboard
-try:
-    from PIL import Image
-except:
-    print('pillow module is missing try to install it to display video thumbnails')
+from PIL import Image
+
 
 from . import config
-from .iconsbase64 import thumbnail_icon
+
+# todo: change docstring to google format and clean unused code
 
 
 def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,  app_name=config.APP_TITLE):
@@ -295,41 +295,36 @@ def time_format(t, tail=''):
 
 
 def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False):
-    """
-    print messages to stdout and log widget in main menu thru main window queue
-    :param args: comma separated messages to be printed
-    :param log_level: used to filter messages
-    :param start: prefix appended to start of string
-    :param end: tail of string
-    :param sep: separator used to join text "args"
-    :param showpopup: if true will show popup gui message
-    :return:
-    """
+    """print messages to stdout and execute any function or method in config.log_callbacks
+
+    Args:
+        args: comma separated messages to be printed
+        log_level (int): used to filter messages, 1 to 3 for verbose
+        start (str): prefix appended to start of string
+        end (str): tail of string
+        sep (str): separator used to join text "args"
+        showpopup (bool): if True will show popup gui message
+
+    Returns:
+        None
+        """
+
     if log_level > config.log_level:
         return
 
-    text = ''
-    for arg in args:
-        text += str(arg)
-        text += sep
-    text = text[:-1]  # remove last space, or sep
-    text = start + text
+    text = sep.join(map(str, args))
 
     try:
-        print(text, end=end)
+        print(start + text + end, end='')
 
-        # one log line, currently used by download window
-        config.log_entry = text
+        # execute registered log callbacks
+        for f in config.log_callbacks:
+            f(start, text, end)
 
-        # sent text to log recorder to write it into log.txt file
-        config.log_recorder_q.put(text + end)
+        # popup
+        if showpopup and config.log_popup_callback:
+            config.log_popup_callback(start, text, end)
 
-        # send for main menu
-        config.log_q.put(text + end)
-
-        # show popup
-        if showpopup:
-            popup(text)
     except Exception as e:
         print(e)
 
@@ -571,12 +566,6 @@ def sort_dictionary(dictionary, descending=True):
     return {k: v for k, v in sorted(dictionary.items(), key=lambda item: item[0], reverse=descending)}
 
 
-def popup(msg, title='', type_=''):
-    """Send message to main window to spawn a popup"""
-    param = dict(title=title, msg=msg, type_=type_)
-    config.main_window_q.put(('popup', param))
-
-
 def translate_server_code(code):
     """Lookup server code and return a readable code description"""
     server_codes = {
@@ -802,63 +791,47 @@ def natural_sort(my_list):
     return sorted(my_list, key=alphanum_key)
 
 
-def process_thumbnail(url):
-    """take url of thumbnail and return thumbnail overlayed ontop of baseplate"""
+def get_thumbnail(url):
+    """download video thumbnail
+    Args:
+        url (str): http url of thumbnail image
 
-    # check if pillow module installed and working
+    Returns:
+        BytesIO object contains thumbnail image data
+    """
     try:
-        # dummy operation will kick in error if module PIL not found
-        _ = Image.Image()
-    except:
-        log('pillow module is missing try to install it to display video thumbnails')
-        return None
-
-    try:
-        # load background image
-        bg_buffer = io.BytesIO(base64.b64decode(thumbnail_icon))
-        bg = Image.open(bg_buffer)
-
-        # downloading thumbnail
         log('downloading Thumbnail', log_level=2)
         buffer = download(url, verbose=False)  # get BytesIO object
-        if not buffer:
-            return None
 
-        # read thumbnail image and call it fg "foreground"
-        fg = Image.open(buffer)
+        return buffer
+    except:
+        log('downloading Thumbnail failed', log_level=2)
 
-        # create thumbnail less 10 pixels from background size
-        fg.thumbnail((bg.size[0]-10, bg.size[1] - 10))
 
-        # calculate centers
-        fg_center_x, fg_center_y = fg.size[0] // 2, fg.size[1] // 2
-        bg_center_x, bg_center_y = bg.size[0] // 2, bg.size[1] // 2
+def resize_image(img=None, buffer=None, size=None):
+    """resize image
+    Args:
+        img (Image): pillow image object
+        buffer (io.BytesIO): or any file like object
+        size (2-tuple(int, int)): an image required size in a (width, height) tuple
 
-        # calculate the box coordinates where we should paset our thumbnail
-        x = bg_center_x - fg_center_x
-        y = bg_center_y - fg_center_y
-        box = (x, y, x + fg.size[0], y + fg.size[1])
+    Returns:
+        pillow image object
+    """
+    if not img and buffer:
+        img = Image.open(buffer)
 
-        # paste foreground "thumbnail" on top of base plate "background"
-        bg.paste(fg, box)
-        # bg.show()
+    if size:
+        img = img.resize(size, resample=Image.LANCZOS)
+    return img
 
-        # encode final thumbnail into base64 string
-        buffered = io.BytesIO()
-        bg.save(buffered, format="PNG")
-        img_str = base64.b64encode(buffered.getvalue())
 
-        # free memory
-        bg_buffer.close()
-        buffer.close()
-        buffered.close()
-        del fg
-        del bg
+def image_to_base64(img):
+    """convert pillow image object to base64"""
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
 
-        return img_str
-    except Exception as e:
-        log('process_thumbnail()> error', e)
-        return None
+    return base64.b64encode(buffer.getvalue())
 
 
 def parse_bytes(bytestr):
@@ -884,17 +857,6 @@ def parse_bytes(bytestr):
         return 0
 
 
-def execute_command(command='', *args, **kwargs):
-    """
-    take a name of a method and put it in commands_q for later execution by MainWindow, this allow access to mainWindow
-    functionality from threads
-    :param command: string representing the name of a method inside MainWindow
-    :return: None
-    """
-
-    config.commands_q.put((command, args, kwargs))
-
-
 def version_value(text):
     """
     convert date based version number into date object for comparision purpose
@@ -917,43 +879,11 @@ def reset_queue(q):
         _ = q.get()
 
 
-def flip_visibility(widget):
-    """
-    flip visibility for a widget, hide visible widget or show hidden one
-    :param widget: pysimplegui Element object i.e. self.window['widget_key']
-    :return:
-    """
-    visible = widget.Visible
-    visible = not visible
-
-    widget.Visible = visible
-    widget(visible=visible)
-
-
 def is_pkg_exist(pkg):
     if importlib.util.find_spec(pkg) is not None:
         return True
     else:
         return False
-
-
-def alternative_to_gtk_clipboard():
-    """
-    This is an ugly fix for pyperclip to stop using gtk
-    for unknown reason Gtk clipboard cause PyIDM to freeze system task bar in Manjaro kde, if we use is_solo()
-    """
-    def executable_exists(name):
-        return subprocess.call(['which', name], stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
-
-    if executable_exists("xsel"):
-        return clipboard.init_xsel_clipboard()
-    if executable_exists("xclip"):
-        return clipboard.init_xclip_clipboard()
-    if executable_exists("klipper") and executable_exists("qdbus"):
-        return clipboard.init_klipper_clipboard()
-    else:
-        log('clipboard needs "xsel", or "xclip" installed to run properly')
-        return clipboard.init_no_clipboard()
 
 
 def auto_rename(file_name, parent_folder):
@@ -1088,13 +1018,12 @@ def arabic_renderer(msg):
         processed_msg = ' '.join(reversed(words)) 
         return processed_msg
 
-
     processed = []
 
     # split to words
     words = msg.split()
 
-    # group sentense in case of mixing arabic with english
+    # group sentences in case of mixing arabic with english
     buffer = []
     for word in words:
         if is_arabic_word(word):
@@ -1114,13 +1043,74 @@ def arabic_renderer(msg):
     return ' '.join(processed)
 
 
+def run_thread(f, *args, daemon=False, **kwargs):
+    """run a callable in a thread
+
+    Args:
+        f (callable): any callable need to be run in a thread
+        args: f's args
+        daemon (bool): Daemon threads are abruptly stopped at shutdown. Their resources (such as open files,
+                      database transactions, etc.) may not be released properly. If you want your threads to stop
+                      gracefully, make them non-daemonic and use a suitable signalling mechanism
+        kwargs: f's kwargs
+
+    Example:
+        def foo(name, greetings='hello'):
+            print(greetings, name)
+
+        run_thread(foo, 'John', greetings='hi')
+
+    Returns:
+        a thread reference
+    """
+
+    t = Thread(target=f, args=args, kwargs=kwargs, daemon=daemon)
+    t.start()
+
+    return t
+
+
+def generate_unique_name(*args, prefix='', suffix=''):
+    """generate unique name from any number of parameters which have a string representation
+
+    Args:
+        args: any arguments that have a string representation
+        prefix (str): concatenated at the begining of hashed value
+        suffix (str): concatenated at the end of hashed value
+
+    Example:
+        generate_unique_name('duck can quack', 'cat', prefix='uid')
+        >>  uid159e7e2ca7a89ee77348f97b4660e56e
+
+    """
+
+    def get_md5(binary_data):
+        return hashlib.md5(binary_data).hexdigest()
+
+    name = ''.join([str(x) for x in args])
+
+    try:
+        name = get_md5(name.encode())
+    except:
+        pass
+
+    return prefix + name + suffix
+
+
+def open_log_file():
+    """open log file located in settings folder"""
+    file = os.path.join(config.sett_folder, 'log.txt')
+    open_file(file)
+
+
 __all__ = [
     'notify', 'handle_exceptions', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name',
     'size_splitter', 'delete_folder', 'get_seg_size', 'run_command', 'print_object', 'update_object', 'truncate',
-    'sort_dictionary', 'popup', 'compare_versions', 'translate_server_code', 'validate_url', 'open_file', 'delete_file',
+    'sort_dictionary', 'compare_versions', 'translate_server_code', 'validate_url', 'open_file', 'delete_file',
     'rename_file', 'load_json', 'save_json', 'echo_stdout', 'echo_stderr', 'log_recorder', 'natural_sort', 'is_pkg_exist',
-    'process_thumbnail', 'parse_bytes', 'set_curl_options', 'execute_command', 'clipboard', 'version_value',
-    'reset_queue', 'flip_visibility', 'alternative_to_gtk_clipboard', 'open_folder', 'auto_rename', 'calc_md5',
-    'calc_sha256', 'get_range_list', 'arabic_renderer'
+    'parse_bytes', 'set_curl_options', 'version_value',
+    'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
+    'calc_sha256', 'get_range_list', 'arabic_renderer', 'get_thumbnail', 'resize_image', 'run_thread', 'generate_unique_name',
+    'open_log_file'
 
 ]

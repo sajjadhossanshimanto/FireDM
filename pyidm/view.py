@@ -1,6 +1,18 @@
-# All views / guis should implement this interface
+"""
+    PyIDM
+
+    multi-connections internet download manager, based on "pyCuRL/curl", and "youtube_dl""
+
+    :copyright: (c) 2019-2020 by Mahmoud Elshahat.
+    :license: GNU LGPLv3, see LICENSE for more details.
+
+    Module description:
+        An interface for All views / GUIs
+"""
+
 
 from abc import ABC, abstractmethod
+
 
 class IView(ABC):
     @abstractmethod
@@ -9,16 +21,31 @@ class IView(ABC):
         pass
 
     @abstractmethod
-    def update(self, *args, **kwargs):
-        """act as an observer to model changes
-        update view, it will be called automatically by controller
+    def update_view(self, **kwargs):
+        """update view, it will be called automatically by controller, when a model changes
         this method shouldn't block
-        :param d: DownloadItem Object which has been updated/changed "observable model"
         """
         pass
 
     @abstractmethod
     def get_user_response(self, msg, options):
         """get user choice and send it back to controller, 
-        mainly this is a popup window or input() method in terminal"""
+        mainly this is a popup window or input() method in terminal
+
+        Args:
+            msg(str): a message to show
+            options (list): a list of options, example: ['yes', 'no', 'cancel']
+
+        Returns:
+            (str): response from user as a selected item from "options"
+
+        Example:
+            msg ="File with the same name already exists\n" \
+                 "/home/mahmoud/Downloads/7z1900.exe\n" \
+                 "Do you want to overwrite file?"
+
+            option = ['Overwrite', 'Cancel']
+
+            get_user_response(msg, options)
+        """
         pass

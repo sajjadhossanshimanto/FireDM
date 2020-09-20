@@ -1,7 +1,7 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
@@ -13,11 +13,10 @@ import os
 import mimetypes
 import time
 from collections import deque
-from queue import Queue
-from threading import Thread, Lock
+from threading import Lock
 from urllib.parse import urljoin
-from .utils import (validate_file_name, get_headers, translate_server_code, size_splitter, get_seg_size, log,
-                    delete_file, delete_folder, save_json, load_json, size_format, get_range_list, arabic_renderer)
+from .utils import (validate_file_name, get_headers, translate_server_code, log,
+                    delete_file, delete_folder, save_json, load_json, get_range_list, arabic_renderer)
 from . import config
 from .config import MediaType
 
@@ -97,8 +96,9 @@ class DownloadItem:
                        config.Status.completed: ['✔'], config.Status.cancelled: ['-x-'],
                        config.Status.processing: ['↯', '↯↯', '↯↯↯'], config.Status.error: ['err']}
 
-    def __init__(self, id_=0, url='', name='', folder=''):
+    def __init__(self, id_=None, url='', name='', folder=''):
         self.id = id_
+        self.title = ''  # file name without extension
         self._name = name
         self.extension = ''  # note: filename extension include dot, ex: '.mp4'
 
@@ -220,7 +220,7 @@ class DownloadItem:
                                  'fragment_base_url', 'audio_fragments', 'audio_fragment_base_url',
                                  '_total_size', 'protocol', 'manifest_url', 'selected_subtitles',
                                  'abr', 'tbr', 'format_id', 'audio_format_id', 'resolution', 'audio_quality',
-                                 'http_headers', 'metadata_file_content']
+                                 'http_headers', 'metadata_file_content', 'title', 'extension']
 
         # property to indicate a time consuming operation is running on download item now
         self.busy = False
@@ -254,7 +254,7 @@ class DownloadItem:
 
     @property
     def speed(self):
-        """return an average of some speed values will give a stable speed reading"""
+        """average speed"""
         if self.status != config.Status.downloading:  # or not self.speed_buffer:
             self._speed = 0
         else:
@@ -274,7 +274,7 @@ class DownloadItem:
                 if len(self.speed_buffer) >= 10:
                     self.speed_buffer.popleft()
 
-                self._speed = avg_speed if avg_speed > 0 else 0
+                self._speed = int(avg_speed) if avg_speed > 0 else 0
 
         return self._speed
 
@@ -323,10 +323,15 @@ class DownloadItem:
 
     @property
     def time_left(self):
-        if self.status == config.Status.downloading and self.total_size and self.total_size >= self.downloaded:
-            return (self.total_size - self.downloaded) / self.speed if self.speed else -1
+        """estimated time remaining to finish download
+        Returns:
+            (int): seconds, it will return -1 if speed=0, this value will be formatted by utils.time_format()
+        """
+        if self.status == config.Status.downloading and self.total_size and self.total_size >= self.downloaded and self.speed:
+            t = (self.total_size - self.downloaded) / self.speed
+            return int(t)
         else:
-            return '---'
+            return -1
 
     @property
     def status(self):
@@ -353,15 +358,20 @@ class DownloadItem:
         # validate new name
         self._name = validate_file_name(new_value)
 
+        self.title, self.extension = os.path.splitext(self._name)
+
     @property
     def rendered_name(self):
-        # fix tkinter bad arabic in linux
+        name = self.name
+        # fix tkinter bad arabic language display in linux
         if config.operating_system == 'Linux':
-            # isolate extension
-            name, ext = os.path.splitext(self.name)
-            return arabic_renderer(name) + ext
-        else:
-            return self.name
+            try:
+                name = arabic_renderer(self.title)
+                name += self.extension
+            except:
+                pass
+
+        return name
 
     @property
     def target_file(self):
@@ -621,7 +631,7 @@ class DownloadItem:
         # update segments from progress info
         if progress_info:
             downloaded = 0
-            log('load_progress_info()> Found previous download on the disk')
+            # log('load_progress_info()> Found previous download on the disk')
 
             # verify segments on disk
             for item in progress_info:
@@ -667,9 +677,3 @@ class DownloadItem:
 
             # update self.downloaded
             self.downloaded = downloaded
-
-
-
-
-
-

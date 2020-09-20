@@ -1,13 +1,15 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
 
+# todo: change docstring to google format and clean unused code
 # check and update application
+
 import hashlib
 import json
 import py_compile
@@ -253,6 +255,7 @@ def check_for_ytdl_update():
 def update_youtube_dl():
     """This block for updating youtube-dl module in the freezed application folder in windows"""
     current_directory = config.current_directory
+    log('start updating youtube-dl')
 
     # check if the application runs from a windows cx_freeze executable
     # if run from source code, we will update system installed package and exit
@@ -275,11 +278,8 @@ def update_youtube_dl():
 
     def bkup():
         # backup current youtube-dl module folder
-
-        log('delete previous backup')
+        log('delete previous backup and backup current youtube-dl module:')
         delete_folder(bkup_module)
-
-        log('backup current youtube-dl module')
         shutil.copytree(target_module, bkup_module)
 
     def unzip():
@@ -352,8 +352,14 @@ def update_youtube_dl():
     log('start updating youtube-dl please wait ...')
 
     try:
-        # backup
-        bkup()
+        # use a thread to show some progress while bakup
+        t = Thread(target=bkup)
+        t.start()
+        while t.is_alive():
+            log('#', start='', end='')
+            time.sleep(0.3)
+
+        log('\n', start='')
 
         # download from github
         log('step 1 of 4: downloading youtube-dl raw files')
@@ -371,7 +377,7 @@ def update_youtube_dl():
         t.start()
         while t.is_alive():
             log('#', start='', end='')
-            time.sleep(0.5)
+            time.sleep(0.3)
 
         log('\n', start='')
         log('youtube-dl.zip extracted to: ', current_directory + '/temp')

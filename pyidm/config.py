@@ -1,13 +1,13 @@
 """
     PyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
+# todo: clean unused items
 
-# configurations
 from queue import Queue
 import os
 import sys
@@ -20,7 +20,7 @@ APP_NAME = 'PyIDM'
 APP_VERSION = __version__
 APP_TITLE = f'{APP_NAME} version {APP_VERSION} .. an open source download manager'
 DEFAULT_DOWNLOAD_FOLDER = os.path.join(os.path.expanduser("~"), 'Downloads')
-DEFAULT_THEME = 'Topanga'
+DEFAULT_THEME = 'default'
 DEFAULT_CONNECTIONS = 10
 
 # minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.
@@ -41,10 +41,11 @@ HEADERS = {
 DEFAULT_LOG_LEVEL = 2
 
 APP_LATEST_VERSION = None  # get value from update module
-ytdl_VERSION = 'loading ...'  # will be loaded once youtube-dl get imported
+ytdl_VERSION = None  # will be loaded once youtube-dl get imported
 ytdl_LATEST_VERSION = None  # get value from update module
 
 TEST_MODE = False
+SIMULATOR = False
 FROZEN = getattr(sys, "frozen", False)  # check if app is being compiled by cx_freeze
 # -------------------------------------------------------------------------------------
 
@@ -103,8 +104,9 @@ use_cookies = False
 cookie_file_path = ''
 
 # systray
-close_action = 'quit'  # close, minimize, to systray, or quit and close systray
-systray_active = False
+close_action = 'quit'  # close, minimize, to systray, or quit and close systray  # to be removed
+systray_active = False  # to be removed
+minimize_to_systray = False
 
 # youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.import_ytdl()
 ytdl_abort = False
@@ -139,9 +141,10 @@ active_downloads = set()  # indexes for active downloading items
 d_list = []
 
 # update
-update_frequency = 7  # 'every day'=1, every week=7, every month=30 and so on
-last_update_check = 0  # day number in the year range from 1 to 366
-update_frequency_map = {'Everyday': 1, 'Every Week': 7, 'Every Month': 30, 'Never': -1}
+check_for_update = True
+update_frequency = 7  # days
+last_update_check = None  # date format (year, month, day)
+
 
 # store hashes for installed update patches in update_record.info file at current folder
 update_record_path = os.path.join(current_directory, 'update_record.info')
@@ -154,13 +157,18 @@ commands_q = Queue()  # queue to access MainWindow internal methods from threads
 error_q = Queue()  # used by workers to report server refuse connection errors
 jobs_q = Queue()  # # required for failed worker jobs
 
+# log callbacks that will be executed when calling log func in utils
+# callback and popup should accept 3 positional args e.g. log_callback(start, text, end)
+log_callbacks = []
+log_popup_callback = None
+
 # settings parameters to be saved on disk
 settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window',
                  'segment_size', 'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections',
                  'update_frequency', 'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy',
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
-                 'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata']
+                 'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update', 'minimize_to_systray']
 
 
 # -------------------------------------------------------------------------------------

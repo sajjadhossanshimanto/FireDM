@@ -1,7 +1,7 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
@@ -16,7 +16,11 @@ from urllib.parse import urljoin
 from . import config
 from .downloaditem import DownloadItem, Segment
 from .utils import (log, validate_file_name, get_headers, size_format, run_command, size_splitter, get_seg_size,
-                    delete_file, download, process_thumbnail, execute_command, rename_file)
+                    delete_file, download, rename_file)
+
+
+# todo: change docstring to google format and clean unused code
+
 
 # youtube-dl
 ytdl = None  # youtube-dl will be imported in a separate thread to save loading time
@@ -257,7 +261,7 @@ class Video(DownloadItem):
 
     @property
     def selected_stream(self):
-        if not self._selected_stream:
+        if not self._selected_stream and self.all_streams:
             self._selected_stream = self.all_streams[0]  # select first stream
 
         return self._selected_stream
@@ -500,7 +504,7 @@ def download_ffmpeg(destination=config.sett_folder):
     d.callback = 'unzip_ffmpeg'
 
     # send download request to main window
-    execute_command("start_download", d, silent=False)
+    # execute_command("start_download", d, silent=False)
 
 
 def unzip_ffmpeg():
@@ -601,18 +605,19 @@ def import_ytdl():
         log(f'youtube-dl version: {config.ytdl_VERSION}, load_time= {int(load_time)} seconds')
 
         # override urlopen in YoutubeDl for interrupting youtube-dl session anytime
-        def foo(func):
+        def urlopen_decorator(func):
             def newfunc(self, *args):
                 # print('urlopen started ............................................')
                 if config.ytdl_abort:
                     # print('urlopen aborted ............................................')
-                    return None
+                    raise Exception('Youtube-dl aborted by user')
+                    # return None
                 data = func(self, *args)
                 return data
 
             return newfunc
 
-        ytdl.YoutubeDL.urlopen = foo(ytdl.YoutubeDL.urlopen)
+        ytdl.YoutubeDL.urlopen = urlopen_decorator(ytdl.YoutubeDL.urlopen)
 
     except Exception as e:
         log('import_ytdl()> error', e)
@@ -943,7 +948,7 @@ def download_sub(lang_name, url, extension, d):
                 if '#EXT' in repr(buffer):
                     sub_d.subtype_list.append('hls')
 
-        execute_command('start_download', sub_d)
+        # execute_command('start_download', sub_d)
 
     except Exception as e:
         log('download_subtitle() error', e)

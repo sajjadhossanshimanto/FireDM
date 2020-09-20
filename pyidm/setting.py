@@ -1,7 +1,7 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
@@ -12,7 +12,10 @@ import json
 
 from . import config
 from . import downloaditem
+from . import model
 from .utils import log, handle_exceptions, update_object
+
+# todo: replace save_d_list and load_d_list, with save_d_map and load_d_map for future releases
 
 
 def get_global_sett_folder():
@@ -97,14 +100,14 @@ def load_d_list():
             thumbnails = json.load(f)
 
         # clean d_list and load thumbnails
-        for d in d_list:
+        for i, d in enumerate(d_list):
             d.live_connections = 0
 
             if d.status != config.Status.completed:
                 d.status = config.Status.cancelled
 
             # use encode() to convert base64 string to byte, however it does work without it, will keep it to be safe
-            d.thumbnail = thumbnails.get(str(d.id), '').encode()
+            d.thumbnail = thumbnails.get(str(i), '').encode()
 
             # update progress info
             d.load_progress_info()
@@ -123,16 +126,105 @@ def save_d_list(d_list):
     try:
         data = []
         thumbnails = {}  # dictionary, key=d.id, value=base64 binary string for thumbnail
-        for d in d_list:
+        for i, d in enumerate(d_list):
             dict_ = {key: d.__dict__.get(key) for key in d.saved_properties}
             data.append(dict_)
 
             # thumbnails
             if d.thumbnail:
                 # convert base64 byte to string is required because json can't handle byte objects
-                thumbnails[d.id] = d.thumbnail.decode("utf-8")
+                thumbnails[str(i)] = d.thumbnail.decode("utf-8")
 
         # store d_list in downloads.cfg file
+        file = os.path.join(config.sett_folder, 'downloads.cfg')
+        with open(file, 'w') as f:
+            try:
+                json.dump(data, f)
+            except Exception as e:
+                print('error save d_list:', e)
+
+        # store thumbnails in thumbnails.cfg file
+        file = os.path.join(config.sett_folder, 'thumbnails.cfg')
+        with open(file, 'w') as f:
+            try:
+                json.dump(thumbnails, f)
+            except Exception as e:
+                print('error save thumbnails file:', e)
+
+        log('list saved')
+    except Exception as e:
+        handle_exceptions(e)
+
+
+def load_d_map(observer_callbacks):
+    """create and return a dictionary of 'uid: DownloadItem objects' based on data extracted from 'downloads.cfg' file
+
+    Args:
+        observer_callbacks (list or tuple): list of observers callbacks
+    """
+    d_map = {}
+
+    try:
+
+        log('Load previous download items from', config.sett_folder)
+
+        # get data
+        file = os.path.join(config.sett_folder, 'downloads.cfg')
+        with open(file, 'r') as f:
+            # expecting a list of dictionaries
+            data = json.load(f)
+
+        # converting data to a map of uid: ObservableDownloadItem() objects
+        for uid, d_dict in data.items():  # {'uid': d_dict, 'uid2': d_dict2, ...}
+            d = update_object(model.ObservableDownloadItem(observer_callbacks=observer_callbacks), d_dict)
+            if d:  # if update_object() returned an updated object not None
+                d.uid = uid
+                d_map[uid] = d
+
+        # get thumbnails
+        file = os.path.join(config.sett_folder, 'thumbnails.cfg')
+        with open(file, 'r') as f:
+            # expecting a list of dictionaries
+            thumbnails = json.load(f)
+
+        # clean d_map and load thumbnails
+        for d in d_map.values():
+            d.live_connections = 0
+
+            if d.status != config.Status.completed:
+                d.status = config.Status.cancelled
+
+            # use encode() to convert base64 string to byte, however it does work without it, will keep it to be safe
+            d.thumbnail = thumbnails.get(d.uid, '').encode()
+
+            # update progress info
+            d.load_progress_info()
+
+    except FileNotFoundError:
+        log('downloads.cfg file not found')
+    except Exception as e:
+        log(f'load_d_map()>: {e}')
+        raise e
+    finally:
+        if not isinstance(d_map, dict):
+            d_map = {}
+        return d_map
+
+
+def save_d_map(d_map):
+    try:
+        data = {}  # dictionary, key=d.uid, value=ObservableDownloadItem
+        thumbnails = {}  # dictionary, key=d.uid, value=base64 binary string for thumbnail
+        for uid, d in d_map.items():
+            d_dict = {key: d.__dict__.get(key) for key in d.saved_properties}
+            data[uid] = d_dict
+
+            # thumbnails
+            if d.thumbnail:
+                # convert base64 byte to string is required because json can't handle byte objects
+                thumbnails[d.uid] = d.thumbnail.decode("utf-8")
+
+        # store d_map in downloads.cfg file
         file = os.path.join(config.sett_folder, 'downloads.cfg')
         with open(file, 'w') as f:
             try:

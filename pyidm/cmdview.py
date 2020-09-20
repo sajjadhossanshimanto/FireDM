@@ -1,20 +1,23 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
+
+    Module description:
+        This is a command line / Terminal view, as a layer between user and controller
+        it must inherit from IView and implement all its abstract methods, see view.py
+        currently it runs in interactive mode and not suitable for automated jobs.
+
 """
 
-# This is a command line / Terminal view, as a layer between user and controller 
-# it must inherit from IView and implement all its abstract methods, see view.py
 
 import shutil
 
 from .view import IView
 from .utils import *
-
 
 
 class CmdView(IView):
@@ -26,19 +29,19 @@ class CmdView(IView):
         """intended to be used in gui as a mainloop not in terminal views"""
         pass
 
-    def update(self, *args, **kwargs):
+    def update_view(self, **kwargs):
         """update view"""
     
         progress = kwargs.get('progress', 0)
         speed = kwargs.get('speed')
         
-        # in terminal view, it will be one download takes place in a time
+        # in terminal view, it will be only one download takes place in a time
         # since there is no updates coming from d_list items, it is easier to identify the currently downloading item
         # by checking progress
         if progress > 0:
             # print progress bar on screen
             # get screen size
-            terminal_width=self.get_terminal_size()[0]
+            terminal_width = self.get_terminal_size()[0]
 
             # adjust bar length based on screen size
             if terminal_width < 70:  # choose 70 character as default
@@ -46,9 +49,9 @@ class CmdView(IView):
                 prefix = ''
                 suffix = ''
             else:
-                bar_length = 40 # default bar length
+                bar_length = 40  # default bar length
                 prefix = 'Progress:'
-                suffix=f" - speed: {size_format(speed, tail='/s')}" if speed else ''
+                suffix = f" - speed: {size_format(speed, tail='/s')}" if speed else ''
             
             self.print_progress_bar(progress, prefix=prefix, suffix=suffix, length=bar_length)
 
@@ -99,7 +102,6 @@ class CmdView(IView):
         output_lines.append("Options:")
         output_lines += options_lines
 
-
         # add stars and space padding for each line
         for i, line in enumerate(output_lines):
             allowable_line_width = box_width - 4
@@ -142,7 +144,7 @@ class CmdView(IView):
         return size
     
     @staticmethod
-    def print_progress_bar (value, prefix = ' Progress:', suffix = '', length=40, fill='█'):
+    def print_progress_bar(value, prefix=' Progress:', suffix='', length=40, fill='█'):
         """print progress bar to screen, value is number between 0 and 100"""
         try:
             value = int(value)

@@ -1,10 +1,28 @@
-about_notes = f"""PyIDM is a python open source (Internet Download Manager) with multi-connections, high speed engine, 
-it downloads general files and videos from youtube and tons of other streaming websites .
-Developed in Python, based on "pyCuRL/libcurl", "youtube_dl", and "PySimpleGUI"
+about_notes = """PyIDM is an open source multi-connections download manager, it downloads
+general files, support downloading videos, and playlists from youtube, 
+and other media websites.
 
-your feedback is most welcomed on
+Developed in Python, based on "LibCurl", and "youtube_dl"
+  
+This application is free to use, in a hope to be useful for someone,
 
-https://github.com/pyIDM/pyIDM
+Conditions and usage restrictions:
+------------------------------------------------------------------------
+  - The following contents are not allowed to be downloaded using this
+    application: 
+       - DRM "Digital rights management", protected videos / streams 
+         or Copyright materials. 
+       - Porn videos/streams or any pornography materials
+       - Illegal contents or any material that encourage/promote violence
+         or criminal/illegal behaviours.
+  
+  - This application is provided "AS IS" without any warranty, it is 
+    under no circumstances the PyIDM author could be held liable for any 
+    claim, or damages or responsible for any misuse of this application.
+------------------------------------------------------------------------
+
+your feedback is most welcomed on:
+https://github.com/pyIDM/PyIDM
 email: info.pyidm@gmail.com
 
 Author,

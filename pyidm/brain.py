@@ -1,7 +1,7 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
@@ -15,7 +15,7 @@ from .video import merge_video_audio, unzip_ffmpeg, pre_process_hls, post_proces
     convert_audio, download_subtitles, write_metadata  # unzip_ffmpeg required here for ffmpeg callback
 from . import config
 from .config import Status, active_downloads, APP_NAME
-from .utils import (log, size_format, popup, notify, delete_folder, delete_file, rename_file, load_json, save_json,
+from .utils import (log, size_format, notify, delete_folder, delete_file, rename_file, load_json, save_json,
                     print_object, calc_md5, calc_sha256, run_command)
 from .worker import Worker
 from .downloaditem import Segment

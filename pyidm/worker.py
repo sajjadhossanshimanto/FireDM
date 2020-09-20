@@ -1,13 +1,16 @@
 """
     PyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
 
 # worker class
+
+# todo: change docstring to google format and clean unused code
+
 import os
 import pycurl
 

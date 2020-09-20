@@ -1,43 +1,88 @@
 """
     pyIDM
 
-    multi-connections internet download manager, based on "pyCuRL/curl", "youtube_dl", and "PySimpleGUI"
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
     :copyright: (c) 2019-2020 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
+
+    module description:
+        This is the controller module as a part of MVC design, which will replace the old application design
+        in attempt to isolate logic from gui / view
+        old design has gui and logic mixed together
+        The Model has DownloadItem as a base class and located at model.py module
+        Model and controller has an observer system where model will notify controller when changed, in turn
+        controller will update the current view
 """
 
-# This is the controller module as a part of MVC design, which will replace the old application design
-# in attempt to isolate logic from gui / view 
-# old design has gui and logic mixed together
-# The Model has DownloadItem as a base class and located at observables.py module
-# Model and conroller has an observer system where model will notify controller when changed, in turn
-# controller will notify the current view
 
-# region imports
 import os, sys, time
 from threading import Thread
 from queue import Queue
-import youtube_dl as ytdl
+from datetime import date
 
+from . import update
 from .utils import *
 from . import setting
 from . import config
 from .config import Status
-from . import update
 from .brain import brain
 from . import video
 from .video import (check_ffmpeg, download_ffmpeg, unzip_ffmpeg, get_ytdl_options, 
                     download_m3u8, parse_subtitles, download_sub)
-from .observables import observableDownloadItem as DownloadItem, observableVideo as Video
-# endregion
+from .model import ObservableDownloadItem, ObservableVideo
+
+
+def set_option(**kwargs):
+    """set global setting option(s) in config.py"""
+    try:
+        config.__dict__.update(kwargs)
+        # log('Settings:', kwargs)
+    except:
+        pass
+
+
+def get_option(key, default=None):
+    """get global setting option(s) in config.py"""
+    try:
+        return config.__dict__.get(key, default)
+    except:
+        return None
 
 
 class Controller:
-    """this is the controller which communicate with view / ui / gui and has the logic for downloading process"""
-    def __init__(self, view_class, custom_settings={}):
+    """controller class
+     communicate with (view / gui) and has the logic for downloading process
+
+    it will update GUI thru an update_view method "refer to view.py" by sending data when model changes
+    data will be passed in key, value kwargs and must contain "command" keyword
+
+    example:
+        {command='new', 'uid': 'uid_e3345de206f17842681153dba3d28ee4', 'active': True, 'name': 'hello.mp4', ...}
+
+    command keyword could have the value of:
+        'new':              gui should create new entry in its download list
+        'update':           update current download list item
+        'playlist_menu':    data contains a video playlist
+        'stream_menu'       data contains stream menu
+        'd_list'            an item in d_list, useful for loading d_list at startup
+
+    uid keyword:
+        this is a unique id for every download item which should be used in all lookup operations
+
+    active keyword:
+        to tell if data belongs to the current active download item
+
+    """
+    def __init__(self, view_class, custom_settings=None):
+        self.observer_q = Queue()  # queue to collect references for updated download items
+
         # create youtube-dl object
-        self.ydl = ytdl.YoutubeDL(get_ytdl_options())
+        # self.ydl = youtube_dl.YoutubeDL(get_ytdl_options())
+        self.ydl = None
+
+        # d_map is a dictionary that map uid to download item object
+        self.d_map = {}
 
         self.d_list = []
         self.active_downloads = []
@@ -50,72 +95,85 @@ class Controller:
         self.playlist = []
         self._playlist_menu = []
         self._stream_menu = []
+        # self._d = None  # active download item which has self.url
         self.d = None  # active download item which has self.url
-
-        self.observer_q = Queue()  # queue to collect refrences for updated downloaditems 
 
         # create view
         self.view = view_class(controller=self)
 
         # notifier thread, it will run in a different thread waiting on observer_q and call self._notify
-        Thread(target=self._notifier, daemon=True).start()
+        Thread(target=self._observer, daemon=True).start()
 
-    def observer(self, d=None, *args, **kwargs):
-        """This is an observer method which get notified when change/update properties in DownloadItem
+        # import youtube-dl in a separate thread
+        Thread(target=video.import_ytdl, daemon=True).start()
+
+    def observer(self, **kwargs):
+        """This is an observer method which get notified when change/update properties in ObservableDownloadItem
         it should be as light as possible otherwise it will impact the whole app
-        it will be rigestered by DownloadItem while creation"""
+        it will be registered by ObservableDownloadItem while creation"""
 
-        self.observer_q.put(d)
+        self.observer_q.put(kwargs)
 
-    def _notifier(self):
+    def _observer(self):
         """run in a thread and update views once there is a change in any download item
         thread should be marked as daemon to get terminated when application quit"""
 
         while True:
-            d = self.observer_q.get()  # it will block waiting for new values in queue
-            self._notify(d)
+            kwargs = self.observer_q.get()  # it will block waiting for new values in queue
+            self._update_view(**kwargs)
 
-    def _notify(self, d=None, *args, **kwargs):
+    def _update_view(self, **kwargs):
         """update "view" by calling its update method"""
+        # print('controller._update_view:', kwargs)
         try:
-            if d:
-                # add active keyword
-                active = True if d == self.d else False 
+            # set default command value
+            kwargs.setdefault('command', 'update')
 
-                properties = ['id', 'name', 'rendered_name', 'progress', 'speed', 'time_left',
-                              'downloaded', 'size', 'total_size', 'status', 'busy']
-                info = {k: getattr(d, k, None) for k in properties}
-                info['active'] = active
-              
-            else:
-                info = kwargs
-            
-            self.view.update(**info)
+            uid = kwargs.get('uid')
+            d = self.d_map.get(uid, None)
+
+            if d is not None:
+                # readonly properties will not be reported by ObservableDownloadItem
+                downloaded = kwargs.get('downloaded', None)
+                if downloaded:
+                    extra = {k: getattr(d, k, None) for k in ['progress', 'speed', 'time_left']}
+                    # print('extra:', extra)
+
+                    kwargs.update(**extra)
+
+            self.view.update_view(**kwargs)
+            # print('controller._update_view:', kwargs)
         except Exception as e:
             log('controller._notify()> error, ', e)
+            # raise e
 
-    def _log_runtime_info(self):
-        """Print useful information about the system"""
-        log('-' * 50, 'PyIDM', '-' * 50)
-        log('Starting PyIDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
-        log('operating system:', config.operating_system_info)
-        log('Python version:', sys.version)
-        log('current working directory:', config.current_directory)
-
-    def _load_settings(self, custom_settings={}):
+    def _load_settings(self, custom_settings=None):
         # load stored setting from disk
         setting.load_setting()
         
         # update config module with custom settings
-        config.__dict__.update(custom_settings)
+        if custom_settings:
+            config.__dict__.update(custom_settings)
 
-        # load stored d_list from the disk
-        self.d_list = config.d_list = setting.load_d_list()
+        # load d_map
+        # self.d_map = setting.load_d_map([self.observer, ])
+
+        # will use old function to stay compatible with old gui.py
+        d_list = setting.load_d_list()
+
+        for d in d_list:
+            obs_d = update_object(ObservableDownloadItem(), d.__dict__)
+            self.d_map[obs_d.uid] = obs_d
 
     def _save_settings(self):
         # Save setting to disk
         setting.save_setting()
-        setting.save_d_list(config.d_list)
+
+        # save d_map
+        # setting.save_d_map(self.d_map)
+
+        # will use old function to stay compatible with old gui.py
+        setting.save_d_list(self.d_map.values())
 
     def _process_video_info(self, info):
         """process video info for a video object
@@ -130,6 +188,8 @@ class Controller:
         
         except Exception as e:
             log('_process_video_info()> error:', e)
+            if config.TEST_MODE:
+                raise e
 
     def _process_video(self, vid):
         """process video info and refresh Video object properties, 
@@ -150,6 +210,8 @@ class Controller:
                 log('_process_video_info()> Failed,  url:', vid.url, log_level=3)
         except Exception as e:
             log('_process_video_info()> error:', e)
+            if config.TEST_MODE:
+                raise e
         finally:
             vid.busy = False
 
@@ -158,71 +220,136 @@ class Controller:
         log('start create video playlist')
         playlist = []
 
-        # fetch info by youtube-dl
-        info = self.ydl.extract_info(url, download=False, process=False)
+        # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
+        if video.ytdl is None:
+            log('youtube-dl module still not loaded completely, please wait')
+            while not video.ytdl:
+                time.sleep(1)  # wait until module gets imported
 
-        # print(info)
+        if self.ydl is None:
+            self.ydl = video.ytdl.YoutubeDL(get_ytdl_options())
 
-        if not info or info.get('direct'):
-            log('youtube_func()> No streams found')
-            return []
+        # reset abort flag
+        config.ytdl_abort = False
+        try:
+            # fetch info by youtube-dl
+            info = self.ydl.extract_info(url, download=False, process=False)
 
-        result_type = info.get('_type', 'video')
+            # print(info)
 
-        # check results if _type is a playlist / multi_video -------------------------------------------------
-        if result_type in ('playlist', 'multi_video') or 'entries' in info:
-            log('youtube-func()> start processing playlist')
-            # log('Media info:', info)
+            # don't process direct links, youtube-dl warning message "URL could be a direct video link, returning it as such."
+            # refer to youtube-dl/extractor/generic.py
+            if not info or info.get('direct'):
+                log('controller._create_video_playlist()> No streams found')
+                return []
 
-            # videos info
-            pl_info = list(info.get('entries'))  # info.get('entries') is a generator
+            """
+                _type key:
 
-            # create initial playlist with un-processed video objects
-            for v_info in pl_info:
-                v_info['formats'] = []
+                _type "playlist" indicates multiple videos.
+                    There must be a key "entries", which is a list, an iterable, or a PagedList
+                    object, each element of which is a valid dictionary by this specification.
+                    Additionally, playlists can have "id", "title", "description", "uploader",
+                    "uploader_id", "uploader_url" attributes with the same semantics as videos
+                    (see above).
 
-                # get video's url
-                vid_url = v_info.get('webpage_url', None) or v_info.get('url', None) or v_info.get('id', None)
+                _type "multi_video" indicates that there are multiple videos that
+                    form a single show, for examples multiple acts of an opera or TV episode.
+                    It must have an entries key like a playlist and contain all the keys
+                    required for a video at the same time.
 
-                # create video object
-                vid = Video(vid_url, v_info, registered_callbacks=[self.observer])
+                _type "url" indicates that the video must be extracted from another
+                    location, possibly by a different extractor. Its only required key is:
+                    "url" - the next URL to extract.
+                    The key "ie_key" can be set to the class name (minus the trailing "IE",
+                    e.g. "Youtube") if the extractor class is known in advance.
+                    Additionally, the dictionary may have any properties of the resolved entity
+                    known in advance, for example "title" if the title of the referred video is
+                    known ahead of time.
 
-                # update info
-                vid.playlist_title = info.get('title', '')
-                vid.playlist_url = url
+                _type "url_transparent" entities have the same specification as "url", but
+                    indicate that the given additional information is more precise than the one
+                    associated with the resolved URL.
+                    This is useful when a site employs a video service that hosts the video and
+                    its technical metadata, but that video service does not embed a useful
+                    title, description etc.
+            """
+            _type = info.get('_type', 'video')
 
-                # add video to playlist
-                playlist.append(vid)
-        else:
-            v_info = info
+            # handle types: url and url transparent
+            if _type in ('url', 'url_transparent'):
+                # handle youtube user links ex: https://www.youtube.com/c/MOTORIZADO/videos
+                # issue: https://github.com/pyIDM/PyIDM/issues/146
+                # info: {'_type': 'url', 'url': 'https://www.youtube.com/playlist?list=UUK32F9z7s_JhACkUdVoWdag',
+                # 'ie_key': 'YoutubePlaylist', 'extractor': 'youtube:user', 'webpage_url': 'https://www.youtube.com/c/MOTORIZADO/videos',
+                # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
 
-            processed_info = self._process_video_info(info)
+                info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
 
-            if processed_info and processed_info.get('formats'):
-                
-                # create video object
-                vid = Video(url, processed_info, registered_callbacks=[self.observer])
+            # check results if _type is a playlist / multi_video -------------------------------------------------
+            if _type in ('playlist', 'multi_video') or 'entries' in info:
+                log('youtube-func()> start processing playlist')
+                # log('Media info:', info)
 
-                # get thumbnail
-                vid.get_thumbnail()
+                # videos info
+                pl_info = list(info.get('entries'))  # info.get('entries') is a generator
 
-                # report done processing
-                vid.processed = True
+                # create initial playlist with un-processed video objects
+                for v_info in pl_info:
+                    v_info['formats'] = []
 
-                # add video to playlist
-                playlist.append(vid)
+                    # get video's url
+                    vid_url = v_info.get('webpage_url', None) or v_info.get('url', None) or v_info.get('id', None)
+
+                    # create video object
+                    vid = ObservableVideo(vid_url, v_info)  #, observer_callbacks=[self.observer])
+
+                    # update info
+                    vid.playlist_title = info.get('title', '')
+                    vid.playlist_url = url
+
+                    # add video to playlist
+                    playlist.append(vid)
+
+                    # vid.register_callback(self.observer)
             else:
-                log('no video streams detected')
+
+                processed_info = self._process_video_info(info)
+
+                if processed_info and processed_info.get('formats'):
+
+                    # create video object
+                    vid = ObservableVideo(url, processed_info) #, observer_callbacks=[self.observer])
+
+                    # get thumbnail
+                    vid.get_thumbnail()
+
+                    # report done processing
+                    vid.processed = True
+
+                    # add video to playlist
+                    playlist.append(vid)
+
+                    # vid.register_callback(self.observer)
+                else:
+                    log('no video streams detected')
+        except Exception as e:
+            playlist = []
+            log('controller._create_video_playlist:', e)
+            if config.TEST_MODE:
+                raise e
 
         return playlist
 
     def _pre_download_checks(self, d, silent=False):
-        """do all checks required for this download"""
-        """
-         do all pre-download checks
-        :param d: DownloadItem object
-        :param silent: if True, hide all a warnning dialogues and select default
-        :return: True on success, False on failure
+        """do all checks required for this download
+
+        Args:
+        d: ObservableDownloadItem object
+        silent: if True, hide all a warning dialogues and select default
+
+        Returns:
+            (bool): True on success, False on failure
         """
 
         if not d:
@@ -232,15 +359,19 @@ class Controller:
             log('Nothing to download, no url given', start='', showpopup=True)
             return False
         elif not d.type:
-            response = self.get_user_response('None type or bad response code \nForce download?', options=['Ok', 'Cancel'])
+            response = self.get_user_response('None type or bad response code \nForce download?', ['Ok', 'Cancel'])
             if response != 'Ok':
                 return False
         elif d.type == 'text/html':
-            response = self.get_user_response('Contents might be a web page / html, Download anyway?', options=['Ok', 'Cancel'])
+            response = self.get_user_response('Contents might be a web page / html, Download anyway?', ['Ok', 'Cancel'])
             if response == 'Ok':
                 d.accept_html = True
             else:
                 return False
+
+        if d.status in (Status.downloading, Status.processing):
+            log('download is already in progress for this item')
+            return False
 
         # check unsupported protocols
         unsupported = ['f4m', 'ism']
@@ -269,12 +400,18 @@ class Controller:
             d.folder = folder
         except FileNotFoundError:
             log(f'destination folder {folder} does not exist', start='', showpopup=True)
+            if config.TEST_MODE:
+                raise
             return False
-        except PermissionError:
+        except (PermissionError, OSError):
             log(f"you don't have enough permission for destination folder {folder}", start='', showpopup=True)
+            if config.TEST_MODE:
+                raise
             return False
         except Exception as e:
             log(f'problem in destination folder {repr(e)}', start='', showpopup=True)
+            if config.TEST_MODE:
+                raise e
             return False
 
         # validate file name
@@ -292,8 +429,7 @@ class Controller:
                 #  show dialogue
                 msg = 'File with the same name already exists \n' + d.target_file + '\nDo you want to overwrite file?'
                 options = ['Overwrite', 'Cancel download']
-                response = self.get_user_response(msg, options=options)
-                # print('Model received:', response)
+                response = self.get_user_response(msg, options)
 
                 if response != options[0]:
                     log('Download cancelled by user')
@@ -302,16 +438,12 @@ class Controller:
                     delete_file(d.target_file)
 
         # search current list for previous item with same name, folder ---------------------------
-        match = [x.id for x in self.d_list if x.target_file == d.target_file]
-        if match:
+        if d.uid in self.d_map:
 
             log('download item', d.num, 'already in list, check resume availability')
-            
-            match_id = match[0]
-            d.id = match_id
 
             # get download item from the list
-            d_from_list = self.d_list[match_id]
+            d_from_list = self.d_map[d.uid]
 
             # default
             response = 'Resume'
@@ -319,57 +451,47 @@ class Controller:
             if not silent:
                 #  show dialogue
                 msg = f'File with the same name: \n{d.name},\n already exist in download list\n' \
-                      'Do you want to resume this file?\n' \
-                      'Resume ==> continue if it has been partially downloaded ... \n' \
-                      'Overwrite ==> delete old downloads and overwrite existing item... \n' \
-                      'note: "if you need fresh download, you have to change file name \n' \
-                      'or target folder or delete same entry from download list'
+                      'Do you want to resume this file?\n\n' \
+                      'if you need a fresh download, you should change file name \n' \
+                      'or target folder or delete same entry from download list \nor check "auto-rename" in settings'
 
                 response = self.get_user_response(msg, ['Resume', 'Overwrite', 'Cancel'])
 
-            if response == 'Resume':
+            if response not in ('Resume', 'Overwrite'):
+                log('Download cancelled by user')
+                d.status = Status.cancelled
+                return False
+
+            elif response == 'Resume':
                 log('check resuming?')
 
                 # to resume, size must match, otherwise it will just overwrite
                 if d.size == d_from_list.size and d.selected_quality == d_from_list.selected_quality:
                     log('resume is possible')
-                    
+
                     d.downloaded = d_from_list.downloaded
                 else:
                     if not silent:
                         msg = f'Resume not possible, New "download item" has differnet properties than existing one \n' \
-                              f'New item    : size={size_format(d.size)}, selected quality={d.selected_quality}\n' \
-                              f'current item: size={size_format(d_from_list.size)}, selected quality={d_from_list.selected_quality}\n' \
+                              f'New item size={size_format(d.size)}, selected quality={d.selected_quality}\n' \
+                              f'current item size={size_format(d_from_list.size)}, selected quality={d_from_list.selected_quality}\n' \
                               f'if you continue, previous download will be overwritten'
                         response = self.get_user_response(msg, ['Ok', 'Cancel'])
                         if response != 'Ok':
                             log('aborted by user')
                             return False
-                    log('file:', d.name, 'has different properties and will be downloaded from beginning')
+                    log('file:', d.name, 'has different properties and will be downloaded from the beginning')
                     d.delete_tempfiles(force_delete=True)
-
-                # replace old item in download list
-                self.d_list[match_id] = d
 
             elif response == 'Overwrite':
                 log('overwrite')
                 d.delete_tempfiles(force_delete=True)
 
-                # replace old item in download list
-                self.d_list[match_id] = d
-
-            else:
-                log('Download cancelled by user')
-                d.status = Status.cancelled
-                return False
-
         else:  # new file
             log('fresh file download')
-            # generate unique id number for each download
-            d.id = len(self.d_list)
 
-            # add to download list
-            self.d_list.append(d)
+        # add to download map
+        self.d_map[d.uid] = d
         # ------------------------------------------------------------------
 
         # if max concurrent downloads exceeded, this download job will be added to pending queue
@@ -382,8 +504,8 @@ class Controller:
         return True
 
     def _pre_download_process(self, d, **kwargs):
-        """take a DownloadItem object and process any missing information before download
-        return a processed DownloadItem object"""
+        """take a ObservableDownloadItem object and process any missing information before download
+        return a processed ObservableDownloadItem object"""
 
         # update user preferences
         d.__dict__.update(kwargs)
@@ -412,46 +534,103 @@ class Controller:
                 
                 except Exception as e:
                     log('_process_video_info()> error:', e)
+                    if config.TEST_MODE:
+                        raise e
                 
                 finally:
                     vid.busy = False
         
         return d
 
-    def _download(self, d, **kwargs):
-        """start downloading an item"""
+    def download_simulator(self, d):
+        print('start download simulator for id:', d.id, d.name)
+
+        speed = 200  # kb/s
+        d.status = Status.downloading
+
+        if d.downloaded >= d.total_size:
+            d.downloaded = 0
+
+        while True:
+            time.sleep(1/2)
+            # print(d.progress)
+
+            d.downloaded += speed//2 * 1024
+            if d.downloaded >= d.total_size:
+                d.status = Status.completed
+                d.downloaded = d.total_size
+                print('download simulator completed for:', d.id, d.name)
+
+                break
+
+            if d.status == Status.cancelled:
+                print('download simulator cancelled for:', d.id, d.name)
+                break
+
+    def _download(self, d, silent=False):
+        """start downloading an item
+
+        Args:
+            d (ObservableDownloadItem): download item
+            silent (bool): if True, hide all a warning dialogues and select default
+        """
+
         try:
-            pre_checks = self._pre_download_checks(d)
+            pre_checks = self._pre_download_checks(d, silent=silent)
 
             if pre_checks:
+                # update view
+                self._report_d(d, command='new')
+
+                # register observer
+                d.register_callback(self.observer)
+
                 # start brain in a separate thread
-                t = Thread(target=brain, daemon=False, args=(d,))
+                if config.SIMULATOR:
+                    t = Thread(target=self.download_simulator, daemon=True, args=(d,))
+                else:
+                    t = Thread(target=brain, daemon=False, args=(d,))
                 t.start()
 
                 # wait thread to end
                 t.join()
 
+                # update view
+                self._report_d(d)
+
         except Exception as e:
             log('download()> error:', e)
+            if config.TEST_MODE:
+                raise e
 
     def _update_playlist_menu(self, pl_menu):
         """update playlist menu and send notification to view"""
         self.playlist_menu = pl_menu
-        self._notify(playlist_menu=pl_menu)
+        self._update_view(command='playlist_menu', playlist_menu=pl_menu)
 
-    def _update_stream_menu(self, stream_menu):
-        """update stream menu and send notification to view"""
-        self.stream_menu = stream_menu
-        self._notify(stream_menu=stream_menu)
+    def _update_stream_menu(self, **info):
+        """update stream menu and send notification to view
+        """
+        self.stream_menu = info.get('stream_menu')
+        self._update_view(**info)
 
-    # public API ----------------------------------------------------------
-    def process_url(self, url):
-        """take url and return a a list of DownloadItem objects"""
+    def _process_url(self, url):
+        """take url and return a a list of ObservableDownloadItem objects
+
+        when a "view" call this method it should expect a playlist menu (list of names) to be passed to its update
+        method,
+
+        Examples:
+            playlist_menu=['1- Nasa mission to Mars', '2- how to train your dragon', ...]
+            or
+            playlist_menu=[] if no video playlist
+
+        """
         self.url = url
         playlist = []
         is_video_playlist = False
 
-        self.d = d = DownloadItem(registered_callbacks=[self.observer])
+        d = ObservableDownloadItem()
         d.update(url)
 
         # searching for videos
@@ -461,50 +640,324 @@ class Controller:
 
             if playlist:
                 is_video_playlist = True
-                
-    
+
         if not playlist:
             playlist = [d]
 
         if url == self.url:
-            log('controller> playlist ready')
             self.playlist = playlist
 
             if is_video_playlist:
+                log('controller> playlist ready')
                 self._update_playlist_menu([str(i + 1) + '- ' + video.rendered_name for i, video in enumerate(self.playlist)])
                 self.select_playlist_video(0)
+            else:
+                self._update_playlist_menu([])
+
+            if self.playlist:
+                self.d = playlist[0]
+                self._report_d(self.d, active=True)
 
         return playlist
 
-    def select_playlist_video(self, idx):
+    def _select_playlist_video(self, idx, active=True):
         """
         select video from playlist menu and update stream menu
         idx: index in playlist menu
-        expected notifications to "view": 
-        dict containing  (idx, stream_menu list, selected_stream_idx), 
-        and info of current selected video in playlist menu"""
+
+        expected notifications to "view":
+        dict containing  (idx, stream_menu list, selected_stream_idx),
+        and info of current selected video in playlist menu
+
+        view should expect something like below:
+        example:
+            {'command': 'stream_menu',
+
+            'stream_menu':
+            ['● Video streams:                     ',
+            '   › mp4 - 1080 - 29.9 MB - id:137 - 30 fps',
+            '   › mp4 - 720 - 18.3 MB - id:22 - 30 fps',
+            '● Audio streams:                 ',
+            '   › aac - 128 - 4.6 MB - id:140',
+            '   › webm - 50 - 1.9 MB - id:249', '',
+            '● Extra streams:                 ',
+            '   › mp4 - 720 - 13.7 MB - id:136 - 30 fps'],
+
+            'video_idx': 0,
+            'selected_stream_idx': 1}
+
+        """
 
         self.d = vid = self.playlist[idx]
-        
+
         # process video
         if not vid.processed:
             self._process_video(vid)
-        
-        info = dict(idx=idx, stream_menu=vid.stream_menu, selected_stream_idx=vid.stream_menu_map.index(vid.selected_stream))
-        self._update_stream_menu(info)
-        self._notify(self.d)
 
-    def select_stream(self, idx):
+        self._update_stream_menu(command='stream_menu', stream_menu=vid.stream_menu, video_idx=idx,
+                                 stream_idx=vid.stream_menu_map.index(vid.selected_stream))
+        self._report_d(self.d, active=active)
+
+    def _report_d(self, d, **kwargs):
+        """notify view of all properties of a download item
+
+        Args:
+            d (ObservableDownloadItem or ObservableVideo): download item
+            kwargs: key, values to be included
+        """
+
+        properties = d.watch_list
+
+        info = {k: getattr(d, k, None) for k in properties}
+        info.update(**kwargs)
+
+        self._update_view(**info)
+
+    def _get_d_list(self):
+        # for d in self.d_list:
+        for d in self.d_map.values():
+            time.sleep(0.1)
+            self._report_d(d, command='d_list')
+
+    def _download_playlist(self, vsmap):
+        """download playlist
+          Args:
+              vsmap (dict): video idx vd stream idx
+        """
+        for vid_idx, s_idx in vsmap.items():
+            d = self.playlist[vid_idx]
+            d.select_stream(index=s_idx)
+            run_thread(self._download, d, silent=True)
+            time.sleep(0.1)
+
+    def _download_subtitle(self, lang_name, url, extension, d):
+        """download one subtitle file"""
+        try:
+            file_name = f'{os.path.splitext(d.target_file)[0]}_{lang_name}.{extension}'
+
+            # create download item object for subtitle
+            sub_d = ObservableDownloadItem()
+            sub_d.name = os.path.basename(file_name)
+            sub_d.folder = os.path.dirname(file_name)
+            sub_d.url = d.url
+            sub_d.eff_url = url
+            sub_d.type = 'subtitle'
+            sub_d.http_headers = d.http_headers
+
+            # if d type is hls video will download file to check if it's an m3u8 or not
+            if 'hls' in d.subtype_list:
+                log('downloading subtitle', file_name)
+                buffer = download(url, http_headers=d.http_headers)
+
+                if buffer:
+                    # convert to string
+                    buffer = buffer.getvalue().decode()
+
+                    # check if downloaded file is an m3u8 file
+                    if '#EXT' in repr(buffer):
+                        sub_d.subtype_list.append('hls')
+
+            self._download(sub_d)
+
+        except Exception as e:
+            log('download_subtitle() error', e)
+
+    def _check_for_ytdl_update(self):
+        """check for new youtube-dl version"""
+
+        current_version = config.ytdl_VERSION
+        if current_version is None:
+            log('youtube-dl not loaded yet, try again', showpopup=True)
+            return
+
+        latest_version = config.ytdl_LATEST_VERSION or update.check_for_ytdl_update()
+        if latest_version:
+            config.ytdl_LATEST_VERSION = latest_version
+            note = f'Youtube-dl version: {config.ytdl_VERSION}, Latest version: {config.ytdl_LATEST_VERSION}'
+            log(note)
+
+            if latest_version != current_version:
+                # select log tab
+                # self.select_tab('Log')
+
+                response = self.get_user_response(
+                    'Found new version of youtube-dl on github \n'
+                    f'new version     =  {latest_version}\n'
+                    f'current version =  {current_version} \n'
+                    'Install new version? (check Log Tab for progress)',  options=['Ok', 'Cancel'])
+
+                if response == 'Ok':
+                    try:
+                        run_thread(update.update_youtube_dl, daemon=True)
+                    except Exception as e:
+                        log('failed to update youtube-dl module:', e)
+            else:
+                log(f'youtube_dl is up-to-date, current version = {current_version}', showpopup=True)
+
+    def _rollback_ytdl_update(self):
+        """delete last youtube-dl update and restore last one"""
+        response = self.get_user_response('Delete last youtube-dl update and restore previous version?',
+                                          options=['Ok', 'Cancel'])
+
+        if response == 'Ok':
+            try:
+                run_thread(update.rollback_ytdl_update, daemon=True)
+            except Exception as e:
+                log('failed to restore youtube-dl module:', e)
+
+    def _check_for_pyidm_update(self):
+        """
+        check for new app version or update patch and show update window,
+        this method is time consuming and should run from a thread
+        """
+
+        # check for new App. version
+        changelog = update.check_for_new_version()
+        if changelog:
+
+            response = self.get_user_response(f'New pyidm version available, full change log:\n{changelog}',
+                                              options=['Homepage', 'cancel'])
+            if response == 'Homepage':
+                update.open_update_link()
+
+        else:
+            log('No Update available', showpopup=True)
+
+    def _auto_check_for_update(self):
+        """auto check for pyidm update"""
+        if config.check_for_update:
+            today = date.today()
+            try:
+                last_check = date(*config.last_update_check)
+            except:
+                last_check = today
+
+            delta = today - last_check
+            if delta.days >= config.update_frequency:
+                res = self.get_user_response(f'Check for PyIDM update?\nLast check was {delta.days} days ago',
+                                             options=['Ok', 'Cancel'])
+                if res == 'Ok':
+                    self.check_for_pyidm_update()
+
+            config.last_update_check = (today.year, today.month, today.day)
+
+    # public API for  a view / GUI (it shouldn't block to prevent gui freeze) ------------------------------------------
+    def log_runtime_info(self):
+        """Print useful information about the system"""
+        log('-' * 30, 'PyIDM', '-' * 30)
+        log('Starting PyIDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
+        log('operating system:', config.operating_system_info)
+        log('Python version:', sys.version)
+        log('current working directory:', config.current_directory)
+
+    def process_url(self, url):
+        """take url and return a a list of ObservableDownloadItem objects
+
+        when a "view" call this method it should expect a playlist menu (list of names) to be passed to its update
+        method,
+
+        Examples:
+            playlist_menu=['1- Nasa mission to Mars', '2- how to train your dragon', ...]
+            or
+            playlist_menu=[] if no video playlist
+
+        """
+        self.url = url
+        self.reset()
+
+        if url:
+            try:
+                run_thread(self._process_url, url)
+            except Exception as e:
+                log("process_url:", e)
+                if config.TEST_MODE:
+                    raise e
+
+    def reset(self):
+        """reset controller and cancel ongoing operation"""
+        # stop youyube-dl
+        config.ytdl_abort = True
+        self.d = None
+        self.playlist = []
+
+    def get_d_list(self):
+        """update previous download list in view"""
+        log('controller.get_d_list()> sending d_list')
+        run_thread(self._get_d_list)
+
+    def download(self, uid=None, **kwargs):
+        """download an item
+
+        Args:
+            uid (str): unique identifier property for a download item in self.d_map, if none, self.d will be downloaded
+            kwargs: key/value for any legit attributes in DownloadItem
+        """
+
+        if uid is None:
+            d = self.d
+            silent = False
+        else:
+            d = self.d_map[uid]
+            silent = True
+
+        if d is None:
+            log('Nothing to download', showpopup=True)
+            return
+
+        # validate file name and extension
+        name = kwargs.get('name', None)
+        if name:
+            title, ext = os.path.splitext(name)
+            if ext != d.extension:
+                kwargs['name'] = title + d.extension
+
+        update_object(d, kwargs)
+
+        run_thread(self._download, d, silent)
+
+        return True
+
+    def download_playlist(self, vsmap):
+        """download playlist
+        Args:
+            vsmap (dict): video idx vd stream idx
+        """
+        run_thread(self._download_playlist, vsmap)
+
+    def stop_download(self, uid):
+        """stop downloading
+        Args:
+            uid (str): unique identifier property for a download item in self.d_map
+        """
+
+        d = self.d_map[uid]
+
+        if d.status != Status.completed:
+            d.status = Status.cancelled
+
+    def select_playlist_video(self, idx, active=True):
+        """
+        select video from playlist menu and update stream menu
+        idx: index in playlist menu
+
+        to see expected notifications to "view" and example:
+            *read _select_playlist_video() doc string
+        """
+
+        run_thread(self._select_playlist_video, idx, active=active)
+
+    def select_stream(self, idx, active=True):
         """select stream for current selected video in playlist menu
         idx: index in stream menu
-        expected notifications: info of current selected video in playlist menu"""
+        expected notifications: info of current selected video in playlist menu
+        """
 
         self.d.select_stream(index=idx)
-        self._notify(self.d)
+        self._report_d(self.d, active=active)
         
     def interactive_download(self, url, **kwargs):
         """intended to be used with command line view and offer step by step choices to download an item"""
-        playlist = self.process_url(url)
+        playlist = self._process_url(url)
 
         d = playlist[0]
 
@@ -575,15 +1028,218 @@ class Controller:
 
         # download
         self._download(d)
-        self._notify(d)
+        self._report_d(d)
 
         self._save_settings()
         config.shutdown = True
 
+    def delete(self, uid):
+        """delete download item from the list
+        Args:
+            uid (str): unique identifier property for a download item in self.d_map
+        """
+
+        d = self.d_map.pop(uid)
+
+        d.status = Status.cancelled
+
+        # # fix id's
+        # for i, d in enumerate(self.d_list):
+        #     d.id = i
+
+        # should send a refresh info to view
+        # self.get_d_list()
+
+        # delete files
+        run_thread(d.delete_tempfiles())
+
+    def get_subtitles(self, uid=None, video_idx=None):
+        """send subtitles info for view
+        # subtitles stored in download item in a dictionary format
+        # template: subtitles = {language1:[sub1, sub2, ...], language2: [sub1, ...]}, where sub = {'url': 'xxx', 'ext': 'xxx'}
+        # Example: {'en': [{'url': 'http://x.com/s1', 'ext': 'srv1'}, {'url': 'http://x.com/s2', 'ext': 'vtt'}], 'ar': [{'url': 'https://www.youtub}, {},...]
+
+        Returns:
+            (dict): e.g. {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
+        """
+
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        all_subtitles = d.prepare_subtitles()
+
+        # required format {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}
+        subs = {k: [item.get('ext', 'txt') for item in v] for k, v in all_subtitles.items()}
+
+        if subs:
+            return subs
+
+    def download_subtitles(self, subs, uid=None, video_idx=None):
+        """download multiple subtitles for the same download item
+        Args:
+            subs (dict): language name vs extension name
+            uid (str): video uid
+            video_idx (int): video index in self.playlist
+        """
+
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        all_subtitles = d.prepare_subtitles()
+
+        for lang, ext in subs.items():
+            items_list = all_subtitles.get(lang)
+            match = [item for item in items_list if item.get('ext') == ext]
+            if match:
+                item = match[-1]
+                url = item.get('url')
+
+                if url:
+                    run_thread(self._download_subtitle, lang, url, ext, d)
+
+    def open_file(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        open_file(d.target_file)
+
+    def open_temp_file(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        open_file(d.temp_file)
+
+    def open_folder(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        open_folder(d.folder)
+
+    def get_webpage_url(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        return d.url
+
+    def get_direct_url(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        return d.eff_url
+
+    def get_playlist_url(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        return d.playlist_url
+
+    def schedule_start(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        log('Not implemented')
+
+    def schedule_cancel(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        log('Not implemented')
+
+    def get_properties(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return 'No properties available!'
+
+        # General properties
+        text = f'Name: {d.name} \n' \
+               f'Folder: {d.folder} \n' \
+               f'Progress: {d.progress}% \n' \
+               f'Downloaded: {size_format(d.downloaded)} of {size_format(d.total_size)} \n' \
+               f'Status: {d.status} \n' \
+               f'Resumable: {d.resumable} \n' \
+               f'Type: {d.type}, {", ".join(d.subtype_list)}\n'
+
+        if d.type == 'video':
+            text += f'Protocol: {d.protocol} \n' \
+                    f'Video: {d.selected_quality}\n' \
+                    f'Audio: {d.audio_quality}'
+
+        return text
+
+    def get_d(self, uid=None, video_idx=None):
+        """get download item reference
+
+        Args:
+            uid (str): unique id for a download item
+            video_idx (int): index of a video download item in self.playlist
+
+        Returns:
+            (DownloadItem): if uid and video_idx omitted it will return self.d
+        """
+
+        if uid:
+            d = self.d_map.get(uid)
+        elif video_idx:
+            d = self.playlist[video_idx]
+        else:
+            d = self.d
+
+        return d
+
+    def auto_check_for_update(self):
+        run_thread(self._auto_check_for_update)
+
+    def check_for_pyidm_update(self):
+        run_thread(self._check_for_pyidm_update)
+
+    def check_for_ytdl_update(self):
+        run_thread(self._check_for_ytdl_update)
+
+    def rollback_ytdl_update(self):
+        run_thread(self._rollback_ytdl_update)
+
     def get_user_response(self, msg, options):
         """get user response from current view
-        msg: a message to show
-        options: a list of options, example: ['yes', 'no', 'cancel']"""
+
+        Args:
+            msg(str): a message to show
+            options (list): a list of options, example: ['yes', 'no', 'cancel']
+
+        Returns:
+            (str): response from user as a selected item from "options"
+        """
 
         response = self.view.get_user_response(msg, options)
 
@@ -592,4 +1248,14 @@ class Controller:
     def run(self):
         """run current "view" main loop"""
         self.view.run()
+        config.shutdown = True  # set global shutdown flag
+        config.ytdl_abort = True
+
+        # cancel all current downloads
+        print('Stop all downloads')
+        for d in self.d_map.values():
+            self.stop_download(d.uid)
+
+        self._save_settings()
+
 
