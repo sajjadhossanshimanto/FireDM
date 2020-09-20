@@ -38,36 +38,33 @@ in terminal which depend on controller
 
 ### Files:
 
-- **PyIDM.py:** main file, it will start "clipboard monitor thread",
-  "sys tray icon", then it will start application in either interactive
-  terminal mode or in gui mode.
+- **PyIDM.py:** main file, it will start application in either
+  interactive terminal mode or in gui mode.
 
 - **config.py:** Contains all shared variables and settings.
 
 - **utils.py:** all helper functions.
 
-- **gui.py:** This module has application gui, unfortunately the gui and
-  some application logic are mixed together in this module which makes
-  it a total mess.
+- **tkview.py:** This module has application gui, designed by tkinter.
 
 - **settings.py:** this where we save / load
   settings, and download items list
 
-- **brain.py:** every download item obect will be sent to brain to
+- **brain.py:** every download item object will be sent to brain to
   download it, this module has thread manager, and file manager
 
-- **cmdview.py:** an interactive user interface in terminal
+- **cmdview.py:** an interactive user interface run in terminal.
 
 - **controller.py:** a part of "MVC" design, where it will contain the
   application logic and communicate to both Model and view
 
-- **observables.py:** contains "ObservableDownloadItem",
+- **model.py:** contains "ObservableDownloadItem",
   "ObservableVideo" which acts as Model in "MVC" design with "observer"
-  design
+  design.
 
 - **downloaditem.py:** It has DownloadItem class which contains
   information for a download item, and you will find a lot of
-  DownloadItem objects in this project code named shortly as "d" or
+  DownloadItem objects in this project named shortly as "d" or
   "self.d".
 
 - **video.py:** it contains Video class which is subclassed from
@@ -75,7 +72,7 @@ in terminal which depend on controller
   function, e.g. merge_video_audio, pre_process_hls, etc...
 
 - **worker.py:** Worker class object acts as a standalone workers, every
-  worker responsible for downloading a chunk or file segment
+  worker responsible for downloading a chunk or file segment.
 
 - **update.py:** contains functions for updating PyIDM frozen version
   "currently cx_freeze windows portable version", also update
