@@ -8,13 +8,13 @@
 PyIDM is a python open source (Internet Download Manager) 
 with multi-connections, high speed engine, 
 it downloads general files and videos from youtube and tons of other streaming websites . <br>
-Developed in Python, based on "pyCuRL/libcurl", "youtube_dl", and "PySimpleGUI"
+Developed in Python, based on "LibCurl", and "youtube_dl".
 
-![main animation](https://user-images.githubusercontent.com/58998813/77242050-2d5d1c80-6c03-11ea-8151-b85a897ff9fb.gif)
+![screenshot](https://user-images.githubusercontent.com/58998813/92564079-e4fcee00-f278-11ea-83e1-9a272bc06b0f.png)
 
 ---
 **Features**:
-* High download speeds "based on libcurl" -
+* High download speeds "based on LibCurl" -
   [See Speed test of: aria2 vs PyIDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif)
 * Multi-connection downloading "Multithreading"
 * Automatic file segmentation.
@@ -30,7 +30,6 @@ Developed in Python, based on "pyCuRL/libcurl", "youtube_dl", and "PySimpleGUI"
 * Scheduling downloads
 * Re-using existing connection to remote server.
 * Clipboard Monitor.
-* Simple GUI interface with 140 themes available. "90s-looking GUI"
 * proxy support (http, https, socks4, and socks5).
 * user/pass authentication, referee link, use cookies, video thumbnail, subtitles, MD5 and SHA256 checksums
 * user can control a lot of options:
@@ -92,10 +91,8 @@ below are the requirements to run from source:
 
 Required python packages: 
 - [pycurl](http://pycurl.io/docs/latest/index.html): is a Python interface to libcurl / curl as our download engine,
-- [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI): a beautiful gui builder, 
-- [youtube_dl](https://github.com/ytdl-org/youtube-dl): famous youtube downloader, limited use for meta information extraction only but videos are downloaded using pycurl 
+- [youtube_dl](https://github.com/ytdl-org/youtube-dl): famous youtube downloader, limited use for meta information extraction only but videos are downloaded using pycurl
 - [certifi](https://github.com/certifi/python-certifi): required by 'pycurl' for validating the trustworthiness of SSL certificates,
-- [pyperclip](https://github.com/asweigart/pyperclip): A cross-platform clipboard module for monitoring url copied to clipboard, requires "xclip or xsel to be available on linux"
 - [plyer](https://github.com/kivy/plyer): for systray area notification.
 
 
@@ -109,26 +106,17 @@ pip install -r requirements.txt
 ```
 or
 ```
-python -m pip install --user --upgrade certifi PySimpleGUI pyperclip plyer youtube_dl pycurl pillow
+python -m pip install --user --upgrade certifi plyer youtube_dl pycurl pillow pystray
 ```
 
 
 
 ---
 
-**more snapshots**
+**more screenshots**
 
-![Main_tab](https://user-images.githubusercontent.com/58998813/77241027-b40afd00-6bf5-11ea-8854-c181d1f9c957.PNG)
-![d_window](https://user-images.githubusercontent.com/58998813/77240959-ec5e0b80-6bf4-11ea-819e-83bd7bd13249.PNG)
-![downloads_tab](https://user-images.githubusercontent.com/58998813/78214514-bb63bd80-74b5-11ea-8d13-e3fce537394d.PNG)
-![playlist_window](https://user-images.githubusercontent.com/58998813/77242155-12d77300-6c04-11ea-9e57-e781e67aaa3b.PNG)
-![setting_tab1](https://user-images.githubusercontent.com/58998813/78214405-75a6f500-74b5-11ea-838f-c7ad95b722ed.PNG)
-![setting_tab2](https://user-images.githubusercontent.com/58998813/78214411-793a7c00-74b5-11ea-9179-68902d5cffff.PNG)
-![setting_tab3](https://user-images.githubusercontent.com/58998813/78214419-7c356c80-74b5-11ea-869f-1560cf5e2f78.PNG)
-![Multi_window](https://user-images.githubusercontent.com/37757246/71418548-a2a46a00-2673-11ea-8101-c95d29b6a0e4.png)
-
-
-[view all screenshots with different themes](https://github.com/pyIDM/PyIDM/issues/13)
+![Main_tab](https://user-images.githubusercontent.com/58998813/92562020-939f2f80-f275-11ea-94ea-fe41c9c72abc.png)
+![sett_tab](https://user-images.githubusercontent.com/58998813/92562130-bfbab080-f275-11ea-990d-c869522ecbaa.png)
 
 
 ---
@@ -180,10 +168,6 @@ you should update youtube-dl module thru PyIDM setting tab or manually by
 python -m pip install youtube_dl --upgrade
 ```
 
-### note for pyperclip: <br>
-Pyperclip is a cross-platform Python module for copy and paste clipboard functions. it is being used if you want to monitor clipboard for files urls and it will be processed automatically by the application.
-On Linux, this module makes use of the xclip or xsel commands, which should come with the os. Otherwise run "sudo apt-get install xclip" on Debian like or "sudo pacman -S xclip" on archlinux
-
 ---
 
 ### Windows binaries: <br>
@@ -209,9 +193,12 @@ ChangeLog.txt is included in source code.
 1- by testing the application and opening
 [new issue](https://github.com/pyIDM/PyIDM/issues/new) for bug
 reporting, feature request, or suggestions.  
-2- check developer guidelines.  
-3- fork this repo and pull request  
-4- improve this readme file
+2- check
+[developer guidelines](https://github.com/pyIDM/PyIDM/blob/master/docs/developer_guide.md).  
+3- check
+[todo list](https://github.com/pyIDM/PyIDM/blob/master/todo.md).  
+4- check open issues, see if you can help.  
+5- fork this repo and pull request
 
 <br><br>
 
@@ -221,16 +208,19 @@ reporting, feature request, or suggestions.
 - [ghacks](https://www.ghacks.net/2020/08/13/pyidm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
 - [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/PyIDM.shtml)
 
-  *help edit this list
+  *help edit this list by writing a comment in
+  [this issue](https://github.com/pyIDM/PyIDM/issues/136)
 
 ---
 
 # Feedback:
-your feedback is most welcomed by filling a [new issue](https://github.com/pyIDM/PyIDM/issues/new) <br>
-or email me at: info.pyidm@gmail.com <br>
+your feedback is most welcomed by filling a
+[new issue](https://github.com/pyIDM/PyIDM/issues/new)  
+or email to: info.pyidm@gmail.com <br>
 
-Author, <br>
-Mahmoud Elshahat, <br>
+Author:  
+Mahmoud Elshahat  
 2019-2020
+
 
 ---
