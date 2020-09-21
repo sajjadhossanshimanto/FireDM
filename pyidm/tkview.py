@@ -1237,6 +1237,7 @@ class FileProperties(ttk.Frame):
 
 
 class Thumbnail(tk.Frame):
+    """Thumbnail image in home tab"""
     def __init__(self, parent):
         tk.Frame.__init__(self, parent, bg=THUMBNAIL_BG)
 
@@ -1269,7 +1270,7 @@ class Thumbnail(tk.Frame):
 
 
 class DItem(tk.Frame):
-    """representation view of one download item"""
+    """representation view of one download item in downloads tab"""
     default_img = None
 
     def __init__(self, parent, uid, bg=None, fg=None, bar_fg=None):
@@ -1513,7 +1514,7 @@ class CheckOption(tk.Checkbutton):
 
 
 class LabeledEntryOption(tk.Frame):
-
+    """an entry with a label for options in setting tab that will update global settings in config.py"""
     def __init__(self, parent, text, entry_key=None, set_text_validator=None, get_text_validator=None, bg=None, fg=None,
                  callback=None, **kwargs):
         bg = bg or atk.get_widget_attribute(parent, 'background')
@@ -1574,6 +1575,7 @@ class LabeledEntryOption(tk.Frame):
 
 
 class CheckEntryOption(tk.Frame):
+    """a check button with entry for options in setting tab that will update global settings in config.py"""
 
     def __init__(self, parent, text, entry_key=None, check_key=None, set_text_validator=None, get_text_validator=None,
                  entry_disabled_value='', bg=None, callback=None, fg=None, **kwargs):
@@ -1659,8 +1661,18 @@ class CheckEntryOption(tk.Frame):
 
 
 class PlaylistWindow(tk.Toplevel):
+    """class for downloading video playlist
+    """
 
     def __init__(self, main, playlist):
+        """initialize
+
+        Args:
+            main: main window class
+            playlist (iterable): video playlist, in case we have a huge playlist
+            e.g. https://www.youtube.com/watch?v=BZyjT5TkWw4&list=PL2aBZuCeDwlT56jTrxQ3FExn-dtchIwsZ  has 4000 videos
+            will show 40 page each page has 100 video
+        """
         self.main = main
         self.parent = main.root
         self.playlist = playlist or []
@@ -1679,18 +1691,15 @@ class PlaylistWindow(tk.Toplevel):
 
         self.s = ttk.Style()
 
-        # bind window close
+        # bind window close action
         self.protocol("WM_DELETE_WINDOW", self.close)
 
         width = 580
         height = 345
         center_window(self, width=width, height=height, reference=self.parent)
-        # self.geometry('580x345')
 
         self.title('Playlist download window')
         self.config(bg=SF_BG)
-
-        # self.transient(self.parent)
 
         self.create_widgets()
 
@@ -1736,6 +1745,8 @@ class PlaylistWindow(tk.Toplevel):
             item.grid_remove()
 
     def update_page_count(self):
+        """update page number e.g. 'Page: 1 of 40'
+        """
         self.page_count_var.set(f'Page: {self.current_page + 1} of {self.total_pages}')
 
     def refresh_items(self, start_idx):
@@ -1788,6 +1799,9 @@ class PlaylistWindow(tk.Toplevel):
             self.refresh_items(start_idx)
 
     def create_item(self, parent, idx, name):
+        """Create an item,
+        every item has video name label, stream quality combobox, and a progressbar
+        """
         item = tk.Frame(parent, bg=MAIN_BG)
         item.columnconfigure(0, weight=1)
         item.columnconfigure(1, weight=1)
@@ -1872,8 +1886,15 @@ class PlaylistWindow(tk.Toplevel):
 
 
 class SubtitleWindow(tk.Toplevel):
+    """Download subtitles window"""
 
     def __init__(self, main, subtitles):
+        """initialize
+
+        Args:
+            main: main window class
+            subtitles (dict): subtitles, key=language, value=list of extensions, e.g. {en: ['srt', 'vtt'], ar: [...]}
+        """
         self.main = main
         self.parent = main.root
         self.subtitles = subtitles or {}
@@ -1888,12 +1909,9 @@ class SubtitleWindow(tk.Toplevel):
         width = 580
         height = 345
         center_window(self, width=width, height=height, reference=self.parent)
-        # self.geometry('580x345')
 
         self.title('Subtitles download window')
         self.config(bg=SF_BG)
-
-        # self.transient(self.parent)
 
         self.create_widgets()
 
