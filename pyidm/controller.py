@@ -84,7 +84,6 @@ class Controller:
         # d_map is a dictionary that map uid to download item object
         self.d_map = {}
 
-        self.d_list = []
         self.active_downloads = []
         self.pending_downloads = []
 
@@ -714,7 +713,6 @@ class Controller:
         self._update_view(**info)
 
     def _get_d_list(self):
-        # for d in self.d_list:
         for d in self.d_map.values():
             time.sleep(0.1)
             self._report_d(d, command='d_list')
@@ -930,9 +928,9 @@ class Controller:
             uid (str): unique identifier property for a download item in self.d_map
         """
 
-        d = self.d_map[uid]
+        d = self.d_map.get(uid)
 
-        if d.status != Status.completed:
+        if d and d.status != Status.completed:
             d.status = Status.cancelled
 
     def select_playlist_video(self, idx, active=True):
@@ -1042,13 +1040,6 @@ class Controller:
         d = self.d_map.pop(uid)
 
         d.status = Status.cancelled
-
-        # # fix id's
-        # for i, d in enumerate(self.d_list):
-        #     d.id = i
-
-        # should send a refresh info to view
-        # self.get_d_list()
 
         # delete files
         run_thread(d.delete_tempfiles())
