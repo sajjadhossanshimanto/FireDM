@@ -15,8 +15,7 @@ from urllib.parse import urljoin
 
 from . import config
 from .downloaditem import DownloadItem, Segment
-from .utils import (log, validate_file_name, get_headers, size_format, run_command, size_splitter, get_seg_size,
-                    delete_file, download, rename_file)
+from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file)
 
 
 # todo: change docstring to google format and clean unused code
@@ -277,8 +276,8 @@ class Video(DownloadItem):
         self.update_param()
 
     def get_thumbnail(self):
-        if self.thumbnail_url and not self.thumbnail:
-            self.thumbnail = process_thumbnail(self.thumbnail_url)
+        """get thumbnail, will be implemented in subclass"""
+        raise Exception('get_thumbnail is Not Implemented in base class "Video"')
 
     def update_param(self):
         """Mainly used when select a stream for current video object"""
