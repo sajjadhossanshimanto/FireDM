@@ -633,7 +633,7 @@ class Popup(tk.Toplevel):
 
     """
     def __init__(self, *args, buttons=None, parent=None, title='Attention', get_user_input=False, default_user_input='',
-                 bg=None, fg=None):
+                 bg=None, fg=None, custom_widget=None):
         """initialize
 
         Args:
@@ -645,6 +645,7 @@ class Popup(tk.Toplevel):
             default_user_input (str): what to display in entry widget if get_user_input is True
             bg (str): background color
             fg (str): text color
+            custom_widget: any tk widget you need to add to popup window
 
         """
         self.parent = parent
@@ -655,6 +656,7 @@ class Popup(tk.Toplevel):
         self.window_title = title
         self.get_user_input = get_user_input
         self.default_user_input = default_user_input
+        self.custom_widget = custom_widget
 
         # entry variable
         self.user_input = tk.StringVar()
@@ -717,6 +719,10 @@ class Popup(tk.Toplevel):
 
         # separator
         ttk.Separator(main_frame, orient='horizontal').pack(side='bottom', fill='x')
+
+        # custom widget
+        if self.custom_widget:
+            self.custom_widget.pack(side='bottom', fill='x')
 
         # get user input
         if self.get_user_input:
@@ -1977,6 +1983,78 @@ class SubtitleWindow(tk.Toplevel):
         self.close()
 
 
+class AudioWindow(tk.Toplevel):
+    """window for Manual audio selection for dash video"""
+
+    def __init__(self, main, audio_menu, selected_idx):
+        """initialize
+
+        Args:
+            main: main window class
+            audio_menu (eterable): list of audio names
+            selected_idx (int): selected audio stream index
+        """
+        self.main = main
+        self.parent = main.root
+        self.audio_menu = audio_menu or []
+        self.selected_idx = selected_idx or 0
+
+        # initialize super
+        tk.Toplevel.__init__(self, self.parent)
+
+        # bind window close
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
+        width = 580
+        height = 345
+        center_window(self, width=width, height=height, reference=self.parent)
+
+        self.title('Manual Audio selection for dash video')
+        self.config(bg=SF_BG)
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        main_frame = tk.Frame(self, bg=MAIN_BG)
+
+        top_frame = tk.Frame(main_frame, bg=MAIN_BG)
+        middle_frame = atk.ScrollableFrame(main_frame, bg=MAIN_BG, hscroll=False)
+        bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
+
+        tk.Label(top_frame, text='Select audio stream:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+
+        self.selection_var = tk.IntVar()
+        self.selection_var.set(self.selected_idx)
+
+        for idx, audio in enumerate(self.audio_menu):
+            item = atk.Radiobutton(middle_frame, text=audio, variable=self.selection_var, value=idx)
+            item.pack(padx=5, pady=5, anchor='w')
+
+            atk.scroll_with_mousewheel(item, target=middle_frame, apply_to_children=True)
+
+        Button(bottom_frame, text='Cancel', command=self.close).pack(side='right', padx=5)
+        Button(bottom_frame, text='Ok', command=self.select_audio).pack(side='right')
+
+        main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
+
+        bottom_frame.pack(side='bottom', fill='x', pady=5)
+        ttk.Separator(main_frame).pack(side='bottom', fill='x', expand=True)
+        middle_frame.pack(side='bottom', expand=True, fill='both')
+        ttk.Separator(main_frame).pack(side='bottom', fill='x', expand=True)
+        top_frame.pack(side='bottom', fill='x')
+
+    def close(self):
+        self.destroy()
+        self.main.subtitles_window = None
+
+    def select_audio(self):
+        idx = self.selection_var.get()
+        if idx is not None:
+            self.main.controller.select_audio(idx)
+
+        self.close()
+
+
 class MainWindow(IView):
     """Main GUI window
 
@@ -2199,7 +2277,7 @@ class MainWindow(IView):
 
         # retry button -------------------------------------------------------------------------------------------------
         self.refresh_img = atk.create_image(b64=refresh_icon, color=PBAR_FG)
-        self.retry_btn = Button(home_tab, image=self.refresh_img, command=lambda: self.process_url(self.url))
+        self.retry_btn = Button(home_tab, image=self.refresh_img, command=lambda: self.refresh_url(self.url))
         # self.retry_btn.image = retry_img
         self.retry_btn.grid(row=0, column=4, padx=(0, 5), pady=(40, 5))
 
@@ -2232,7 +2310,7 @@ class MainWindow(IView):
         self.file_properties.grid(row=2, column=0, columnspan=3, rowspan=1, sticky='wes', padx=5, pady=10)
 
         # download button ----------------------------------------------------------------------------------------------
-        Button(home_tab, text='Download', command=lambda: self.download(name=self.file_properties.name.get()),
+        Button(home_tab, text='Download', command=self.download_btn_callback,
                font='any 12').grid(row=2, column=3, padx=1, pady=5, sticky='es')
 
         return home_tab
@@ -2401,7 +2479,7 @@ class MainWindow(IView):
         # limit lines in log output to save memory, one line around 100 characters, 1000 lines will be 100000 chars
         # around 100 KB in memory
         self.log_text = atk.ScrolledText(tab, max_chars=100000, bg=bg, fg=fg, bd=1, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG,
-                                         highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=20,
+                                         highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=5,
                                          )
 
         btn_frame = tk.Frame(tab, bg=MAIN_BG)
@@ -2454,7 +2532,7 @@ class MainWindow(IView):
         right_click_map = {'Open File': lambda x: self.controller.open_file(uid=x),
                            'Open File Location': lambda x: self.controller.open_folder(uid=x),
                            '▶ Watch while downloading': lambda x: self.controller.open_temp_file(uid=x),
-                           'Refresh url': lambda x: self.copy(self.controller.get_webpage_url(uid=x)),
+                           'Refresh url': lambda x: self.refresh_url(self.controller.get_webpage_url(uid=x)),
                            'copy webpage url': lambda x: self.copy(self.controller.get_webpage_url(uid=x)),
                            'copy direct url': lambda x: self.copy(self.controller.get_direct_url(uid=x)),
                            'copy playlist url': lambda x: self.copy(self.controller.get_playlist_url(uid=x)),
@@ -2511,9 +2589,24 @@ class MainWindow(IView):
         sl = get_option('speed_limit', 0)
         text = size_format(sl) if sl else '.. No Limit!'
         self.speed_limit_label.config(text=f'current value: {text}')
+
     # endregion
 
     # region download
+    def download_btn_callback(self):
+        """callback for download button in main tab"""
+        # select audio for dash video
+        if config.manually_select_dash_audio:
+            menu = self.controller.get_audio_menu()
+            if menu:
+                selected_audio = self.controller.get_selected_audio()
+                idx = menu.index(selected_audio) if selected_audio else 0
+
+                AudioWindow(self, menu, idx)
+
+        # download
+        self.download(name=self.file_properties.name.get())
+
     def resume_download(self, uid):
         """start / resume download for a download item
 
@@ -2858,6 +2951,13 @@ class MainWindow(IView):
     # endregion
 
     # region url, clipboard
+    def refresh_url(self, url):
+        self.url_var.set('')
+        self.url_var.set(url)
+
+        # select home tab
+        self.select_tab('Home')
+
     def url_change_handler(self, event):
         """update url entry contents when new url copied to clipboard"""
 

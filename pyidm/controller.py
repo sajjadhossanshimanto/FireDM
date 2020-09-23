@@ -1189,6 +1189,59 @@ class Controller:
 
         return text
 
+    def get_audio_menu(self, uid=None, video_idx=None):
+        """get audio menu "FOR DASH VIDEOS ONLY"
+        Args:
+            uid: unique video uid
+            video_idx (int): index of video in self.playlist
+
+        Returns:
+            (list): list of audio streams
+        """
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d or not d.audio_streams or 'dash' not in d.subtype_list:
+            return None
+
+        audio_menu = [stream.name for stream in d.audio_streams]
+        return audio_menu
+
+    def get_selected_audio(self, uid=None, video_idx=None):
+        """send selected audio
+        Args:
+            uid: unique video uid
+            video_idx (int): index of video in self.playlist
+
+        Returns:
+            (str): name of selected audio streams
+        """
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d or not d.audio_streams:
+            return None
+
+        return d.audio_stream.name
+
+    def select_audio(self, audio_idx, uid=None, video_idx=None):
+        """select audio from audio menu
+        Args:
+            audio_idx (int): index of audio stream
+            uid: unique video uid
+            video_idx (int): index of video in self.playlist
+        """
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d or not d.audio_streams:
+            return None
+
+        selected_audio_stream = d.audio_streams[audio_idx]
+
+        d.select_audio(selected_audio_stream)
+        log('Selected audio:', selected_audio_stream)
+
     def get_d(self, uid=None, video_idx=None):
         """get download item reference
 
