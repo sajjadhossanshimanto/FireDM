@@ -2394,8 +2394,8 @@ class MainWindow(IView):
         self.proxy_type_var.set(get_option('proxy_type', 'http'))
 
         def proxy_type_option(text):
-            tk.Radiobutton(proxy_frame, text=text, value=text, variable=self.proxy_type_var, bg=bg, fg=fg,
-                           highlightthickness=0, activebackground=bg, activeforeground=fg, selectcolor=bg).pack(side='left', padx=2)
+            atk.Radiobutton(proxy_frame, text=text, value=text, variable=self.proxy_type_var, bg=bg,
+                            fg=fg).pack( side='left', padx=2)
 
         proxy_type_option('http')
         proxy_type_option('https')
