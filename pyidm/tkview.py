@@ -2425,7 +2425,7 @@ class MainWindow(IView):
         separator()
 
         # advanced -----------------------------------------------------------------------------------------------------
-        heading('Advanced:')
+        heading('Debugging:')
         CheckOption(tab, 'keep temp files / folders after done downloading for debugging.', key='keep_temp').pack(anchor='w')
         CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"', key='TEST_MODE').pack(anchor='w')
         CheckOption(tab, 'Use ThreadPoolExecutor instead of individual threads', key='use_thread_pool_executor').pack(anchor='w')
@@ -2485,11 +2485,16 @@ class MainWindow(IView):
                                          highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=5,
                                          )
 
+        def copy_log():
+            self.copy(self.log_text.get(1.0, tk.END))
+            self.msgbox('Log text copied to clipboard')
+
         btn_frame = tk.Frame(tab, bg=MAIN_BG)
         tk.Label(btn_frame, text='Log:', bg=MAIN_BG, fg=BTN_BG, font='any 10 bold').pack(side='left')
         Button(btn_frame, text='Clear', command=self.log_text.clear).pack(side='right', padx=5)
-        Button(btn_frame, text='Folder', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
-        Button(btn_frame, text='Log File', command=open_log_file).pack(side='right', padx=5)
+        # Button(btn_frame, text='Folder', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
+        # Button(btn_frame, text='Log File', command=open_log_file).pack(side='right', padx=5)
+        Button(btn_frame, text='copy Log', command=copy_log).pack(side='right', padx=5)
 
         btn_frame.pack(pady=5, expand=True, fill='x')
         self.log_text.pack(expand=True, fill='both')
