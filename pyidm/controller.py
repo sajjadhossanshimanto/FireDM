@@ -17,6 +17,7 @@
 
 
 import os, sys, time
+from copy import copy
 from threading import Thread
 from queue import Queue
 from datetime import date
@@ -84,8 +85,7 @@ class Controller:
         # d_map is a dictionary that map uid to download item object
         self.d_map = {}
 
-        self.active_downloads = []
-        self.pending_downloads = []
+        self.pending_downloads_q = Queue()
 
         # load application settings
         self._load_settings(custom_settings)
@@ -105,6 +105,20 @@ class Controller:
 
         # import youtube-dl in a separate thread
         Thread(target=video.import_ytdl, daemon=True).start()
+
+        # handle pending downloads
+        Thread(target=self._pending_downloads_handler, daemon=True).start()
+
+    def _pending_downloads_handler(self):
+        """handle pending downloads, should run in a dedicated thread"""
+
+        while True:
+            active_downloads = len([d for d in self.d_map.values() if d.status in (Status.downloading, Status.processing)])
+            if active_downloads < config.max_concurrent_downloads:
+                d = self.pending_downloads_q.get()
+                self._download(d, silent=True)
+
+            time.sleep(3)
 
     def observer(self, **kwargs):
         """This is an observer method which get notified when change/update properties in ObservableDownloadItem
@@ -418,24 +432,6 @@ class Controller:
             log("File name can't be empty!!", start='', showpopup=True)
             return False
 
-        # check if file with the same name exist in destination
-        if os.path.isfile(d.target_file):
-            # auto rename option
-            if config.auto_rename:
-                d.name = auto_rename(d.name, d.folder)
-                log('File with the same name exist in download folder, generate new name:', d.name)
-            else:
-                #  show dialogue
-                msg = 'File with the same name already exists \n' + d.target_file + '\nDo you want to overwrite file?'
-                options = ['Overwrite', 'Cancel download']
-                response = self.get_user_response(msg, options)
-
-                if response != options[0]:
-                    log('Download cancelled by user')
-                    return False
-                else:
-                    delete_file(d.target_file)
-
         # search current list for previous item with same name, folder ---------------------------
         if d.uid in self.d_map:
 
@@ -489,15 +485,31 @@ class Controller:
         else:  # new file
             log('fresh file download')
 
+        # check if file with the same name exist in destination
+        if os.path.isfile(d.target_file):
+            # auto rename option
+            if config.auto_rename:
+                d = copy(d)
+                d.name = auto_rename(d.name, d.folder)
+                d.calculate_uid()
+                log('File with the same name exist in download folder, generate new name:', d.name)
+                self._download(d)
+                return False
+            else:
+                #  show dialogue
+                msg = 'File with the same name already exists \n' + d.target_file + '\nDo you want to overwrite file?'
+                options = ['Overwrite', 'Cancel download']
+                response = self.get_user_response(msg, options)
+
+                if response != options[0]:
+                    log('Download cancelled by user')
+                    return False
+                else:
+                    delete_file(d.target_file)
+
         # add to download map
         self.d_map[d.uid] = d
         # ------------------------------------------------------------------
-
-        # if max concurrent downloads exceeded, this download job will be added to pending queue
-        if len(self.active_downloads) >= config.max_concurrent_downloads:
-            d.status = Status.pending
-            self.pending_downloads.append(d)
-            return False
 
         # if above checks passed will return True
         return True
@@ -583,6 +595,14 @@ class Controller:
 
                 # register observer
                 d.register_callback(self.observer)
+
+                # if max concurrent downloads exceeded, this download job will be added to pending queue
+                active_downloads = len(
+                    [d for d in self.d_map.values() if d.status in (Status.downloading, Status.processing)])
+                if active_downloads >= config.max_concurrent_downloads:
+                    d.status = Status.pending
+                    self.pending_downloads_q.put(d)
+                    return
 
                 # start brain in a separate thread
                 if config.SIMULATOR:
@@ -1174,7 +1194,8 @@ class Controller:
             return 'No properties available!'
 
         # General properties
-        text = f'Name: {d.name} \n' \
+        text = f'UID: {d.uid} \n' \
+               f'Name: {d.name} \n' \
                f'Folder: {d.folder} \n' \
                f'Progress: {d.progress}% \n' \
                f'Downloaded: {size_format(d.downloaded)} of {size_format(d.total_size)} \n' \
