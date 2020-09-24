@@ -2014,6 +2014,9 @@ class AudioWindow(tk.Toplevel):
 
         self.create_widgets()
 
+        # block and wait for window to close
+        self.wait_window(self)
+
     def create_widgets(self):
         main_frame = tk.Frame(self, bg=MAIN_BG)
 
