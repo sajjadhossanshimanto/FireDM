@@ -97,6 +97,9 @@ class DownloadItem:
                        config.Status.processing: ['↯', '↯↯', '↯↯↯'], config.Status.error: ['err']}
 
     def __init__(self, id_=None, url='', name='', folder=''):
+        # unique name for download item, will be calculated based on name and target folder
+        self.uid = None
+
         self.id = id_
         self.title = ''  # file name without extension
         self._name = name
@@ -374,6 +377,11 @@ class DownloadItem:
         return name
 
     @property
+    def temp_folder(self):
+        name = f'pyidm_{self.uid}'
+        return os.path.join(self.folder, name)
+
+    @property
     def target_file(self):
         """return file name including path"""
         return os.path.join(self.folder, self.name)
@@ -382,17 +390,14 @@ class DownloadItem:
     def temp_file(self):
         """return temp file name including path"""
         name = f'_temp_{self.name}'.replace(' ', '_')
-        return os.path.join(self.folder, name)
+        return os.path.join(self.temp_folder, name)
 
     @property
     def audio_file(self):
         """return temp file name including path"""
         name = f'audio_for_{self.name}'.replace(' ', '_')
-        return os.path.join(self.folder, name)
+        return os.path.join(self.temp_folder, name)
 
-    @property
-    def temp_folder(self):
-        return f'{self.temp_file}_parts_'
 
     @property
     def i(self):

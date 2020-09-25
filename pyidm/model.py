@@ -10,7 +10,6 @@
         this module contains an observables data models
 """
 
-
 from .downloaditem import DownloadItem
 from .video import Video
 from . import utils
@@ -51,15 +50,15 @@ class Observable:
         # self.__dict__[key] = value  # don't use this because it doesn't work well with decorated properties
 
         if value != old_value:
+            # calculate uid if name or folder changed
+            if key in ('name', 'folder'):
+                self.calculate_uid()
+
             self.notify(key, value)
 
     def notify(self, key, value):
         if key in self.watch_list:
             self._notify(**{'uid': self.uid, key: value})
-
-        # calculate uid if name or folder changed
-        if key in ('name', 'folder'):
-            self.calculate_uid()
 
     def _notify(self, **kwargs):
         """execute registered callbacks"""

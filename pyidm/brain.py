@@ -114,6 +114,10 @@ def brain(d=None, downloader=None):
 
 
 def file_manager(d, keep_segments=True):
+    # create temp folder if it doesn't exist
+    if not os.path.isdir(d.temp_folder):
+        os.mkdir(d.temp_folder)
+
     # create temp files, needed for future opening in 'rb+' mode otherwise it will raise file not found error
     temp_files = set([seg.tempfile for seg in d.segments])
     for file in temp_files:
