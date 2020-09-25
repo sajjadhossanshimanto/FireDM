@@ -2613,7 +2613,7 @@ class MainWindow(IView):
                 AudioWindow(self, menu, idx)
 
         # download
-        self.download(name=self.file_properties.name.get())
+        self.download(name=self.file_properties.name.get(), folder=self.file_properties.folder.get())
 
     def resume_download(self, uid):
         """start / resume download for a download item
