@@ -1221,7 +1221,7 @@ class Controller:
         # get download item
         d = self.get_d(uid, video_idx)
 
-        if not d or not d.audio_streams or 'dash' not in d.subtype_list:
+        if not d or d.type != 'video' or not d.audio_streams or 'dash' not in d.subtype_list:
             return None
 
         audio_menu = [stream.name for stream in d.audio_streams]
