@@ -78,8 +78,7 @@ class Controller:
     def __init__(self, view_class, custom_settings=None):
         self.observer_q = Queue()  # queue to collect references for updated download items
 
-        # create youtube-dl object
-        # self.ydl = youtube_dl.YoutubeDL(get_ytdl_options())
+        # youtube-dl object
         self.ydl = None
 
         # d_map is a dictionary that map uid to download item object
@@ -100,7 +99,7 @@ class Controller:
         # create view
         self.view = view_class(controller=self)
 
-        # notifier thread, it will run in a different thread waiting on observer_q and call self._notify
+        # observer thread, it will run in a different thread waiting on observer_q and call self._update_view
         Thread(target=self._observer, daemon=True).start()
 
         # import youtube-dl in a separate thread
@@ -157,7 +156,7 @@ class Controller:
             self.view.update_view(**kwargs)
             # print('controller._update_view:', kwargs)
         except Exception as e:
-            log('controller._notify()> error, ', e)
+            log('controller._update_view()> error, ', e)
             # raise e
 
     def _load_settings(self, custom_settings=None):
@@ -1195,7 +1194,7 @@ class Controller:
 
         # General properties
         text = f'UID: {d.uid} \n' \
-               f'Name: {d.name} \n' \
+               f'Name: {d.rendered_name} \n' \
                f'Folder: {d.folder} \n' \
                f'Progress: {d.progress}% \n' \
                f'Downloaded: {size_format(d.downloaded)} of {size_format(d.total_size)} \n' \
