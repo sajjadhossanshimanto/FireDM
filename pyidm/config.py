@@ -103,9 +103,8 @@ log_recorder_q = Queue()
 use_cookies = False
 cookie_file_path = ''
 
-# systray
-close_action = 'quit'  # close, minimize, to systray, or quit and close systray  # to be removed
-systray_active = False  # to be removed
+# systray, it will be disabled by default since it doesn't work properly on most operating systems except Windows.
+enable_systray = True if operating_system == 'Windows' else False
 minimize_to_systray = False
 
 # youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.import_ytdl()
@@ -168,7 +167,8 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'update_frequency', 'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy',
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
-                 'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update', 'minimize_to_systray']
+                 'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
+                 'minimize_to_systray', 'enable_systray']
 
 
 # -------------------------------------------------------------------------------------

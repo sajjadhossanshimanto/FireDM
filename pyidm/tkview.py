@@ -2357,7 +2357,8 @@ class MainWindow(IView):
         Button(themes_frame, text='New', command=self.new_theme).pack(side='right', padx=5)
         Button(themes_frame, text='Edit', command=self.edit_theme).pack(side='right', padx=5)
 
-        CheckOption(tab, 'Minimize to systray when close application', key='minimize_to_systray').pack(anchor='w')
+        CheckOption(tab, 'Enable systray icon "requires application restart"', key='enable_systray').pack(anchor='w')
+        CheckOption(tab, 'Minimize to systray when closing application window', key='minimize_to_systray').pack(anchor='w')
         CheckOption(tab, 'Monitor clipboard for copied urls', key='monitor_clipboard').pack(anchor='w')
         CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
@@ -2885,7 +2886,10 @@ class MainWindow(IView):
         run_thread(url_watchdog, self.root, daemon=True)
 
         # run systray
-        run_thread(self.systray.run, daemon=True)
+        if config.enable_systray:
+            run_thread(self.systray.run, daemon=True)
+        else:
+            log('systray disabled in settings ...')
 
         # update youtube-dl version info once gets loaded
         self.update_youtube_dl_info()
