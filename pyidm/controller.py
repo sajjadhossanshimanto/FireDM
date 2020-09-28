@@ -444,10 +444,9 @@ class Controller:
 
             if not silent:
                 #  show dialogue
-                msg = f'File with the same name: \n{d.name},\n already exist in download list\n' \
-                      'Do you want to resume this file?\n\n' \
-                      'if you need a fresh download, you should change file name \n' \
-                      'or target folder or delete same entry from download list \nor check "auto-rename" in settings'
+                msg = f'File with the same name: \n{d.name},\n' \
+                      f'already exist in download list,\n' \
+                      'Do you want to resume this file?\n\n'
 
                 response = self.get_user_response(msg, ['Resume', 'Overwrite', 'Cancel'])
 
