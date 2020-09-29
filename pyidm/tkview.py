@@ -2425,10 +2425,21 @@ class MainWindow(IView):
         LabeledEntryOption(login_frame, 'Pass:', entry_key='password', show='*').pack(side='left', padx=5)
         login_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
+        # cookies ---------------------------------------------
+        def get_cookie_file(target):
+            """get cookie file path"""
+            fp = filedialog.askopenfilename()
+            if fp:
+                target.set(fp)
+
+        cookies_frame = tk.Frame(tab, bg=MAIN_BG)
+        cookies = CheckEntryOption(cookies_frame, 'Cookies file:', check_key='use_cookies', entry_key='cookie_file_path')
+        cookies.pack(side='left', expand=True, fill='x')
+        Button(cookies_frame, text='...', transparent=True, command=lambda: get_cookie_file(cookies)).pack(side='left')
+        cookies_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
+
         CheckEntryOption(tab, 'Referee url:', check_key='use_referer',
                          entry_key='referer_url').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
-        CheckEntryOption(tab, 'Cookies file:', check_key='use_cookies',
-                         entry_key='cookie_file_path').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         separator()
 
