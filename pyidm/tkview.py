@@ -1135,7 +1135,10 @@ class FileProperties(ttk.Frame):
         self.config(style=self.style)
 
         # variables
-        self.name = tk.StringVar()
+        self.raw_name = ''  # name without processing
+        self.name = tk.StringVar()  # file's rendered name to fix arabic display on linux, "refer to DownloadItem"
+        self.name.get = lambda: self.raw_name  # return raw name instead of rendered name
+
         self.folder = tk.StringVar()
         self.size = tk.StringVar()
         self.type = tk.StringVar()
@@ -1189,7 +1192,8 @@ class FileProperties(ttk.Frame):
         'type': 'video', 'subtype_list': ['dash', 'fragmented'], 'resumable': True, 'total_size': 100000}
 
         """
-        name = kwargs.get('rendered_name', None)
+        name = kwargs.get('name', None)
+        rendered_name = kwargs.get('rendered_name', None)
         size = kwargs.get('total_size', None)
         folder = kwargs.get('folder', None)
         type_ = kwargs.get('type', '')
@@ -1197,7 +1201,10 @@ class FileProperties(ttk.Frame):
         resumable = kwargs.get('resumable', '')
 
         if name:
-            self.name.set(name)
+            self.raw_name = name
+
+        if rendered_name:
+            self.name.set(rendered_name)
         if folder:
             self.folder.set(folder)
         if size is not None:
