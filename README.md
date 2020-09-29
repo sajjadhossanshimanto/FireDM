@@ -39,8 +39,11 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
     - Max. Concurrent downloads.
     - Max. connections per download.
 
-
 ---
+# How to use PyIDM:
+Refer to user guide at https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md
+
+----------------------
 # How to install PyIDM?
 You have 3 options to run PyIDM on your operating system:
 
