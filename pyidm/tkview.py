@@ -1463,15 +1463,14 @@ class DItem(tk.Frame):
             if extension:
                 self.thumbnail_label['text'] = extension.replace('.', '').upper()
 
-            if status:
-                self.status.set(status)
-                # if status != config.Status.downloading:
-                #     self.eta.set('')
-                #     self.speed.set('')
-
             if 'errors' in kwargs:
                 errors = kwargs['errors']
                 self.error_lbl['text'] = f'[{errors} connection errors!]' if errors else ''
+
+            if status:
+                self.status.set(status)
+                if status == config.Status.completed:
+                    self.error_lbl['text'] = ''
         except:
             raise
 
