@@ -1471,8 +1471,10 @@ class DItem(tk.Frame):
                 self.status.set(status)
                 if status == config.Status.completed:
                     self.error_lbl['text'] = ''
-        except:
-            raise
+        except Exception as e:
+            log('DItem.update()> error:', e)
+            if config.TEST_MODE:
+                raise e
 
 
 class Checkbutton(tk.Checkbutton):
