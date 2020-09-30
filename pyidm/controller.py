@@ -115,7 +115,8 @@ class Controller:
             active_downloads = len([d for d in self.d_map.values() if d.status in (Status.downloading, Status.processing)])
             if active_downloads < config.max_concurrent_downloads:
                 d = self.pending_downloads_q.get()
-                self._download(d, silent=True)
+                if d.status == Status.pending:
+                    self._download(d, silent=True)
 
             time.sleep(3)
 
