@@ -369,6 +369,9 @@ class DownloadItem:
         # fix tkinter bad arabic language display in linux
         if config.operating_system == 'Linux':
             try:
+                if not self.title:
+                    self.title, self.extension = os.path.splitext(self.name)
+
                 name = arabic_renderer(self.title)
                 name += self.extension
             except:
