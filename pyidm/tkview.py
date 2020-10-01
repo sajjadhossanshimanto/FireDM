@@ -2375,6 +2375,12 @@ class MainWindow(IView):
         # CheckOption(tab, 'Auto close download window after finish downloading', key='auto_close_download_window').pack(anchor='w')
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
 
+        sett_folder_frame = tk.Frame(tab, bg=bg)
+        sett_folder_frame.pack(anchor='w', expand=True, fill='x')
+        tk.Label(sett_folder_frame, text='Settings Folder:', bg=bg, fg=fg).pack(side='left')
+        tk.Label(sett_folder_frame, text=config.sett_folder, bg=bg, fg=fg).pack(side='left')
+        Button(sett_folder_frame, text='Open', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
+
         separator()
 
         # Network ------------------------------------------------------------------------------------------------------
