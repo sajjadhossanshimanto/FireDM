@@ -12,6 +12,7 @@ import hashlib
 import importlib
 import os
 import io
+import webbrowser
 from threading import Thread
 
 import pycurl
@@ -1103,6 +1104,17 @@ def open_log_file():
     open_file(file)
 
 
+def open_webpage(url):
+    """open webpage in default browser
+    Args:
+        url(str): webpage url
+    """
+    try:
+        webbrowser.open_new(url)
+    except Exception as e:
+        log('utils.open_webpage()> error:', e)
+
+
 __all__ = [
     'notify', 'handle_exceptions', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name',
     'size_splitter', 'delete_folder', 'get_seg_size', 'run_command', 'print_object', 'update_object', 'truncate',
@@ -1111,6 +1123,6 @@ __all__ = [
     'parse_bytes', 'set_curl_options', 'version_value',
     'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
     'calc_sha256', 'get_range_list', 'arabic_renderer', 'get_thumbnail', 'resize_image', 'run_thread', 'generate_unique_name',
-    'open_log_file'
+    'open_log_file', 'open_webpage'
 
 ]

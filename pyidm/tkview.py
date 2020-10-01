@@ -2477,7 +2477,12 @@ class MainWindow(IView):
         self.pyidm_update_note.set(f'PyIDM version: {config.APP_VERSION}')
         lbl(self.pyidm_update_note).grid(row=1, column=1, columnspan=2, sticky='w')
 
-        Button(update_frame, text='About!', command=lambda: self.msgbox(about_notes)).grid(row=1, column=3, sticky='w', pady=5, padx=(20, 5))
+        def show_about_notes():
+            res = self.popup(about_notes, buttons=['Close', 'Help!'], title='About PyIDM')
+            if res == 'Help!':
+                open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
+
+        Button(update_frame, text='About!', command=show_about_notes).grid(row=1, column=3, sticky='w', pady=5, padx=(20, 5))
 
         # youtube-dl update
         Button(update_frame, image=self.refresh_img, command=self.check_for_ytdl_update).grid(row=2, column=0, sticky='e', pady=5, padx=(20, 5))
@@ -2508,8 +2513,7 @@ class MainWindow(IView):
         # limit lines in log output to save memory, one line around 100 characters, 1000 lines will be 100000 chars
         # around 100 KB in memory
         self.log_text = atk.ScrolledText(tab, max_chars=100000, bg=bg, fg=fg, bd=1, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG,
-                                         highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=5,
-                                         )
+                                         highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=5)
 
         def copy_log():
             self.copy(self.log_text.get(1.0, tk.END))
