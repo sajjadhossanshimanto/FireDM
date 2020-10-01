@@ -75,11 +75,16 @@ config.sett_folder = locate_setting_folder()
 
 
 def load_d_list():
-    """create and return a list of 'DownloadItem objects' based on data extracted from 'downloads.cfg' file"""
+    """deprecated: kept only to load download list for legacy versions starting from version equal or older
+    than 2020.9.26 .
+
+    create and return a list of 'DownloadItem objects' based on data extracted from 'downloads.cfg' file
+
+    """
     d_list = []
 
     try:
-        log('Load previous download items from', config.sett_folder)
+        # log('Load previous download items from', config.sett_folder)
 
         # get d_list
         file = os.path.join(config.sett_folder, 'downloads.cfg')
@@ -122,45 +127,9 @@ def load_d_list():
         return d_list
 
 
-def save_d_list(d_list):
-    try:
-        data = []
-        thumbnails = {}  # dictionary, key=d.id, value=base64 binary string for thumbnail
-        for i, d in enumerate(d_list):
-            dict_ = {key: d.__dict__.get(key) for key in d.saved_properties}
-            data.append(dict_)
+def load_d_map():
+    """create and return a dictionary of 'uid: DownloadItem objects' based on data extracted from 'downloads.dat' file
 
-            # thumbnails
-            if d.thumbnail:
-                # convert base64 byte to string is required because json can't handle byte objects
-                thumbnails[str(i)] = d.thumbnail.decode("utf-8")
-
-        # store d_list in downloads.cfg file
-        file = os.path.join(config.sett_folder, 'downloads.cfg')
-        with open(file, 'w') as f:
-            try:
-                json.dump(data, f)
-            except Exception as e:
-                print('error save d_list:', e)
-
-        # store thumbnails in thumbnails.cfg file
-        file = os.path.join(config.sett_folder, 'thumbnails.cfg')
-        with open(file, 'w') as f:
-            try:
-                json.dump(thumbnails, f)
-            except Exception as e:
-                print('error save thumbnails file:', e)
-
-        log('list saved')
-    except Exception as e:
-        handle_exceptions(e)
-
-
-def load_d_map(observer_callbacks):
-    """create and return a dictionary of 'uid: DownloadItem objects' based on data extracted from 'downloads.cfg' file
-
-    Args:
-        observer_callbacks (list or tuple): list of observers callbacks
     """
     d_map = {}
 
@@ -169,20 +138,20 @@ def load_d_map(observer_callbacks):
         log('Load previous download items from', config.sett_folder)
 
         # get data
-        file = os.path.join(config.sett_folder, 'downloads.cfg')
+        file = os.path.join(config.sett_folder, 'downloads.dat')
         with open(file, 'r') as f:
             # expecting a list of dictionaries
             data = json.load(f)
 
         # converting data to a map of uid: ObservableDownloadItem() objects
         for uid, d_dict in data.items():  # {'uid': d_dict, 'uid2': d_dict2, ...}
-            d = update_object(model.ObservableDownloadItem(observer_callbacks=observer_callbacks), d_dict)
+            d = update_object(model.ObservableDownloadItem(), d_dict)
             if d:  # if update_object() returned an updated object not None
                 d.uid = uid
                 d_map[uid] = d
 
         # get thumbnails
-        file = os.path.join(config.sett_folder, 'thumbnails.cfg')
+        file = os.path.join(config.sett_folder, 'thumbnails.dat')
         with open(file, 'r') as f:
             # expecting a list of dictionaries
             thumbnails = json.load(f)
@@ -201,7 +170,14 @@ def load_d_map(observer_callbacks):
             d.load_progress_info()
 
     except FileNotFoundError:
-        log('downloads.cfg file not found')
+        # check for legacy download.cfg file
+        log('downloads.dat file not found, looking for legacy "downloads.cfg" file')
+        d_list = load_d_list()
+
+        for d in d_list:
+            obs_d = update_object(model.ObservableDownloadItem(), d.__dict__)
+            d_map[obs_d.uid] = obs_d
+
     except Exception as e:
         log(f'load_d_map()>: {e}')
         raise e
@@ -225,7 +201,8 @@ def save_d_map(d_map):
                 thumbnails[d.uid] = d.thumbnail.decode("utf-8")
 
         # store d_map in downloads.cfg file
-        file = os.path.join(config.sett_folder, 'downloads.cfg')
+        file = os.path.join(config.sett_folder, 'downloads.dat')
+        print(file)
         with open(file, 'w') as f:
             try:
                 json.dump(data, f)
@@ -233,7 +210,7 @@ def save_d_map(d_map):
                 print('error save d_list:', e)
 
         # store thumbnails in thumbnails.cfg file
-        file = os.path.join(config.sett_folder, 'thumbnails.cfg')
+        file = os.path.join(config.sett_folder, 'thumbnails.dat')
         with open(file, 'w') as f:
             try:
                 json.dump(thumbnails, f)

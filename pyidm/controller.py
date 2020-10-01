@@ -169,24 +169,14 @@ class Controller:
             config.__dict__.update(custom_settings)
 
         # load d_map
-        # self.d_map = setting.load_d_map([self.observer, ])
-
-        # will use old function to stay compatible with old gui.py
-        d_list = setting.load_d_list()
-
-        for d in d_list:
-            obs_d = update_object(ObservableDownloadItem(), d.__dict__)
-            self.d_map[obs_d.uid] = obs_d
+        self.d_map = setting.load_d_map()
 
     def _save_settings(self):
         # Save setting to disk
         setting.save_setting()
 
         # save d_map
-        # setting.save_d_map(self.d_map)
-
-        # will use old function to stay compatible with old gui.py
-        setting.save_d_list(self.d_map.values())
+        setting.save_d_map(self.d_map)
 
     def _process_video_info(self, info):
         """process video info for a video object
