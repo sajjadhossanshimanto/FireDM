@@ -266,19 +266,22 @@ def file_manager(d, keep_segments=True):
             # write metadata
             if d.metadata_file_content and config.write_metadata:
                 log('file manager()> writing metadata info to:', d.name)
+                # create metadata file
+                metadata_filename = d.target_file + '.meta'
+
                 try:
-                    # create metadata file
-                    metadata_filename = d.target_file + '.meta'
                     with open(metadata_filename, 'w') as f:
                         f.write(d.metadata_file_content)
 
                     # let ffmpeg write metadata to file
                     write_metadata(d.target_file, metadata_filename)
 
+                except Exception as e:
+                    log('file manager()> writing metadata error:', e)
+
+                finally:
                     # delete meta file
                     delete_file(metadata_filename)
-                except Exception as e:
-                    log('file manager()> writing metada error:', e)
 
             # at this point all done successfully
             d.status = Status.completed
