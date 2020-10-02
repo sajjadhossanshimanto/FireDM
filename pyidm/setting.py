@@ -202,7 +202,6 @@ def save_d_map(d_map):
 
         # store d_map in downloads.cfg file
         file = os.path.join(config.sett_folder, 'downloads.dat')
-        print(file)
         with open(file, 'w') as f:
             try:
                 json.dump(data, f)
@@ -217,7 +216,7 @@ def save_d_map(d_map):
             except Exception as e:
                 print('error save thumbnails file:', e)
 
-        log('list saved')
+        log('downloads items list saved in:', file)
     except Exception as e:
         handle_exceptions(e)
 
@@ -249,6 +248,6 @@ def save_setting():
         file = os.path.join(config.sett_folder, 'setting.cfg')
         with open(file, 'w') as f:
             json.dump(settings, f)
-            log('setting saved')
+            log('setting saved in:', file)
     except Exception as e:
         log('save_setting() > error', e)

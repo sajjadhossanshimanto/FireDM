@@ -2522,7 +2522,11 @@ class MainWindow(IView):
             self.msgbox('Log text copied to clipboard')
 
         btn_frame = tk.Frame(tab, bg=MAIN_BG)
-        tk.Label(btn_frame, text='Log:', bg=MAIN_BG, fg=BTN_BG, font='any 10 bold').pack(side='left')
+        tk.Label(btn_frame, text='Log Level:', bg=MAIN_BG, fg=BTN_BG, font='any 10 bold').pack(side='left')
+        level_menu = Combobox(btn_frame, values=(1, 2, 3), selection=config.log_level, width=5)
+        level_menu.callback = lambda: set_option(log_level=int(level_menu.selection))
+        level_menu.pack(side='left', padx=5)
+
         Button(btn_frame, text='Clear', command=self.log_text.clear).pack(side='right', padx=5)
         # Button(btn_frame, text='Folder', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
         # Button(btn_frame, text='Log File', command=open_log_file).pack(side='right', padx=5)
