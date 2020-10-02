@@ -9,8 +9,7 @@
     Module description:
         Main application gui design by tkinter
 """
-
-
+import datetime
 import time
 import tkinter as tk
 import awesometkinter as atk
@@ -519,7 +518,7 @@ class Combobox(ttk.Combobox):
         self.bind('<<ComboboxSelected>>', self.on_selection)
 
         # selection
-        if selection:
+        if selection is not None:
             self.set(selection)
 
     def on_selection(self, event):
@@ -1291,7 +1290,7 @@ class DItem(tk.Frame):
     def __init__(self, parent, uid, bg=None, fg=None, bar_fg=None):
         self.bg = bg or atk.get_widget_attribute(parent, 'background') or MAIN_BG
         self.fg = fg or MAIN_FG
-        self.bar_fg = bar_fg or 'green'  #progressbar_color
+        self.bar_fg = bar_fg or 'green'  # progressbar_color
 
         self.uid = uid
 
@@ -1417,7 +1416,7 @@ class DItem(tk.Frame):
     def toggle_blinker(self):
         """an activity blinker "like an led" """
         status = self.status.get()
-        if status in (config.Status.completed, config.Status.cancelled):
+        if status not in (config.Status.downloading, config.Status.processing):
             self.blinker['fg'] = self.bg
             return
 
@@ -1436,8 +1435,6 @@ class DItem(tk.Frame):
         """update widgets value"""
         # print(locals())
         try:
-            # an led like, to react with data flow
-            self.toggle_blinker()
 
             if rendered_name:
                 self.name.set(rendered_name)
@@ -1473,6 +1470,10 @@ class DItem(tk.Frame):
                 self.status.set(status)
                 if status == config.Status.completed:
                     self.error_lbl['text'] = ''
+
+            # an led like, to react with data flow
+            self.toggle_blinker()
+
         except Exception as e:
             log('DItem.update()> error:', e)
             if config.TEST_MODE:
@@ -2068,6 +2069,116 @@ class AudioWindow(tk.Toplevel):
         self.close()
 
 
+class DatePicker(tk.Toplevel):
+    """Date picker window"""
+
+    def __init__(self, parent, min_year=None, max_year=None, title='Date Picker'):
+        """initialize
+
+        Args:
+            parent: parent window
+            min_year (int): minimum year to show
+            max_year (int): max. year to show
+            title (str): window title
+        """
+        self.parent = parent
+
+        today = datetime.datetime.today()
+        self.min_year = min_year or today.year - 20
+        self.max_year = max_year or today.year + 20
+
+        self.selected_date = None
+
+        self.fields = {'Year': {'values': list(range(self.min_year, self.max_year + 1)), 'selection': today.year},
+                       'Month': {'values': list(range(1, 13)), 'selection': today.month},
+                       'Day': {'values': list(range(1, 31)), 'selection': today.day},
+                       'Hour': {'values': list(range(0, 60)), 'selection': today.hour},
+                       'Minute': {'values': list(range(0, 60)), 'selection': today.minute},
+                       }
+
+        # initialize super
+        tk.Toplevel.__init__(self, self.parent)
+
+        # bind window close
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
+        width = 420
+        height = 180
+        center_window(self, width=width, height=height, reference=self.parent)
+
+        self.title(title)
+        self.config(bg=SF_BG)
+
+        self.create_widgets()
+
+        self.wait_window(self)
+
+    def is_leap(self, year):
+        """year -> 1 if leap year, else 0, source: datetime.py"""
+        return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+    def days_in_month(self, year, month):
+        """year, month -> number of days in that month in that year, modified from source: datetime.py"""
+        default = [-1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        if month == 2 and self.is_leap(year):
+            return 29
+        return default[month]
+
+    def create_widgets(self):
+        main_frame = tk.Frame(self, bg=MAIN_BG)
+        top_frame = tk.Frame(main_frame, bg=MAIN_BG)
+        tk.Label(top_frame, text='Select Date and time:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+
+        middle_frame = tk.Frame(main_frame, bg=MAIN_BG)
+
+        def set_field(field_name, value):
+            x = self.fields[field_name]
+            x['selection'] = int(value)
+
+            # set correct days according to month and year
+            year = self.fields['Year']['selection']
+            month = self.fields['Month']['selection']
+            day = self.fields['Day']['selection']
+            days_in_month = self.days_in_month(year, month)
+            self.day_combo.config(values=list(range(1, days_in_month + 1)))
+            if day > days_in_month:
+                self.day_combo.set(days_in_month)
+
+        c = 0
+        for key, item in self.fields.items():
+            tk.Label(middle_frame, text=key, bg=MAIN_BG, fg=MAIN_FG).grid(row=0, column=c, padx=5, sticky='w')
+            cb = Combobox(middle_frame, values=item['values'], selection=item['selection'], width=5)
+            cb.grid(row=1, column=c, padx=(5, 10), sticky='w')
+            cb.callback = lambda field_name=key, combo=cb: set_field(field_name, combo.selection)
+
+            # get day combo box reference
+            if key == 'Day':
+                self.day_combo = cb
+
+            c += 1
+
+        bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
+        Button(bottom_frame, text='Cancel', command=self.close).pack(side='right', padx=5)
+        Button(bottom_frame, text='Ok', command=self.set_selection).pack(side='right')
+
+        main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
+        bottom_frame.pack(side='bottom', fill='x', pady=5)
+        ttk.Separator(main_frame).pack(side='bottom', fill='x', expand=True)
+        middle_frame.pack(side='bottom', expand=True, fill='both')
+        ttk.Separator(main_frame).pack(side='bottom', fill='x', expand=True)
+        top_frame.pack(side='bottom', fill='x')
+
+    def close(self):
+        self.destroy()
+
+    def set_selection(self):
+        """return selected date"""
+        values = [int(item['selection']) for item in self.fields.values()]
+        self.selected_date = datetime.datetime(*values)
+        self.close()
+
+
 class MainWindow(IView):
     """Main GUI window
 
@@ -2580,8 +2691,8 @@ class MainWindow(IView):
                            'copy webpage url': lambda x: self.copy(self.controller.get_webpage_url(uid=x)),
                            'copy direct url': lambda x: self.copy(self.controller.get_direct_url(uid=x)),
                            'copy playlist url': lambda x: self.copy(self.controller.get_playlist_url(uid=x)),
-                           # '⏳ Schedule download': lambda x: self.controller.schedule_start(uid=x),
-                           # '⏳ Cancel schedule!': lambda x: self.controller.schedule_cancel(uid=x),
+                           '⏳ Schedule Item': lambda x: self.schedule(uid=x),
+                           '⏳ Cancel schedule!': lambda x: self.controller.schedule_cancel(uid=x),
                            'properties': lambda x: self.msgbox(self.controller.get_properties(uid=x)),
                            }
 
@@ -2955,6 +3066,15 @@ class MainWindow(IView):
 
     def unhide(self):
         self.root.deiconify()
+
+    def schedule(self, uid=None, video_idx=None):
+        """schedule download item"""
+
+        # show date picker
+        dp = DatePicker(self.root, title='Schedule Download Item')
+        if dp.selected_date:
+            self.controller.schedule_start(uid=uid, video_idx=video_idx, target_date=dp.selected_date)
+
     # endregion
 
     # region video

@@ -183,6 +183,7 @@ class Status:
     pending = 'pending'
     processing = 'processing'  # for any ffmpeg operations
     error = 'error'
+    scheduled = 'scheduled'
 
 
 # media type class

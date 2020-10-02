@@ -14,8 +14,7 @@
         Model and controller has an observer system where model will notify controller when changed, in turn
         controller will update the current view
 """
-
-
+from datetime import datetime
 import os, sys, time
 from copy import copy
 from threading import Thread
@@ -108,6 +107,9 @@ class Controller:
         # handle pending downloads
         Thread(target=self._pending_downloads_handler, daemon=True).start()
 
+        # handle scheduled downloads
+        Thread(target=self._scheduled_downloads_handler, daemon=True).start()
+
     def _pending_downloads_handler(self):
         """handle pending downloads, should run in a dedicated thread"""
 
@@ -119,6 +121,19 @@ class Controller:
                     self._download(d, silent=True)
 
             time.sleep(3)
+
+    def _scheduled_downloads_handler(self):
+        """handle scheduled downloads, should run in a dedicated thread"""
+
+        while True:
+            sched_downloads = [d for d in self.d_map.values() if d.status == Status.scheduled]
+            if sched_downloads:
+                current_datetime = datetime.now()
+                for d in sched_downloads:
+                    if d.sched and datetime.fromisoformat(d.sched) <= current_datetime:
+                        self._download(d, silent=True)
+
+            time.sleep(60)
 
     def observer(self, **kwargs):
         """This is an observer method which get notified when change/update properties in ObservableDownloadItem
@@ -170,6 +185,10 @@ class Controller:
 
         # load d_map
         self.d_map = setting.load_d_map()
+
+        # register observer
+        for d in self.d_map.values():
+            d.register_callback(self.observer)
 
     def _save_settings(self):
         # Save setting to disk
@@ -939,7 +958,7 @@ class Controller:
 
         d = self.d_map.get(uid)
 
-        if d and d.status != Status.completed:
+        if d and d.status in (Status.downloading, Status.processing, Status.pending):
             d.status = Status.cancelled
 
     def select_playlist_video(self, idx, active=True):
@@ -1157,23 +1176,36 @@ class Controller:
 
         return d.playlist_url
 
-    def schedule_start(self, uid=None, video_idx=None):
+    def schedule_start(self, uid=None, video_idx=None, target_date=None):
+        """Schedule a download item
+        Args:
+            target_date (datetime.datetime object): target date and time to start download
+        """
         # get download item
         d = self.get_d(uid, video_idx)
 
-        if not d:
+        if not d or not isinstance(target_date, datetime):
             return
 
-        log('Not implemented')
+        # validate target date should be greater than current date
+        if target_date <= datetime.now():
+            log('Schedule date should be greater than current date, try again', showpopup=True)
+            return
+
+        log(f'Schedule {d.name} at: {target_date}')
+        d.sched = target_date.isoformat(sep=' ')
+        d.status = Status.scheduled
 
     def schedule_cancel(self, uid=None, video_idx=None):
         # get download item
         d = self.get_d(uid, video_idx)
 
-        if not d:
+        if not d or d.status != Status.scheduled:
             return
 
-        log('Not implemented')
+        log(f'Schedule for: {d.name} has been cancelled')
+        d.status = Status.cancelled
+        d.sched = None
 
     def get_properties(self, uid=None, video_idx=None):
         # get download item
@@ -1194,8 +1226,13 @@ class Controller:
 
         if d.type == 'video':
             text += f'Protocol: {d.protocol} \n' \
-                    f'Video: {d.selected_quality}\n' \
-                    f'Audio: {d.audio_quality}'
+                    f'Video stream: {d.selected_quality}\n'
+
+            if 'dash' in d.subtype_list:
+                text += f'Audio stream: {d.audio_quality}\n'
+
+        if d.status == Status.scheduled:
+            text += f'Scheduled: {d.sched}'
 
         return text
 

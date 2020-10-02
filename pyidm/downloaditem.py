@@ -146,7 +146,7 @@ class DownloadItem:
         self.callback = ''
 
         # schedule download
-        self.sched = None  # should be time in (hours, minutes) tuple for scheduling download
+        self.sched = None
 
         # speed
         self._speed = 0
@@ -223,7 +223,7 @@ class DownloadItem:
                                  'fragment_base_url', 'audio_fragments', 'audio_fragment_base_url',
                                  '_total_size', 'protocol', 'manifest_url', 'selected_subtitles',
                                  'abr', 'tbr', 'format_id', 'audio_format_id', 'resolution', 'audio_quality',
-                                 'http_headers', 'metadata_file_content', 'title', 'extension']
+                                 'http_headers', 'metadata_file_content', 'title', 'extension', 'sched']
 
         # property to indicate a time consuming operation is running on download item now
         self.busy = False
