@@ -695,6 +695,8 @@ class Popup(tk.Toplevel):
 
         self.update_idletasks()
 
+        self.focus()
+
         # block and wait for window to close
         self.wait_window(self)
 
@@ -713,9 +715,9 @@ class Popup(tk.Toplevel):
         # add buttons
         btns_fr = tk.Frame(main_frame, bg=self.bg)
         btns_fr.pack(side='bottom', anchor='e', padx=5)
-        for c, btn in enumerate(self.buttons):
-            Button(btns_fr, command=lambda button_name=btn: self.button_callback(button_name),
-                   text=btn).pack(side='left', padx=(5, 2), pady=5)
+        for btn_name in self.buttons:
+            Button(btns_fr, command=lambda button_name=btn_name: self.button_callback(button_name),
+                   text=btn_name).pack(side='left', padx=(5, 2), pady=5)
 
         # separator
         ttk.Separator(main_frame, orient='horizontal').pack(side='bottom', fill='x')
@@ -751,7 +753,7 @@ class Popup(tk.Toplevel):
 
     def focus(self):
         """focus window and bring it to front"""
-        self.deiconify()
+        self.focus_force()
 
     def close(self):
         self.destroy()
