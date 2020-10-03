@@ -1188,8 +1188,9 @@ class Controller:
             return
 
         # validate target date should be greater than current date
-        if target_date <= datetime.now():
-            log('Schedule date should be greater than current date, try again', showpopup=True)
+        if target_date < datetime.now():
+            log('Can not Schedule something in the past', 'Please select a Schedule time greater than current time',
+                showpopup=True)
             return
 
         log(f'Schedule {d.name} at: {target_date}')

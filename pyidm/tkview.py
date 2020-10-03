@@ -31,7 +31,6 @@ from .view import IView
 from .controller import Controller, set_option, get_option
 from .utils import *
 from . import config
-from . import update
 from .iconsbase64 import *
 from .systray import SysTray
 from .about import about_notes

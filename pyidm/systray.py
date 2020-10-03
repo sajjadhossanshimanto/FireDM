@@ -11,11 +11,11 @@
 """
 
 import os
-from . import config
 import awesometkinter as atk
 
-from .iconsbase64 import APP_ICON2
-from .utils import log
+from . import config
+from .iconsbase64 import APP_ICON
+from .utils import log, delete_file
 
 
 class SysTray:
@@ -24,7 +24,7 @@ class SysTray:
     """
     def __init__(self, main_window):
         self.main_window = main_window
-        self._tray_icon_path = os.path.join(config.sett_folder, 'systray.png')  # path to icon
+        self.tray_icon_path = os.path.join(config.sett_folder, 'systray.png')  # path to icon
         self.icon = None
         self._hover_text = None
         self.Gtk = None
@@ -40,25 +40,13 @@ class SysTray:
     def tray_icon(self):
         """return pillow image"""
         try:
-            img = atk.create_pil_image(b64=APP_ICON2)
+            img = atk.create_pil_image(b64=APP_ICON, size=16)
 
             return img
         except Exception as e:
             log('systray: tray_icon', e)
             if config.TEST_MODE:
                 raise e
-
-    @property
-    def tray_icon_path(self):
-        # save icon as a png on setting directory and return path
-        if not os.path.isfile(self._tray_icon_path):
-            try:
-                # save file to settings folder
-                self.tray_icon.save(self._tray_icon_path, format='png')
-            except:
-                pass
-
-        return self._tray_icon_path
 
     def run(self):
         # not supported on mac
@@ -77,6 +65,12 @@ class SysTray:
                 gi.require_version('Gtk', '3.0')
                 from gi.repository import Gtk
                 self.Gtk = Gtk
+
+                # delete previous icon file (it might contains an icon file for old pyidm versions)
+                delete_file(self.tray_icon_path)
+
+                # save file to settings folder
+                self.tray_icon.save(self.tray_icon_path, format='png')
 
                 def icon_right_click(icon, button, time):
                     menu = Gtk.Menu()
@@ -97,7 +91,8 @@ class SysTray:
                 self.active = True
                 Gtk.main()
                 return
-            except:
+            except Exception as e:
+                log('Systray Gtk 3.0:', e, log_level=2)
                 self.active = False
 
         # let pystray decide which icon to run
