@@ -140,10 +140,10 @@ active_downloads = set()  # indexes for active downloading items
 d_list = []
 
 # queues
-main_q = Queue()  # used by pyIDM.py
-main_window_q = Queue()  # queue for Main application window
-log_q = Queue()  # queue to hold log messages to be displayed in main window's log tab
-commands_q = Queue()  # queue to access MainWindow internal methods from threads
+# main_q = Queue()  # used by pyIDM.py
+# main_window_q = Queue()  # queue for Main application window
+# log_q = Queue()  # queue to hold log messages to be displayed in main window's log tab
+# commands_q = Queue()  # queue to access MainWindow internal methods from threads
 error_q = Queue()  # used by workers to report server refuse connection errors
 jobs_q = Queue()  # # required for failed worker jobs
 
@@ -174,6 +174,7 @@ last_update_check = None  # date format (year, month, day)
 # store hashes for installed update patches in update_record.info file at current folder xx NOT IMPLEMENTED xx
 update_record_path = os.path.join(current_directory, 'update_record.info')
 # -----------------------------------------------------------------------------------------------------
+
 
 # status class as an Enum
 class Status:
