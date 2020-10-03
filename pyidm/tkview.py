@@ -153,6 +153,8 @@ themes_table = {
 # hold all user defined themes, previously created themes will be loaded from disk
 user_themes = {}
 
+app_icon_img = None
+popup_icon_img = None
 
 def url_watchdog(root):
     """monitor url links copied to clipboard
@@ -566,6 +568,9 @@ class CustomTitleBar(tk.Frame):
 
         if minimize:
             self.create_button('🔻', self.iconify).pack(side='right', padx=0, pady=0)
+
+        # icon
+        tk.Label(self, image=popup_icon_img, bg=bg, fg=fg).pack(side='left', padx=5, pady=3)
 
         title = tk.Label(self, text=title, bg=bg, fg=fg)
         title.pack(side='right', padx=5, fill='x', expand=True)
@@ -2217,7 +2222,11 @@ class MainWindow(IView):
         self.main_frame=None
 
         # set window icon
-        self.root.iconphoto(True, atk.create_image(b64=APP_ICON))
+        global app_icon_img, popup_icon_img
+        app_icon_img = atk.create_image(b64=APP_ICON, size=24)
+        popup_icon_img = atk.create_image(b64=APP_ICON, size=18)
+
+        self.root.iconphoto(True, app_icon_img)
 
         # themes
         self.load_user_themes()
