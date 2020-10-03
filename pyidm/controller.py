@@ -1310,7 +1310,8 @@ class Controller:
         return d
 
     def auto_check_for_update(self):
-        run_thread(self._auto_check_for_update)
+        if not config.disable_update_feature:
+            run_thread(self._auto_check_for_update)
 
     def check_for_pyidm_update(self):
         run_thread(self._check_for_pyidm_update)

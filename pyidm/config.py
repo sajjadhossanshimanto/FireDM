@@ -139,15 +139,6 @@ ffmpeg_download_folder = sett_folder
 active_downloads = set()  # indexes for active downloading items
 d_list = []
 
-# update
-check_for_update = True
-update_frequency = 7  # days
-last_update_check = None  # date format (year, month, day)
-
-
-# store hashes for installed update patches in update_record.info file at current folder
-update_record_path = os.path.join(current_directory, 'update_record.info')
-
 # queues
 main_q = Queue()  # used by pyIDM.py
 main_window_q = Queue()  # queue for Main application window
@@ -171,8 +162,18 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'minimize_to_systray', 'enable_systray']
 
 
-# -------------------------------------------------------------------------------------
+# update --------------------------------------------------------------------------------------------
+# set this flag to True to disable update feature completely
+disable_update_feature = False
 
+check_for_update = not disable_update_feature
+update_frequency = 7  # days
+last_update_check = None  # date format (year, month, day)
+
+
+# store hashes for installed update patches in update_record.info file at current folder xx NOT IMPLEMENTED xx
+update_record_path = os.path.join(current_directory, 'update_record.info')
+# -----------------------------------------------------------------------------------------------------
 
 # status class as an Enum
 class Status:

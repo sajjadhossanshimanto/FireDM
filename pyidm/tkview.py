@@ -2573,7 +2573,6 @@ class MainWindow(IView):
         separator()
 
         # update -----------------------------------------------------------------------------------------------------
-        heading('Update:')
         update_frame = tk.Frame(tab, bg=bg)
 
         def lbl(var):
@@ -2605,7 +2604,9 @@ class MainWindow(IView):
 
         Button(update_frame, text='Rollback update', command=self.rollback_ytdl_update).grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
 
-        update_frame.pack(anchor='w', fill='x', expand=True)
+        if not config.disable_update_feature:
+            heading('Update:')
+            update_frame.pack(anchor='w', fill='x', expand=True)
 
         # add padding
         for w in tab.pack_slaves():
