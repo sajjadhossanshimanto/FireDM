@@ -2422,11 +2422,13 @@ class MainWindow(IView):
         # playlist download, sub buttons -------------------------------------------------------------------------------
         self.pl_img = atk.create_image(b64=playlist_icon, color=PBAR_FG)
         self.sub_img = atk.create_image(b64=subtitle_icon, color=PBAR_FG)
+        self.about_img = atk.create_image(b64=about_icon, color=PBAR_FG)
 
         pl_sub_frame = tk.Frame(home_tab, background=MAIN_BG)
         Button(pl_sub_frame, image=self.pl_img, command=self.show_pl_window).pack(pady=0, padx=5)
-        tk.Button(pl_sub_frame, image=self.sub_img, bd=0, bg=MAIN_BG, highlightbackground=MAIN_BG,
-                  activebackground=MAIN_BG, command=self.show_subtitles_window).pack(pady=40, padx=5)
+        Button(pl_sub_frame, image=self.sub_img, command=self.show_subtitles_window).pack(pady=20, padx=5)
+        Button(pl_sub_frame, image=self.about_img, command=self.show_about_notes).pack(pady=0, padx=5)
+
         pl_sub_frame.grid(row=1, column=4, padx=5, pady=10)
 
         # file properties ----------------------------------------------------------------------------------------------
@@ -2588,13 +2590,6 @@ class MainWindow(IView):
         self.pyidm_update_note = tk.StringVar()
         self.pyidm_update_note.set(f'PyIDM version: {config.APP_VERSION}')
         lbl(self.pyidm_update_note).grid(row=1, column=1, columnspan=2, sticky='w')
-
-        def show_about_notes():
-            res = self.popup(about_notes, buttons=['Close', 'Help!'], title='About PyIDM')
-            if res == 'Help!':
-                open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
-
-        Button(update_frame, text='About!', command=show_about_notes).grid(row=1, column=3, sticky='w', pady=5, padx=(20, 5))
 
         # youtube-dl update
         Button(update_frame, image=self.refresh_img, command=self.check_for_ytdl_update).grid(row=2, column=0, sticky='e', pady=5, padx=(20, 5))
@@ -3075,6 +3070,11 @@ class MainWindow(IView):
         dp = DatePicker(self.root, title='Schedule Download Item')
         if dp.selected_date:
             self.controller.schedule_start(uid=uid, video_idx=video_idx, target_date=dp.selected_date)
+
+    def show_about_notes(self):
+        res = self.popup(about_notes, buttons=['Close', 'Help!'], title='About PyIDM')
+        if res == 'Help!':
+            open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
 
     # endregion
 
