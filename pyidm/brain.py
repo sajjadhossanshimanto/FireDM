@@ -83,10 +83,10 @@ def brain(d=None, downloader=None):
             log(f'File: "{d.name}", completed.')
             break
         elif d.status == Status.cancelled:
-            log(f'brain {d.num}: Cancelled download')
+            log(f'brain {d.uid}: Cancelled download')
             break
         elif d.status == Status.error:
-            log(f'brain {d.num}: download error')
+            log(f'brain {d.uid}: download error')
             break
 
     # todo: should find a better way to handle callback.
@@ -97,7 +97,7 @@ def brain(d=None, downloader=None):
         globals()[d.callback]()
 
     # report quitting
-    log(f'brain {d.num}: quitting', log_level=2)
+    log(f'brain {d.uid}: quitting', log_level=2)
 
     if d.status == Status.completed:
         if config.checksum:
@@ -298,7 +298,7 @@ def file_manager(d, keep_segments=True):
         d.save_progress_info()
 
     # Report quitting
-    log(f'file_manager {d.num}: quitting', log_level=2)
+    log(f'file_manager {d.uid}: quitting', log_level=2)
 
 
 def thread_manager(d):
@@ -511,4 +511,4 @@ def thread_manager(d):
     # update d param
     d.live_connections = 0
     d.remaining_parts = num_live_threads + len(job_list) + config.jobs_q.qsize()
-    log(f'thread_manager {d.num}: quitting', log_level=2)
+    log(f'thread_manager {d.uid}: quitting', log_level=2)

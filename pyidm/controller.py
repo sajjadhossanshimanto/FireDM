@@ -444,7 +444,7 @@ class Controller:
         # search current list for previous item with same name, folder ---------------------------
         if d.uid in self.d_map:
 
-            log('download item', d.num, 'already in list, check resume availability')
+            log('download item', d.uid, 'already in list, check resume availability')
 
             # get download item from the list
             d_from_list = self.d_map[d.uid]
@@ -559,7 +559,7 @@ class Controller:
         return d
 
     def download_simulator(self, d):
-        print('start download simulator for id:', d.id, d.name)
+        print('start download simulator for id:', d.uid, d.name)
 
         speed = 200  # kb/s
         d.status = Status.downloading
@@ -575,12 +575,12 @@ class Controller:
             if d.downloaded >= d.total_size:
                 d.status = Status.completed
                 d.downloaded = d.total_size
-                print('download simulator completed for:', d.id, d.name)
+                print('download simulator completed for:', d.uid, d.name)
 
                 break
 
             if d.status == Status.cancelled:
-                print('download simulator cancelled for:', d.id, d.name)
+                print('download simulator cancelled for:', d.uid, d.name)
                 break
 
     def _download(self, d, silent=False):
