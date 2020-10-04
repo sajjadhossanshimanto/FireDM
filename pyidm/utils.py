@@ -182,7 +182,9 @@ def get_headers(url, verbose=False, http_headers=None):
     try:
         c.perform()
     except Exception as e:
-        if 'Failed writing body' not in str(e):
+        # write callback will terminate libcurl to discard the body, we only need the headers, an exception will be
+        # raised e.g. (23, 'FFailed writing body') or (23, 'Failure writing output to destination')
+        if '23' not in str(e):
             log('get_headers()>', e)
 
     # add status code and effective url to headers
