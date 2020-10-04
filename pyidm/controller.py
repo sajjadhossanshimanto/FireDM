@@ -514,9 +514,6 @@ class Controller:
                     return False
                 else:
                     delete_file(d.target_file)
-
-        # add to download map
-        self.d_map[d.uid] = d
         # ------------------------------------------------------------------
 
         # if above checks passed will return True
@@ -611,6 +608,9 @@ class Controller:
                     d.status = Status.pending
                     self.pending_downloads_q.put(d)
                     return
+
+                # add to download map
+                self.d_map[d.uid] = d
 
                 # start brain in a separate thread
                 if config.SIMULATOR:
