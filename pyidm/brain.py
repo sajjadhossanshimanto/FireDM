@@ -446,14 +446,19 @@ def thread_manager(d):
 
                     if remaining_segs:
                         current_seg = remaining_segs.pop()
-                        size = current_seg.remaining // 2
+
+                        # range boundaries
+                        start = current_seg.range[0]
+                        middle = start + current_seg.remaining // 2
                         end = current_seg.range[1]
-                        current_seg.range = [current_seg.range[0], current_seg.range[0] + size]
+
+                        # assign new range for current segment
+                        current_seg.range = [start, middle]
 
                         # create new segment
-                        start = current_seg.range[1] + 1
                         seg = Segment(name=os.path.join(d.temp_folder, f'{len(d.segments)}'), url=current_seg.url,
-                                      tempfile=current_seg.tempfile, range=[start, end])
+                                      tempfile=current_seg.tempfile, range=[middle + 1, end],
+                                      media_type=current_seg.media_type)
 
                         # add to segments
                         d.segments.append(seg)
