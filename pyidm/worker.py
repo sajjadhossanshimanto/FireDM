@@ -292,7 +292,7 @@ class Worker:
 
         except Exception as e:
             # this error generated when user cancel download, or write function abort
-            if any(statement in repr(e) for statement in ('Failed writing body', 'Callback aborted')):
+            if '23' in repr(e) or '42' in repr(e):  # ('Failed writing body', 'Callback aborted')
                 error = f'terminated'
                 log('Seg', self.seg.basename, error, 'worker', self.tag, log_level=3)
             else:
