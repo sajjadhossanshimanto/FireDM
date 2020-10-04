@@ -2778,6 +2778,10 @@ class MainWindow(IView):
                            '⏳ Schedule Item': lambda x: self.schedule(uid=x),
                            '⏳ Cancel schedule!': lambda x: self.controller.schedule_cancel(uid=x),
                            'properties': lambda x: self.msgbox(self.controller.get_properties(uid=x)),
+                           '---': None,
+                           'Clear completed items': lambda x: self.delete_completed(),
+                           'Stop all downloads': lambda x: self.stop_all(),
+                           'Clear all items': lambda x: self.delete_all(),
                            }
 
         atk.RightClickMenu(d_item, right_click_map.keys(),
@@ -2855,6 +2859,11 @@ class MainWindow(IView):
 
         self.download(uid)
 
+    def stop_all(self):
+        """stop all downloads"""
+        for uid in self.d_items:
+            self.stop_download(uid)
+
     def stop_download(self, uid):
         self.controller.stop_download(uid)
 
@@ -2866,6 +2875,34 @@ class MainWindow(IView):
             kwargs: key/value for any legit attributes in DownloadItem
         """
         self.controller.download(uid, **kwargs)
+
+    def delete_completed(self):
+        """delete completed items"""
+        for uid, item in self.d_items.items():
+            if item.status.get() == config.Status.completed:
+                item.destroy()
+                self.controller.delete(uid)
+
+        self.d_items = {uid: item for uid, item in self.d_items.items() if item.status.get() != config.Status.completed}
+
+    def delete_all(self):
+        """remove all download items from downloads tab and delete all their temp files, completed files on the disk
+        will never be removed"""
+
+        # get user confirmation
+        msg = 'Are you sure you want to clear all download items from downloads list?\n' \
+              'note: only temp files will be removed, completed files on disk will never be deleted\n'\
+              'Write the word "delete" below to confirm.'
+        res, txt = self.popup(msg, buttons=['Ok', 'Cancel'], get_user_input=True)
+
+        if res != 'Ok' or txt.lower().strip() != 'delete':
+            return
+
+        for uid, item in self.d_items.items():
+            item.destroy()
+            self.controller.delete(uid)
+
+        self.d_items.clear()
 
     def delete(self, uid):
         """delete download item"""
