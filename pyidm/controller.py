@@ -745,16 +745,20 @@ class Controller:
             time.sleep(0.1)
             self._report_d(d, command='d_list')
 
-    def _download_playlist(self, vsmap):
+    def _download_playlist(self, vsmap, subtitles=None):
         """download playlist
           Args:
-              vsmap (dict): video idx vd stream idx
+              vsmap (dict): key=video idx, value=stream idx
+              subtitles (dict): key=language, value=selected extension
         """
         for vid_idx, s_idx in vsmap.items():
             d = self.playlist[vid_idx]
             d.select_stream(index=s_idx)
             run_thread(self._download, d, silent=True)
             time.sleep(0.1)
+
+            if subtitles:
+                self.download_subtitles(subtitles, video_idx=vid_idx)
 
     def _download_subtitle(self, lang_name, url, extension, d):
         """download one subtitle file"""
@@ -943,12 +947,14 @@ class Controller:
 
         return True
 
-    def download_playlist(self, vsmap):
+    def download_playlist(self, vsmap, subtitles=None):
         """download playlist
         Args:
-            vsmap (dict): video idx vd stream idx
+            vsmap (dict): key=video idx, value=stream idx
+            subtitles (dict): key=language, value=selected extension
         """
-        run_thread(self._download_playlist, vsmap)
+
+        run_thread(self._download_playlist, vsmap, subtitles)
 
     def stop_download(self, uid):
         """stop downloading
@@ -1113,7 +1119,8 @@ class Controller:
         all_subtitles = d.prepare_subtitles()
 
         for lang, ext in subs.items():
-            items_list = all_subtitles.get(lang)
+            items_list = all_subtitles.get(lang, [])
+
             match = [item for item in items_list if item.get('ext') == ext]
             if match:
                 item = match[-1]
@@ -1121,6 +1128,8 @@ class Controller:
 
                 if url:
                     run_thread(self._download_subtitle, lang, url, ext, d)
+            else:
+                log('subtitle:', lang, 'Not available for:', d.name)
 
     def open_file(self, uid=None, video_idx=None):
         # get download item
@@ -1301,9 +1310,9 @@ class Controller:
             (DownloadItem): if uid and video_idx omitted it will return self.d
         """
 
-        if uid:
+        if uid is not None:
             d = self.d_map.get(uid)
-        elif video_idx:
+        elif video_idx is not None:
             d = self.playlist[video_idx]
         else:
             d = self.d

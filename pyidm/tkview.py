@@ -1706,6 +1706,10 @@ class PlaylistWindow(tk.Toplevel):
 
         self.selected_videos = {}  # video_idx vd stream_idx
         self.stream_menus = {}  # video_idx vs stream menu
+        self.subtitles = {}
+        self.selected_subs = {}
+
+        self.videos_counter = tk.IntVar()
 
         # initialize super
         tk.Toplevel.__init__(self, self.parent)
@@ -1734,10 +1738,21 @@ class PlaylistWindow(tk.Toplevel):
         self.page_count_var = tk.StringVar()
         self.update_page_count()
 
-        tk.Label(top_frame, text=f'Playlist ({self.playlist_count}) videos:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
-        tk.Label(top_frame, textvariable=self.page_count_var, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
-        Button(top_frame, text='Next', command=self.next_page).pack(side='right', padx=5, pady=5)
-        Button(top_frame, text='Prev.', command=self.prev_page).pack(side='right', padx=5, pady=5)
+        f1 = tk.Frame(top_frame, bg=MAIN_BG)
+        f1.pack(fill='x', expand=True, anchor='w')
+        tk.Label(f1, text=f'Total videos: {self.playlist_count}, Selected:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+        tk.Label(f1, textvariable=self.videos_counter, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=2, pady=5)
+
+        Button(f1, text='Next', command=self.next_page).pack(side='right', padx=5, pady=5)
+        tk.Label(f1, textvariable=self.page_count_var, bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
+        Button(f1, text='Prev.', command=self.prev_page).pack(side='right', padx=5, pady=5)
+
+        f2 = tk.Frame(top_frame, bg=MAIN_BG)
+        f2.pack(fill='x', expand=True, anchor='w')
+        self.subtitles_label = tk.Label(f2, text='Total subtitles: 0, Selected: 0', bg=MAIN_BG,fg=MAIN_FG)
+        self.subtitles_label.pack(side='left', padx=5, pady=5)
+
+        Button(f2, text='Sub', command=self.show_subtitles_window).pack(side='left', padx=5, pady=5)
 
         for idx, name in zip(range(self.items_per_page), self.playlist):
             item = self.create_item(videos_frame, idx, name)
@@ -1759,7 +1774,15 @@ class PlaylistWindow(tk.Toplevel):
         ttk.Separator(main_frame).pack(side='top', fill='x', expand=True)
         videos_frame.pack(side='bottom', expand=True, fill='both')
 
-        # self.update_idletasks()
+    def show_subtitles_window(self):
+        if self.subtitles:
+            sub_window = SubtitleWindow(self.main, self.subtitles, enable_download_button=False,
+                                        enable_select_button=True, block=True, selected_subs=self.selected_subs)
+            self.selected_subs = sub_window.selected_subs
+        else:
+            self.main.msgbox('No Subtitles available for selected videos or no videos selected!')
+
+        self.update_subs_label()
 
     def hide_all_items(self):
         for item in self.items:
@@ -1768,7 +1791,7 @@ class PlaylistWindow(tk.Toplevel):
     def update_page_count(self):
         """update page number e.g. 'Page: 1 of 40'
         """
-        self.page_count_var.set(f'Page: {self.current_page + 1} of {self.total_pages}')
+        self.page_count_var.set(f'{self.current_page + 1} of {self.total_pages}')
 
     def refresh_items(self, start_idx):
         # update widgets
@@ -1868,8 +1891,7 @@ class PlaylistWindow(tk.Toplevel):
         self.main.pl_window = None
 
     def download(self):
-        print(self.selected_videos)
-        self.main.download_playlist(self.selected_videos)
+        self.main.controller.download_playlist(self.selected_videos, subtitles=self.selected_subs)
 
         self.close()
 
@@ -1885,6 +1907,19 @@ class PlaylistWindow(tk.Toplevel):
         self.stream_select_callback(video_idx)
         self.stream_menus[video_idx] = stream_menu
 
+        # get subtitles
+        sub = self.main.controller.get_subtitles(video_idx=video_idx)
+        if sub:
+            self.update_subtitles(sub)
+
+    def update_subtitles(self, sub):
+        """update available subtitles, it is a sum of all subtitles for all selected videos in playlist"""
+
+        for lang, new_ext_list in sub.items():
+            ext_list = self.subtitles.get('lang', [])
+            # merge 2 lists, don't use set() to avoid losing order
+            self.subtitles[lang] = ext_list + [x for x in new_ext_list if x not in ext_list]
+
     def stream_select_callback(self, video_idx):
         item = self.get_item(video_idx)
         stream_idx = item.combobox.current()
@@ -1893,6 +1928,9 @@ class PlaylistWindow(tk.Toplevel):
             self.selected_videos[video_idx] = stream_idx
         elif video_idx in self.selected_videos:
             self.selected_videos.pop(video_idx)
+
+    def update_subs_label(self):
+        self.subtitles_label['text'] = f'Total subtitles: {len(self.subtitles)}, Selected: {len(self.selected_subs)}'
 
     def video_select_callback(self, video_idx):
         """ask controller to send stream menu when selecting a video"""
@@ -1903,23 +1941,36 @@ class PlaylistWindow(tk.Toplevel):
             self.start_progressbar(video_idx)
             self.main.controller.select_playlist_video(video_idx, active=False)
 
+            self.videos_counter.set(self.videos_counter.get() + 1)
+        else:
+            self.videos_counter.set(self.videos_counter.get() - 1)
+
+        self.update_subs_label()
+
         self.stream_select_callback(video_idx)
 
 
 class SubtitleWindow(tk.Toplevel):
     """Download subtitles window"""
 
-    def __init__(self, main, subtitles):
+    def __init__(self, main, subtitles, enable_download_button=True, enable_select_button=False, block=False, selected_subs=None):
         """initialize
 
         Args:
             main: main window class
             subtitles (dict): subtitles, key=language, value=list of extensions, e.g. {en: ['srt', 'vtt'], ar: [...]}
+            download_button (bool): show download button
+            select_button (bool): show select button
+            block (bool): block until closed
+            selected_subs (dict): key=language, value=selected extension
         """
         self.main = main
         self.parent = main.root
         self.subtitles = subtitles or {}
+        self.selected_subs = selected_subs or {}  # key=language, value=selected extension
         self.items = []
+        self.enable_select_button = enable_select_button
+        self.enable_download_button = enable_download_button
 
         # initialize super
         tk.Toplevel.__init__(self, self.parent)
@@ -1936,13 +1987,18 @@ class SubtitleWindow(tk.Toplevel):
 
         self.create_widgets()
 
+        if block:
+            self.wait_window(self)
+
     def create_widgets(self):
         main_frame = tk.Frame(self, bg=MAIN_BG)
         top_frame = tk.Frame(main_frame, bg=MAIN_BG)
         subs_frame = atk.ScrollableFrame(main_frame, bg=MAIN_BG, hscroll=False)
         bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
 
-        tk.Label(top_frame, text=f'Subtitles {len(self.subtitles)} items:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+        tk.Label(top_frame, text=f'Total Subtitles: {len(self.subtitles)} items.', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+        self.selected_subs_label = tk.Label(top_frame, text=f'Selected: {len(self.selected_subs)} items.', bg=MAIN_BG, fg=MAIN_FG)
+        self.selected_subs_label.pack(side='left', padx=5, pady=5)
 
         for language, extensions in self.subtitles.items():
             item = self.create_item(subs_frame, language, extensions)
@@ -1952,8 +2008,20 @@ class SubtitleWindow(tk.Toplevel):
 
             atk.scroll_with_mousewheel(item, target=subs_frame, apply_to_children=True)
 
+            if language in self.selected_subs:
+                item.selected.set(True)
+
+                ext = self.selected_subs[language]
+                if ext in extensions:
+                    item.combobox.set(ext)
+
         Button(bottom_frame, text='Cancel', command=self.close).pack(side='right', padx=5)
-        Button(bottom_frame, text='Download', command=self.download).pack(side='right')
+
+        if self.enable_select_button:
+            Button(bottom_frame, text='Select', command=self.select).pack(side='right')
+
+        if self.enable_download_button:
+            Button(bottom_frame, text='Download', command=self.download).pack(side='right')
 
         main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
 
@@ -1971,7 +2039,7 @@ class SubtitleWindow(tk.Toplevel):
         item.selected = tk.BooleanVar()
 
         # checkbutton
-        item.checkbutton = Checkbutton(item, text=language, variable=item.selected, width=40)
+        item.checkbutton = Checkbutton(item, text=language, variable=item.selected, width=40, command=self.update_selected_count)
 
         # stream menu
         item.combobox = Combobox(item, extensions, width=20)
@@ -1986,14 +2054,26 @@ class SubtitleWindow(tk.Toplevel):
         self.destroy()
         self.main.subtitles_window = None
 
-    def download(self):
-        # get a dict of selected language vs selected extension
-        lang_ext_map = {}
+    def select(self):
+        """callback for select button"""
+        self.update_selected_subs()
+        self.close()
+
+    def update_selected_subs(self):
+        """update selected subs"""
+        self.selected_subs.clear()
         for item in self.items:
             if item.selected.get():
-                lang_ext_map[item.language] = item.combobox.get()
+                self.selected_subs[item.language] = item.combobox.get()
 
-        self.main.controller.download_subtitles(lang_ext_map)
+    def update_selected_count(self):
+        count = len([item for item in self.items if item.selected.get()])
+        self.selected_subs_label['text'] = f'Selected: {count} items.'
+
+    def download(self):
+        self.update_selected_subs()
+
+        self.main.controller.download_subtitles(self.selected_subs)
 
         self.close()
 
@@ -2786,9 +2866,6 @@ class MainWindow(IView):
             kwargs: key/value for any legit attributes in DownloadItem
         """
         self.controller.download(uid, **kwargs)
-
-    def download_playlist(self, idx_list):
-        self.controller.download_playlist(idx_list)
 
     def delete(self, uid):
         """delete download item"""
