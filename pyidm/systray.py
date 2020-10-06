@@ -40,7 +40,7 @@ class SysTray:
     def tray_icon(self):
         """return pillow image"""
         try:
-            img = atk.create_pil_image(b64=APP_ICON, size=16)
+            img = atk.create_pil_image(b64=APP_ICON, size=48)
 
             return img
         except Exception as e:
@@ -95,7 +95,7 @@ class SysTray:
                 log('Systray Gtk 3.0:', e, log_level=2)
                 self.active = False
 
-        # let pystray decide which icon to run
+        # let pystray decide which backend to run
         try:
             from pystray import Icon, Menu, MenuItem
             items = []
@@ -113,12 +113,12 @@ class SysTray:
     def shutdown(self):
         try:
             self.active = False
-            self.icon.stop()
+            self.icon.stop()  # must be called from main thread
         except:
             pass
 
         try:
-            # quit main, don't know why it raise (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
+            # quit main, might raise (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
             # but it has no side effect and PyIDM quit normally
             self.Gtk.main_quit()
         except:
@@ -126,5 +126,6 @@ class SysTray:
 
     def quit(self, *args):
         """callback when selecting quit from systray menu"""
-        self.shutdown()
-        self.main_window.close()
+        # thread safe call for main window close
+        self.main_window.run_method(self.main_window.close)
+
