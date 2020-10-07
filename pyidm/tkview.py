@@ -1178,7 +1178,8 @@ class FileProperties(ttk.Frame):
         separator(3)
 
         label('Folder:', r=4, c=0)
-        label('/home/Downloads/', textvariable=self.folder, r=4, c=1)
+        tk.Entry(self, text='/home/Downloads/', textvariable=self.folder, bg=self.bg, fg=self.fg,
+                 highlightthickness=0).grid(row=4, column=1, sticky='we')
         Button(self, text='...', transparent=True, command=self.change_folder).grid(row=4, column=2, padx=1, pady=0)
 
         separator(5)
