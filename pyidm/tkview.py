@@ -2303,8 +2303,8 @@ class MainWindow(IView):
 
         # set window icon
         global app_icon_img, popup_icon_img
-        app_icon_img = atk.create_image(b64=APP_ICON, size=24)
-        popup_icon_img = atk.create_image(b64=APP_ICON, size=18)
+        app_icon_img = atk.create_image(b64=APP_ICON, size=48)
+        popup_icon_img = atk.create_image(b64=APP_ICON, size=22)
 
         self.root.iconphoto(True, app_icon_img)
 
