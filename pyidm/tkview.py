@@ -2878,6 +2878,13 @@ class MainWindow(IView):
 
     def delete_completed(self):
         """delete completed items"""
+        # get user confirmation
+        msg = 'Are you sure you want to remove completed items from the list?'
+        res = self.popup(msg, buttons=['Yes', 'Cancel'])
+
+        if res != 'Yes':
+            return
+
         for uid, item in self.d_items.items():
             if item.status.get() == config.Status.completed:
                 item.destroy()
@@ -3018,8 +3025,6 @@ class MainWindow(IView):
     # region general
     def run(self):
         """run application"""
-
-        self.root.after(1000, self.controller.get_d_list)
         self.root.mainloop()
 
     def close(self):
@@ -3145,6 +3150,9 @@ class MainWindow(IView):
 
         # log runtime info
         self.controller.log_runtime_info()
+
+        # get download items
+        self.controller.get_d_list()
 
         # start url monitor thread
         run_thread(url_watchdog, self.root, daemon=True)
