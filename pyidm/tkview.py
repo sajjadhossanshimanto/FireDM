@@ -1372,9 +1372,8 @@ class DItem(tk.Frame):
         tk.Label(btns_frame, textvariable=self.status, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
 
         # blinker button, it will blink with received data flow
-        self.blinker = tk.Label(btns_frame, bg=self.bg, text='⚫', fg='green')
-        self.blinker.pack(side='left', padx=(0, 10))
-        self.blinker.state = False
+        self.blinker = tk.StringVar()
+        tk.Label(btns_frame, bg=self.bg, textvariable=self.blinker, fg='green').pack(side='left', padx=(0, 10), pady=5)
 
         # errors label
         self.error_lbl = tk.Label(btns_frame, bg=self.bg, text='', fg='red')
@@ -1420,19 +1419,12 @@ class DItem(tk.Frame):
     def toggle_blinker(self):
         """an activity blinker "like an led" """
         status = self.status.get()
-        if status not in (config.Status.downloading, config.Status.processing):
-            self.blinker['fg'] = self.bg
-            return
-
-        if self.blinker.state:
+        if not self.blinker.get() and status in (config.Status.downloading, config.Status.processing):
             # on blinker
-            self.blinker['fg'] = 'green'
+            self.blinker.set('⚫')
         else:
             # off blinker
-            self.blinker['fg'] = self.bg
-
-        # toggle state
-        self.blinker.state = not self.blinker.state
+            self.blinker.set('')
 
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, **kwargs):

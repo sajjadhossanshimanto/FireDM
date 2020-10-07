@@ -144,11 +144,29 @@ class Controller:
 
     def _observer(self):
         """run in a thread and update views once there is a change in any download item
-        thread should be marked as daemon to get terminated when application quit"""
+        it will update gui/view only on specific time intervals to prevent flooding view with data"""
+
+        buffer = {}  # key = uid, value = kwargs
+        report_interval = 0.5  # sec
 
         while True:
-            kwargs = self.observer_q.get()  # it will block waiting for new values in queue
-            self._update_view(**kwargs)
+            for i in range(self.observer_q.qsize()):
+                item = self.observer_q.get()
+                uid = item.get('uid')
+                if uid:
+                    if uid in buffer:
+                        buffer[uid].update(**item)
+                    else:
+                        buffer[uid] = item
+                else:
+                    buffer[len(buffer)] = item
+
+            for v in buffer.values():
+                self._update_view(**v)
+
+            buffer.clear()
+
+            time.sleep(report_interval)
 
     def _update_view(self, **kwargs):
         """update "view" by calling its update method"""
