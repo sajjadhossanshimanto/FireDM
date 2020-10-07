@@ -4,4 +4,4 @@ youtube_dl
 pycurl
 pillow
 pystray
-awesometkinter
+awesometkinter >= 2020.9.22
