@@ -88,15 +88,19 @@ class Segment:
 
 
 class DownloadItem:
+    """base class for download items"""
 
-    # animation ['►►   ', '  ►►'] › ► ⤮ ⇴ ↹ ↯  ↮  ₡ ['⯈', '▼', '⯇', '▲', ⚫]
-    # ['⏵⏵', '  ⏵⏵'] ['›', '››', '›››', '››››', '›››››'] ['❯', '❯❯', '❯❯❯', '❯❯❯❯'] ['|', '||', '|||', '||||', '|||||']
+    def __init__(self, url='', name='', folder=''):
+        """initialize
 
-    def __init__(self, id_=None, url='', name='', folder=''):
+        Args:
+            url (str): download link
+            name (str): file name including extension e.g. myvideo.mp4
+            folder (str): download folder
+        """
         # unique name for download item, will be calculated based on name and target folder
         self.uid = None
 
-        self.id = id_  # to be removed
         self.title = ''  # file name without extension
         self._name = name
         self.extension = ''  # note: filename extension includes a dot, ex: '.mp4'
@@ -210,7 +214,7 @@ class DownloadItem:
         self.metadata_file_content = ''
 
         # properties names that will be saved on disk
-        self.saved_properties = ['id', '_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
+        self.saved_properties = ['_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
                                  'resumable', 'selected_quality', '_segment_size', '_downloaded', '_status',
                                  '_remaining_parts', 'audio_url', 'audio_size', 'type', 'subtype_list', 'fragments',
                                  'fragment_base_url', 'audio_fragments', 'audio_fragment_base_url',
@@ -340,10 +344,6 @@ class DownloadItem:
         # kill subprocess if currently active
         if self.subprocess and value in (config.Status.cancelled, config.Status.error):
             self.kill_subprocess()
-
-    @property
-    def num(self):
-        return self.id + 1 if isinstance(self.id, int) else self.id
 
     @property
     def name(self):

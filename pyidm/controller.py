@@ -344,7 +344,7 @@ class Controller:
                     vid_url = v_info.get('webpage_url', None) or v_info.get('url', None) or v_info.get('id', None)
 
                     # create video object
-                    vid = ObservableVideo(vid_url, v_info)  #, observer_callbacks=[self.observer])
+                    vid = ObservableVideo(vid_url, v_info)
 
                     # update info
                     vid.playlist_title = info.get('title', '')
