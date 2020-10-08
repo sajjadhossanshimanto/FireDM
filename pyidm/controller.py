@@ -25,11 +25,10 @@ from . import update
 from .utils import *
 from . import setting
 from . import config
-from .config import Status
+from .config import Status, MediaType
 from .brain import brain
 from . import video
-from .video import (check_ffmpeg, download_ffmpeg, unzip_ffmpeg, get_ytdl_options, 
-                    download_m3u8, parse_subtitles, download_sub)
+from .video import (check_ffmpeg, download_ffmpeg, unzip_ffmpeg, get_ytdl_options)
 from .model import ObservableDownloadItem, ObservableVideo
 
 
@@ -109,6 +108,9 @@ class Controller:
 
         # handle scheduled downloads
         Thread(target=self._scheduled_downloads_handler, daemon=True).start()
+
+        # check for ffmpeg and update file path "config.ffmpeg_actual_path"
+        check_ffmpeg()
 
     def _pending_downloads_handler(self):
         """handle pending downloads, should run in a dedicated thread"""
@@ -420,11 +422,16 @@ class Controller:
             log(f'unsupported protocol: \n"{match[0]}" stream type is not supported yet', start='', showpopup=True)
             return False
 
-        # check for ffmpeg availability in case this is a dash video or hls video
-        if 'dash' in d.subtype_list or 'hls' in d.subtype_list:
-            # log('Dash or HLS video detected')
+        # check for ffmpeg availability
+        if d.type in (MediaType.video, MediaType.audio, MediaType.key):
             if not check_ffmpeg():
-                log('Download cancelled, FFMPEG is missing', start='', showpopup=True)
+                # log('Download cancelled, FFMPEG is missing', start='', showpopup=True)
+
+                log('"FFMPEG" is required to process media files',
+                    'executable must be copied into PyIDM folder or add ffmpeg path to system PATH',
+                    'you can download it manually from https://www.ffmpeg.org/download.html',
+                    sep='\n',
+                    showpopup=True)
                 return False
 
         # validate destination folder for existence and permissions
@@ -897,6 +904,7 @@ class Controller:
         log('operating system:', config.operating_system_info)
         log('Python version:', sys.version)
         log('current working directory:', config.current_directory)
+        log('FFMPEG:', config.ffmpeg_actual_path)
 
     def process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
