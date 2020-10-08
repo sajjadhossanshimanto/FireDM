@@ -89,21 +89,17 @@ class Segment:
 
 class DownloadItem:
 
-    # animation ['►►   ', '  ►►'] › ► ⤮ ⇴ ↹ ↯  ↮  ₡ ['⯈', '▼', '⯇', '▲']
+    # animation ['►►   ', '  ►►'] › ► ⤮ ⇴ ↹ ↯  ↮  ₡ ['⯈', '▼', '⯇', '▲', ⚫]
     # ['⏵⏵', '  ⏵⏵'] ['›', '››', '›››', '››››', '›››››'] ['❯', '❯❯', '❯❯❯', '❯❯❯❯'] ['|', '||', '|||', '||||', '|||||']
-    animation_icons = {config.Status.downloading: ['❯' * n for n in range(1, 5)],
-                       config.Status.pending: ['⏳'],
-                       config.Status.completed: ['✔'], config.Status.cancelled: ['-x-'],
-                       config.Status.processing: ['↯', '↯↯', '↯↯↯'], config.Status.error: ['err']}
 
     def __init__(self, id_=None, url='', name='', folder=''):
         # unique name for download item, will be calculated based on name and target folder
         self.uid = None
 
-        self.id = id_
+        self.id = id_  # to be removed
         self.title = ''  # file name without extension
         self._name = name
-        self.extension = ''  # note: filename extension include dot, ex: '.mp4'
+        self.extension = ''  # note: filename extension includes a dot, ex: '.mp4'
 
         self.folder = os.path.abspath(folder)
 
@@ -124,15 +120,12 @@ class DownloadItem:
         self._downloaded = 0
         self._lock = None  # Lock() to access downloaded property from different threads
         self._status = config.Status.cancelled
+
         self._remaining_parts = 0
 
         # connection status
         self.status_code = 0
         self.status_code_description = ''
-
-        # animation
-        self.animation_index = 0
-        self.animation_timer = 0
 
         # audio
         self.audio_stream = None
@@ -401,26 +394,6 @@ class DownloadItem:
         name = f'audio_for_{self.name}'.replace(' ', '_')
         return os.path.join(self.temp_folder, name)
 
-
-    @property
-    def i(self):
-        # This is where we put the animation letter
-        if self.sched:
-            selected_image = self.sched_string
-        else:
-            icon_list = self.animation_icons.get(self.status, [''])
-
-            if time.time() - self.animation_timer > 0.5:
-                self.animation_timer = time.time()
-                self.animation_index += 1
-
-            if self.animation_index >= len(icon_list):
-                self.animation_index = 0
-
-            selected_image = icon_list[self.animation_index]
-
-        return selected_image
-
     @property
     def segment_size(self):
         return self._segment_size
@@ -429,14 +402,6 @@ class DownloadItem:
     def segment_size(self, value):
         self._segment_size = value if value <= self.size else self.size
         # print('segment size = ', self._segment_size)
-
-    @property
-    def sched_string(self):
-        # t = time.localtime(self.sched)
-        # text = f"⏳({t.tm_hour}:{t.tm_min})"
-        text = f"{self.sched[0]:02}:{self.sched[1]:02}"
-        # text = f"⏳{self.sched[0]:02}:{self.sched[1]:02}"
-        return text
 
     def select_subs(self, subs_names=None):
         """
@@ -494,59 +459,56 @@ class DownloadItem:
         headers = get_headers(url)
         # print('update d parameters:', headers)
 
-        # update headers only if no other update thread created with different url
-        if True:  #url == self.url:
-            # print('update()> url, self.url', url, self.url)
-            self.url = url
-            self.eff_url = headers.get('eff_url')
-            self.status_code = headers.get('status_code', '')
-            self.status_code_description = f"{self.status_code} - {translate_server_code(self.status_code)}"
+        # update headers
+        # print('update()> url, self.url', url, self.url)
+        self.url = url
+        self.eff_url = headers.get('eff_url')
+        self.status_code = headers.get('status_code', '')
+        self.status_code_description = f"{self.status_code} - {translate_server_code(self.status_code)}"
 
-            # get file name
-            name = ''
-            if 'content-disposition' in headers:  # example content-disposition : attachment; filename=ffmpeg.zip
-                try:
-                    name = headers['content-disposition'].split('=')[1].strip('"')
-                except:
-                    pass
+        # get file name
+        name = ''
+        if 'content-disposition' in headers:  # example content-disposition : attachment; filename=ffmpeg.zip
+            try:
+                name = headers['content-disposition'].split('=')[1].strip('"')
+            except:
+                pass
 
-            elif 'file-name' in headers:
-                name = headers['file-name']
-            else:
-                clean_url = url.split('?')[0] if '?' in url else url
-                name = clean_url.split('/')[-1].strip()
-
-            # file size
-            size = int(headers.get('content-length', 0))
-
-            # type
-            content_type = headers.get('content-type', '').split(';')[0]
-            # fallback, guess type from file name extension
-            # guessed_content_type = mimetypes.guess_type(name, strict=False)[0]
-            # if not content_type:
-            #     content_type = guessed_content_type
-
-            # file extension:
-            ext = os.path.splitext(name)[1]
-            if not ext:  # if no ext in file name
-                ext = mimetypes.guess_extension(content_type, strict=False) if content_type not in ('N/A', None) else ''
-
-                if ext:
-                    name += ext
-
-            # resume support
-            resumable = headers.get('accept-ranges', 'none') != 'none'
-
-            self.name = name
-            self.extension = ext
-            self.size = size
-            self.type = content_type
-            self.resumable = resumable
-
-            # build segments
-            self.build_segments()
+        elif 'file-name' in headers:
+            name = headers['file-name']
         else:
-            print('DownloadItem.Update()> url changed, abort update for ', url)
+            clean_url = url.split('?')[0] if '?' in url else url
+            name = clean_url.split('/')[-1].strip()
+
+        # file size
+        size = int(headers.get('content-length', 0))
+
+        # type
+        content_type = headers.get('content-type', '').split(';')[0]
+        # fallback, guess type from file name extension
+        # guessed_content_type = mimetypes.guess_type(name, strict=False)[0]
+        # if not content_type:
+        #     content_type = guessed_content_type
+
+        # file extension:
+        ext = os.path.splitext(name)[1]
+        if not ext:  # if no ext in file name
+            ext = mimetypes.guess_extension(content_type, strict=False) if content_type not in ('N/A', None) else ''
+
+            if ext:
+                name += ext
+
+        # resume support
+        resumable = headers.get('accept-ranges', 'none') != 'none'
+
+        self.name = name
+        self.extension = ext
+        self.size = size
+        self.type = content_type
+        self.resumable = resumable
+
+        # build segments
+        self.build_segments()
 
         log('headers:', headers, log_level=3)
 

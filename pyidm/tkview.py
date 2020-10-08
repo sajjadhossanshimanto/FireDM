@@ -1301,6 +1301,15 @@ class DItem(tk.Frame):
 
         tk.Frame.__init__(self, parent, bg=self.bg)
 
+        self.animation_symbols = {config.Status.downloading: '',
+                                  config.Status.cancelled: '-x-',
+                                  config.Status.completed: '✔',
+                                  config.Status.pending: '⏳',
+                                  config.Status.scheduled: '⏳',
+                                  config.Status.processing: '↯',
+                                  config.Status.error: '',
+                                  }
+
         self.name = tk.StringVar()
         # self.name.set(uid)
 
@@ -1317,6 +1326,9 @@ class DItem(tk.Frame):
         # self.eta.set('- ETA: 30 seconds')
 
         self.status = tk.StringVar()
+        self.status_symbol = tk.StringVar()
+        self.media_type = tk.StringVar()
+        self.media_subtype = tk.StringVar()
 
         # thumbnail
         self.thumbnail_size = 120
@@ -1371,14 +1383,19 @@ class DItem(tk.Frame):
 
         # status label
         tk.Label(btns_frame, textvariable=self.status, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
+        tk.Label(btns_frame, textvariable=self.status_symbol, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
 
         # blinker button, it will blink with received data flow
-        self.blinker = tk.StringVar()
-        tk.Label(btns_frame, bg=self.bg, textvariable=self.blinker, fg='green').pack(side='left', padx=(0, 10), pady=5)
+        self.blinker = tk.Label(btns_frame, bg=self.bg, text='▼', fg='green')
+        self.blinker.pack(side='left', padx=(0, 10), pady=5)
 
         # errors label
         self.error_lbl = tk.Label(btns_frame, bg=self.bg, text='', fg='red')
         self.error_lbl.pack(side='left', padx=(0, 10))
+
+        # media type
+        tk.Label(btns_frame, textvariable=self.media_subtype, bg=self.bg, fg=self.fg, anchor='w').pack(side='right', padx=5)
+        tk.Label(btns_frame, textvariable=self.media_type, bg=self.bg, fg=self.fg, anchor='w').pack(side='right', padx=5)
 
         # progressbar
         self.bar = atk.RadialProgressbar(parent=self, size=(60, 60), fg=PBAR_FG, text_fg=PBAR_TXT, font_size_ratio=0.12)
@@ -1420,15 +1437,16 @@ class DItem(tk.Frame):
     def toggle_blinker(self):
         """an activity blinker "like an led" """
         status = self.status.get()
-        if not self.blinker.get() and status in (config.Status.downloading, config.Status.processing):
+        if self.blinker.cget('fg') != 'green' and status in (config.Status.downloading, config.Status.processing):
             # on blinker
-            self.blinker.set('⚫')
+            self.blinker.config(fg='green')
         else:
             # off blinker
-            self.blinker.set('')
+            self.blinker.config(fg=self.bg)
 
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
-               thumbnail=None, status=None, extension=None, sched=None, **kwargs):
+               thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
+               **kwargs):
         """update widgets value"""
         # print(locals())
         try:
@@ -1461,16 +1479,24 @@ class DItem(tk.Frame):
 
             if 'errors' in kwargs:
                 errors = kwargs['errors']
-                self.error_lbl['text'] = f'[{errors} connection errors!]' if errors else ''
+                self.error_lbl['text'] = f'[{errors} errs!]' if errors else ''
 
             if status:
                 if status == config.Status.completed:
                     self.error_lbl['text'] = ''
                 self.status.set(status)
 
+                self.status_symbol.set(self.animation_symbols.get(status, ''))
+
             if sched:
                 if status == config.Status.scheduled:
                     self.status.set(f'{status} @{sched}')
+
+            if type:
+                self.media_type.set(type)
+
+            if subtype_list:
+                self.media_subtype.set(subtype_list)
 
             # an led like, to react with data flow
             self.toggle_blinker()
