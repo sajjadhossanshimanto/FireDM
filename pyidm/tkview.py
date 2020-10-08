@@ -1428,7 +1428,7 @@ class DItem(tk.Frame):
             self.blinker.set('')
 
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
-               thumbnail=None, status=None, extension=None, **kwargs):
+               thumbnail=None, status=None, extension=None, sched=None, **kwargs):
         """update widgets value"""
         # print(locals())
         try:
@@ -1464,9 +1464,13 @@ class DItem(tk.Frame):
                 self.error_lbl['text'] = f'[{errors} connection errors!]' if errors else ''
 
             if status:
-                self.status.set(status)
                 if status == config.Status.completed:
                     self.error_lbl['text'] = ''
+                self.status.set(status)
+
+            if sched:
+                if status == config.Status.scheduled:
+                    self.status.set(f'{status} @{sched}')
 
             # an led like, to react with data flow
             self.toggle_blinker()
