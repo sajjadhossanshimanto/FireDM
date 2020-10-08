@@ -140,10 +140,6 @@ active_downloads = set()  # indexes for active downloading items
 d_list = []
 
 # queues
-# main_q = Queue()  # used by pyIDM.py
-# main_window_q = Queue()  # queue for Main application window
-# log_q = Queue()  # queue to hold log messages to be displayed in main window's log tab
-# commands_q = Queue()  # queue to access MainWindow internal methods from threads
 error_q = Queue()  # used by workers to report server refuse connection errors
 jobs_q = Queue()  # # required for failed worker jobs
 
@@ -152,6 +148,10 @@ jobs_q = Queue()  # # required for failed worker jobs
 log_callbacks = []
 log_popup_callback = None
 
+# gui window size
+DEFAULT_WINDOW_SIZE = (780, 433) # width, height in pixels
+window_size = DEFAULT_WINDOW_SIZE
+
 # settings parameters to be saved on disk
 settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window',
                  'segment_size', 'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections',
@@ -159,7 +159,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
-                 'minimize_to_systray', 'enable_systray']
+                 'minimize_to_systray', 'enable_systray', 'window_size']
 
 
 # update --------------------------------------------------------------------------------------------

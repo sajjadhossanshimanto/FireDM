@@ -2317,9 +2317,13 @@ class MainWindow(IView):
 
         # root ----------------------------------------------------------------------------------------------------
         self.root = tk.Tk()
-        # self.root.withdraw()
-        self.width = 780
-        self.height = 433
+
+        # assign window size
+        try:
+            self.width, self.height = config.window_size
+        except:
+            self.width, self.height = config.DEFAULT_WINDOW_SIZE
+
         center_window(self.root, width=self.width, height=self.height)
         self.root.title(f'PyIDM ver.{config.APP_VERSION}')
         self.main_frame=None
@@ -2354,6 +2358,9 @@ class MainWindow(IView):
         self.root.bind('<<urlChangeEvent>>', self.url_change_handler)
         self.root.bind("<<updateViewEvent>>", self.update_view_handler)
         self.root.bind("<<runMethodEvent>>", self.run_method_handler)
+
+        # remember window size
+        self.root.bind('<Configure>', self.remember_window_size)
 
         # initialize systray
         self.systray = SysTray(self)
@@ -2855,6 +2862,10 @@ class MainWindow(IView):
         sl = get_option('speed_limit', 0)
         text = size_format(sl) if sl else '.. No Limit!'
         self.speed_limit_label.config(text=f'current value: {text}')
+
+    def remember_window_size(self, *args):
+        """save current window size in config.window_size"""
+        config.window_size = (self.root.winfo_width(), self.root.winfo_height())
 
     # endregion
 
