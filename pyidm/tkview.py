@@ -2453,6 +2453,7 @@ class MainWindow(IView):
 
         if self.main_frame:
             self.restart_gui()
+
     # endregion
 
     # region widgets
@@ -3173,6 +3174,10 @@ class MainWindow(IView):
         self.d_items.clear()
         self.create_main_widgets()
         self.select_tab('Settings')
+
+        # get download items
+        self.root.after(1000, self.controller.get_d_list)
+
         self.run()
 
     def post_startup(self):

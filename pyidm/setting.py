@@ -201,22 +201,22 @@ def save_d_map(d_map):
                 thumbnails[d.uid] = d.thumbnail.decode("utf-8")
 
         # store d_map in downloads.cfg file
-        file = os.path.join(config.sett_folder, 'downloads.dat')
-        with open(file, 'w') as f:
+        downloads_fp = os.path.join(config.sett_folder, 'downloads.dat')
+        with open(downloads_fp, 'w') as f:
             try:
                 json.dump(data, f)
             except Exception as e:
                 print('error save d_list:', e)
 
         # store thumbnails in thumbnails.cfg file
-        file = os.path.join(config.sett_folder, 'thumbnails.dat')
-        with open(file, 'w') as f:
+        thumbnails_fp = os.path.join(config.sett_folder, 'thumbnails.dat')
+        with open(thumbnails_fp, 'w') as f:
             try:
                 json.dump(thumbnails, f)
             except Exception as e:
                 print('error save thumbnails file:', e)
 
-        log('downloads items list saved in:', file)
+        log('downloads items list saved in:', downloads_fp)
     except Exception as e:
         handle_exceptions(e)
 
