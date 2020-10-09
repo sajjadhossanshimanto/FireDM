@@ -126,6 +126,7 @@ class DownloadItem:
         self._status = config.Status.cancelled
 
         self._remaining_parts = 0
+        self.total_parts = 0
 
         # connection status
         self.status_code = 0
@@ -216,7 +217,7 @@ class DownloadItem:
         # properties names that will be saved on disk
         self.saved_properties = ['_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
                                  'resumable', 'selected_quality', '_segment_size', '_downloaded', '_status',
-                                 '_remaining_parts', 'audio_url', 'audio_size', 'type', 'subtype_list', 'fragments',
+                                 '_remaining_parts', 'total_parts', 'audio_url', 'audio_size', 'type', 'subtype_list', 'fragments',
                                  'fragment_base_url', 'audio_fragments', 'audio_fragment_base_url',
                                  '_total_size', 'protocol', 'manifest_url', 'selected_subtitles',
                                  'abr', 'tbr', 'format_id', 'audio_format_id', 'resolution', 'audio_quality',
@@ -434,6 +435,8 @@ class DownloadItem:
             if sizes and [seg for seg in self.segments if seg.downloaded is False and not seg.size]:
                 avg_seg_size = sum(sizes) // len(sizes)
                 total_size = avg_seg_size * len(self.segments)  # estimated
+
+            self.total_parts = len(self.segments)
 
         total_size = total_size or self.size
 

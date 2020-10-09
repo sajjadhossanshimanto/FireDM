@@ -1267,7 +1267,8 @@ class Controller:
                f'Downloaded: {size_format(d.downloaded)} of {size_format(d.total_size)} \n' \
                f'Status: {d.status} \n' \
                f'Resumable: {d.resumable} \n' \
-               f'Type: {d.type}, {", ".join(d.subtype_list)}\n'
+               f'Type: {d.type}, {", ".join(d.subtype_list)}\n' \
+               f'Remaining segments: {d.remaining_parts} of {d.total_parts}\n'
 
         if d.type == 'video':
             text += f'Protocol: {d.protocol} \n' \

@@ -1311,19 +1311,13 @@ class DItem(tk.Frame):
                                   }
 
         self.name = tk.StringVar()
-        # self.name.set(uid)
-
-        self.size = tk.StringVar()
-        # self.size.set('30 MB')
-
-        self.total_size = tk.StringVar()
-        # self.total_size.set('of 100 MB')
-
-        self.speed = tk.StringVar()
-        # self.speed.set('- Speed: 1.5 MB/s')
-
-        self.eta = tk.StringVar()
-        # self.eta.set('- ETA: 30 seconds')
+        self.size = tk.StringVar()  # self.size.set('30 MB')
+        self.total_size = tk.StringVar()  # self.total_size.set('of 100 MB')
+        self.speed = tk.StringVar()  # self.speed.set('- Speed: 1.5 MB/s')
+        self.eta = tk.StringVar()  # self.eta.set('- ETA: 30 seconds')
+        self.live_connections = tk.StringVar()  # self.live_connections.set('W8')
+        self.total_parts = None
+        self.remaining_parts = tk.StringVar()  # self.remaining_parts.set('P20 of 150')
 
         self.status = tk.StringVar()
         self.status_symbol = tk.StringVar()
@@ -1360,6 +1354,8 @@ class DItem(tk.Frame):
         tk.Label(misc_frame, textvariable=self.total_size, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
         tk.Label(misc_frame, textvariable=self.speed, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
         tk.Label(misc_frame, textvariable=self.eta, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
+        tk.Label(misc_frame, textvariable=self.live_connections, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
+        tk.Label(misc_frame, textvariable=self.remaining_parts, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
 
         # buttons
         btns_frame = tk.Frame(self, bg=self.bg)
@@ -1446,6 +1442,7 @@ class DItem(tk.Frame):
 
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
+               remaining_parts=None, live_connections=None, total_parts=None,
                **kwargs):
         """update widgets value"""
         # print(locals())
@@ -1481,9 +1478,23 @@ class DItem(tk.Frame):
                 errors = kwargs['errors']
                 self.error_lbl['text'] = f'[{errors} errs!]' if errors else ''
 
+            if live_connections is not None:
+                self.live_connections.set(f'Live {live_connections}' if live_connections > 0 else '')
+
+            if total_parts:
+                self.total_parts = total_parts
+
+            if remaining_parts:
+                txt = f'Remain: {remaining_parts}'
+                if self.total_parts:
+                    txt += f' of {self.total_parts}'
+
+                self.remaining_parts.set(txt)
+
             if status:
                 if status == config.Status.completed:
                     self.error_lbl['text'] = ''
+                    self.remaining_parts.set('')
                 self.status.set(status)
 
                 self.status_symbol.set(self.animation_symbols.get(status, ''))
