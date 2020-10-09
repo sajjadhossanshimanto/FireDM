@@ -632,12 +632,18 @@ class Controller:
                     'executable must be copied into PyIDM folder or add ffmpeg path to system PATH',
                     'you can download it manually from https://www.ffmpeg.org/download.html'])
 
-                options = ['Download', 'Cancel'] if config.operating_system == 'Windows' else ['Ok']
+                options = ['Ok']
+
+                if config.operating_system == 'Windows':
+                    msg += '\n\n'
+                    msg += f'Press "Download" button to download ffmpeg executable into: {config.sett_folder}'
+
+                    options = ['Download', 'Cancel']
 
                 res = self.get_user_response(msg, options=options)
                 if res == 'Download':
                     # download ffmpeg from github
-                    self.download_ffmpeg()
+                    self._download_ffmpeg()
                 return False
 
         # validate destination folder for existence and permissions
@@ -822,7 +828,7 @@ class Controller:
             if config.TEST_MODE:
                 raise e
 
-    def download_ffmpeg(self, destination=config.sett_folder):
+    def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
 
         Args:
@@ -850,7 +856,7 @@ class Controller:
         d.update(url)
         d.name = 'ffmpeg.exe'
 
-        run_thread(self._download, d)
+        run_thread(self._download, d, silent=True)
 
     def _download_playlist(self, vsmap, subtitles=None):
         """download playlist
