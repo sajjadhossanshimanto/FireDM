@@ -1186,9 +1186,8 @@ class FileProperties(ttk.Frame):
 
         misc_frame = tk.Frame(self, bg=self.bg)
         misc_frame.grid(row=6, column=0, columnspan=3, sticky='ew')
-        tk.Label(misc_frame, textvariable=self.type, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
-        tk.Label(misc_frame, textvariable=self.subtype, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
-        tk.Label(misc_frame, textvariable=self.resumable, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
+        for var in (self.type, self.subtype, self.resumable):
+            tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
 
         separator(7)
 
@@ -1317,7 +1316,7 @@ class DItem(tk.Frame):
         self.eta = tk.StringVar()  # self.eta.set('- ETA: 30 seconds')
         self.live_connections = tk.StringVar()  # self.live_connections.set('W8')
         self.total_parts = None
-        self.remaining_parts = tk.StringVar()  # self.remaining_parts.set('P20 of 150')
+        self.completed_parts = tk.StringVar()  # self.current_segment.set('Done: 20 of 150')
 
         self.status = tk.StringVar()
         self.status_symbol = tk.StringVar()
@@ -1350,12 +1349,9 @@ class DItem(tk.Frame):
         # misc info
         misc_frame = tk.Frame(self, bg=self.bg)
         misc_frame.grid(row=1, column=1, sticky='w')
-        tk.Label(misc_frame, textvariable=self.size, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
-        tk.Label(misc_frame, textvariable=self.total_size, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
-        tk.Label(misc_frame, textvariable=self.speed, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
-        tk.Label(misc_frame, textvariable=self.eta, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
-        tk.Label(misc_frame, textvariable=self.live_connections, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
-        tk.Label(misc_frame, textvariable=self.remaining_parts, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
+
+        for var in (self.size, self.total_size, self.speed, self.eta, self.live_connections, self.completed_parts):
+            tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
 
         # buttons
         btns_frame = tk.Frame(self, bg=self.bg)
@@ -1363,23 +1359,23 @@ class DItem(tk.Frame):
         btn_size = 10
         btn_color = BTN_BG
 
-        # images
+        # buttons' images
         self.play_img = atk.create_image(b64=play_icon, color=btn_color, size=btn_size)
         self.pause_img = atk.create_image(b64=pause_icon, color=btn_color, size=btn_size)
         self.delete_img = atk.create_image(b64=delete_icon, color='red', size=btn_size)
 
-        self.play_button = tk.Button(btns_frame, image=self.play_img, bg=self.bg, bd=0, highlightbackground=self.bg, activebackground=self.bg)
-        self.play_button.pack(side='left', padx=(0, 10))
+        # create buttons
+        self.play_button = Button(btns_frame, image=self.play_img)
+        self.pause_button = Button(btns_frame, image=self.pause_img)
+        self.delete_button = Button(btns_frame, image=self.delete_img)
 
-        self.pause_button = tk.Button(btns_frame, image=self.pause_img, bg=self.bg, bd=0, highlightbackground=self.bg, activebackground=self.bg)
-        self.pause_button.pack(side='left', padx=(0, 10))
+        # pack buttons
+        for btn in (self.play_button, self.pause_button, self.delete_button):
+            btn.pack(side='left', padx=(0, 10))
 
-        self.delete_button = tk.Button(btns_frame, image=self.delete_img, bg=self.bg, bd=0, highlightbackground=self.bg, activebackground=self.bg)
-        self.delete_button.pack(side='left', padx=(0, 10))
-
-        # status label
-        tk.Label(btns_frame, textvariable=self.status, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
-        tk.Label(btns_frame, textvariable=self.status_symbol, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
+        # status labels
+        for var in (self.status, self.status_symbol):
+            tk.Label(btns_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
 
         # blinker button, it will blink with received data flow
         self.blinker = tk.Label(btns_frame, bg=self.bg, text='▼', fg='green')
@@ -1390,8 +1386,8 @@ class DItem(tk.Frame):
         self.error_lbl.pack(side='left', padx=(0, 10))
 
         # media type
-        tk.Label(btns_frame, textvariable=self.media_subtype, bg=self.bg, fg=self.fg, anchor='w').pack(side='right', padx=5)
-        tk.Label(btns_frame, textvariable=self.media_type, bg=self.bg, fg=self.fg, anchor='w').pack(side='right', padx=5)
+        for var in (self.media_subtype, self.media_type):
+            tk.Label(btns_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='right', padx=5)
 
         # progressbar
         self.bar = atk.RadialProgressbar(parent=self, size=(60, 60), fg=PBAR_FG, text_fg=PBAR_TXT, font_size_ratio=0.12)
@@ -1422,7 +1418,6 @@ class DItem(tk.Frame):
 
     def show(self):
         """grid self"""
-        # self.grid(sticky='ewns', pady=5)
         self.pack(expand=True, fill='x', pady=5)
 
     def hide(self):
@@ -1479,22 +1474,20 @@ class DItem(tk.Frame):
                 self.error_lbl['text'] = f'[{errors} errs!]' if errors else ''
 
             if live_connections is not None:
-                self.live_connections.set(f'Live {live_connections}' if live_connections > 0 else '')
+                self.live_connections.set(f'Workers: {live_connections}, ' if live_connections > 0 else '')
 
             if total_parts:
                 self.total_parts = total_parts
 
             if remaining_parts:
-                txt = f'Remain: {remaining_parts}'
                 if self.total_parts:
-                    txt += f' of {self.total_parts}'
-
-                self.remaining_parts.set(txt)
+                    completed = self.total_parts - remaining_parts
+                    self.completed_parts.set(f'Done: {completed} of {self.total_parts}')
 
             if status:
                 if status == config.Status.completed:
                     self.error_lbl['text'] = ''
-                    self.remaining_parts.set('')
+                    self.completed_parts.set('')
                 self.status.set(status)
 
                 self.status_symbol.set(self.animation_symbols.get(status, ''))
