@@ -9,7 +9,6 @@
 import copy
 import os
 import re
-import zipfile
 import time
 from urllib.parse import urljoin
 
@@ -474,93 +473,6 @@ class Stream:
         return self._mediatype
 
 
-def download_ffmpeg(destination=config.sett_folder):
-    """it should download ffmpeg.exe for windows os"""
-
-    # set download folder
-    config.ffmpeg_download_folder = destination
-
-    # first check windows 32 or 64
-    import platform
-    # ends with 86 for 32 bit and 64 for 64 bit i.e. Win7-64: AMD64 and Vista-32: x86
-    if platform.machine().endswith('64'):
-        # 64 bit link
-        url = 'https://github.com/pyIDM/pyIDM/releases/download/extra/ffmpeg.zip'
-    else:
-        # 32 bit link
-        url = 'https://github.com/pyIDM/pyIDM/releases/download/extra/ffmpeg_32bit.zip'
-
-    log('downloading: ', url)
-
-    # create a download object, will store ffmpeg in setting folder
-    # print('config.sett_folder = ', config.sett_folder)
-    d = DownloadItem(url=url, folder=config.ffmpeg_download_folder)
-    d.update(url)
-    d.name = 'ffmpeg.zip'  # must rename it for unzip to find it
-    # print('d.folder = ', d.folder)
-
-    # post download
-    d.callback = 'unzip_ffmpeg'
-
-    # send download request to main window
-    # execute_command("start_download", d, silent=False)
-
-
-def unzip_ffmpeg():
-    log('unzip_ffmpeg:', 'unzipping')
-
-    try:
-        file_name = os.path.join(config.ffmpeg_download_folder, 'ffmpeg.zip')
-        with zipfile.ZipFile(file_name, 'r') as zip_ref:  # extract zip file
-            zip_ref.extractall(config.ffmpeg_download_folder)
-
-        log('ffmpeg update:', 'delete zip file')
-        delete_file(file_name)
-        log('ffmpeg update:', 'ffmpeg .. is ready at: ', config.ffmpeg_download_folder)
-    except Exception as e:
-        log('unzip_ffmpeg: error ', e)
-
-
-def check_ffmpeg():
-    """check for ffmpeg availability, first: current folder, second config.global_sett_folder,
-    and finally: system wide"""
-
-    log('check ffmpeg availability?')
-    found = False
-
-    # search in current app directory then default setting folder
-    try:
-        for folder in [config.current_directory, config.global_sett_folder]:
-            for file in os.listdir(folder):
-                # print(file)
-                if file == 'ffmpeg.exe':
-                    found = True
-                    config.ffmpeg_actual_path = os.path.join(folder, file)
-                    break
-            if found:  # break outer loop
-                break
-    except:
-        pass
-
-    # Search in the system
-    if not found:
-        cmd = 'where ffmpeg' if config.operating_system == 'Windows' else 'which ffmpeg'
-        error, output = run_command(cmd, verbose=False)
-        if not error:
-            found = True
-
-            # fix issue 47 where command line return \n\r with path
-            output = output.strip()
-            config.ffmpeg_actual_path = os.path.realpath(output)
-
-    if found:
-        log('ffmpeg checked ok! - at: ', config.ffmpeg_actual_path)
-        return True
-    else:
-        log(f'can not find ffmpeg!!, install it, or add executable location to PATH, or copy executable to ',
-            config.global_sett_folder, 'or', config.current_directory)
-
-
 def merge_video_audio(video, audio, output, d):
     """merge video file and audio file into output file, d is a reference for current DownloadItem object"""
     log('merging video and audio')
@@ -736,7 +648,8 @@ def pre_process_hls(d):
 
     # check if file is encrypted
     if is_encrypted(video_m3u8) and 'encrypted' not in d.subtype_list:
-        d.subtype_list.append('encrypted')
+        # d.subtype_list.append('encrypted')
+        d.subtype_list = d.subtype_list + ['encrypted']  # if you use "append" changes will not be reported to "Controller" 
 
     log(d.subtype_list)
 

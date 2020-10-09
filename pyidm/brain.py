@@ -11,19 +11,18 @@ import time
 from threading import Thread
 import concurrent.futures
 
-from .video import merge_video_audio, unzip_ffmpeg, pre_process_hls, post_process_hls, \
-    convert_audio, download_subtitles, write_metadata  # unzip_ffmpeg required here for ffmpeg callback
+from .video import merge_video_audio, pre_process_hls, post_process_hls, \
+    convert_audio, download_subtitles, write_metadata
 from . import config
-from .config import Status, active_downloads, APP_NAME
-from .utils import (log, size_format, notify, delete_folder, delete_file, rename_file, load_json, save_json,
-                    print_object, calc_md5, calc_sha256, run_command)
+from .config import Status, APP_NAME
+from .utils import (log, size_format, notify, delete_file, rename_file, calc_md5, calc_sha256, run_command)
 from .worker import Worker
 from .downloaditem import Segment
 
 
-def brain(d=None, downloader=None):
-    """main brain for a single download, it controls thread manger, file manager, and get data from workers
-    and communicate with download window Gui, Main frame gui"""
+def brain(d=None):
+    """main brain for a single download, it controls thread manger, file manager
+    """
 
     # set status
     if d.status == Status.downloading:
@@ -89,13 +88,6 @@ def brain(d=None, downloader=None):
             log(f'brain {d.uid}: download error')
             break
 
-    # todo: should find a better way to handle callback.
-    # callback, a method or func "name" to call if download completed, it is stored as a string to be able to save it
-    # on disk with other downloaditem parameters
-    if d.callback and d.status == Status.completed:
-        # d.callback()
-        globals()[d.callback]()
-
     # report quitting
     log(f'brain {d.uid}: quitting', log_level=2)
 
@@ -114,6 +106,8 @@ def brain(d=None, downloader=None):
 
 
 def file_manager(d, keep_segments=True):
+    """write downloaded segments to a single file, and report download completed"""
+
     # create temp folder if it doesn't exist
     if not os.path.isdir(d.temp_folder):
         os.mkdir(d.temp_folder)
@@ -302,6 +296,7 @@ def file_manager(d, keep_segments=True):
 
 
 def thread_manager(d):
+    """create multiple worker threads to download file segments"""
 
     #   soft start, connections will be gradually increase over time to reach max. number
     #   set by user, this prevent impact on servers/network, and avoid "service not available" response
