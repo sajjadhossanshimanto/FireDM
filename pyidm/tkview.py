@@ -2609,6 +2609,7 @@ class MainWindow(IView):
         CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
         CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(anchor='w')
+        CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
         # CheckOption(tab, 'Show download window', key='show_download_window').pack(anchor='w')
         # CheckOption(tab, 'Auto close download window after finish downloading', key='auto_close_download_window').pack(anchor='w')
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')

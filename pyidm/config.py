@@ -68,6 +68,7 @@ show_download_window = True
 auto_close_download_window = True
 segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 show_thumbnail = True  # auto preview video thumbnail at main tab
+download_thumbnail = False
 process_playlist = False  # fetch videos info only if selected, since big playlist consume time/resources.
 big_playlist_length = 50  # minimum number of videos in big playlist, it will ignore "process_playlist"
 manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
@@ -112,7 +113,7 @@ ytdl_abort = False
 
 # advanced
 keep_temp = False  # keep temp files / folders after done downloading for debugging
-checksum = False  # calculate checksums for completed files MD5 and SHA256
+checksum = True  # calculate checksums for completed files MD5 and SHA256
 use_thread_pool_executor = False
 max_seg_retries = 10  # maximum retries for a segment until reporting downloaded, this is for segment with unknown size
 
@@ -159,7 +160,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
-                 'minimize_to_systray', 'enable_systray', 'window_size']
+                 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail']
 
 
 # update --------------------------------------------------------------------------------------------

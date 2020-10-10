@@ -811,6 +811,23 @@ def get_thumbnail(url):
         log('downloading Thumbnail failed', log_level=2)
 
 
+def download_thumbnail(url, fp):
+    """download thumbnail
+
+    Args:
+        url (str): thumbnail url link
+        fp (str): file path
+    """
+
+    try:
+        buffer = get_thumbnail(url)
+        img = Image.open(buffer)
+        img.save(fp)
+        log('Thumbnail saved to:', fp)
+    except Exception as e:
+        log('Saving Thumbnail failed', log_level=2)
+
+
 def resize_image(img=None, buffer=None, size=None):
     """resize image
     Args:
@@ -1125,6 +1142,6 @@ __all__ = [
     'parse_bytes', 'set_curl_options', 'version_value',
     'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
     'calc_sha256', 'get_range_list', 'arabic_renderer', 'get_thumbnail', 'resize_image', 'run_thread', 'generate_unique_name',
-    'open_log_file', 'open_webpage'
+    'open_log_file', 'open_webpage', 'download_thumbnail'
 
 ]

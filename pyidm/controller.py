@@ -823,8 +823,29 @@ class Controller:
                 # update view
                 self._report_d(d)
 
+                # post actions
+                self._post_download(d)
+
         except Exception as e:
             log('download()> error:', e)
+            if config.TEST_MODE:
+                raise e
+
+    def _post_download(self, d):
+        """action required after done downloading
+
+        Args:
+            d (ObservableDownloadItem): download item
+        """
+
+        try:
+            # download thumbnail
+            if config.download_thumbnail and d.status == Status.completed and d.thumbnail_url:
+                fp = os.path.splitext(d.target_file)[0] + '.png'
+                download_thumbnail(d.thumbnail_url, fp)
+
+        except Exception as e:
+            log('controller._post_download()> error:', e)
             if config.TEST_MODE:
                 raise e
 

@@ -125,8 +125,8 @@ class ObservableVideo(Video, Observable):
     def get_thumbnail(self):
         """get video thumbnail and store it as base64 text in self.thumbnail"""
         if self.thumbnail_url and not self.thumbnail:
-            img = utils.get_thumbnail(self.thumbnail_url)
-            img = utils.resize_image(buffer=img, size=self.thumbnail_size)
+            buffer = utils.get_thumbnail(self.thumbnail_url)
+            img = utils.resize_image(buffer=buffer, size=self.thumbnail_size)
             self.thumbnail = utils.image_to_base64(img)
 
     def prepare_subtitles(self):
