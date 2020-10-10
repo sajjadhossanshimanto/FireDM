@@ -27,7 +27,7 @@ try:
     with open(f"{current_directory}/requirements.txt", "r") as fh:
         requirements = fh.readlines()
 except:
-    requirements = ['plyer', 'certifi', 'youtube_dl', 'pycurl', 'pillow', 'pystray']
+    requirements = ['plyer', 'certifi', 'youtube_dl', 'pycurl', 'pillow', 'pystray', 'awesometkinter >= 2020.9.22']
 
 setuptools.setup(
     name="PyIDM",
