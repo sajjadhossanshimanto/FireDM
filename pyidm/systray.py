@@ -127,5 +127,5 @@ class SysTray:
     def quit(self, *args):
         """callback when selecting quit from systray menu"""
         # thread safe call for main window close
-        self.main_window.run_method(self.main_window.close)
+        self.main_window.run_method(self.main_window.quit)
 

@@ -3068,19 +3068,23 @@ class MainWindow(IView):
         self.root.mainloop()
 
     def close(self):
-        """safe application terminate"""
+        """hide main window or terminate application"""
         if config.minimize_to_systray and self.systray.active:
             self.hide()
         else:
-            config.shutdown = True
-            self.root.destroy()  # destroy all widgets and quit mainloop
+            self.quit()
 
-            # save themes
-            self.save_user_themes()
-            print('Gui terminated')
+    def quit(self):
+        """Quit application and systray"""
+        config.shutdown = True
+        self.root.destroy()  # destroy all widgets and quit mainloop
 
-            # quit systray
-            self.systray.shutdown()
+        # save themes
+        self.save_user_themes()
+        print('Gui terminated')
+
+        # quit systray
+        self.systray.shutdown()
 
     def reset(self):
         self.pl_menu.reset()
