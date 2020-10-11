@@ -1,3 +1,6 @@
+2020.10.11:
+- hotfix for systray icon quit action, issue #171.
+
 2020.10.10:
 - Added Schedule downloads feature.
 - Manual audio selection for dash videos.
