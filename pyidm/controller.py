@@ -1212,6 +1212,19 @@ class Controller:
     # endregion
 
     # region open file/folder
+    def play_file(self, uid=None, video_idx=None):
+        """open download item target file or temp file"""
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        if os.path.isfile(d.target_file):
+            open_file(d.target_file)
+        else:
+            open_file(d.temp_file)
+
     def open_file(self, uid=None, video_idx=None):
         # get download item
         d = self.get_d(uid, video_idx)

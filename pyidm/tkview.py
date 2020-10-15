@@ -2322,6 +2322,9 @@ class MainWindow(IView):
         # root ----------------------------------------------------------------------------------------------------
         self.root = tk.Tk()
 
+        # # default font
+        # self.root.option_add("*Font", "helvetica")
+
         # assign window size
         try:
             self.width, self.height = config.window_size
@@ -2804,9 +2807,9 @@ class MainWindow(IView):
         d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
 
         # right click menu
-        right_click_map = {'Open File': lambda x: self.controller.open_file(uid=x),
+        right_click_map = {'Open File': lambda x: self.controller.play_file(uid=x),
                            'Open File Location': lambda x: self.controller.open_folder(uid=x),
-                           '▶ Watch while downloading': lambda x: self.controller.open_temp_file(uid=x),
+                           '▶ Watch while downloading': lambda x: self.controller.play_file(uid=x),
                            'Refresh url': lambda x: self.refresh_url(self.controller.get_webpage_url(uid=x)),
                            'copy webpage url': lambda x: self.copy(self.controller.get_webpage_url(uid=x)),
                            'copy direct url': lambda x: self.copy(self.controller.get_direct_url(uid=x)),
@@ -2823,6 +2826,9 @@ class MainWindow(IView):
         atk.RightClickMenu(d_item, right_click_map.keys(),
                            callback=lambda option, x=d_item.uid: right_click_map[option](x),
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
+
+        # bind double click to play files
+        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x))
 
     def set_proxy(self, *args):
         enabled = config.enable_proxy
