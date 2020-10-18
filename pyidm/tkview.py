@@ -1300,15 +1300,6 @@ class DItem(tk.Frame):
 
         tk.Frame.__init__(self, parent, bg=self.bg)
 
-        self.animation_symbols = {config.Status.downloading: '',
-                                  config.Status.cancelled: '-x-',
-                                  config.Status.completed: '✔',
-                                  config.Status.pending: '⏳',
-                                  config.Status.scheduled: '⏳',
-                                  config.Status.processing: '↯',
-                                  config.Status.error: '',
-                                  }
-
         self.name = tk.StringVar()
         self.size = tk.StringVar()  # self.size.set('30 MB')
         self.total_size = tk.StringVar()  # self.total_size.set('of 100 MB')
@@ -1319,7 +1310,7 @@ class DItem(tk.Frame):
         self.completed_parts = tk.StringVar()  # self.current_segment.set('Done: 20 of 150')
 
         self.status = tk.StringVar()
-        self.status_symbol = tk.StringVar()
+        self.extra = tk.StringVar()
         self.media_type = tk.StringVar()
         self.media_subtype = tk.StringVar()
 
@@ -1374,11 +1365,17 @@ class DItem(tk.Frame):
             btn.pack(side='left', padx=(0, 10))
 
         # status labels
-        for var in (self.status, self.status_symbol):
+        for var in (self.status, self.extra):
             tk.Label(btns_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
 
         # blinker button, it will blink with received data flow
-        self.blinker = tk.Label(btns_frame, bg=self.bg, text='▼', fg='green')
+        self.blinker_on_img = atk.create_image(b64=download_icon,  color=btn_color, size=12)
+        self.blinker_off_img = atk.create_image(b64=download_icon,  color=self.bg, size=12)
+        self.done_img = atk.create_image(b64=done_icon, color=btn_color)
+        self.hourglass_img = atk.create_image(b64=hourglass_icon, color=btn_color)
+
+        self.blinker = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg)
+        self.blinker.on = False
         self.blinker.pack(side='left', padx=(0, 10), pady=5)
 
         # errors label
@@ -1428,12 +1425,21 @@ class DItem(tk.Frame):
     def toggle_blinker(self):
         """an activity blinker "like an led" """
         status = self.status.get()
-        if self.blinker.cget('fg') != 'green' and status in (config.Status.downloading, config.Status.processing):
+        if not self.blinker.on and status in (config.Status.downloading, config.Status.processing):
             # on blinker
-            self.blinker.config(fg='green')
+            self.blinker.config(image=self.blinker_on_img)
+            self.blinker.on = True
+
+        elif status == config.Status.completed:
+            self.blinker.config(image=self.done_img)
+
+        elif status in (config.Status.pending, config.Status.scheduled):
+            self.blinker.config(image=self.hourglass_img)
+
         else:
             # off blinker
-            self.blinker.config(fg=self.bg)
+            self.blinker.config(image=self.blinker_off_img)
+            self.blinker.on = False
 
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
@@ -1490,11 +1496,12 @@ class DItem(tk.Frame):
                     self.completed_parts.set('')
                 self.status.set(status)
 
-                self.status_symbol.set(self.animation_symbols.get(status, ''))
+                if status != config.Status.scheduled:
+                    self.extra.set('')
 
             if sched:
                 if status == config.Status.scheduled:
-                    self.status.set(f'{status} @{sched}')
+                    self.extra.set(f'@{sched}')
 
             if type:
                 self.media_type.set(type)
