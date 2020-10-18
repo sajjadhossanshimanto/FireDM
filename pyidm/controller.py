@@ -888,6 +888,7 @@ class Controller:
         for vid_idx, s_idx in vsmap.items():
             d = self.playlist[vid_idx]
             d.select_stream(index=s_idx)
+            d.folder = config.download_folder
             run_thread(self._download, d, silent=True)
             time.sleep(0.1)
 
