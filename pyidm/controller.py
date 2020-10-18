@@ -799,6 +799,9 @@ class Controller:
                 # register observer
                 d.register_callback(self.observer)
 
+                # add to download map
+                self.d_map[d.uid] = d
+
                 # if max concurrent downloads exceeded, this download job will be added to pending queue
                 active_downloads = len(
                     [d for d in self.d_map.values() if d.status in (Status.downloading, Status.processing)])
@@ -806,9 +809,6 @@ class Controller:
                     d.status = Status.pending
                     self.pending_downloads_q.put(d)
                     return
-
-                # add to download map
-                self.d_map[d.uid] = d
 
                 # start brain in a separate thread
                 if config.SIMULATOR:
