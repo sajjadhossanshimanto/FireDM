@@ -57,8 +57,9 @@ unzip, and run from PyIDM.exe, no installation required.
     then you can run application from Terminal by:<br>
     `python -m pyidm`          note pyidm name in small letters 
 
-    or just<br>
-    `pyidm`        an exexutable "i.e. pyidm.exe on windows" will be located at "python/scripts", if it doesn't work append "python/scripts" folder to PATH. 
+    or just<br> `pyidm` an executable "i.e. pyidm.exe on windows" will
+    be located at "python/scripts", if it doesn't work append
+    "python/scripts" folder to PATH.
 
 
 3. **run from github source code**:<br>
@@ -67,8 +68,10 @@ To run from source, you have to have a python installed, "supported python versi
 if PyIDM failed to install required packages, you should install it manually, refer to "Dependencies" section below.
 
 4. **Build PyIDM yourself**:
-    - get the source code from github:<br>
-        `git clone https://github.com/pyIDM/PyIDM.git` <br>
+   -  get the source code from github: (recommended for latest updated
+      version)
+
+   `git clone https://github.com/pyIDM/PyIDM.git` <br>
 
     - or get the source code from PyPi: <br>
         navigate to https://pypi.org/project/pyIDM/#files and download a tar ball, example file name "pyIDM-2020.3.22.tar.gz", then extract it
@@ -77,8 +80,20 @@ if PyIDM failed to install required packages, you should install it manually, re
         `python setup.py install`
 
     - run PyIDM from Terminal by typing:<br>
-        `python -m pyidm`     or  just `pyidm`   
+        `python -m pyidm`     or  just `pyidm`
 
+5. **Examples:**
+
+    -**Linux ubuntu:**  
+    install from source, with required dependency and
+    run pyidm
+    ```
+    git clone https://github.com/pyIDM/PyIDM.git 
+    sudo apt install ffmpeg fonts-symbola libcurl4-openssl-dev libssl-dev python3-pip
+    python3-pil python3-pil.imagetk python3-tk 
+    python3 setup.py install --user 
+    python3 -m pyidm
+    ```
 
 **important note on Tkinter for mac users**:<br>
 - as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
