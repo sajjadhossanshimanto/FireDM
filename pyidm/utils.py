@@ -111,6 +111,10 @@ def set_curl_options(c, http_headers=None):
     c.setopt(pycurl.CAINFO, certifi.where())  # for https sites and ssl cert handling
     c.setopt(pycurl.PROXY_CAINFO, certifi.where())
 
+    # verifies SSL certificate
+    c.setopt(pycurl.SSL_VERIFYPEER, config.verify_ssl_cert)
+    c.setopt(pycurl.SSL_VERIFYHOST, config.verify_ssl_cert)
+
     # time out
     c.setopt(pycurl.CONNECTTIMEOUT, 10)  # limits the connection phase, it has no impact once it has connected.
 

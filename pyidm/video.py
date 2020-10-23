@@ -48,13 +48,16 @@ def get_ytdl_options():
         # not sure if youtube-dl will accept socks4a, and socks5h used by libcurl to use a proxy dns, to be safe will
         # remove it and use normal proxy names
         proxy = config.proxy.replace('socks4a', 'socks4')
-        proxy = config.proxy.replace('socks5h', 'socks5')
+        proxy = proxy.replace('socks5h', 'socks5')
         ydl_opts['proxy'] = proxy
 
     # set Referer website
     if config.referer_url:
         # this is not accessible via youtube-dl options, changing standard headers is the only way
         ytdl.utils.std_headers['Referer'] = config.referer_url
+
+    # verify / bypass server's ssl certificate
+    ydl_opts['nocheckcertificate'] = not config.verify_ssl_cert
 
     # website authentication
     if config.username or config.password:
@@ -70,7 +73,6 @@ def get_ytdl_options():
     # ydl_opts['allsubtitles'] = True  # has no effect
     ydl_opts['writesubtitles'] = True
     ydl_opts['writeautomaticsub'] = True
-
 
     # if config.log_level >= 3:
         # ydl_opts['verbose'] = True  # it make problem with Frozen PyIDM, extractor doesn't work

@@ -1534,7 +1534,7 @@ class Checkbutton(tk.Checkbutton):
 
 class CheckOption(tk.Checkbutton):
     """a check button option for setting tab that will update global settings in config.py"""
-    def __init__(self, parent, text, key=None, onvalue=True, offvalue=False, bg=None, fg=None, callback=None,):
+    def __init__(self, parent, text, key=None, onvalue=True, offvalue=False, bg=None, fg=None, callback=None):
         bg = bg or atk.get_widget_attribute(parent, 'background')
         fg = fg or MAIN_FG
         self.key = key
@@ -2696,6 +2696,25 @@ class MainWindow(IView):
 
         CheckEntryOption(tab, 'Referee url:', check_key='use_referer',
                          entry_key='referer_url').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
+
+        # verify server's ssl certificate
+        def ssl_disable_warning():
+            if not config.verify_ssl_cert:
+                # get user confirmation
+                msg = ('WARNING: disabling verification of SSL certificate allows bad guys to man-in-the-middle the '
+                       'communication without you know it and makes the communication insecure. '
+                       'Just having encryption on a transfer is not enough as you cannot be sure that you are '
+                       'communicating with the correct end-point. \n'
+                       'Are you sure?')
+
+                res = self.popup(msg, buttons=['Yes', 'Cancel'])
+
+                if res != 'Yes':
+                    ssl_cert_option.set(True)
+
+        ssl_cert_option = CheckOption(tab, "verify server's SSL certificate", key='verify_ssl_cert',
+                                      callback=ssl_disable_warning)
+        ssl_cert_option.pack(anchor='w')
 
         separator()
 

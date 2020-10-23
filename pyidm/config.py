@@ -81,6 +81,7 @@ max_concurrent_downloads = DEFAULT_CONCURRENT_CONNECTIONS
 max_connections = DEFAULT_CONNECTIONS
 use_referer = False
 referer_url = ''  # referer website url
+verify_ssl_cert = True  # verify server's ssl certificate
 
 # website authentication
 use_web_auth = False
