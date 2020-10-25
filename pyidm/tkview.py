@@ -2616,10 +2616,8 @@ class MainWindow(IView):
         CheckOption(tab, 'Enable systray icon "requires application restart"', key='enable_systray').pack(anchor='w')
         CheckOption(tab, 'Minimize to systray when closing application window', key='minimize_to_systray').pack(anchor='w')
         CheckOption(tab, 'Monitor clipboard for copied urls', key='monitor_clipboard').pack(anchor='w')
-        CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
-        CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(anchor='w')
-        CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
+
         # CheckOption(tab, 'Show download window', key='show_download_window').pack(anchor='w')
         # CheckOption(tab, 'Auto close download window after finish downloading', key='auto_close_download_window').pack(anchor='w')
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
@@ -2629,6 +2627,15 @@ class MainWindow(IView):
         tk.Label(sett_folder_frame, text='Settings Folder:', bg=bg, fg=fg).pack(side='left')
         tk.Label(sett_folder_frame, text=config.sett_folder, bg=bg, fg=fg).pack(side='left')
         Button(sett_folder_frame, text='Open', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
+
+        separator()
+
+        # Video / Audio ------------------------------------------------------------------------------------------------
+        heading('Video / Audio:')
+        CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
+        CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(
+            anchor='w')
+        CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
 
         separator()
 
