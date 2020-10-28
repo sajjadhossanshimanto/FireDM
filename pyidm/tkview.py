@@ -2632,6 +2632,21 @@ class MainWindow(IView):
 
         # Video / Audio ------------------------------------------------------------------------------------------------
         heading('Video / Audio:')
+
+        # video extractor backend -------------------------
+        def select_extractor(extractor):
+            self.controller.set_video_backend(extractor)
+            self.update_youtube_dl_info()
+
+        f = tk.Frame(tab, bg=bg)
+        f.pack(anchor='w', expand=True, fill='x')
+
+        tk.Label(f, bg=bg, fg=fg, text='Video extractor backend:  ').pack(side='left')
+
+        self.extractors_menu = Combobox(f, values=config.video_extractors_list, selection=config.active_video_extractor)
+        self.extractors_menu.callback = lambda: select_extractor(self.extractors_menu.selection)
+        self.extractors_menu.pack(side='left', ipadx=5)
+
         CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
         CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(
             anchor='w')
@@ -2754,7 +2769,7 @@ class MainWindow(IView):
         # youtube-dl update
         Button(update_frame, image=self.refresh_img, command=self.check_for_ytdl_update).grid(row=2, column=0, sticky='e', pady=5, padx=(20, 5))
         self.youtube_dl_update_note = tk.StringVar()
-        self.youtube_dl_update_note.set(f'Youtube-dl version: {config.ytdl_VERSION}')
+        self.youtube_dl_update_note.set(f'{config.active_video_extractor} version: {config.ytdl_VERSION}')
         lbl(self.youtube_dl_update_note).grid(row=2, column=1, columnspan=2, sticky='w')
 
         Button(update_frame, text='Rollback update', command=self.rollback_ytdl_update).grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
@@ -3204,7 +3219,7 @@ class MainWindow(IView):
         current_version = config.ytdl_VERSION
         if current_version:
             self.youtube_dl_update_note.set(
-                f'Youtube-dl version: {config.ytdl_VERSION}')
+                f'{config.active_video_extractor} version: {config.ytdl_VERSION}')
         else:
             self.root.after(1000, self.update_youtube_dl_info)
 

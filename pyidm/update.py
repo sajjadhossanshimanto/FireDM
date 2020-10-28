@@ -15,17 +15,17 @@ import json
 import py_compile
 import shutil
 import sys
-import zipfile
+import zipfile, tarfile
 import queue
 import time
 from threading import Thread
 from distutils.dir_util import copy_tree
+import os
+import webbrowser
+from packaging.version import parse as parse_version
 
 from . import config
-import os
-
 from .utils import log, download, run_command, delete_folder, version_value, delete_file
-import webbrowser
 
 
 def update():
@@ -68,6 +68,8 @@ def check_for_new_version():
     """
     Check for new PyIDM version
     :return: changelog text or None
+
+    FIXME: should use pypi and github api
     """
 
     # url will be chosen depend on frozen state of the application
@@ -228,64 +230,106 @@ def install_update_patch():
         return False
 
 
-def check_for_ytdl_update():
-    """it will download "version.py" file from github to check for a new version, return ytdl_latest_version
+# generalize package update
+def get_pkg_latest_version(pkg):
+    """get latest stable package release version on https://pypi.org/
+
+    url pattern: f'https://pypi.python.org/pypi/{pkg}/json'
+    received json will be a dict with:
+    keys = 'info', 'last_serial', 'releases', 'urls'
+    releases = {'release_version': [{dict for wheel file}, {dict for tar file}], ...}
+    dict for tar file = {"filename":"youtube_dlc-2020.10.24.post6.tar.gz", 'url': 'file url'}
+
+
+    Args:
+        pkg (str): package name
+
+    Return:
+        2-tuple(str, str): latest_version, and download url
     """
 
-    url = 'https://github.com/ytdl-org/youtube-dl/raw/master/youtube_dl/version.py'
+    # download json info
+    url = f'https://pypi.python.org/pypi/{pkg}/json'
 
     # get BytesIO object
-    log('check for youtube-dl latest version on Github...')
+    log(f'check for {pkg} latest version on pypi.org...')
     buffer = download(url, verbose=False)
+    latest_version = None
+    url = None
 
     if buffer:
         # convert to string
         contents = buffer.getvalue().decode()
 
-        # extract version number from contents
-        latest_version = contents.rsplit(maxsplit=1)[-1].replace("'", '')
+        j = json.loads(contents)
 
-        return latest_version
+        releases = j.get('releases', {})
+        if releases:
+
+            latest_version = max([parse_version(release) for release in releases.keys()]) or None
+            if latest_version:
+                latest_version = str(latest_version)
+
+                # get latest release url
+                release_info = releases[latest_version]
+                for _dict in release_info:
+                    file_name = _dict['filename']
+                    url = None
+                    if file_name.endswith('tar.gz'):
+                        url = _dict['url']
+                        break
+
+        return latest_version, url
 
     else:
-        log("check_for_update() --> couldn't check for update, url is unreachable")
-        return None
+        log(f"get_pkg_latest_version() --> couldn't check for {pkg}, url is unreachable")
+        return None, None
 
 
-def update_youtube_dl():
-    """This block for updating youtube-dl module in the freezed application folder in windows"""
+def update_pkg(pkg, url):
+    """updating a package in frozen application folder
+
+    Args:
+        pkg (str): package name
+        url (str): download url
+    """
+
     current_directory = config.current_directory
-    log('start updating youtube-dl')
+    log(f'start updating {pkg}')
 
-    # check if the application runs from a windows cx_freeze executable
-    # if run from source code, we will update system installed package and exit
+    # check if the application is frozen, e.g. runs from a windows cx_freeze executable
+    # if run from source, we will update system installed package and exit
     if not config.FROZEN:
-        cmd = f'"{sys.executable}" -m pip install youtube_dl --upgrade'
+        cmd = f'"{sys.executable}" -m pip install {pkg} --upgrade'
         success, output = run_command(cmd)
         if success:
-            log('successfully updated youtube_dl')
+            log(f'successfully updated {pkg}, please restart application', showpopup=True)
         return
+
+    # paths
+    temp_folder = os.path.join(current_directory, f'temp_{pkg}')
+    extract_folder = os.path.join(temp_folder, 'extracted')
+    tar_fn = f'{pkg}.tar.gz'
+    tar_fp = os.path.join(temp_folder, tar_fn)
+
+    target_pkg_folder = os.path.join(current_directory, f'lib/{pkg}')
+    bkup_folder = os.path.join(current_directory, f'lib/{pkg}_bkup')
+    new_pkg_folder = None
 
     # make temp folder
     log('making temp folder in:', current_directory)
-    if 'temp' not in os.listdir(current_directory):
-        os.mkdir(os.path.join(current_directory, 'temp'))
-
-    # paths
-    target_module = os.path.join(current_directory, 'lib/youtube_dl')
-    bkup_module = os.path.join(current_directory, 'lib/youtube_dl_bkup')
-    new_module = os.path.join(current_directory, 'temp/youtube-dl-master/youtube_dl')
+    if not os.path.isdir(temp_folder):
+        os.mkdir(temp_folder)
 
     def bkup():
         # backup current youtube-dl module folder
-        log('delete previous backup and backup current youtube-dl module:')
-        delete_folder(bkup_module)
-        shutil.copytree(target_module, bkup_module)
+        log(f'delete previous backup and backup current {pkg}:')
+        delete_folder(bkup_folder)
+        shutil.copytree(target_pkg_folder, bkup_folder)
 
-    def unzip():
-        # extract zipped module
-        with zipfile.ZipFile('temp/youtube-dl.zip', 'r') as zip_ref:
-            zip_ref.extractall(path=os.path.join(current_directory, 'temp'))
+    def extract():
+        with tarfile.open(tar_fp, 'r') as tar:
+            tar.extractall(path=extract_folder)
 
     def compile_file(q):
         while q.qsize():
@@ -304,8 +348,8 @@ def update_youtube_dl():
         q = queue.Queue()
 
         # get files list and add it to queue
-        for item in os.listdir(new_module):
-            item = os.path.join(new_module, item)
+        for item in os.listdir(new_pkg_folder):
+            item = os.path.join(new_pkg_folder, item)
 
             if os.path.isfile(item):
                 file = item
@@ -340,19 +384,19 @@ def update_youtube_dl():
             if not live_threads and not q.qsize():
                 break
 
-            time.sleep(0.1) 
+            time.sleep(0.1)
         log('Finished compiling to .pyc files')
 
-    def overwrite_module():
-        delete_folder(target_module)
-        shutil.move(new_module, target_module)
-        log('new module copied to:', target_module)
+    def overwrite_pkg():
+        delete_folder(target_pkg_folder)
+        shutil.move(new_pkg_folder, target_pkg_folder)
+        log('new package copied to:', target_pkg_folder)
 
     # start processing -------------------------------------------------------
-    log('start updating youtube-dl please wait ...')
+    log(f'start updating {pkg} please wait ...')
 
     try:
-        # use a thread to show some progress while bakup
+        # use a thread to show some progress while backup
         t = Thread(target=bkup)
         t.start()
         while t.is_alive():
@@ -361,74 +405,78 @@ def update_youtube_dl():
 
         log('\n', start='')
 
-        # download from github
-        log('step 1 of 4: downloading youtube-dl raw files')
-        url = 'https://github.com/ytdl-org/youtube-dl/archive/master.zip'
-        response = download(url, 'temp/youtube-dl.zip')
-        if response is False:
-            log('failed to download youtube-dl, abort update')
+        # download from pypi
+        log(f'step 1 of 4: downloading {pkg} raw files')
+        buffer = download(url, file_name=tar_fp)
+        if not buffer:
+            log(f'failed to download {pkg}, abort update')
             return
 
-        # extract zip file
-        log('step 2 of 4: extracting youtube-dl.zip')
+        # extract tar file
+        log(f'step 2 of 4: extracting {tar_fn}')
 
         # use a thread to show some progress while unzipping
-        t = Thread(target=unzip)
+        t = Thread(target=extract)
         t.start()
         while t.is_alive():
             log('#', start='', end='')
             time.sleep(0.3)
 
         log('\n', start='')
-        log('youtube-dl.zip extracted to: ', current_directory + '/temp')
+        log(f'{tar_fn} extracted to: {temp_folder}')
+
+        # define new pkg folder
+        pkg_master_folder = os.path.join(extract_folder, os.listdir(extract_folder)[0])
+        new_pkg_folder = os.path.join(pkg_master_folder, pkg)
 
         # compile files from py to pyc
         log('step 3 of 4: compiling files, please wait')
         compile_all()
 
         # delete old youtube-dl module and replace it with new one
-        log('step 4 of 4: overwrite old youtube-dl module')
-        overwrite_module()
+        log(f'step 4 of 4: overwrite old {pkg} files')
+        overwrite_pkg()
 
         # clean old files
-        delete_folder('temp')
         log('delete temp folder')
-        log('youtube_dl module ..... done updating \nplease restart Application now', showpopup=True)
+        delete_folder(temp_folder)
+        log(f'{pkg} ..... done updating \nplease restart Application now', showpopup=True)
     except Exception as e:
-        log('update_youtube_dl()> error', e)
+        log(f'update_pkg()> error', e)
 
 
-def rollback_ytdl_update():
-    """rollback last youtube-dl update"""
+def rollback_pkg_update(pkg):
+    """rollback last package update
+
+    Args:
+        pkg (str): package name
+    """
     if not config.FROZEN:
-        log('rollback youtube-dl update is currently working on portable windows version only')
+        log(f'rollback {pkg} update is currently working on portable windows version only')
         return
 
-    log('rollback last youtube-dl update ................................')
+    log(f'rollback last {pkg} update ................................')
 
     # paths
     current_directory = config.current_directory
-    target_module = os.path.join(current_directory, 'lib/youtube_dl')
-    bkup_module = os.path.join(current_directory, 'lib/youtube_dl_bkup')
+    target_pkg_folder = os.path.join(current_directory, f'lib/{pkg}')
+    bkup_folder = os.path.join(current_directory, f'lib/{pkg}_bkup')
 
     try:
         # find a backup first
-        if os.path.isdir(bkup_module):
-            log('delete active youtube-dl module')
-            delete_folder(target_module)
+        if os.path.isdir(bkup_folder):
+            log(f'delete active {pkg} module')
+            delete_folder(target_pkg_folder)
 
-            log('copy backup youtube-dl module')
-            shutil.copytree(bkup_module, target_module)
+            log(f'copy backup {pkg} module')
+            shutil.copytree(bkup_folder, target_pkg_folder)
 
-            log('done restoring youtube-dl module')
-            log('please restart Application now .................................')
+            log(f'Done restoring {pkg} module, please restart Application now', showpopup=True)
         else:
-            log('No backup youtube-dl modules found')
+            log(f'No {pkg} backup found')
 
     except Exception as e:
-        log('rollback_ytdl_update()> error', e)
-
-
+        log('rollback_pkg_update()> error', e)
 
 
 

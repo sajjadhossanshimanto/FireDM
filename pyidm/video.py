@@ -500,12 +500,16 @@ def merge_video_audio(video, audio, output, d):
     return error, output
             
 
-def import_ytdl():
+def import_ytdl(extractor=config.active_video_extractor):
     # import youtube_dl using thread because it takes sometimes 20 seconds to get imported and impact app startup time
     start = time.time()
     global ytdl, ytdl_version
     try:
-        import youtube_dl as ytdl
+        # select extractor backend, should edit this part if more extractors will be added in the future
+        if extractor == 'youtube_dl':
+            import youtube_dl as ytdl
+        else:
+            import youtube_dlc as ytdl
 
         # update version value
         config.ytdl_VERSION = ytdl.version.__version__
@@ -515,7 +519,7 @@ def import_ytdl():
 
         # calculate loading time
         load_time = time.time() - start
-        log(f'youtube-dl version: {config.ytdl_VERSION}, load_time= {int(load_time)} seconds')
+        log(f'{extractor} version: {config.ytdl_VERSION}, load_time= {int(load_time)} seconds')
 
         # override urlopen in YoutubeDl for interrupting youtube-dl session anytime
         def urlopen_decorator(func):

@@ -1,7 +1,9 @@
 plyer
 certifi
 youtube_dl
+youtube_dlc
 pycurl
 pillow
 pystray
 awesometkinter >= 2020.9.22
+packaging

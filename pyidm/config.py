@@ -67,12 +67,16 @@ monitor_clipboard = True
 show_download_window = True
 auto_close_download_window = True
 segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
+auto_rename = False  # auto rename file if there is an existing file with same name at download folder
+
+# video / audio --------------------------------------------------------------------------------------------------------
+video_extractors_list = ['youtube_dlc', 'youtube_dl']
+active_video_extractor = 'youtube_dlc'
 show_thumbnail = True  # auto preview video thumbnail at main tab
 download_thumbnail = False
 process_playlist = False  # fetch videos info only if selected, since big playlist consume time/resources.
 big_playlist_length = 50  # minimum number of videos in big playlist, it will ignore "process_playlist"
 manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
-auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 write_metadata = True  # write metadata to video file
 
 # connection / network
@@ -161,7 +165,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
-                 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail']
+                 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor']
 
 
 # update --------------------------------------------------------------------------------------------

@@ -28,7 +28,7 @@ from . import config
 from .config import Status, MediaType
 from .brain import brain
 from . import video
-from .video import get_ytdl_options
+from .video import get_ytdl_options, import_ytdl
 from .model import ObservableDownloadItem, ObservableVideo
 
 
@@ -930,47 +930,48 @@ class Controller:
 
     # region Application update
     def _check_for_ytdl_update(self):
-        """check for new youtube-dl version"""
+        """check for new youtube-dl (or active video extractor backend) version"""
+
+        pkg = config.active_video_extractor
 
         current_version = config.ytdl_VERSION
         if current_version is None:
-            log('youtube-dl not loaded yet, try again', showpopup=True)
+            log(f'{pkg} not loaded yet, try again', showpopup=True)
             return
 
-        latest_version = config.ytdl_LATEST_VERSION or update.check_for_ytdl_update()
+        latest_version, url = update.get_pkg_latest_version(pkg)
         if latest_version:
             config.ytdl_LATEST_VERSION = latest_version
-            note = f'Youtube-dl version: {config.ytdl_VERSION}, Latest version: {config.ytdl_LATEST_VERSION}'
+            note = f'{pkg} version: {config.ytdl_VERSION}, Latest version: {config.ytdl_LATEST_VERSION}'
             log(note)
 
-            if latest_version != current_version:
-                # select log tab
-                # self.select_tab('Log')
-
+            if update.parse_version(latest_version) > update.parse_version(current_version):
                 response = self.get_user_response(
-                    'Found new version of youtube-dl on github \n'
+                    f'Found new version of {pkg} on pypi \n'
                     f'new version     =  {latest_version}\n'
                     f'current version =  {current_version} \n'
                     'Install new version? (check Log Tab for progress)',  options=['Ok', 'Cancel'])
 
                 if response == 'Ok':
                     try:
-                        run_thread(update.update_youtube_dl, daemon=True)
+                        run_thread(update.update_pkg, pkg, url, daemon=True)
                     except Exception as e:
-                        log('failed to update youtube-dl module:', e)
+                        log(f'failed to update {pkg}:', e)
             else:
                 log(f'youtube_dl is up-to-date, current version = {current_version}', showpopup=True)
 
     def _rollback_ytdl_update(self):
-        """delete last youtube-dl update and restore last one"""
-        response = self.get_user_response('Delete last youtube-dl update and restore previous version?',
+        """delete last video extractor e.g. youtube-dl update and restore last one"""
+        pkg = config.active_video_extractor
+
+        response = self.get_user_response(f'Delete last {pkg} update and restore previous version?',
                                           options=['Ok', 'Cancel'])
 
         if response == 'Ok':
             try:
-                run_thread(update.rollback_ytdl_update, daemon=True)
+                run_thread(update.rollback_pkg_update, pkg, daemon=True)
             except Exception as e:
-                log('failed to restore youtube-dl module:', e)
+                log(f'failed to restore {pkg}:', e)
 
     def _check_for_pyidm_update(self):
         """
@@ -1155,6 +1156,11 @@ class Controller:
 
         d.select_audio(selected_audio_stream)
         log('Selected audio:', selected_audio_stream)
+
+    def set_video_backend(self, extractor):
+        """select video extractor backend, e.g. youtube-dl, youtube-dlc, ..."""
+        set_option(active_video_extractor=extractor)
+        import_ytdl(extractor=extractor)
     # endregion
 
     # region subtitles
