@@ -1159,8 +1159,9 @@ class Controller:
 
     def set_video_backend(self, extractor):
         """select video extractor backend, e.g. youtube-dl, youtube-dlc, ..."""
+        config.ytdl_VERSION = None
         set_option(active_video_extractor=extractor)
-        import_ytdl(extractor=extractor)
+        run_thread(import_ytdl, extractor, daemon=True)
     # endregion
 
     # region subtitles
