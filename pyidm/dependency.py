@@ -14,7 +14,7 @@ import subprocess
 import importlib.util
 
 # add the required packages here without any version numbers
-requirements = ['plyer', 'certifi', 'youtube_dl', 'pycurl', 'PIL', 'pystray']
+requirements = ['plyer', 'certifi', 'youtube_dl', 'youtube_dlc', 'pycurl', 'PIL', 'pystray', 'awesometkinter']
 
 
 def is_venv():

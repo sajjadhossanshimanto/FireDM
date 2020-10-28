@@ -27,7 +27,8 @@ try:
     with open(f"{current_directory}/requirements.txt", "r") as fh:
         requirements = fh.readlines()
 except:
-    requirements = ['plyer', 'certifi', 'youtube_dl', 'pycurl', 'pillow', 'pystray', 'awesometkinter >= 2020.9.22']
+    requirements = ['plyer', 'certifi', 'youtube_dl', 'youtube_dlc', 'pycurl', 'pillow', 'pystray',
+                    'awesometkinter >= 2020.9.22']
 
 setuptools.setup(
     name="PyIDM",
@@ -45,7 +46,7 @@ setuptools.setup(
         'Source': 'https://github.com/pyIDM/PyIDM',
         'Tracker': 'https://github.com/pyIDM/PyIDM/issues',
         'Releases': 'https://github.com/pyIDM/PyIDM/releases',
-        'Screenshots': 'https://github.com/pyIDM/PyIDM/issues/13#issuecomment-602136747'
+        'Screenshots': 'https://github.com/pyIDM/PyIDM/issues/13#issuecomment-689337428'
     },
     install_requires=requirements,
     entry_points={
