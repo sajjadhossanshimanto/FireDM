@@ -14,21 +14,6 @@
 # standard modules
 import os, sys
 
-# install update if user downloaded an update batch "FROZEN application only"
-if hasattr(sys, 'frozen'):  # like if application frozen by cx_freeze
-    current_directory = os.path.dirname(sys.executable)
-
-    # Should copy contents of PyIDM_update_files folder and overwrite PyIDM original files
-    update_batch_path = os.path.join(current_directory, 'PyIDM_update_files')
-    if os.path.isdir(update_batch_path):
-        from distutils.dir_util import copy_tree, remove_tree
-        copy_tree(update_batch_path, current_directory)
-        print('done installing updates')
-
-        # delete folder
-        remove_tree(update_batch_path)
-
-
 # This code should stay on top to handle relative imports in case of direct call of pyIDM.py
 if __package__ is None:
     path = os.path.realpath(os.path.abspath(__file__))

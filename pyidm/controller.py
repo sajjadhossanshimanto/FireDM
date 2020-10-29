@@ -983,7 +983,7 @@ class Controller:
         changelog = update.check_for_new_version()
         if changelog:
 
-            response = self.get_user_response(f'New pyidm version available, full change log:\n{changelog}',
+            response = self.get_user_response(f'New pyidm version available, full change log:\n\n{changelog}',
                                               options=['Homepage', 'cancel'])
             if response == 'Homepage':
                 update.open_update_link()
