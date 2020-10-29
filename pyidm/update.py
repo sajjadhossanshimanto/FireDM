@@ -169,7 +169,7 @@ def update_pkg(pkg, url):
         os.mkdir(temp_folder)
 
     def bkup():
-        # backup current youtube-dl module folder
+        # backup current package folder
         log(f'delete previous backup and backup current {pkg}:')
         delete_folder(bkup_folder)
         shutil.copytree(target_pkg_folder, bkup_folder)
@@ -280,7 +280,7 @@ def update_pkg(pkg, url):
         log('step 3 of 4: compiling files, please wait')
         compile_all()
 
-        # delete old youtube-dl module and replace it with new one
+        # delete old package and replace it with new one
         log(f'step 4 of 4: overwrite old {pkg} files')
         overwrite_pkg()
 

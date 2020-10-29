@@ -958,7 +958,7 @@ class Controller:
                     except Exception as e:
                         log(f'failed to update {pkg}:', e)
             else:
-                log(f'youtube_dl is up-to-date, current version = {current_version}', showpopup=True)
+                log(f'{pkg} is up-to-date, current version = {current_version}', showpopup=True)
 
     def _rollback_ytdl_update(self):
         """delete last video extractor e.g. youtube-dl update and restore last one"""
