@@ -67,41 +67,45 @@ def open_update_link():
 def check_for_new_version():
     """
     Check for new PyIDM version
-    :return: changelog text or None
 
-    FIXME: should use pypi and github api
+    Return:
+        changelog text or None
+
     """
 
-    # url will be chosen depend on frozen state of the application
-    source_code_url = 'https://github.com/pyIDM/pyIDM/raw/master/ChangeLog.txt'
-    new_release_url = 'https://github.com/pyIDM/pyIDM/releases/download/extra/ChangeLog.txt'
-    url = new_release_url if config.FROZEN else source_code_url
-
-    # download ChangeLog.txt from github,
-    log('check for PyIDM latest version ...')
+    latest_version = '0'
+    changelog = None
 
     try:
-        buffer = download(url, verbose=False)    # get BytesIO object
+        if config.FROZEN:
+            # use github API to get latest version
+            url = 'https://api.github.com/repos/pyidm/pyidm/releases/latest'
+            buffer = download(url, verbose=False)
 
-        if buffer:
-            # convert to string
-            changelog = buffer.getvalue().decode()
+            if buffer:
+                # convert to string
+                contents = buffer.getvalue().decode()
+                j = json.loads(contents)
+                latest_version = j.get('tag_name', '0')
 
-            # extract version number from contents
-            server_version = changelog.splitlines()[0].replace(':', '').strip()
+        else:
+            # check pypi version
+            latest_version, _ = get_pkg_latest_version('pyidm')
 
-            # update latest version value
-            log('Latest server version:', server_version)
-            config.APP_LATEST_VERSION = server_version
+        if parse_version(latest_version) > parse_version(config.APP_VERSION):
+            log('Found new version:', str(latest_version))
 
-            # check if this version newer than current application version
-            if version_value(server_version) > version_value(config.APP_VERSION):
-                log('Latest newer version:', server_version)
-                return changelog
-    except:
-        pass
+            # download change log file
+            url = 'https://github.com/pyIDM/pyIDM/raw/master/ChangeLog.txt'
+            buffer = download(url, verbose=False)  # get BytesIO object
 
-    return None
+            if buffer:
+                # convert to string
+                changelog = buffer.getvalue().decode()
+    except Exception as e:
+        log('check_for_new_version()> error:', e)
+
+    return changelog
 
 
 def check_for_new_patch():
