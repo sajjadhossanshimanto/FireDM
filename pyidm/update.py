@@ -85,6 +85,7 @@ def get_pkg_latest_version(pkg):
     received json will be a dict with:
     keys = 'info', 'last_serial', 'releases', 'urls'
     releases = {'release_version': [{dict for wheel file}, {dict for tar file}], ...}
+    dict for wheel file = {"filename":"youtube_dlc-2020.10.24.post6-py2.py3-none-any.whl", 'url': 'file url'}
     dict for tar file = {"filename":"youtube_dlc-2020.10.24.post6.tar.gz", 'url': 'file url'}
 
 
@@ -92,7 +93,7 @@ def get_pkg_latest_version(pkg):
         pkg (str): package name
 
     Return:
-        2-tuple(str, str): latest_version, and download url
+        2-tuple(str, str): latest_version, and download url (for wheel file)
     """
 
     # download json info
@@ -122,7 +123,7 @@ def get_pkg_latest_version(pkg):
                 for _dict in release_info:
                     file_name = _dict['filename']
                     url = None
-                    if file_name.endswith('tar.gz'):
+                    if file_name.endswith('.whl'):
                         url = _dict['url']
                         break
 
@@ -135,10 +136,12 @@ def get_pkg_latest_version(pkg):
 
 def update_pkg(pkg, url):
     """updating a package in frozen application folder
+    expect to download and extract a wheel file e.g. "youtube_dlc-2020.10.24.post6-py2.py3-none-any.whl", which in fact
+    is a zip file
 
     Args:
         pkg (str): package name
-        url (str): download url
+        url (str): download url (for a wheel file)
     """
 
     current_directory = config.current_directory
@@ -156,8 +159,8 @@ def update_pkg(pkg, url):
     # paths
     temp_folder = os.path.join(current_directory, f'temp_{pkg}')
     extract_folder = os.path.join(temp_folder, 'extracted')
-    tar_fn = f'{pkg}.tar.gz'
-    tar_fp = os.path.join(temp_folder, tar_fn)
+    z_fn = f'{pkg}.zip'
+    z_fp = os.path.join(temp_folder, z_fn)
 
     target_pkg_folder = os.path.join(current_directory, f'lib/{pkg}')
     bkup_folder = os.path.join(current_directory, f'lib/{pkg}_bkup')
@@ -174,9 +177,15 @@ def update_pkg(pkg, url):
         delete_folder(bkup_folder)
         shutil.copytree(target_pkg_folder, bkup_folder)
 
-    def extract():
-        with tarfile.open(tar_fp, 'r') as tar:
+    def tar_extract():
+        with tarfile.open(z_fp, 'r') as tar:
             tar.extractall(path=extract_folder)
+
+    def zip_extract():
+        with zipfile.ZipFile(z_fp, 'r') as z:
+            z.extractall(path=extract_folder)
+
+    extract = zip_extract
 
     def compile_file(q):
         while q.qsize():
@@ -254,13 +263,13 @@ def update_pkg(pkg, url):
 
         # download from pypi
         log(f'step 1 of 4: downloading {pkg} raw files')
-        buffer = download(url, file_name=tar_fp)
+        buffer = download(url, file_name=z_fp)
         if not buffer:
             log(f'failed to download {pkg}, abort update')
             return
 
         # extract tar file
-        log(f'step 2 of 4: extracting {tar_fn}')
+        log(f'step 2 of 4: extracting {z_fn}')
 
         # use a thread to show some progress while unzipping
         t = Thread(target=extract)
@@ -270,11 +279,10 @@ def update_pkg(pkg, url):
             time.sleep(0.3)
 
         log('\n', start='')
-        log(f'{tar_fn} extracted to: {temp_folder}')
+        log(f'{z_fn} extracted to: {temp_folder}')
 
         # define new pkg folder
-        pkg_master_folder = os.path.join(extract_folder, os.listdir(extract_folder)[0])
-        new_pkg_folder = os.path.join(pkg_master_folder, pkg)
+        new_pkg_folder = os.path.join(extract_folder, pkg)
 
         # compile files from py to pyc
         log('step 3 of 4: compiling files, please wait')
