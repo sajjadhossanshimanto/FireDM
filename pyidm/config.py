@@ -70,8 +70,8 @@ segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 
 # video / audio --------------------------------------------------------------------------------------------------------
-video_extractors_list = ['youtube_dlc', 'youtube_dl']
-active_video_extractor = 'youtube_dlc'
+video_extractors_list = ['youtube_dl', 'youtube_dlc']
+active_video_extractor = 'youtube_dl'
 show_thumbnail = True  # auto preview video thumbnail at main tab
 download_thumbnail = False
 process_playlist = False  # fetch videos info only if selected, since big playlist consume time/resources.
