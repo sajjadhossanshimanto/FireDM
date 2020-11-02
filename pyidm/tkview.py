@@ -527,7 +527,7 @@ class Combobox(ttk.Combobox):
         widget.selection_clear()
 
         self.selection = widget.get()
-        self.selection_idx = None
+        self.selection_idx = widget.current()
 
         if callable(self.callback):
             self.callback()
@@ -1725,8 +1725,8 @@ class PlaylistWindow(tk.Toplevel):
         Args:
             main: main window class
             playlist (iterable): video playlist, in case we have a huge playlist
-            e.g. https://www.youtube.com/watch?v=BZyjT5TkWw4&list=PL2aBZuCeDwlT56jTrxQ3FExn-dtchIwsZ  has 4000 videos
-            will show 40 page each page has 100 video
+                                 e.g. https://www.youtube.com/watch?v=BZyjT5TkWw4&list=PL2aBZuCeDwlT56jTrxQ3FExn-dtchIwsZ
+                                 has 4000 videos, we will show 40 page each page has 100 video
         """
         self.main = main
         self.parent = main.root
@@ -1738,12 +1738,18 @@ class PlaylistWindow(tk.Toplevel):
         self.current_page = 0
         self.items_per_page = min(self.playlist_count, self.max_videos_per_page)
 
-        self.selected_videos = {}  # video_idx vd stream_idx
+        self.selected_videos = {}  # video_idx vs stream_idx
         self.stream_menus = {}  # video_idx vs stream menu
         self.subtitles = {}
         self.selected_subs = {}
 
         self.videos_counter = tk.IntVar()
+
+        self.master_strem_menu = []
+        self.master_combo = None
+        self.master_selection = None  # master combo_box selection
+        self.video_streams = {}  # {'   › mp4': [360, 240, 144], '   › webm': [360, 240, 144]}
+        self.audio_streams = {}  # {'   › aac': [128], '   › ogg': [160], '   › mp3': [128], '   › webm': [160, 70, 50], '   › m4a': [128]}
 
         # initialize super
         tk.Toplevel.__init__(self, self.parent)
@@ -1787,6 +1793,10 @@ class PlaylistWindow(tk.Toplevel):
         self.subtitles_label.pack(side='left', padx=5, pady=5)
 
         Button(f2, text='Sub', command=self.show_subtitles_window).pack(side='left', padx=5, pady=5)
+
+        # master menu
+        self.master_combo = Combobox(f2, [], width=40, callback=self.master_combo_callback)
+        self.master_combo.pack(side='right', padx=5, pady=5)
 
         for idx, name in zip(range(self.items_per_page), self.playlist):
             item = self.create_item(videos_frame, idx, name)
@@ -1930,13 +1940,25 @@ class PlaylistWindow(tk.Toplevel):
         self.close()
 
     def update_view(self, video_idx=None, stream_menu=None, stream_idx=None):
-        """update stream menu values"""
+        """update stream menu values
+
+        example:
+            stream menu = ['● Video streams:                     ', '   › mp4 - 360 - 8.0 MB - id:18 - 25 fps',
+            '   › mp4 - 240 - 4.9 MB - id:133 - 25 fps', '   › mp4 - 144 - 2.2 MB - id:160 - 15 fps',
+            '   › webm - 360 - 4.0 MB - id:243 - 25 fps', '   › webm - 240 - 2.4 MB - id:242 - 25 fps', '
+            › webm - 144 - 1.3 MB - id:278 - 25 fps', '',
+            '● Audio streams:                 ',
+            '   › aac - 128 - 2.6 MB - id:140', '   › ogg - 160 - 3.1 MB - id:251', '   › mp3 - 128 - 2.6 MB - id:140',
+            '   › webm - 160 - 3.1 MB - id:251', '   › m4a - 128 - 2.6 MB - id:140', '   › webm - 70 - 1.4 MB - id:250',
+            '   › webm - 50 - 1.0 MB - id:249', '',
+            '● Extra streams:                 ', '   › mp4 - 360 - 5.1 MB - id:134 - 25 fps']
+
+        """
         self.stop_progressbar(video_idx)
         item = self.get_item(video_idx)
         combobox = item.combobox
         combobox.config(values=stream_menu)
         combobox.current(stream_idx)
-        combobox.selection_clear()
 
         self.stream_select_callback(video_idx)
         self.stream_menus[video_idx] = stream_menu
@@ -1945,6 +1967,77 @@ class PlaylistWindow(tk.Toplevel):
         sub = self.main.controller.get_subtitles(video_idx=video_idx)
         if sub:
             self.update_subtitles(sub)
+
+        # update master stream menu
+        self.update_master_menu(stream_menu)
+
+        # follow master menu selection
+        self.follow_master_selection(video_idx, stream_menu)
+
+    def master_combo_callback(self):
+        self.master_selection = self.master_combo.selection
+
+        for i, item in enumerate(self.items):
+            if item.selected.get():
+                self.follow_master_selection(video_idx=i)
+
+    def follow_master_selection(self, video_idx=None, stream_menu=None):
+        """update all selected stream menus to match master menu selection"""
+        stream_menu = stream_menu or self.stream_menus.get(video_idx, None)
+        if not stream_menu:
+            return
+
+        # follow master menu selection
+        item = self.get_item(video_idx)
+        combobox = item.combobox
+
+        if self.master_selection:
+            try:
+                for idx, x in enumerate(stream_menu):
+                    if x.startswith(self.master_selection):
+                        combobox.current(idx)
+            except Exception as e:
+                log('follow master selection error:', e)
+
+    def update_master_menu(self, stream_menu):
+        # update master stream menu
+        self.video_streams = {}  # {'   › mp4': [360, 240, 144], '   › webm': [360, 240, 144]}
+        self.audio_streams = {}  # {'   › aac': [128], '   › ogg': [160], '   › mp3': [128], '   › webm': [160, 70, 50], '   › m4a': [128]}
+        streams = self.video_streams
+        for name in stream_menu:
+            if "Audio" in name:
+                streams = self.audio_streams
+
+            if streams == self.audio_streams and name == '':
+                break
+
+            if name.startswith('   › '):
+                entry = name.split(' - ')[:2]
+                ext, quality = entry[0], int(entry[1])
+
+                quality_list = streams.setdefault(ext, [])
+                if quality not in quality_list:
+                    quality_list.append(quality)
+
+        def process(streams_dict):
+            for ext, quality_list in streams_dict.items():
+                quality_list = sorted(quality_list, reverse=True)
+                for quality in quality_list:
+                    item = f'{ext} - {quality}'
+                    menu.append(item)
+
+        menu = ['● Video streams:                     ']
+        process(self.video_streams)
+        menu += ['', '● Audio streams:                 ']
+        process(self.audio_streams)
+
+        self.master_strem_menu = menu
+
+        self.master_combo.config(values=list(self.master_strem_menu))
+
+        # set selection
+        if not self.master_selection and len(self.master_strem_menu) >= 2 :
+            self.master_combo.current(1)
 
     def update_subtitles(self, sub):
         """update available subtitles, it is a sum of all subtitles for all selected videos in playlist"""
