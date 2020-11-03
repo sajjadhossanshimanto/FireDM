@@ -128,7 +128,7 @@ pip install -r requirements.txt
 ```
 or
 ```
-python -m pip install --user --upgrade certifi plyer youtube_dl pycurl pillow pystray
+python -m pip install --user --upgrade certifi plyer youtube_dl pycurl pillow pystray awesometkinter
 ```
 
 
