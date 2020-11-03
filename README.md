@@ -47,18 +47,20 @@ Refer to user guide at https://github.com/pyIDM/PyIDM/blob/master/docs/user_guid
 # How to install PyIDM?
 You have 3 options to run PyIDM on your operating system:
 
-1. **Windows portable version**:<br>
-Latest Windows portable version available [here](https://github.com/pyIDM/PyIDM/releases/latest). <br>
-unzip, and run from PyIDM.exe, no installation required.
+1. **Windows portable version**:  
+   Latest Windows portable version available
+   [here](https://github.com/pyIDM/PyIDM/releases/latest).  
+   unzip, and run from PyIDM.exe, no installation required.
 
 2. **PyPi**:<br>
     `python -m pip install pyidm --upgrade --no-cache`
     
-    then you can run application from Terminal by:<br>
-    `python -m pyidm`          note pyidm name in small letters 
+    then you can run application from Terminal by:  
+    `python -m pyidm`          note pyidm name in small letters
 
-    or just<br> `pyidm` an executable "i.e. pyidm.exe on windows" will
-    be located at "python/scripts", if it doesn't work append
+    or just  
+    `pyidm` an executable "i.e. pyidm.exe on windows" will be
+    located at "python/scripts", if it doesn't work append
     "python/scripts" folder to PATH.
 
 
@@ -69,27 +71,27 @@ if PyIDM failed to install required packages, you should install it manually, re
 
 4. **Build PyIDM yourself**:
    -  get the source code from github: (recommended for latest updated
-      version)
+      version, also shallow clone is preferred)  
+      `git clone --depth 1 https://github.com/pyIDM/PyIDM.git`
 
-   `git clone https://github.com/pyIDM/PyIDM.git` <br>
+   - or get the source code from PyPi:  
+   navigate to https://pypi.org/project/pyIDM/#files and download a tar
+   ball, example file name "pyIDM-2020.3.22.tar.gz", then extract it
 
-    - or get the source code from PyPi: <br>
-        navigate to https://pypi.org/project/pyIDM/#files and download a tar ball, example file name "pyIDM-2020.3.22.tar.gz", then extract it
-
-    - open your terminal or command prompt and navigate to pyidm folder then type below command <br>
+   - open your terminal or command prompt and navigate to pyidm folder then type below command  
         `python setup.py install`
 
-    - run PyIDM from Terminal by typing:<br>
+   - run PyIDM from Terminal by typing:  
         `python -m pyidm`     or  just `pyidm`
 
 5. **Examples:**
 
     -**Linux ubuntu:**
 
-    download source:
-    `git clone https://github.com/pyIDM/PyIDM.git`
+    download source (shallow clone is preferred):  
+    `git clone --depth 1 https://github.com/pyIDM/PyIDM.git`
 
-    install dependencies:
+    install dependencies:  
     `sudo apt install ffmpeg fonts-symbola libcurl4-openssl-dev
     libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk`
 
