@@ -9,6 +9,7 @@
     Module description:
         this module contains an observables data models
 """
+import os
 
 from .downloaditem import DownloadItem
 from .video import Video
@@ -44,6 +45,10 @@ class Observable:
             old_value = super_class.__getattribute__(self, key)
         except:
             old_value = None
+
+        # normalize folder path https://github.com/pyIDM/PyIDM/issues/185
+        if key == 'folder':
+            value = os.path.normpath(value)
 
         # set new value
         super_class.__setattr__(self, key, value)
