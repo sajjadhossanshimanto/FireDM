@@ -1790,13 +1790,16 @@ class PlaylistWindow(tk.Toplevel):
 
         f2 = tk.Frame(top_frame, bg=MAIN_BG)
         f2.pack(fill='x', expand=True, anchor='w')
-        self.subtitles_label = tk.Label(f2, text='Total subtitles: 0, Selected: 0', bg=MAIN_BG,fg=MAIN_FG)
+        self.subtitles_label = tk.Label(f2, text='Total subtitles: 0, Selected: 0', bg=MAIN_BG, fg=MAIN_FG)
         self.subtitles_label.pack(side='left', padx=5, pady=5)
 
         Button(f2, text='Sub', command=self.show_subtitles_window).pack(side='left', padx=5, pady=5)
 
         # master menu
-        self.master_combo = Combobox(f2, [], width=40, callback=self.master_combo_callback)
+        f3 = tk.Frame(top_frame, bg=MAIN_BG)
+        f3.pack(fill='x', expand=True, anchor='w')
+        tk.Label(f3, text='Preferred quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+        self.master_combo = Combobox(f3, [], width=40, callback=self.master_combo_callback)
         self.master_combo.pack(side='right', padx=5, pady=5)
 
         # create items widgets
