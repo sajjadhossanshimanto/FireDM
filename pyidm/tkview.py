@@ -2321,7 +2321,8 @@ class AudioWindow(tk.Toplevel):
         self.selection_var.set(self.selected_idx)
 
         for idx, audio in enumerate(self.audio_menu):
-            item = atk.Radiobutton(middle_frame, text=audio, variable=self.selection_var, value=idx)
+            # value should be string to fix tkinter error when value is 0
+            item = atk.Radiobutton(middle_frame, text=audio, variable=self.selection_var, value=f'{idx}')
             item.pack(padx=5, pady=5, anchor='w')
 
             atk.scroll_with_mousewheel(item, target=middle_frame, apply_to_children=True)
@@ -2339,12 +2340,11 @@ class AudioWindow(tk.Toplevel):
 
     def close(self):
         self.destroy()
-        self.main.subtitles_window = None
 
     def select_audio(self):
         idx = self.selection_var.get()
         if idx is not None:
-            self.main.controller.select_audio(idx)
+            self.main.controller.select_audio(int(idx))
 
         self.close()
 
