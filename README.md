@@ -92,8 +92,10 @@ if PyIDM failed to install required packages, you should install it manually, re
     `git clone --depth 1 https://github.com/pyIDM/PyIDM.git`
 
     install dependencies:  
-    `sudo apt install ffmpeg fonts-symbola libcurl4-openssl-dev
-    libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk`
+    ```
+    sudo apt install ffmpeg fonts-symbola libcurl4-openssl-dev
+    libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk
+    ```
 
     install PyIDM:
     `python3 setup.py install --user`
