@@ -2322,7 +2322,7 @@ class AudioWindow(tk.Toplevel):
 
         for idx, audio in enumerate(self.audio_menu):
             # value should be string to fix tkinter error when value is 0
-            item = atk.Radiobutton(middle_frame, text=audio, variable=self.selection_var, value=f'{idx}')
+            item = atk.button.Radiobutton(middle_frame, text=audio, variable=self.selection_var, value=f'{idx}')
             item.pack(padx=5, pady=5, anchor='w')
 
             atk.scroll_with_mousewheel(item, target=middle_frame, apply_to_children=True)
@@ -2831,7 +2831,7 @@ class MainWindow(IView):
         self.proxy_type_var.set(get_option('proxy_type', 'http'))
 
         def proxy_type_option(text):
-            atk.Radiobutton(proxy_frame, text=text, value=text, variable=self.proxy_type_var, bg=bg,
+            atk.button.Radiobutton(proxy_frame, text=text, value=text, variable=self.proxy_type_var, bg=bg,
                             fg=fg).pack( side='left', padx=2)
 
         proxy_type_option('http')
