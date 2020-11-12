@@ -1070,7 +1070,7 @@ def arabic_renderer(msg):
     return ' '.join(processed)
 
 
-def run_thread(f, *args, daemon=False, **kwargs):
+def run_thread(f, *args, daemon=True, **kwargs):
     """run a callable in a thread
 
     Args:
