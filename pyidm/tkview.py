@@ -2689,7 +2689,6 @@ class MainWindow(IView):
         self.side_frame = SideFrame(parent=self.main_frame)
 
         # create side frame buttons
-        img_folder = 'D:\\python/myProgects/PyIDM/design/ui/'
         self.side_frame.create_button('Home', b64=home_icon, target=self.home_tab)
         self.side_frame.create_button('Downloads', b64=download_icon, target=self.d_tab)
         self.side_frame.create_button('Settings', b64=sett_icon, target=self.sett_frame)
@@ -2765,7 +2764,7 @@ class MainWindow(IView):
         return home_tab
 
     def create_downloads_tab(self):
-        tab = atk.ScrollableFrame(self.main_frame, bg=MAIN_BG, vscroll=True, hscroll=False, autoscroll=True,
+        tab = atk.ScrollableFrame(self.main_frame, bg=MAIN_BG, vscroll=True, hscroll=False, autoscroll=config.autoscroll_download_tab,
                                   sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
 
         return tab
@@ -2811,6 +2810,8 @@ class MainWindow(IView):
         # CheckOption(tab, 'Show download window', key='show_download_window').pack(anchor='w')
         # CheckOption(tab, 'Auto close download window after finish downloading', key='auto_close_download_window').pack(anchor='w')
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
+        CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item "requires application restart"',
+                    key='autoscroll_download_tab').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')

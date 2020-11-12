@@ -68,6 +68,7 @@ show_download_window = True
 auto_close_download_window = True
 segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
+autoscroll_download_tab = False
 
 # video / audio --------------------------------------------------------------------------------------------------------
 video_extractors_list = ['youtube_dl', 'youtube_dlc']
@@ -165,7 +166,8 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
-                 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor']
+                 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
+                 'autoscroll_download_tab']
 
 
 # update --------------------------------------------------------------------------------------------
