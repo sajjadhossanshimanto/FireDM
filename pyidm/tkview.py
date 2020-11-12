@@ -1798,9 +1798,14 @@ class PlaylistWindow(tk.Toplevel):
         # master menu
         f3 = tk.Frame(top_frame, bg=MAIN_BG)
         f3.pack(fill='x', expand=True, anchor='w')
-        tk.Label(f3, text='Preferred quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+
+        # select all
+        self.select_all_var = tk.BooleanVar()
+        Checkbutton(f3, text='Select all', variable=self.select_all_var, command=self.toggle_all).pack(side='left', padx=5, pady=5)
+
         self.master_combo = Combobox(f3, [], width=40, callback=self.master_combo_callback)
         self.master_combo.pack(side='right', padx=5, pady=5)
+        tk.Label(f3, text='Preferred quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=(20, 5), pady=5)
 
         # create items widgets
         for idx, name in zip(range(self.items_per_page), self.playlist):
@@ -1961,6 +1966,28 @@ class PlaylistWindow(tk.Toplevel):
         item.bar.grid_remove()
         item.bar.stop()
     # endregion
+
+    def toggle_all(self):
+        run_thread(self._toggle_all)
+
+    def _toggle_all(self):
+        """select / unselct all video items in playlist"""
+
+        if self.select_all_var.get():
+            for idx, item in enumerate(self.items):
+                # quit if playlist window closed
+                if self.main.pl_window is None:
+                    break
+
+                item.checkbutton.invoke()
+
+                # add some time delay to process a video item and load stream menu before process next video
+                menu = self.stream_menus.get(idx, [])
+                if not menu:
+                    time.sleep(0.3)
+        else:
+            for item in self.items:
+                item.checkbutton.invoke()
 
     def close(self):
         self.destroy()
@@ -2129,6 +2156,7 @@ class PlaylistWindow(tk.Toplevel):
         else:
             self.videos_counter.set(self.videos_counter.get() - 1)
             item.combobox.grid_remove()
+            self.stop_progressbar(item_idx)
 
         self.update_subs_label()
 
