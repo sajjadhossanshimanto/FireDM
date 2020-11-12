@@ -12,6 +12,7 @@ Developers who contributed with code:
 - @Aboghazala
 - @shin-illua
 - @ryneeverett
+- @bertaga
 
 ---
 
