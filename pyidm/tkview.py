@@ -2680,7 +2680,7 @@ class MainWindow(IView):
         self.sett_frame = self.create_settings_tab()
 
         # downloads tab
-        self.d_tab = self.create_downloads_tab()
+        self.downloads_frame = self.create_downloads_tab()
 
         # log tab
         self.log_tab = self.create_log_tab()
@@ -2690,7 +2690,7 @@ class MainWindow(IView):
 
         # create side frame buttons
         self.side_frame.create_button('Home', b64=home_icon, target=self.home_tab)
-        self.side_frame.create_button('Downloads', b64=download_icon, target=self.d_tab)
+        self.side_frame.create_button('Downloads', b64=download_icon, target=self.downloads_frame)
         self.side_frame.create_button('Settings', b64=sett_icon, target=self.sett_frame)
         self.side_frame.create_button('Log', b64=log_icon, target=self.log_tab)
 
@@ -2764,8 +2764,25 @@ class MainWindow(IView):
         return home_tab
 
     def create_downloads_tab(self):
-        tab = atk.ScrollableFrame(self.main_frame, bg=MAIN_BG, vscroll=True, hscroll=False, autoscroll=config.autoscroll_download_tab,
-                                  sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
+        tab = tk.Frame(self.main_frame, background=MAIN_BG)
+
+        # buttons frame
+        top_fr = tk.Frame(tab, bg=HDG_BG)
+        top_fr.pack(fill='x', pady=5, padx=(5, 0))
+
+        btn_fr = tk.Frame(top_fr, bg=MAIN_BG)
+        btn_fr.pack(fill='x', pady=5, padx=5)
+
+        tk.Label(btn_fr, text='Downloads:', bg=MAIN_BG, fg=MAIN_FG, anchor='w',
+                 font='any 10 bold').pack(anchor='w', side='left', padx=5)
+
+        Button(btn_fr, text='STOP ALL', command=self.stop_all).pack(side='right', padx=5, pady=3)
+        Button(btn_fr, text='RESUME ALL', command=self.resume_all).pack(side='right', padx=5, pady=3)
+
+        # Scrollable
+        self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
+                                         autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
+        self.d_tab.pack(expand=True, fill='both')
 
         return tab
 
@@ -2812,6 +2829,8 @@ class MainWindow(IView):
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
         CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item "requires application restart"',
                     key='autoscroll_download_tab').pack(anchor='w')
+        CheckOption(tab, 'Show confirm dialog when press "RESUME ALL" button', key='confirm_on_resume_all').pack(anchor='w')
+        CheckOption(tab, 'Show confirm dialog when press "STOP ALL" button', key='confirm_on_stop_all').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')
@@ -3132,6 +3151,15 @@ class MainWindow(IView):
         # download
         self.download(name=self.file_properties.name.get(), folder=self.file_properties.folder.get())
 
+    def download(self, uid=None, **kwargs):
+        """Send command to controller to download an item
+
+        Args:
+            uid (str): download item's unique identifier, if omitted active item will be downloaded
+            kwargs: key/value for any legit attributes in DownloadItem
+        """
+        self.controller.download(uid, **kwargs)
+
     def resume_download(self, uid):
         """start / resume download for a download item
 
@@ -3141,22 +3169,31 @@ class MainWindow(IView):
 
         self.download(uid)
 
-    def stop_all(self):
-        """stop all downloads"""
-        for uid in self.d_items:
-            self.stop_download(uid)
+    def resume_all(self):
+        """resume downloading all non completed items in downloads tab"""
+
+        if config.confirm_on_resume_all:
+            res = self.popup('Resume all non-completed downloads?', buttons=['Yes', 'No'])
+            if res != 'Yes':
+                return
+
+        for uid, item in self.d_items.items():
+            if item.status.get() in (config.Status.cancelled, config.Status.error):
+                self.resume_download(uid)
 
     def stop_download(self, uid):
         self.controller.stop_download(uid)
 
-    def download(self, uid=None, **kwargs):
-        """Send command to controller to download an item
+    def stop_all(self):
+        """stop all downloads"""
 
-        Args:
-            uid (str): download item's unique identifier, if omitted active item will be downloaded
-            kwargs: key/value for any legit attributes in DownloadItem
-        """
-        self.controller.download(uid, **kwargs)
+        if config.confirm_on_stop_all:
+            res = self.popup('Stop all active downloads?', buttons=['Yes', 'No'])
+            if res != 'Yes':
+                return
+
+        for uid in self.d_items:
+            self.stop_download(uid)
 
     def delete_completed(self):
         """delete completed items"""
