@@ -1975,7 +1975,7 @@ class PlaylistWindow(tk.Toplevel):
 
         if self.select_all_var.get():
             for idx, item in enumerate(self.items):
-                # quit if playlist window closed
+                # quit if playlist window closed, or uncheck button
                 if self.main.pl_window is None or not self.select_all_var.get():
                     break
 
@@ -1986,6 +1986,8 @@ class PlaylistWindow(tk.Toplevel):
 
                 # add some time delay to process a video item and load stream menu before process next video
                 menu = self.stream_menus.get(idx, [])
+                # if video process failed, stream menu will contain only the headers (5 items) and no streams
+                # e.g. ['● Video streams:', '', '● Audio streams:', '', '● Extra streams:']
                 if len(menu) <= 5:
                     time.sleep(0.5)
         else:
