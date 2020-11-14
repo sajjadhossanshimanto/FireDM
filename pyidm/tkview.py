@@ -1979,14 +1979,20 @@ class PlaylistWindow(tk.Toplevel):
                 if self.main.pl_window is None:
                     break
 
+                if item.selected.get():
+                    continue
+
                 item.checkbutton.invoke()
 
                 # add some time delay to process a video item and load stream menu before process next video
                 menu = self.stream_menus.get(idx, [])
                 if not menu:
-                    time.sleep(0.3)
+                    time.sleep(0.5)
         else:
             for item in self.items:
+                if not item.selected.get():
+                    continue
+
                 item.checkbutton.invoke()
 
     def close(self):
