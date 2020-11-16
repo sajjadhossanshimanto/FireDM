@@ -2855,6 +2855,7 @@ class MainWindow(IView):
         CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(
             anchor='w')
         CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
+        CheckOption(tab, 'Enable CAPTCHA! workaround', key='enable_captcha_workaround').pack(anchor='w')
 
         separator()
 
@@ -3582,6 +3583,23 @@ class MainWindow(IView):
             return
 
         self.pl_window = PlaylistWindow(self, pl)
+
+    def get_offline_webpage_path(self):
+        """get the file path of the offline webpage contents as a workaround for captcha
+        """
+
+        msg = 'Found Captcha when downloading webpage contents, you should open this link in your browser' \
+              ' and  save webpage manually on the disk (as htm or html), then press below "select file" button to ' \
+              'select your saved webpage file'
+        fp = None
+
+        btn = self.popup(msg, buttons=['Select file', 'Cancel'], title='Captcha found')
+
+        if btn == 'Select file':
+            fp = filedialog.askopenfilename()
+
+        return fp
+
     # endregion
 
     # region url, clipboard

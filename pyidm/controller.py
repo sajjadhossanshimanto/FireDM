@@ -355,6 +355,38 @@ class Controller:
                 time.sleep(1)  # wait until module gets imported
 
         if self.ydl is None:
+            # override _download_webpage in Youtube-dl for captcha workaround -- experimental
+            def download_webpage_decorator(func):
+                # return data
+                def newfunc(obj, *args, **kwargs):
+                    print('-' * 20, "start download page")
+                    content = func(obj, *args, **kwargs)
+
+                    if config.enable_captcha_workaround and isinstance(content, str) and 'captcha' in content:
+                        print('-' * 20, "captcha here!!")
+                        # get webpage offline file path from user
+                        fp = self.view.get_offline_webpage_path()
+
+                        if fp is None:
+                            log('Cancelled by user')
+                            return content
+
+                        if not os.path.isfile(fp):
+                            log('invalid file path:', fp)
+                            return content
+
+                        with open(fp, 'rb') as fh:
+                            new_content = fh.read()
+                            encoding = video.ytdl.extractor.common.InfoExtractor._guess_encoding_from_content('', new_content)
+                            content = new_content.decode(encoding=encoding)
+
+                    return content
+
+                return newfunc
+
+            video.ytdl.extractor.common.InfoExtractor._download_webpage = download_webpage_decorator(
+                    video.ytdl.extractor.common.InfoExtractor._download_webpage)
+
             self.ydl = video.ytdl.YoutubeDL(get_ytdl_options())
 
         # reset abort flag
@@ -413,6 +445,7 @@ class Controller:
                 # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
 
                 info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
+                # print(info)
 
             # check results if _type is a playlist / multi_video -------------------------------------------------
             if _type in ('playlist', 'multi_video') or 'entries' in info:
