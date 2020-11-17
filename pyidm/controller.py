@@ -362,6 +362,9 @@ class Controller:
                     print('-' * 20, "start download page")
                     content = func(obj, *args, **kwargs)
 
+                    # search for word captcha in webpage content is not enough
+                    # example webpage https://www.youtube.com/playlist?list=PLwvr71r_LHEXwKxel0_hECnTb75JHEwlf
+
                     if config.enable_captcha_workaround and isinstance(content, str) and 'captcha' in content:
                         print('-' * 20, "captcha here!!")
                         # get webpage offline file path from user

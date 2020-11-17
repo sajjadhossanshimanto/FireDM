@@ -115,7 +115,7 @@ process_playlist = False  # fetch videos info only if selected, since big playli
 big_playlist_length = 50  # minimum number of videos in big playlist, it will ignore "process_playlist"
 manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
 write_metadata = True  # write metadata to video file
-enable_captcha_workaround = True
+enable_captcha_workaround = False
 
 # ffmpeg
 ffmpeg_actual_path = None
