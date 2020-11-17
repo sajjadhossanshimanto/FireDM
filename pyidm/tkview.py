@@ -1251,7 +1251,19 @@ class FileProperties(ttk.Frame):
         self.edit_name_popup = None
 
         if button == 'Rename' and name:
-            self.name.set(name.strip())
+            name = name.strip()
+            self.raw_name = name
+
+            # fix tkinter bad arabic language display in linux
+            if config.operating_system == 'Linux':
+                try:
+                    title, extension = os.path.splitext(name)
+
+                    name = arabic_renderer(title)
+                    name += extension
+                except:
+                    pass
+            self.name.set(name)
 
 
 class Thumbnail(tk.Frame):
