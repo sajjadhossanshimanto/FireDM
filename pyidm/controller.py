@@ -188,7 +188,7 @@ class Controller:
             if is_video_playlist:
                 log('controller> playlist ready')
                 self._update_playlist_menu([str(i + 1) + '- ' + video.rendered_name for i, video in enumerate(self.playlist)])
-                self.select_playlist_video(0)
+                # self.select_playlist_video(0) # view should call this method
             else:
                 self._update_playlist_menu([])
 
@@ -335,9 +335,9 @@ class Controller:
                 log('_process_video_info()> processed url:', vid.url, log_level=3)
                 vid.processed = True
             else:
-                log('_process_video_info()> Failed,  url:', vid.url, log_level=3)
+                log('_process_video()> Failed,  url:', vid.url, log_level=3)
         except Exception as e:
-            log('_process_video_info()> error:', e)
+            log('_process_video()> error:', e)
             if config.TEST_MODE:
                 raise e
         finally:
@@ -483,7 +483,7 @@ class Controller:
                 if processed_info and processed_info.get('formats'):
 
                     # create video object
-                    vid = ObservableVideo(url, processed_info) #, observer_callbacks=[self.observer])
+                    vid = ObservableVideo(url, processed_info)
 
                     # get thumbnail
                     vid.get_thumbnail()
@@ -529,13 +529,13 @@ class Controller:
                     # get thumbnail
                     vid.get_thumbnail()
 
-                    log('_process_video_info()> processed url:', vid.url, log_level=3)
+                    log('_pre_download_process()> processed url:', vid.url, log_level=3)
                     vid.processed = True
                 else:
-                    log('_process_video_info()> Failed,  url:', vid.url, log_level=3)
+                    log('_pre_download_process()> Failed,  url:', vid.url, log_level=3)
 
             except Exception as e:
-                log('_process_video_info()> error:', e)
+                log('_pre_download_process()> error:', e)
                 if config.TEST_MODE:
                     raise e
 
