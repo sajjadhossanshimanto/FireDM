@@ -214,9 +214,9 @@ class Video(DownloadItem):
                      'extra_streams': [stream.name for stream in extra_streams]}
 
         # build menu
-        stream_menu = ['● Video streams:                     '] + [stream.name for stream in mp4_videos] + [stream.name for stream in other_videos]  \
-                      + ['', '● Audio streams:                 '] + [stream.name for stream in audio_streams]\
-                      + ['', '● Extra streams:                 '] + [stream.name for stream in extra_streams]
+        stream_menu = ['Video streams:                     '] + [stream.name for stream in mp4_videos] + [stream.name for stream in other_videos]  \
+                      + ['', 'Audio streams:                 '] + [stream.name for stream in audio_streams]\
+                      + ['', 'Extra streams:                 '] + [stream.name for stream in extra_streams]
 
         # stream menu map will be used to lookup streams from stream menu, can't use dictionary to allow repeated key names
         stream_menu_map = [None] + mp4_videos + other_videos + [None, None] + audio_streams + [None, None] + extra_streams
@@ -443,11 +443,11 @@ class Stream:
     @property
     def name(self):
         fps = f' - {self.fps} fps' if self.fps else ''
-        return f'   › {self.extension} - {self.quality} - {size_format(self.size)} - id:{self.format_id}{fps}'  # ¤ » ›
+        return self.raw_name + f' - {size_format(self.size)} - id:{self.format_id}{fps}'  # ¤ »
 
     @property
     def raw_name(self):
-        return f'      ›  {self.extension} - {self.quality}'
+        return f'    {self.extension} - {self.quality}'
 
     @property
     def quality(self):

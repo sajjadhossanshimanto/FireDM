@@ -1343,6 +1343,11 @@ class DItem(tk.Frame):
                                         highlightthickness=0)
 
         self.thumbnail_label.pack(expand=True, fill='both', padx=2, pady=2)
+        #
+        # # check button
+        # self.selected = tk.BooleanVar()
+        # self.chkbtn = tk.Checkbutton(f, variable=self.selected)
+        # self.chkbtn.place(relx=0.1, rely=0.9, anchor="center")
 
         self.columnconfigure(1, weight=1)
 
@@ -1761,8 +1766,8 @@ class PlaylistWindow(tk.Toplevel):
         self.master_strem_menu = []
         self.master_combo = None
         self.master_selection = None  # master combo_box selection
-        self.video_streams = {}  # {'   › mp4': [360, 240, 144], '   › webm': [360, 240, 144]}
-        self.audio_streams = {}  # {'   › aac': [128], '   › ogg': [160], '   › mp3': [128], '   › webm': [160, 70, 50], '   › m4a': [128]}
+        self.video_streams = {}  # {'    mp4': [360, 240, 144], '    webm': [360, 240, 144]}
+        self.audio_streams = {}  # {'    aac': [128], '    ogg': [160], '    mp3': [128], '    webm': [160, 70, 50], '    m4a': [128]}
 
         # initialize super
         tk.Toplevel.__init__(self, self.parent)
@@ -1999,7 +2004,7 @@ class PlaylistWindow(tk.Toplevel):
                 # add some time delay to process a video item and load stream menu before process next video
                 menu = self.stream_menus.get(idx, [])
                 # if video process failed, stream menu will contain only the headers (5 items) and no streams
-                # e.g. ['● Video streams:', '', '● Audio streams:', '', '● Extra streams:']
+                # e.g. ['Video streams:', '', 'Audio streams:', '', 'Extra streams:']
                 if len(menu) <= 5:
                     time.sleep(0.5)
         else:
@@ -2026,15 +2031,15 @@ class PlaylistWindow(tk.Toplevel):
         """update stream menu values
 
         example:
-            stream menu = ['● Video streams:                     ', '   › mp4 - 360 - 8.0 MB - id:18 - 25 fps',
-            '   › mp4 - 240 - 4.9 MB - id:133 - 25 fps', '   › mp4 - 144 - 2.2 MB - id:160 - 15 fps',
-            '   › webm - 360 - 4.0 MB - id:243 - 25 fps', '   › webm - 240 - 2.4 MB - id:242 - 25 fps', '
-            › webm - 144 - 1.3 MB - id:278 - 25 fps', '',
-            '● Audio streams:                 ',
-            '   › aac - 128 - 2.6 MB - id:140', '   › ogg - 160 - 3.1 MB - id:251', '   › mp3 - 128 - 2.6 MB - id:140',
-            '   › webm - 160 - 3.1 MB - id:251', '   › m4a - 128 - 2.6 MB - id:140', '   › webm - 70 - 1.4 MB - id:250',
-            '   › webm - 50 - 1.0 MB - id:249', '',
-            '● Extra streams:                 ', '   › mp4 - 360 - 5.1 MB - id:134 - 25 fps']
+            stream menu = ['Video streams:                     ', '    mp4 - 360 - 8.0 MB - id:18 - 25 fps',
+            '    mp4 - 240 - 4.9 MB - id:133 - 25 fps', '    mp4 - 144 - 2.2 MB - id:160 - 15 fps',
+            '    webm - 360 - 4.0 MB - id:243 - 25 fps', '    webm - 240 - 2.4 MB - id:242 - 25 fps', '
+             webm - 144 - 1.3 MB - id:278 - 25 fps', '',
+            'Audio streams:                 ',
+            '    aac - 128 - 2.6 MB - id:140', '    ogg - 160 - 3.1 MB - id:251', '    mp3 - 128 - 2.6 MB - id:140',
+            '    webm - 160 - 3.1 MB - id:251', '    m4a - 128 - 2.6 MB - id:140', '    webm - 70 - 1.4 MB - id:250',
+            '    webm - 50 - 1.0 MB - id:249', '',
+            'Extra streams:                 ', '    mp4 - 360 - 5.1 MB - id:134 - 25 fps']
 
         """
         item_idx = self.get_item_idx(video_idx)
@@ -2101,22 +2106,45 @@ class PlaylistWindow(tk.Toplevel):
                 log('follow master selection error:', e)
 
     def update_master_menu(self, stream_menu):
-        # update master stream menu
-        streams = self.video_streams
-        for name in stream_menu:
-            if "Audio" in name:
-                streams = self.audio_streams
+        """update master menu in playlist window
+        Args:
+            stream_menu (lsit): list of strings, example:
+                Video Stream:
+                    mp4 - 1080 - 10 MB - ...
+                    webm - 720 - 5 MB - ...
 
-            if streams == self.audio_streams and name == '':
+                Audio Streams:
+                    AAC - 128 - 4 MB - ...
+
+                Extra Streams:
+                    mp4 - 480 - 10 MB - ...
+
+        we should build master menu to contain video and audio streams only and every stream will be extension and
+        quality only, e.g. mp4 - 1080
+
+        """
+
+        streams = self.video_streams
+
+        for entry in stream_menu:
+            # if we reach at the empty line under Audio Streams' section will break to avoid extra streams
+            if streams == self.audio_streams and entry == '':
                 break
 
-            if name.startswith('   › '):
-                entry = name.split(' - ')[:2]
-                ext, quality = entry[0], int(entry[1])
+            if "Audio" in entry:
+                streams = self.audio_streams
 
+            # get streams
+            try:
+                ext, quality = entry.split(' - ')[:2]  # stream example  "    mp4 - 1080 - 10 MB - ..."
+                quality = int(quality)
+
+                # example video streams {'    mp4': [1080, 720, 480], '    webm': [720, 240], ...}
                 quality_list = streams.setdefault(ext, [])
                 if quality not in quality_list:
                     quality_list.append(quality)
+            except:
+                continue
 
         def process(streams_dict):
             for ext, quality_list in streams_dict.items():
@@ -2125,9 +2153,9 @@ class PlaylistWindow(tk.Toplevel):
                     item = f'{ext} - {quality}'
                     menu.append(item)
 
-        menu = ['● Video streams:                     ']
+        menu = ['Video streams:                     ']
         process(self.video_streams)
-        menu += ['', '● Audio streams:                 ']
+        menu += ['', 'Audio streams:                 ']
         process(self.audio_streams)
 
         self.master_strem_menu = menu

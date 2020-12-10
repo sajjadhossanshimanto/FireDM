@@ -569,14 +569,14 @@ class Controller:
             {'command': 'stream_menu',
 
             'stream_menu':
-            ['● Video streams:                     ',
-            '   › mp4 - 1080 - 29.9 MB - id:137 - 30 fps',
-            '   › mp4 - 720 - 18.3 MB - id:22 - 30 fps',
-            '● Audio streams:                 ',
-            '   › aac - 128 - 4.6 MB - id:140',
-            '   › webm - 50 - 1.9 MB - id:249', '',
-            '● Extra streams:                 ',
-            '   › mp4 - 720 - 13.7 MB - id:136 - 30 fps'],
+            ['Video streams:                     ',
+            '    mp4 - 1080 - 29.9 MB - id:137 - 30 fps',
+            '    mp4 - 720 - 18.3 MB - id:22 - 30 fps',
+            'Audio streams:                 ',
+            '    aac - 128 - 4.6 MB - id:140',
+            '    webm - 50 - 1.9 MB - id:249', '',
+            'Extra streams:                 ',
+            '    mp4 - 720 - 13.7 MB - id:136 - 30 fps'],
 
             'video_idx': 0,
             'selected_stream_idx': 1}
