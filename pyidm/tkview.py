@@ -1343,11 +1343,11 @@ class DItem(tk.Frame):
                                         highlightthickness=0)
 
         self.thumbnail_label.pack(expand=True, fill='both', padx=2, pady=2)
-        #
-        # # check button
-        # self.selected = tk.BooleanVar()
-        # self.chkbtn = tk.Checkbutton(f, variable=self.selected)
-        # self.chkbtn.place(relx=0.1, rely=0.9, anchor="center")
+
+        # check button
+        self.selected = tk.BooleanVar()
+        self.chkbtn = tk.Checkbutton(f, variable=self.selected,  activebackground=THUMBNAIL_BD, bg=THUMBNAIL_BD)
+        self.chkbtn.place(relx=0.1, rely=0.9, anchor="center")
 
         self.columnconfigure(1, weight=1)
 
@@ -1413,7 +1413,7 @@ class DItem(tk.Frame):
     def __repr__(self):
         return f'DItem({self.uid})'
 
-    def bind(self, sequence=None, func=None, add=None):
+    def bind(self, sequence=None, func=None, add=None, exclude=None):
         """bind events to self and all children widgets"""
 
         # call original bind to frame
@@ -1422,6 +1422,8 @@ class DItem(tk.Frame):
         # apply bind for all children
         def bind_children(w):
             for child in w.winfo_children():
+                if child is exclude:
+                    continue
                 child.bind(sequence, func, add)
 
                 # recursive call
@@ -2553,7 +2555,7 @@ class MainWindow(IView):
 
         self.url = ''
         self.url_after_id = None  # identifier returned by 'after' method, keep it for future cancelling
-        self.d_items = {}  # hold DItem objects
+        self.d_items = {}  # hold DItem objects  {'UID': DItem()}
 
         self.pl_window = None  # playlist download window
         self.subtitles_window = None  # subtitles download window
@@ -2821,11 +2823,18 @@ class MainWindow(IView):
         btn_fr = tk.Frame(top_fr, bg=MAIN_BG)
         btn_fr.pack(fill='x', pady=5, padx=5)
 
-        tk.Label(btn_fr, text='Downloads:', bg=MAIN_BG, fg=MAIN_FG, anchor='w',
-                 font='any 10 bold').pack(anchor='w', side='left', padx=5)
+        self.select_all_var = tk.BooleanVar()
+        self.select_all_var.trace_add('write', lambda *args: self.toggle_selection())
+        tk.Checkbutton(btn_fr, variable=self.select_all_var, activebackground=THUMBNAIL_BD,
+                       bg=THUMBNAIL_BD).pack(anchor='w', side='left', padx=5)
 
-        Button(btn_fr, text='STOP ALL', command=self.stop_all).pack(side='right', padx=5, pady=3)
-        Button(btn_fr, text='RESUME ALL', command=self.resume_all).pack(side='right', padx=5, pady=3)
+        tk.Label(btn_fr, text='Select All', bg=MAIN_BG, fg=MAIN_FG, anchor='w').pack(anchor='w', side='left', padx=5)
+        self.selected_count = tk.Label(btn_fr, text='', bg=MAIN_BG, fg=MAIN_FG, anchor='w')
+        self.selected_count.pack(anchor='w', side='left', padx=5)
+
+        Button(btn_fr, text='Delete', command=self.delete_selected).pack(side='right', padx=5, pady=3)
+        Button(btn_fr, text='Stop', command=self.stop_selected).pack(side='right', padx=5, pady=3)
+        Button(btn_fr, text='Resume', command=self.resume_selected).pack(side='right', padx=5, pady=3)
 
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
@@ -3132,7 +3141,13 @@ class MainWindow(IView):
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
         # bind double click to play files
-        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x))
+        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=d_item.chkbtn)
+
+        # bind one click to invoke check button with
+        d_item.bind('<Button-1>', lambda event, cb=d_item.chkbtn: cb.invoke(), exclude=d_item.chkbtn)
+
+        # trace for checkbutton variable
+        d_item.selected.trace_add('write', lambda *args: self.update_selected_count())
 
     def set_proxy(self, *args):
         enabled = config.enable_proxy
@@ -3218,6 +3233,13 @@ class MainWindow(IView):
 
         self.download(uid)
 
+    def resume_selected(self):
+        """resume downloading selected and non completed items in downloads tab"""
+
+        for uid, item in self.d_items.items():
+            if item.status.get() in (config.Status.cancelled, config.Status.error) and item.selected.get():
+                self.resume_download(uid)
+
     def resume_all(self):
         """resume downloading all non completed items in downloads tab"""
 
@@ -3233,6 +3255,13 @@ class MainWindow(IView):
     def stop_download(self, uid):
         self.controller.stop_download(uid)
 
+    def stop_selected(self):
+        """stop downloading selected items in downloads tab"""
+
+        for uid, item in self.d_items.items():
+            if item.selected.get():
+                self.stop_download(uid)
+
     def stop_all(self):
         """stop all downloads"""
 
@@ -3243,6 +3272,24 @@ class MainWindow(IView):
 
         for uid in self.d_items:
             self.stop_download(uid)
+
+    def delete(self, uid):
+        """delete download item"""
+
+        # get user confirmation
+        msg = 'Are you sure you want to delete:\n' \
+              f'{self.d_items[uid].name.get()}'
+        res = self.popup(msg, buttons=['Ok', 'Cancel'])
+
+        if res != 'Ok':
+            return
+
+        # pop d
+        d = self.d_items.pop(uid)
+
+        d.destroy()
+
+        self.controller.delete(uid)
 
     def delete_completed(self):
         """delete completed items"""
@@ -3259,6 +3306,32 @@ class MainWindow(IView):
                 self.controller.delete(uid)
 
         self.d_items = {uid: item for uid, item in self.d_items.items() if item.status.get() != config.Status.completed}
+
+    def delete_selected(self):
+        """remove selected download items from downloads tab
+        only temp files will be removed, completed files on disk will never be deleted"""
+
+        selected_count = len([item for item in self.d_items.values() if item.selected.get()])
+        if not selected_count:
+            return
+
+        # get user confirmation
+        msg = 'Are you sure you want to clear selected download items from downloads list?\n' \
+              'note: only temp files will be removed, completed files on disk will never be deleted\n'\
+              'Write the word "delete" below to confirm.'
+        res, txt = self.popup(msg, buttons=['Ok', 'Cancel'], get_user_input=True)
+
+        if res != 'Ok' or txt.lower().strip() != 'delete':
+            return
+
+        deleted = []
+        for uid, item in self.d_items.items():
+            if item.selected.get():
+                deleted.append(uid)
+                item.destroy()
+                self.controller.delete(uid)
+
+        self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
 
     def delete_all(self):
         """remove all download items from downloads tab and delete all their temp files, completed files on the disk
@@ -3279,23 +3352,17 @@ class MainWindow(IView):
 
         self.d_items.clear()
 
-    def delete(self, uid):
-        """delete download item"""
+    def toggle_selection(self):
+        """toggle selection of all download items"""
 
-        # get user confirmation
-        msg = 'Are you sure you want to delete:\n' \
-              f'{self.d_items[uid].name.get()}'
-        res = self.popup(msg, buttons=['Ok', 'Cancel'])
+        for item in self.d_items.values():
+            item.selected.set(self.select_all_var.get())
 
-        if res != 'Ok':
-            return
+    def update_selected_count(self):
+        """update the number of selected download items and display it on a label in downloads tab"""
 
-        # pop d
-        d = self.d_items.pop(uid)
-
-        d.destroy()
-
-        self.controller.delete(uid)
+        count = len([item for item in self.d_items.values() if item.selected.get()])
+        self.selected_count['text'] = f'(Selected: {count} of {len(self.d_items)})'
 
     # endregion
 
