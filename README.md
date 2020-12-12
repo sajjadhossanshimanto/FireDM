@@ -10,6 +10,8 @@ with multi-connections, high speed engine,
 it downloads general files and videos from youtube and tons of other streaming websites . <br>
 Developed in Python, based on "LibCurl", and "youtube_dl".
 
+[**Download for Windows**](https://github.com/pyIDM/PyIDM/releases/latest)
+
 ![screenshot](https://user-images.githubusercontent.com/58998813/92564079-e4fcee00-f278-11ea-83e1-9a272bc06b0f.png)
 
 ---
@@ -31,13 +33,15 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 * Re-using existing connection to remote server.
 * Clipboard Monitor.
 * proxy support (http, https, socks4, and socks5).
-* user/pass authentication, referee link, use cookies, video thumbnail, subtitles, MD5 and SHA256 checksums
+* user/pass authentication, referee link, use cookies, video thumbnail,
+  subtitles.
+* MD5 and SHA256 checksums.
 * user can control a lot of options:
-    - select theme.
-    - set proxy.
-    - Speed limit.
-    - Max. Concurrent downloads.
-    - Max. connections per download.
+   -   select and edit themes.
+   - set proxy.
+   - Speed limit.
+   - Max. Concurrent downloads.
+   - Max. connections per download.
 
 ---
 # How to use PyIDM:
@@ -45,7 +49,8 @@ Refer to user guide at https://github.com/pyIDM/PyIDM/blob/master/docs/user_guid
 
 ----------------------
 # How to install PyIDM?
-You have 3 options to run PyIDM on your operating system:
+You have various options to install and run PyIDM on your operating
+system:
 
 1. **Windows portable version**:  
    Latest Windows portable version available
@@ -64,10 +69,14 @@ You have 3 options to run PyIDM on your operating system:
     "python/scripts" folder to PATH.
 
 
-3. **run from github source code**:<br>
-PyIDM is a python app. so, it can run on any platform that can run python, 
-To run from source, you have to have a python installed, "supported python versions is 3.6, 3.7, and 3.8", then download or clone this repository, and run PyIDM.py (it will install the other required python packages automatically if missing)
-if PyIDM failed to install required packages, you should install it manually, refer to "Dependencies" section below.
+3. **run from github source code**:<br> PyIDM is a python app. so, it
+   can run on any platform that can run python, To run from source, you
+   have to have a python installed, "supported python versions is 3.6,
+   3.7, and 3.8", then download or clone this repository, and run
+   PyIDM.py (it will install the other required python packages
+   automatically if missing) if PyIDM failed to install required
+   packages, you should install it manually, refer to "Dependencies"
+   section below.
 
 4. **Build PyIDM yourself**:
    -  get the source code from github: (recommended for latest updated
@@ -113,14 +122,19 @@ refer to [issue #113](https://github.com/pyIDM/PyIDM/issues/113)
 # Dependencies:
 below are the requirements to run from source:
 - Python 3.6+: tested with python 3.6 on windows, and 3.7, 3.8 on linux
+- tkinter
 - [ffmpeg](https://www.ffmpeg.org/) : for merging audio with youtube DASH videos "it will be installed automatically on windows"
 
 Required python packages: 
 - [pycurl](http://pycurl.io/docs/latest/index.html): is a Python interface to libcurl / curl as our download engine,
 - [youtube_dl](https://github.com/ytdl-org/youtube-dl): famous youtube downloader, limited use for meta information extraction only but videos are downloaded using pycurl
+- [youtube-dlc](https://github.com/blackjack4494/yt-dlc): community version of youtube-dl
 - [certifi](https://github.com/certifi/python-certifi): required by 'pycurl' for validating the trustworthiness of SSL certificates,
 - [plyer](https://github.com/kivy/plyer): for systray area notification.
-
+- [awesometkinter](https://github.com/Aboghazala/AwesomeTkinter): for
+  application gui.
+- [pillow](https://python-pillow.org/): imaging library for python
+- [pystray](https://github.com/moses-palmer/pystray): for systray icon
 
 ** please read notes below
 
@@ -141,32 +155,23 @@ python -m pip install --user --upgrade certifi plyer youtube_dl pycurl pillow py
 
 **more screenshots**
 
-![Main_tab](https://user-images.githubusercontent.com/58998813/92562020-939f2f80-f275-11ea-94ea-fe41c9c72abc.png)
-![sett_tab](https://user-images.githubusercontent.com/58998813/92562130-bfbab080-f275-11ea-990d-c869522ecbaa.png)
+![Main_tab](https://user-images.githubusercontent.com/58998813/94432366-f3af3480-0196-11eb-8449-3e35bfb13e5c.png)
+![sett_tab](https://user-images.githubusercontent.com/58998813/94432701-6f10e600-0197-11eb-9d5a-397980d8fa57.png)
+
+[See more ...](https://github.com/pyIDM/PyIDM/issues/13#issuecomment-699985614)
 
 
 ---
-# Why another download manager?:
-Originally, I made this project to help myself download some youtube
-videos, then decided to share it thinking it might be useful for someone
-else, so please don't put your fire on me if you find a mistake in code
-or stupid approach to solve a problem, or an ugly gui design, instead
-try to fix it (this is the soul of open source software, it is open for
-everyone to participate and improve).
-
-what is the benefit of open source, compared to
-closed-source/Proprietary software if both are free?  
-I believe that, **"if the product is free, then you are the product"**,
-most free closed-source software collect data about you, some of them
-are toxic and plant trojans and spy-wares in your system, with open
-source, nothing hidden, and source code exposed to thousands of
-programmers, no one can play dirty games.
+# what is the benefit of open source, compared to closed-source/Proprietary software if both are free?
+As said, **"if the product is free, then you are the product"**, most
+free closed-source software collect data about you, some of them are
+toxic and plant trojans and spy-wares in your system, with open source,
+nothing hidden, and source code exposed to thousands of programmers, no
+one can play dirty games.
 
 
-Need to mention that, during working on this project I found a lot of
-amazing open source "download managers" projects, which are more
-professional than this one, and this project is never made to compete
-with other download managers, it is just a "hopefully useful" addition.
+Need to mention, this project is never made to compete with other
+download managers, it is just a "hopefully useful" addition.
 
 
 
@@ -239,14 +244,20 @@ reporting, feature request, or suggestions.
 
 ---
 
+# contributors:
+Please check
+[contributors.md](https://github.com/pyIDM/PyIDM/blob/master/contributors.md)
+for a list of contributors
+
 # Feedback:
 your feedback is most welcomed by filling a
 [new issue](https://github.com/pyIDM/PyIDM/issues/new)  
 or email to: info.pyidm@gmail.com <br>
 
+
+---
+
 Author:  
 Mahmoud Elshahat  
 2019-2020
 
-
----
