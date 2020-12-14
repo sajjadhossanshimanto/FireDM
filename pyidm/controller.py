@@ -308,6 +308,11 @@ class Controller:
         info: youtube-dl info dict
         """
         try:
+            # handle types: url and url transparent
+            _type = info.get('_type', 'video')
+            if _type in ('url', 'url_transparent'):
+
+                info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
 
             # process info
             processed_info = self.ydl.process_ie_result(info, download=False)
@@ -457,6 +462,7 @@ class Controller:
 
                 # videos info
                 pl_info = list(info.get('entries'))  # info.get('entries') is a generator
+                # log('list(info.get(entries):', pl_info)
 
                 # create initial playlist with un-processed video objects
                 for v_info in pl_info:
