@@ -455,7 +455,13 @@ class Stream:
             if self.mediatype == 'audio':
                 return int(self.abr)
             else:
-                return int(self.height)
+                # some video streams has its resolution's height different from its quality, e.g 1280 width x 676 height
+                # is actually 720p quality, will use format_note field and fallback to height.
+                match = re.match(r'\d+', self.format_note)
+                if match:
+                    return int(match.group())
+                else:
+                    return int(self.height)
         except:
             return 0
 
