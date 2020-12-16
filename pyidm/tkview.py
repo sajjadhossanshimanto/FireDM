@@ -1346,7 +1346,7 @@ class DItem(tk.Frame):
 
         # check button
         self.selected = tk.BooleanVar()
-        self.chkbtn = atk.Checkbutton(f, variable=self.selected, bg='white')
+        self.chkbtn = atk.Checkbutton(f, variable=self.selected, bg='white', bd=0, highlightthickness=0)
         self.chkbtn.place(x=2, y=2, anchor="nw")
 
         self.columnconfigure(1, weight=1)
@@ -2826,7 +2826,8 @@ class MainWindow(IView):
         self.select_all_var = tk.BooleanVar()
         self.select_all_var.trace_add('write', lambda *args: self.toggle_selection())
 
-        atk.Checkbutton(btn_fr, variable=self.select_all_var).pack(anchor='w', side='left', padx=5)
+        atk.Checkbutton(btn_fr, variable=self.select_all_var, bd=0, highlightthickness=0).pack(anchor='w', side='left',
+                                                                                               padx=5)
 
         tk.Label(btn_fr, text='Select All', bg=MAIN_BG, fg=MAIN_FG, anchor='w').pack(anchor='w', side='left', padx=5)
         self.selected_count = tk.Label(btn_fr, text='', bg=MAIN_BG, fg=MAIN_FG, anchor='w')
