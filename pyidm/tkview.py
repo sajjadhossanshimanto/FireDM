@@ -1346,8 +1346,8 @@ class DItem(tk.Frame):
 
         # check button
         self.selected = tk.BooleanVar()
-        self.chkbtn = tk.Checkbutton(f, variable=self.selected,  activebackground=THUMBNAIL_BD, bg=THUMBNAIL_BD)
-        self.chkbtn.place(relx=0.1, rely=0.9, anchor="center")
+        self.chkbtn = atk.Checkbutton(f, variable=self.selected, bg='white')
+        self.chkbtn.place(x=2, y=2, anchor="nw")
 
         self.columnconfigure(1, weight=1)
 
@@ -2825,8 +2825,8 @@ class MainWindow(IView):
 
         self.select_all_var = tk.BooleanVar()
         self.select_all_var.trace_add('write', lambda *args: self.toggle_selection())
-        tk.Checkbutton(btn_fr, variable=self.select_all_var, activebackground=THUMBNAIL_BD,
-                       bg=THUMBNAIL_BD).pack(anchor='w', side='left', padx=5)
+
+        atk.Checkbutton(btn_fr, variable=self.select_all_var).pack(anchor='w', side='left', padx=5)
 
         tk.Label(btn_fr, text='Select All', bg=MAIN_BG, fg=MAIN_FG, anchor='w').pack(anchor='w', side='left', padx=5)
         self.selected_count = tk.Label(btn_fr, text='', bg=MAIN_BG, fg=MAIN_FG, anchor='w')
@@ -2994,7 +2994,7 @@ class MainWindow(IView):
 
         separator()
 
-        # Debugging -----------------------------------------------------------------------------------------------------
+        # Debugging ----------------------------------------------------------------------------------------------------
         heading('Debugging:')
         CheckOption(tab, 'keep temp files / folders after done downloading for debugging.', key='keep_temp').pack(anchor='w')
         CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"', key='TEST_MODE').pack(anchor='w')
@@ -3093,7 +3093,7 @@ class MainWindow(IView):
 
         self.side_frame.select_tab(tab_name)
 
-    def create_ditem(self, uid, focus=True, **kwargs):
+    def create_ditem(self, uid, **kwargs):
         """create new DItem and show it in downloads tab
 
         Args:
@@ -3142,9 +3142,6 @@ class MainWindow(IView):
 
         # bind double click to play files
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=d_item.chkbtn)
-
-        # bind one click to invoke check button with
-        d_item.bind('<Button-1>', lambda event, cb=d_item.chkbtn: cb.invoke(), exclude=d_item.chkbtn)
 
         # trace for checkbutton variable
         d_item.selected.trace_add('write', lambda *args: self.update_selected_count())
