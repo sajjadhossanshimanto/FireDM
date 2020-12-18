@@ -2907,6 +2907,15 @@ class MainWindow(IView):
         CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
         CheckOption(tab, 'Enable CAPTCHA! workaround', key='enable_captcha_workaround').pack(anchor='w')
 
+        # video extractor backend -------------------------
+        extractor_frame = tk.Frame(tab, bg=bg)
+        tk.Label(extractor_frame, bg=bg, fg=fg, text='Select video extractor engine:  ').pack(side='left')
+        self.extractors_menu = Combobox(extractor_frame, values=config.video_extractors_list,
+                                        selection=config.active_video_extractor)
+        self.extractors_menu.callback = lambda: self.controller.set_video_backend(self.extractors_menu.selection)
+        self.extractors_menu.pack(side='left')
+        extractor_frame.pack(anchor='w')
+
         separator()
 
         # Network ------------------------------------------------------------------------------------------------------
@@ -3013,32 +3022,27 @@ class MainWindow(IView):
         CheckEntryOption(update_frame, 'Check for update every: ', entry_key='update_frequency', width=4, justify='center',
                          check_key='check_for_update', get_text_validator=lambda x: int(x) if int(x) > 0 else 7)\
             .grid(row=0, column=0, columnspan=2, sticky='w')
-        lbl('days').grid(row=0, column=2, sticky='w')
+        tk.Label(update_frame, bg=bg, fg=fg, text='days', padx=5).grid(row=0, column=2, sticky='w')
 
         # PyIDM update
-        Button(update_frame, image=self.refresh_img, command=self.controller.check_for_pyidm_update).grid(row=1, column=0, sticky='e', pady=5, padx=(20, 5))
         self.pyidm_update_note = tk.StringVar()
         self.pyidm_update_note.set(f'PyIDM version: {config.APP_VERSION}')
-        lbl(self.pyidm_update_note).grid(row=1, column=1, columnspan=2, sticky='w')
+        lbl(self.pyidm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
+        Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
+               command=self.controller.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
 
-        # youtube-dl and youtube-dlc update
-        Button(update_frame, image=self.refresh_img, command=self.check_for_ytdl_update).grid(row=2, column=0, sticky='e', pady=5, padx=(20, 5))
+        # youtube-dl and youtube-dlc
         self.youtube_dl_update_note = tk.StringVar()
-        self.youtube_dl_update_note.set(f'{config.active_video_extractor} version: {config.ytdl_VERSION}')
+        self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version}')
         lbl(self.youtube_dl_update_note).grid(row=2, column=1, columnspan=2, sticky='w')
+        Button(update_frame, text='Rollback update',
+               command=lambda: self.rollback_pkg_update('youtube_dl')).grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
 
-        Button(update_frame, text='Rollback update', command=self.rollback_ytdl_update).grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
-
-        # video extractor backend -------------------------
-        def select_extractor(extractor):
-            self.controller.set_video_backend(extractor)
-            self.update_youtube_dl_info()
-
-        tk.Label(update_frame, bg=bg, fg=fg, text='Switch extractor:  ').grid(row=2, column=4, sticky='w', padx=(50, 5))
-
-        self.extractors_menu = Combobox(update_frame, values=config.video_extractors_list, selection=config.active_video_extractor)
-        self.extractors_menu.callback = lambda: select_extractor(self.extractors_menu.selection)
-        self.extractors_menu.grid(row=2, column=5, sticky='w')
+        self.youtube_dlc_update_note = tk.StringVar()
+        self.youtube_dlc_update_note.set(f'youtube-dlc version: {config.youtube_dlc_version}')
+        lbl(self.youtube_dlc_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
+        Button(update_frame, text='Rollback update',
+               command=lambda: self.rollback_pkg_update('youtube_dlc')).grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
 
         if not config.disable_update_feature:
             heading('Update:')
@@ -3554,23 +3558,21 @@ class MainWindow(IView):
                 time.sleep(0.01)
 
     def update_youtube_dl_info(self):
-        """write youtube-dl version once it gets imported"""
-        current_version = config.ytdl_VERSION
-        if current_version:
-            self.youtube_dl_update_note.set(
-                f'{config.active_video_extractor} version: {config.ytdl_VERSION}')
-        else:
-            self.youtube_dl_update_note.set(f'{config.active_video_extractor} version: Loading ... ')
+        """write youtube-dl and youtube-dlc version once it gets imported"""
+
+        self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version or "Loading ... "}')
+        self.youtube_dlc_update_note.set(f'youtube-dlc version: {config.youtube_dlc_version or "Loading ... "}')
+
+        if not all((config.youtube_dl_version, config.youtube_dlc_version)):
             self.root.after(1000, self.update_youtube_dl_info)
 
-    def check_for_ytdl_update(self):
-        self.controller.check_for_ytdl_update()
-        self.select_tab('Log')
+    def rollback_pkg_update(self, pkg):
+        """restore previous package version e.g. youtube-dl and youtube-dlc"""
+        response = self.popup(f'Delete last {pkg} update and restore previous version?', buttons=['Ok', 'Cancel'])
 
-    def rollback_ytdl_update(self):
-        """delete last youtube-dl update and restore last one"""
-        self.controller.rollback_ytdl_update()
-        self.select_tab('Log')
+        if response == 'Ok':
+            self.select_tab('Log')
+            self.controller.rollback_pkg_update(pkg)
 
     def restart_gui(self):
         self.main_frame.destroy()

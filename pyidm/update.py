@@ -13,6 +13,7 @@
 import hashlib
 import json
 import py_compile
+import re
 import shutil
 import sys
 import zipfile, tarfile
@@ -78,26 +79,40 @@ def check_for_new_version():
     return changelog
 
 
-def get_pkg_latest_version(pkg):
+def get_pkg_latest_version(pkg, fetch_url=True):
     """get latest stable package release version on https://pypi.org/
+    reference: https://warehouse.pypa.io/api-reference/
+    Available strategies:
+    1 - rss feed (faster and lighter), send xml info with latest release version but no info on "wheel file" url,
+        pattern example: https://pypi.org/rss/project/youtube-dl/releases.xml
+        example data:
+                    <item>
+                    <title>2020.12.14</title>
+                    <link>https://pypi.org/project/youtube-dl/2020.12.14/</link>
+                    <description>YouTube video downloader</description>
+                    <author>dstftw@gmail.com</author>
+                    <pubDate>Sun, 13 Dec 2020 17:59:21 GMT</pubDate>
+                    </item>
 
-    url pattern: f'https://pypi.python.org/pypi/{pkg}/json'
-    received json will be a dict with:
-    keys = 'info', 'last_serial', 'releases', 'urls'
-    releases = {'release_version': [{dict for wheel file}, {dict for tar file}], ...}
-    dict for wheel file = {"filename":"youtube_dlc-2020.10.24.post6-py2.py3-none-any.whl", 'url': 'file url'}
-    dict for tar file = {"filename":"youtube_dlc-2020.10.24.post6.tar.gz", 'url': 'file url'}
+    2- json, (slower and bigger file), send all info for the package
+        url pattern: f'https://pypi.org/pypi/{pkg}/json' e.g.    https://pypi.org/pypi/pyidm/json
+        received json will be a dict with:
+        keys = 'info', 'last_serial', 'releases', 'urls'
+        releases = {'release_version': [{dict for wheel file}, {dict for tar file}], ...}
+        dict for wheel file = {"filename":"youtube_dlc-2020.10.24.post6-py2.py3-none-any.whl", 'url': 'file url'}
+        dict for tar file = {"filename":"youtube_dlc-2020.10.24.post6.tar.gz", 'url': 'file url'}
 
 
     Args:
         pkg (str): package name
+        fetch_url (bool): if true, will use json API to get download url, else it will use rss feed to get version only
 
     Return:
-        2-tuple(str, str): latest_version, and download url (for wheel file)
+        2-tuple(str, str): latest_version, and download url (for wheel file) if available
     """
 
     # download json info
-    url = f'https://pypi.python.org/pypi/{pkg}/json'
+    url = f'https://pypi.org/pypi/{pkg}/json' if fetch_url else f'https://pypi.org/rss/project/{pkg}/releases.xml'
 
     # get BytesIO object
     log(f'check for {pkg} latest version on pypi.org...')
@@ -109,23 +124,32 @@ def get_pkg_latest_version(pkg):
         # convert to string
         contents = buffer.getvalue().decode()
 
-        j = json.loads(contents)
+        # rss feed
+        if not fetch_url:
+            match = re.findall(r'<title>(\d+.\d+.\d+.*)</title>', contents)
+            latest_version = max([parse_version(release) for release in match]) if match else None
 
-        releases = j.get('releases', {})
-        if releases:
-
-            latest_version = max([parse_version(release) for release in releases.keys()]) or None
             if latest_version:
                 latest_version = str(latest_version)
+        # json
+        else:
+            j = json.loads(contents)
 
-                # get latest release url
-                release_info = releases[latest_version]
-                for _dict in release_info:
-                    file_name = _dict['filename']
-                    url = None
-                    if file_name.endswith('.whl'):
-                        url = _dict['url']
-                        break
+            releases = j.get('releases', {})
+            if releases:
+
+                latest_version = max([parse_version(release) for release in releases.keys()]) or None
+                if latest_version:
+                    latest_version = str(latest_version)
+
+                    # get latest release url
+                    release_info = releases[latest_version]
+                    for _dict in release_info:
+                        file_name = _dict['filename']
+                        url = None
+                        if file_name.endswith('.whl'):
+                            url = _dict['url']
+                            break
 
         return latest_version, url
 
@@ -153,8 +177,8 @@ def update_pkg(pkg, url):
         cmd = f'"{sys.executable}" -m pip install {pkg} --upgrade'
         success, output = run_command(cmd)
         if success:
-            log(f'successfully updated {pkg}, please restart application', showpopup=True)
-        return
+            log(f'successfully updated {pkg}')
+        return True
 
     # paths
     temp_folder = os.path.join(current_directory, f'temp_{pkg}')
@@ -295,7 +319,8 @@ def update_pkg(pkg, url):
         # clean old files
         log('delete temp folder')
         delete_folder(temp_folder)
-        log(f'{pkg} ..... done updating \nplease restart Application now', showpopup=True)
+        log(f'{pkg} ..... done updating')
+        return True
     except Exception as e:
         log(f'update_pkg()> error', e)
 
@@ -307,7 +332,7 @@ def rollback_pkg_update(pkg):
         pkg (str): package name
     """
     if not config.FROZEN:
-        log(f'rollback {pkg} update is currently working on portable windows version only')
+        log(f'rollback {pkg} update is currently working on portable windows version only', showpopup=True)
         return
 
     log(f'rollback last {pkg} update ................................')

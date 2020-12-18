@@ -41,7 +41,7 @@ DEFAULT_CONCURRENT_CONNECTIONS = 3
 APP_URL = 'https://github.com/pyIDM/PyIDM'
 LATEST_RELEASE_URL = 'https://github.com/pyIDM/PyIDM/releases/latest'
 
-# headers, note: a random user agent will replace below value later by video.import_ytdl()
+# headers, note: a random user agent will replace below value later when importing youtube-dl
 USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3721.3'
 HEADERS = {
     'User-Agent': USER_AGENT,
@@ -52,9 +52,8 @@ HEADERS = {
 
 DEFAULT_LOG_LEVEL = 2
 
-APP_LATEST_VERSION = None  # get value from update module
-ytdl_VERSION = None  # will be loaded once youtube-dl get imported
-ytdl_LATEST_VERSION = None  # get value from update module
+youtube_dl_version = None
+youtube_dlc_version = None
 
 TEST_MODE = False
 SIMULATOR = False
@@ -106,7 +105,7 @@ window_size = DEFAULT_WINDOW_SIZE
 
 
 # video / audio --------------------------------------------------------------------------------------------------------
-# youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.import_ytdl()
+# youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.set_interrupt_switch()
 ytdl_abort = False
 video_extractors_list = ['youtube_dl', 'youtube_dlc']
 active_video_extractor = 'youtube_dl'

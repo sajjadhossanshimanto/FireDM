@@ -11,6 +11,7 @@ import os
 import re
 import time
 from urllib.parse import urljoin
+import importlib
 
 from . import config
 from .downloaditem import DownloadItem, Segment
@@ -22,6 +23,9 @@ from .utils import (log, validate_file_name, get_headers, size_format, run_comma
 
 # youtube-dl
 ytdl = None  # youtube-dl will be imported in a separate thread to save loading time
+
+youtube_dl = None  # youtube-dl will be imported in a separate thread to save loading time
+youtube_dlc = None  # youtube-dlc will be imported in a separate thread to save loading time
 
 
 class Logger(object):
@@ -506,48 +510,86 @@ def merge_video_audio(video, audio, output, d):
     return error, output
             
 
-def import_ytdl(extractor=None):
-    # import youtube_dl using thread because it takes sometimes 20 seconds to get imported and impact app startup time
+def load_extractor_engines(reload=False):
+    """import extractor engines
+    should call this from a thread because sometimes youtube_dl takes around 20 seconds to get imported and impact
+    app startup time
 
-    extractor = extractor or config.active_video_extractor
+    Args:
+        reload (bool): if true it will reload modules instead of importing, needed after modules update
+    """
+
+    global youtube_dl, youtube_dlc
+
+    # youtube-dl ----------------------------------------------------------------------------------------------------
     start = time.time()
-    global ytdl, ytdl_version
-    try:
-        # select extractor backend, should edit this part if more extractors will be added in the future
-        if extractor == 'youtube_dl':
-            import youtube_dl as ytdl
-            log('youtube-dl imported')
-        else:
-            import youtube_dlc as ytdl
-            log('youtube-dlc imported')
 
-        # update version value
-        config.ytdl_VERSION = ytdl.version.__version__
+    if reload and youtube_dl:
+        importlib.reload(youtube_dl)
+    else:
+        import youtube_dl
 
-        # get a random user agent and update headers
-        config.HEADERS['User-Agent'] = ytdl.utils.random_user_agent()
+    config.youtube_dl_version = youtube_dl.version.__version__
 
-        # calculate loading time
-        load_time = time.time() - start
-        log(f'{extractor} version: {config.ytdl_VERSION}, load_time= {int(load_time)} seconds')
+    # calculate loading time
+    load_time = time.time() - start
+    log(f'youtube_dl version: {config.youtube_dl_version}, load_time= {int(load_time)} seconds')
 
-        # override urlopen in YoutubeDl for interrupting youtube-dl session anytime
-        def urlopen_decorator(func):
-            def newfunc(self, *args):
-                # print('urlopen started ............................................')
-                if config.ytdl_abort:
-                    # print('urlopen aborted ............................................')
-                    raise Exception('Youtube-dl aborted by user')
-                    # return None
-                data = func(self, *args)
-                return data
+    # youtube-dlc ----------------------------------------------------------------------------------------------------
+    start = time.time()
 
-            return newfunc
+    if reload and youtube_dlc:
+        importlib.reload(youtube_dlc)
+    else:
+        import youtube_dlc
 
-        ytdl.YoutubeDL.urlopen = urlopen_decorator(ytdl.YoutubeDL.urlopen)
+    config.youtube_dlc_version = youtube_dlc.version.__version__
 
-    except Exception as e:
-        log('import_ytdl()> error', e)
+    # calculate loading time
+    load_time = time.time() - start
+    log(f'youtube_dlc version: {config.youtube_dlc_version}, load_time= {int(load_time)} seconds')
+
+    # set interrupt / kill switch
+    set_interrupt_switch()
+
+    # set default extractor
+    set_default_extractor()
+
+    # get a random user agent and update headers
+    config.HEADERS['User-Agent'] = youtube_dl.utils.random_user_agent()
+
+
+def set_default_extractor(extractor=None):
+    """set default extractor engine, e.g. select between youtube-dl and youtube-dlc"""
+    extractor = extractor or config.active_video_extractor
+
+    global ytdl
+    ytdl = youtube_dl if extractor == 'youtube_dl' else youtube_dlc
+    log('set default extractor engine to:', extractor, ytdl)
+
+
+def set_interrupt_switch():
+    # override urlopen in Youtube-dl or youtube-dlc for interrupting session anytime
+
+    global youtube_dl, youtube_dlc
+
+    def urlopen_decorator(func):
+        def newfunc(self, *args):
+            # print('urlopen started ............................................')
+            if config.ytdl_abort:
+                # print('urlopen aborted ............................................')
+                raise Exception('Youtube-dl aborted by user')
+                # return None
+            data = func(self, *args)
+            return data
+
+        return newfunc
+
+    for pkg in (youtube_dl, youtube_dlc):
+        try:
+            pkg.YoutubeDL.urlopen = urlopen_decorator(pkg.YoutubeDL.urlopen)
+        except Exception as e:
+            log('video.set_interrupt_switch() error:', e)
 
 
 def pre_process_hls(d):

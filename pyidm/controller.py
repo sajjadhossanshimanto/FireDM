@@ -28,7 +28,7 @@ from . import config
 from .config import Status, MediaType
 from .brain import brain
 from . import video
-from .video import get_ytdl_options, import_ytdl
+from .video import get_ytdl_options
 from .model import ObservableDownloadItem, ObservableVideo
 
 
@@ -141,7 +141,7 @@ class Controller:
         Thread(target=self._observer, daemon=True).start()
 
         # import youtube-dl in a separate thread
-        Thread(target=video.import_ytdl, daemon=True).start()
+        Thread(target=video.load_extractor_engines, daemon=True).start()
 
         # handle pending downloads
         Thread(target=self._pending_downloads_handler, daemon=True).start()
@@ -971,67 +971,99 @@ class Controller:
     # endregion
 
     # region Application update
-    def _check_for_ytdl_update(self):
-        """check for new youtube-dl (or active video extractor backend) version"""
+    def _check_for_update(self):
+        """check for newer version of PyIDM, youtube-dl, and youtube-dlc"""
 
-        pkg = config.active_video_extractor
+        info = {'pyidm': {'current_version': config.APP_VERSION, 'latest_version': None},
+                'youtube_dl': {'current_version': config.youtube_dl_version, 'latest_version': None},
+                'youtube_dlc': {'current_version': config.youtube_dlc_version, 'latest_version': None},
+                }
 
-        current_version = config.ytdl_VERSION
-        if current_version is None:
-            log(f'{pkg} not loaded yet, try again', showpopup=True)
-            return
+        def fetch_pypi(pkg):
+            pkg_info = info[pkg]
+            pkg_info['latest_version'], _ = update.get_pkg_latest_version(pkg, fetch_url=False)
+            log('done checking:', pkg, pkg_info['current_version'], pkg_info['latest_version'])
 
-        latest_version, url = update.get_pkg_latest_version(pkg)
-        if latest_version:
-            config.ytdl_LATEST_VERSION = latest_version
-            note = f'{pkg} version: {config.ytdl_VERSION}, Latest version: {config.ytdl_LATEST_VERSION}'
-            log(note)
+        threads = []
+        for pkg in ('pyidm', 'youtube_dl', 'youtube_dlc'):
+            if not info[pkg]['current_version']:
+                log(f'{pkg} still loading, try again', showpopup=True)
+                return
+            t = Thread(target=fetch_pypi, args=(pkg,))
+            threads.append(t)
+            t.start()
+            time.sleep(0.1)
 
-            if update.parse_version(latest_version) > update.parse_version(current_version):
-                response = self.get_user_response(
-                    f'Found new version of {pkg} on pypi \n'
-                    f'new version     =  {latest_version}\n'
-                    f'current version =  {current_version} \n'
-                    'Install new version? (check Log Tab for progress)',  options=['Ok', 'Cancel'])
+        for t in threads:
+            t.join()
 
-                if response == 'Ok':
-                    try:
-                        run_thread(update.update_pkg, pkg, url, daemon=True)
-                    except Exception as e:
-                        log(f'failed to update {pkg}:', e)
+        # update
+        msg = 'Check for update Status:\n\n'
+        new_pkgs = []
+        for pkg, pkg_info in info.items():
+            current_version = pkg_info['current_version']
+            latest_version = pkg_info['latest_version']
+
+            if latest_version is None:
+                msg += f'{pkg}: {current_version} .... Failed!\n\n'
+            elif update.parse_version(latest_version) > update.parse_version(current_version):
+                msg += f'{pkg}: {current_version}, New version "{latest_version}" is available!\n\n'
+                new_pkgs.append(pkg)
             else:
-                log(f'{pkg} is up-to-date, current version = {current_version}', showpopup=True)
+                msg += f'{pkg}: {current_version}, Latest {latest_version} - package up to date!\n\n'
 
-    def _rollback_ytdl_update(self):
-        """delete last video extractor e.g. youtube-dl update and restore last one"""
-        pkg = config.active_video_extractor
+        if new_pkgs:
+            msg += 'Do you want to update now? \n'
+            options = ['Update', 'Cancel']
 
-        response = self.get_user_response(f'Delete last {pkg} update and restore previous version?',
-                                          options=['Ok', 'Cancel'])
+            # show update notes for pyidm
+            if 'pyidm' in new_pkgs:
+                log('getting PyIDM changelog ....')
 
-        if response == 'Ok':
-            try:
-                run_thread(update.rollback_pkg_update, pkg, daemon=True)
-            except Exception as e:
-                log(f'failed to restore {pkg}:', e)
+                # download change log file
+                url = 'https://github.com/pyIDM/pyIDM/raw/master/ChangeLog.txt'
+                buffer = download(url, verbose=False)  # get BytesIO object
 
-    def _check_for_pyidm_update(self):
-        """
-        check for new app version or update patch and show update window,
-        this method is time consuming and should run from a thread
-        """
+                if buffer:
+                    # convert to string
+                    changelog = buffer.getvalue().decode()
 
-        # check for new App. version
-        changelog = update.check_for_new_version()
-        if changelog:
+                    # verify server didn't send html page
+                    if '<!DOCTYPE html>' not in changelog:
+                        msg += '\n\n\n'
+                        msg += 'PyIDM Change Log:\n'
+                        msg += changelog
 
-            response = self.get_user_response(f'New pyidm version available, full change log:\n\n{changelog}',
-                                              options=['Homepage', 'cancel'])
-            if response == 'Homepage':
-                update.open_update_link()
+            res = self.get_user_response(msg, options)
+            if res != options[0]:
+                return
+
+            # start updating modules
+            done_pkgs = {}
+            for pkg in new_pkgs:
+                latest_version, url = update.get_pkg_latest_version(pkg, fetch_url=True)
+
+                log('Installing', pkg, latest_version)
+                try:
+                    success = update.update_pkg(pkg, url)
+                    done_pkgs[pkg] = success
+
+                except Exception as e:
+                    log(f'failed to update {pkg}:', e)
+
+            msg = 'Update results:\n\n'
+            for pkg, success in done_pkgs.items():
+                msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
+
+            if any(done_pkgs.values()):
+                msg += 'Please Restart application for update to take effect!'
+            else:
+                msg += 'Update failed!!!! ... try again'
+
+            log(msg, showpopup=True)
 
         else:
-            log('No Update available', showpopup=True)
+            log(msg, showpopup=True)
 
     def _auto_check_for_update(self):
         """auto check for pyidm update"""
@@ -1047,7 +1079,7 @@ class Controller:
                 res = self.get_user_response(f'Check for PyIDM update?\nLast check was {delta.days} days ago',
                                              options=['Ok', 'Cancel'])
                 if res == 'Ok':
-                    self.check_for_pyidm_update()
+                    self._check_for_update()
 
             config.last_update_check = (today.year, today.month, today.day)
     # endregion
@@ -1203,9 +1235,8 @@ class Controller:
         """select video extractor backend, e.g. youtube-dl, youtube-dlc, ..."""
         self.ydl = None
         video.ytdl = None
-        config.ytdl_VERSION = None
         set_option(active_video_extractor=extractor)
-        run_thread(import_ytdl, extractor, daemon=True)
+        video.set_default_extractor(extractor)
     # endregion
 
     # region subtitles
@@ -1459,18 +1490,18 @@ class Controller:
     # endregion
 
     # region Application update
+    def check_for_update(self):
+        run_thread(self._check_for_update)
+
     def auto_check_for_update(self):
         if not config.disable_update_feature:
             run_thread(self._auto_check_for_update)
 
-    def check_for_pyidm_update(self):
-        run_thread(self._check_for_pyidm_update)
-
-    def check_for_ytdl_update(self):
-        run_thread(self._check_for_ytdl_update)
-
-    def rollback_ytdl_update(self):
-        run_thread(self._rollback_ytdl_update)
+    def rollback_pkg_update(self, pkg):
+        try:
+            run_thread(update.rollback_pkg_update, pkg, daemon=True)
+        except Exception as e:
+            log(f'failed to restore {pkg}:', e)
     # endregion
 
     # region cmd view
