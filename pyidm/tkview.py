@@ -156,6 +156,36 @@ user_themes = {}
 app_icon_img = None
 popup_icon_img = None
 
+busy_callbacks = []
+
+
+def busy_callback(callback):
+    """decorator to prevent multiple execution of same function/method
+    e.g. when press a button multiple times it will prevent multiple callback execution
+    Note: the decorated function is responsible to remove itself from busy_callbacks list if it needs to be executed
+          again.
+    """
+    def wrapper(*args, **kwargs):
+        if callback not in busy_callbacks:
+            busy_callbacks.append(callback)
+            return callback(*args, **kwargs)
+        else:
+            log('function already running')
+
+    # keep reference of original callback to use it later
+    wrapper.original_callback = callback
+    return wrapper
+
+
+def free_callback(callback):
+    """remove a callback from busy_callbacks list and make it available for calling again"""
+    try:
+        original_callback = getattr(callback, 'original_callback', None)
+        busy_callbacks.remove(original_callback)
+    except Exception as e:
+        log('free_callback', e)
+
+
 def url_watchdog(root):
     """monitor url links copied to clipboard
     intended to be run from a thread, and generate an event when find a new url
@@ -2621,6 +2651,11 @@ class MainWindow(IView):
 
         self.root.after(1000, self.post_startup)
 
+        # number vs callback, e.g. ask controller to update youtube-dl sending any identifier e.g. "500",
+        # when controller finishes this job it will send a signal with same number "500", then tkview will call
+        # the associated callback
+        self.post_processors = {}
+
     # region themes
     def save_user_themes(self):
         try:
@@ -3029,7 +3064,7 @@ class MainWindow(IView):
         self.pyidm_update_note.set(f'PyIDM version: {config.APP_VERSION}')
         lbl(self.pyidm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
         Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
-               command=self.controller.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
+               command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
 
         # youtube-dl and youtube-dlc
         self.youtube_dl_update_note = tk.StringVar()
@@ -3043,6 +3078,11 @@ class MainWindow(IView):
         lbl(self.youtube_dlc_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
         Button(update_frame, text='Rollback update',
                command=lambda: self.rollback_pkg_update('youtube_dlc')).grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
+
+        # progressbar while updating packages
+        self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=120, fg=PBAR_FG, text_bg=bg,
+                                         text_fg=PBAR_TXT)
+        self.update_progressbar.grid(row=1, column=4, rowspan=3, pady=5, padx=20, sticky='e')
 
         if not config.disable_update_feature:
             heading('Update:')
@@ -3457,6 +3497,11 @@ class MainWindow(IView):
             # update item in d_tab
             elif uid in self.d_items:
                 self.d_items[uid].update(**kwargs)
+
+        # handle signals for post processor callbacks
+        if command == 'signal':
+            signal_id = kwargs.get('signal_id')
+            self.execute_post_processor(signal_id)
     # endregion
 
     # region general
@@ -3649,6 +3694,35 @@ class MainWindow(IView):
         res = self.popup(about_notes, buttons=['Close', 'Help!'], title='About PyIDM')
         if res == 'Help!':
             open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
+
+    @busy_callback
+    def check_for_update(self):
+        log('start Checking for update ....')
+
+        def cleanup():
+            """will be executed when controller finishes checking for update"""
+            self.update_progressbar.stop()
+            self.update_progressbar.set(0)
+
+            # make function available again
+            free_callback(self.check_for_update)
+
+        # run progressbar
+        self.update_progressbar.start()
+        signal_id = self.add_postprocessor(cleanup)
+        self.controller.check_for_update(signal_id=signal_id)
+
+    def add_postprocessor(self, callback):
+        signal_id = len(self.post_processors)
+        self.post_processors[signal_id] = callback
+        return signal_id
+
+    def execute_post_processor(self, signal_id):
+        callback = self.post_processors.get(signal_id, None)
+        if callable(callback):
+            callback()
+        else:
+            log('post processor not found for signal_id:', signal_id)
 
     # endregion
 

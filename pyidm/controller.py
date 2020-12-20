@@ -971,7 +971,7 @@ class Controller:
     # endregion
 
     # region Application update
-    def _check_for_update(self):
+    def _check_for_update(self, signal_id=None):
         """check for newer version of PyIDM, youtube-dl, and youtube-dlc"""
 
         info = {'pyidm': {'current_version': config.APP_VERSION, 'latest_version': None},
@@ -988,7 +988,7 @@ class Controller:
         for pkg in ('pyidm', 'youtube_dl', 'youtube_dlc'):
             if not info[pkg]['current_version']:
                 log(f'{pkg} still loading, try again', showpopup=True)
-                return
+                continue
             t = Thread(target=fetch_pypi, args=(pkg,))
             threads.append(t)
             t.start()
@@ -1035,35 +1035,36 @@ class Controller:
                         msg += changelog
 
             res = self.get_user_response(msg, options)
-            if res != options[0]:
-                return
+            if res == options[0]:
 
-            # start updating modules
-            done_pkgs = {}
-            for pkg in new_pkgs:
-                latest_version, url = update.get_pkg_latest_version(pkg, fetch_url=True)
+                # start updating modules
+                done_pkgs = {}
+                for pkg in new_pkgs:
+                    latest_version, url = update.get_pkg_latest_version(pkg, fetch_url=True)
 
-                log('Installing', pkg, latest_version)
-                try:
-                    success = update.update_pkg(pkg, url)
-                    done_pkgs[pkg] = success
+                    log('Installing', pkg, latest_version)
+                    try:
+                        success = update.update_pkg(pkg, url)
+                        done_pkgs[pkg] = success
 
-                except Exception as e:
-                    log(f'failed to update {pkg}:', e)
+                    except Exception as e:
+                        log(f'failed to update {pkg}:', e)
 
-            msg = 'Update results:\n\n'
-            for pkg, success in done_pkgs.items():
-                msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
+                msg = 'Update results:\n\n'
+                for pkg, success in done_pkgs.items():
+                    msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
 
-            if any(done_pkgs.values()):
-                msg += 'Please Restart application for update to take effect!'
-            else:
-                msg += 'Update failed!!!! ... try again'
+                if any(done_pkgs.values()):
+                    msg += 'Please Restart application for update to take effect!'
+                else:
+                    msg += 'Update failed!!!! ... try again'
 
-            log(msg, showpopup=True)
+                log(msg, showpopup=True)
 
         else:
             log(msg, showpopup=True)
+
+        self._update_view(command='signal', signal_id=signal_id)
 
     def _auto_check_for_update(self):
         """auto check for pyidm update"""
@@ -1490,8 +1491,9 @@ class Controller:
     # endregion
 
     # region Application update
-    def check_for_update(self):
-        run_thread(self._check_for_update)
+    def check_for_update(self, signal_id=None):
+        """check for newer version of PyIDM, youtube-dl, and youtube-dlc"""
+        run_thread(self._check_for_update, signal_id)
 
     def auto_check_for_update(self):
         if not config.disable_update_feature:
