@@ -935,32 +935,105 @@ def auto_rename(file_name, parent_folder):
     return new_name
 
 
-def calc_md5(file_name=None, buffer=None):
-    try:
-        if file_name:
-            buffer = open(file_name, 'rb')
+def calc_md5(fp=None, buffer=None):
+    """calculate md5 hash
+        Args:
+            fp (str): file path
+            buffer (io.buffer): file like object
 
-        md5 = hashlib.md5(buffer.read()).hexdigest()
-        if file_name:
+        Return:
+            (str): MD5 hexadecimal string
+    """
+    try:
+        if fp:
+            buffer = open(fp, 'rb')
+
+        md5_hash = hashlib.md5()
+
+        # read file in chunks to save memory in case of big files
+        chunk_size = 1024 * 1024  # 1 Megabyte at a time
+
+        while True:
+            chunk = buffer.read(chunk_size)
+            if not chunk:
+                break
+            md5_hash.update(chunk)
+
+        if fp:
             buffer.close()
 
-        return md5
+        return md5_hash.hexdigest()
+
     except Exception as e:
         return f'calc_md5()> error, {str(e)}'
 
 
-def calc_sha256(file_name=None, buffer=None):
-    try:
-        if file_name:
-            buffer = open(file_name, 'rb')
+def calc_sha256(fp=None, buffer=None):
+    """calculate sha26 hash
+    Args:
+        fp (str): file path
+        buffer (io.buffer): file like object
 
-        sha256 = hashlib.sha256(buffer.read()).hexdigest()
-        if file_name:
+    Return:
+        (str): sha26 hexadecimal string
+    """
+    try:
+        if fp:
+            buffer = open(fp, 'rb')
+
+        sha256_hash = hashlib.sha256()
+
+        # read file in chunks to save memory in case of big files
+        chunk_size = 1024 * 1024  # 1 Megabyte at a time
+
+        while True:
+            chunk = buffer.read(chunk_size)
+            if not chunk:
+                break
+            sha256_hash.update(chunk)
+
+        if fp:
             buffer.close()
 
-        return sha256
+        return sha256_hash.hexdigest()
+
     except Exception as e:
         return f'calc_sha256()> error, {str(e)}'
+
+
+def calc_md5_sha256(fp=None, buffer=None):
+    """calculate both md5 and sha26
+    Args:
+        fp (str): file path
+        buffer (io.buffer): file like object
+
+    Return:
+        (str, str): 2-tuple of MD5, SHA256 hexadecimal string
+    """
+    try:
+        if fp:
+            buffer = open(fp, 'rb')
+
+        md5_hash = hashlib.md5()
+        sha256_hash = hashlib.sha256()
+
+        # read file in chunks to save memory in case of big files
+        chunk_size = 1024 * 1024  # 1 Megabyte at a time
+
+        while True:
+            chunk = buffer.read(chunk_size)
+            if not chunk:
+                break
+            md5_hash.update(chunk)
+            sha256_hash.update(chunk)
+
+        if fp:
+            buffer.close()
+
+        return md5_hash.hexdigest().upper(), sha256_hash.hexdigest().upper()
+
+    except Exception as e:
+        return f'calc_md5_sha256()> error, {str(e)}'
 
 
 def get_range_list(file_size):
@@ -1147,7 +1220,7 @@ __all__ = [
     'sort_dictionary', 'compare_versions', 'translate_server_code', 'validate_url', 'open_file', 'delete_file',
     'rename_file', 'load_json', 'save_json', 'echo_stdout', 'echo_stderr', 'log_recorder', 'natural_sort', 'is_pkg_exist',
     'parse_bytes', 'set_curl_options', 'version_value',
-    'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
+    'reset_queue', 'open_folder', 'auto_rename', 'calc_md5', 'calc_md5_sha256',
     'calc_sha256', 'get_range_list', 'arabic_renderer', 'get_thumbnail', 'resize_image', 'run_thread', 'generate_unique_name',
     'open_log_file', 'open_webpage', 'download_thumbnail'
 

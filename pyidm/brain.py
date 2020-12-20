@@ -15,7 +15,7 @@ from .video import merge_video_audio, pre_process_hls, post_process_hls, \
     convert_audio, download_subtitles, write_metadata
 from . import config
 from .config import Status, APP_NAME
-from .utils import (log, size_format, notify, delete_file, rename_file, calc_md5, calc_sha256, run_command)
+from .utils import (log, size_format, notify, delete_file, rename_file, calc_md5_sha256, run_command)
 from .worker import Worker
 from .downloaditem import Segment
 
@@ -93,8 +93,11 @@ def brain(d=None):
 
     if d.status == Status.completed:
         if config.checksum:
-            log('MD5:', calc_md5(file_name=d.target_file))
-            log('SHA256:', calc_sha256(file_name=d.target_file))
+            log()
+            log(f'Calculating MD5 and SHA256 for {d.target_file} .....')
+            md5, sha256 = calc_md5_sha256(fp=d.target_file)
+            log(f'MD5: {md5} - for {d.name}')
+            log(f'SHA256: {sha256} - for {d.name}')
 
         # uncomment to debug segments ranges
         # segments = sorted([seg for seg in d.segments], key=lambda seg: seg.range[0])
