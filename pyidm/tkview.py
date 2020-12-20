@@ -3692,9 +3692,11 @@ class MainWindow(IView):
             self.controller.schedule_start(uid=uid, video_idx=video_idx, target_date=dp.selected_date)
 
     def show_about_notes(self):
-        res = self.popup(about_notes, buttons=['Close', 'Help!'], title='About PyIDM')
+        res = self.popup(about_notes, buttons=['Home', 'Help!', 'Close'], title='About PyIDM')
         if res == 'Help!':
             open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
+        elif res == 'Home':
+            open_webpage('https://github.com/pyIDM/PyIDM/')
 
     @busy_callback
     def check_for_update(self):
