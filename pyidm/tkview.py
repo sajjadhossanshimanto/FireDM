@@ -1027,7 +1027,8 @@ class MediaListBox(tk.Frame):
 
         self.listbox = tk.Listbox(self, background=self.background, foreground=MAIN_FG, relief='sunken', bd=0,
                                   highlightthickness=0, listvariable=self.var, width=20, height=6,
-                                  selectmode=tk.SINGLE, selectbackground=SF_CHKMARK, exportselection=0)
+                                  selectmode=tk.SINGLE, selectbackground=SF_CHKMARK, activestyle='none',
+                                  selectforeground=atk.calc_font_color(SF_CHKMARK), exportselection=0)
         self.listbox.grid(padx=5, pady=5, sticky='ewns')
 
         self.bar = atk.RadialProgressbar(parent=self, size=(100, 100), fg=PBAR_FG, text_bg=self.background, text_fg=PBAR_TXT)
