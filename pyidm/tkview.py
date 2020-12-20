@@ -3697,7 +3697,8 @@ class MainWindow(IView):
 
     @busy_callback
     def check_for_update(self):
-        log('start Checking for update ....')
+        log('\n\nstart Checking for update ....')
+        self.select_tab('Log')
 
         def cleanup():
             """will be executed when controller finishes checking for update"""

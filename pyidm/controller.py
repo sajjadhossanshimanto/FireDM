@@ -982,12 +982,12 @@ class Controller:
         def fetch_pypi(pkg):
             pkg_info = info[pkg]
             pkg_info['latest_version'], _ = update.get_pkg_latest_version(pkg, fetch_url=False)
-            log('done checking:', pkg, pkg_info['current_version'], pkg_info['latest_version'])
+            log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
         for pkg in ('pyidm', 'youtube_dl', 'youtube_dlc'):
             if not info[pkg]['current_version']:
-                log(f'{pkg} still loading, try again', showpopup=True)
+                log(f'{pkg} still loading, try again')
                 continue
             t = Thread(target=fetch_pypi, args=(pkg,))
             threads.append(t)
@@ -1004,10 +1004,12 @@ class Controller:
             current_version = pkg_info['current_version']
             latest_version = pkg_info['latest_version']
 
-            if latest_version is None:
+            if current_version is None:
+                msg += f'{pkg}: still loading, try again!\n\n'
+            elif latest_version is None:
                 msg += f'{pkg}: {current_version} .... Failed!\n\n'
             elif update.parse_version(latest_version) > update.parse_version(current_version):
-                msg += f'{pkg}: {current_version}, New version "{latest_version}" is available!\n\n'
+                msg += f'{pkg}: {current_version}, New version "{latest_version}" available!\n\n'
                 new_pkgs.append(pkg)
             else:
                 msg += f'{pkg}: {current_version}, Latest {latest_version} - package up to date!\n\n'
