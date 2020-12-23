@@ -28,7 +28,7 @@ try:
         requirements = fh.readlines()
 except:
     requirements = ['plyer', 'certifi', 'youtube_dl', 'youtube_dlc', 'pycurl', 'pillow', 'pystray',
-                    'awesometkinter >= 2020.9.22']
+                    'awesometkinter >= 2020.12.16']
 
 setuptools.setup(
     name="PyIDM",
