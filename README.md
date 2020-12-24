@@ -111,9 +111,18 @@ system:
 
     run PyIDM: `python3 -m pyidm`
 
+# Known Issues:
+- Linux X-server will raise an error if some fonts are missing especially emoji fonts, below are the recommended fonts to be installed, for more info refer to [issue #200](https://github.com/pyIDM/PyIDM/issues/200).
 
-**important note on Tkinter for mac users**:<br>
-- as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
+```
+ttf-linux-libertine 
+ttf-inconsolata 
+ttf-emojione
+ttf-symbola
+noto-fonts
+```
+
+- Mac - Tkinter, as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
 refer to [issue #113](https://github.com/pyIDM/PyIDM/issues/113)
 
 
