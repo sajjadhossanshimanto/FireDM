@@ -27,7 +27,7 @@ try:
     with open(f"{current_directory}/requirements.txt", "r") as fh:
         requirements = fh.readlines()
 except:
-    requirements = ['plyer', 'certifi', 'youtube_dl', 'youtube_dlc', 'pycurl', 'pillow', 'pystray',
+    requirements = ['plyer', 'certifi', 'youtube_dl', 'youtube_dlc', 'pycurl', 'pillow >= 6.0.0', 'pystray',
                     'awesometkinter >= 2020.12.16']
 
 setuptools.setup(
