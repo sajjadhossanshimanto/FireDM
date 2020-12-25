@@ -3019,6 +3019,13 @@ class MainWindow(IView):
         CheckEntryOption(tab, 'Referee url:', check_key='use_referer',
                          entry_key='referer_url').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
+        def update_headers():
+            config.HEADERS['User-Agent'] = config.custom_user_agent or config.DEFAULT_USER_AGENT
+
+        # config.HEADERS.update('User-Agent'=config.custom_user_agent)
+        CheckEntryOption(tab, 'Custom user agent:', entry_key='custom_user_agent',
+                         callback=update_headers).pack(anchor='w', fill='x', expand=True, padx=(0, 5))
+
         # verify server's ssl certificate
         def ssl_disable_warning():
             if not config.verify_ssl_cert:

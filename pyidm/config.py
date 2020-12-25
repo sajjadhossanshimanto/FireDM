@@ -24,7 +24,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'confirm_on_resume_all', 'confirm_on_stop_all', 'enable_captcha_workaround',
-                 'verify_ssl_cert']
+                 'verify_ssl_cert', 'custom_user_agent']
 
 
 # CONSTANTS
@@ -41,10 +41,13 @@ DEFAULT_CONCURRENT_CONNECTIONS = 3
 APP_URL = 'https://github.com/pyIDM/PyIDM'
 LATEST_RELEASE_URL = 'https://github.com/pyIDM/PyIDM/releases/latest'
 
-# headers, note: a random user agent will replace below value later when importing youtube-dl
-USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3721.3'
+# headers,
+DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3721.3'
+custom_user_agent = None
+
+#  a random user agent will be used later when importing youtube-dl, if no custom user agent
 HEADERS = {
-    'User-Agent': USER_AGENT,
+    'User-Agent': custom_user_agent or DEFAULT_USER_AGENT,
     'Accept-Charset': 'ISO-8859-1,utf-8;q=0.7,*;q=0.7',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Language': 'en-us,en;q=0.5',

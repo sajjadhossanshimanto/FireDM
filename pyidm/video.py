@@ -151,6 +151,10 @@ class Video(DownloadItem):
         # use youtube-dl headers
         self.http_headers = self.vid_info.get('http_headers') or config.HEADERS
 
+        # use custom user agent if any
+        if config.custom_user_agent:
+            self.http_headers['User-Agent'] = config.custom_user_agent
+
         # don't accept compressed contents
         self.http_headers['Accept-Encoding'] = '*;q=0'
 
@@ -556,7 +560,8 @@ def load_extractor_engines(reload=False):
     set_default_extractor()
 
     # get a random user agent and update headers
-    config.HEADERS['User-Agent'] = youtube_dl.utils.random_user_agent()
+    if not config.custom_user_agent:
+        config.HEADERS['User-Agent'] = youtube_dl.utils.random_user_agent()
 
 
 def set_default_extractor(extractor=None):
