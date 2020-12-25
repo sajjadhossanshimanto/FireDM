@@ -1,3 +1,7 @@
+2020.12.25:
+- [CHECKSUM] fix out of memory when calculating checksum for big files.
+- Add option to set a custom "http user agent" issue #199
+
 2020.12.20:
 - [playlist] Fixed youtube-dl playlist processing
 - [playlist window] added "select all" checkbutton issue #187
