@@ -75,7 +75,7 @@ def set_curl_options(c, http_headers=None):
     """take pycurl object as an argument and set basic options"""
 
     # use default headers if no http-headers assigned or passed empty headers
-    http_headers = http_headers or config.HEADERS
+    http_headers = http_headers or config.http_headers
 
     # c.setopt(pycurl.USERAGENT, config.USER_AGENT)
 

@@ -149,7 +149,7 @@ class Video(DownloadItem):
         self.automatic_captions = self.vid_info.get('automatic_captions', {})
 
         # use youtube-dl headers
-        self.http_headers = self.vid_info.get('http_headers') or config.HEADERS
+        self.http_headers = self.vid_info.get('http_headers') or config.http_headers
 
         # use custom user agent if any
         if config.custom_user_agent:
@@ -561,7 +561,7 @@ def load_extractor_engines(reload=False):
 
     # get a random user agent and update headers
     if not config.custom_user_agent:
-        config.HEADERS['User-Agent'] = youtube_dl.utils.random_user_agent()
+        config.http_headers['User-Agent'] = youtube_dl.utils.random_user_agent()
 
 
 def set_default_extractor(extractor=None):
@@ -847,7 +847,7 @@ def parse_m3u8_line(line):
     return info
 
 
-def download_m3u8(url, http_headers=config.HEADERS):
+def download_m3u8(url, http_headers=config.http_headers):
     try:
         # download the manifest from m3u8 file descriptor located at url
         buffer = download(url, verbose=False, http_headers=http_headers)  # get BytesIO object

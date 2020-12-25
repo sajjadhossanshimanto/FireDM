@@ -3020,7 +3020,7 @@ class MainWindow(IView):
                          entry_key='referer_url').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         def update_headers():
-            config.HEADERS['User-Agent'] = config.custom_user_agent or config.DEFAULT_USER_AGENT
+            config.http_headers['User-Agent'] = config.custom_user_agent or config.DEFAULT_USER_AGENT
 
         # config.HEADERS.update('User-Agent'=config.custom_user_agent)
         CheckEntryOption(tab, 'Custom user agent:', entry_key='custom_user_agent',
