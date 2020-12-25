@@ -48,20 +48,50 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 Refer to user guide at https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md
 
 ----------------------
-# How to install PyIDM?
-You have various options to install and run PyIDM on your operating
-system:
-
-1. **Windows portable version**:  
+# install PyIDM:
+**Windows:**
+ - **Windows portable version**:  
    Latest Windows portable version available
    [here](https://github.com/pyIDM/PyIDM/releases/latest).  
    unzip, and run from PyIDM.exe, no installation required.
+   
+   for older versions you can check https://github.com/pyIDM/PyIDM/releases
 
-2. **PyPi**:<br>
-    `python -m pip install pyidm --upgrade --no-cache`
+
+**Linux:**
+
+    - UBUNTU:
+    
+        1- verify you have minimum python version 3.6+
+            python3
+        
+        2- install pip:
+            sudo apt-install python3-pip
+            
+        3- install dependencies:
+            sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk
+            
+        4- install fonts
+            sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
+        
+        5- install pyidm
+            python3 -m pip install pyidm --user --upgrade --no-cache
+            
+            or if you run into a problem
+            sudo python3 -m pip install pyidm --upgrade --no-cache
+    
+
+**other options:**
+
+- **PyPi**:<br>
+     on windows replace "python3" with "python" in below commands
+
+    `python3 -m pip install pyidm --user --upgrade --no-cache`
+    or
+    `sudo python3 -m pip install pyidm --upgrade --no-cache`
     
     then you can run application from Terminal by:  
-    `python -m pyidm`          note pyidm name in small letters
+    `python3 -m pyidm`          
 
     or just  
     `pyidm` an executable "i.e. pyidm.exe on windows" will be
@@ -69,7 +99,8 @@ system:
     "python/scripts" folder to PATH.
 
 
-3. **run from github source code**:<br> PyIDM is a python app. so, it
+-  **run from github source code**:<br> 
+   PyIDM is a python app. so, it
    can run on any platform that can run python, To run from source, you
    have to have a python installed, "supported python versions is 3.6,
    3.7, and 3.8", then download or clone this repository, and run
@@ -78,7 +109,7 @@ system:
    packages, you should install it manually, refer to "Dependencies"
    section below.
 
-4. **Build PyIDM yourself**:
+-  **Build PyIDM yourself**:
    -  get the source code from github: (recommended for latest updated
       version, also shallow clone is preferred)  
       `git clone --depth 1 https://github.com/pyIDM/PyIDM.git`
@@ -88,39 +119,14 @@ system:
    ball, example file name "pyIDM-2020.3.22.tar.gz", then extract it
 
    - open your terminal or command prompt and navigate to pyidm folder then type below command  
-        `python setup.py install`
+        `python3 setup.py install  --user`
 
    - run PyIDM from Terminal by typing:  
-        `python -m pyidm`     or  just `pyidm`
-
-5. **Examples:**
-
-    -**Linux ubuntu:**
-
-    download source (shallow clone is preferred):  
-    `git clone --depth 1 https://github.com/pyIDM/PyIDM.git`
-
-    install dependencies:  
-    ```
-    sudo apt install ffmpeg fonts-symbola libcurl4-openssl-dev
-    libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk
-    ```
-
-    install PyIDM:
-    `python3 setup.py install --user`
-
-    run PyIDM: `python3 -m pyidm`
+        `python3 -m pyidm`     or  just `pyidm`
 
 # Known Issues:
-- Linux X-server will raise an error if some fonts are missing especially emoji fonts, below are the recommended fonts to be installed, for more info refer to [issue #200](https://github.com/pyIDM/PyIDM/issues/200).
+- Linux X-server will raise an error if some fonts are missing especially emoji fonts, for more info refer to [issue #200](https://github.com/pyIDM/PyIDM/issues/200).
 
-```
-ttf-linux-libertine 
-ttf-inconsolata 
-ttf-emojione
-ttf-symbola
-noto-fonts
-```
 
 - Mac - Tkinter, as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
 refer to [issue #113](https://github.com/pyIDM/PyIDM/issues/113)
@@ -133,7 +139,16 @@ below are the requirements to run from source:
 - Python 3.6+: tested with python 3.6 on windows, and 3.7, 3.8 on linux
 - tkinter
 - [ffmpeg](https://www.ffmpeg.org/) : for merging audio with youtube DASH videos "it will be installed automatically on windows"
+- Fonts: (Linux X-server will raise an error if some fonts are missing especially emoji fonts, below are the 
+recommended fonts to be installed, for more info refer to [issue #200](https://github.com/pyIDM/PyIDM/issues/200).)
 
+    ```
+    ttf-linux-libertine 
+    ttf-inconsolata 
+    ttf-emojione
+    ttf-symbola
+    noto-fonts
+    ```
 Required python packages: 
 - [pycurl](http://pycurl.io/docs/latest/index.html): is a Python interface to libcurl / curl as our download engine,
 - [youtube_dl](https://github.com/ytdl-org/youtube-dl): famous youtube downloader, limited use for meta information extraction only but videos are downloaded using pycurl
@@ -152,10 +167,6 @@ PyIDM application will do its best to install missing packages automatically onc
 
 ```
 pip install -r requirements.txt
-```
-or
-```
-python -m pip install --user --upgrade certifi plyer youtube_dl pycurl pillow pystray awesometkinter
 ```
 
 
@@ -210,14 +221,6 @@ python -m pip install youtube_dl --upgrade
 
 ---
 
-### Windows binaries: <br>
-a standalone frozen version prepared by py2exe or cx_freeze is available at: [latest version](https://github.com/pyIDM/PyIDM/releases/latest) <br>
-for all available build versions you can check https://github.com/pyIDM/PyIDM/releases
-
-
-
----
-
 <br><br>
 
 # Versions change log:
@@ -247,6 +250,7 @@ reporting, feature request, or suggestions.
 # Some recent articles/reviews on this project*:
 - [ghacks](https://www.ghacks.net/2020/08/13/pyidm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
 - [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/PyIDM.shtml)
+- [hackermilk](https://www.hackermilk.info/2020/01/an-open-source-alternative-to-internet.html)
 
   *help edit this list by writing a comment in
   [this issue](https://github.com/pyIDM/PyIDM/issues/136)
