@@ -13,6 +13,9 @@ import datetime
 import time
 import tkinter as tk
 import awesometkinter as atk
+import PIL
+from awesometkinter.version import __version__ as atk_version
+import pycurl
 from queue import Queue
 from tkinter import ttk, filedialog, colorchooser
 import os, sys
@@ -508,6 +511,7 @@ class Button(tk.Button):
             options['activebackground'] = parent_bg
             options['highlightbackground'] = parent_bg
             options['highlightthickness'] = 0
+            options['activeforeground'] = BTN_AFG
             options['bd'] = 0
         else:
 
@@ -3088,8 +3092,8 @@ class MainWindow(IView):
                command=lambda: self.rollback_pkg_update('youtube_dlc')).grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
 
         # progressbar while updating packages
-        self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=120, fg=PBAR_FG, text_bg=bg,
-                                         text_fg=PBAR_TXT)
+        self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=100, fg=PBAR_FG, text_bg=bg,
+                                                        text_fg=PBAR_TXT)
         self.update_progressbar.grid(row=1, column=4, rowspan=3, pady=5, padx=20, sticky='e')
 
         if not config.disable_update_feature:
@@ -3647,6 +3651,13 @@ class MainWindow(IView):
 
         # log runtime info
         self.controller.log_runtime_info()
+
+        # log extra pkgs info
+        log('Tkinter version:', self.root.call("info", "patchlevel"))
+        log('AwesomeTkinter version:', atk_version)
+        log('Pillow version:', PIL.__version__)
+        log('PyCUrl version:', pycurl.version)
+        log()
 
         # get download items
         self.controller.get_d_list()

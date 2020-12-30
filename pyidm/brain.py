@@ -40,7 +40,8 @@ def brain(d=None):
 
     log('\n')
     log('=' * 106)
-    log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder} \n')
+    log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder}')
+    log(f'url: "{d.url}" \n')
 
     # hls / m3u8 protocols
     if 'hls' in d.subtype_list:

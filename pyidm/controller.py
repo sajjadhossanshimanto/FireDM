@@ -1090,7 +1090,7 @@ class Controller:
     # public API for  a view / GUI (it shouldn't block to prevent gui freeze) ------------------------------------------
     def log_runtime_info(self):
         """Print useful information about the system"""
-        log('-' * 30, 'PyIDM', '-' * 30)
+        log('-' * 20, 'PyIDM', '-' * 20)
         log('Starting PyIDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
         log('operating system:', config.operating_system_info)
         log('Python version:', sys.version)
