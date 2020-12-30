@@ -267,7 +267,7 @@ def file_manager(d, keep_segments=True):
                 metadata_filename = d.target_file + '.meta'
 
                 try:
-                    with open(metadata_filename, 'w') as f:
+                    with open(metadata_filename, 'w', encoding="utf-8") as f:
                         f.write(d.metadata_file_content)
 
                     # let ffmpeg write metadata to file
