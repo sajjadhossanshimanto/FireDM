@@ -1150,10 +1150,10 @@ class Controller:
         """
 
         if uid is None:
-            d = self.d
+            d = copy(self.d)
             silent = False
         else:
-            d = self.d_map[uid]
+            d = self.d_map.get(uid, None)
             silent = True
 
         if d is None:
