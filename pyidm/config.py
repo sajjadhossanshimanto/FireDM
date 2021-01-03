@@ -198,6 +198,7 @@ class Status:
     processing = 'processing'  # for any ffmpeg operations
     error = 'error'
     scheduled = 'scheduled'
+    refreshing_url = 'refreshing url'
 
 
 # media type class

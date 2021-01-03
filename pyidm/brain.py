@@ -420,8 +420,6 @@ def thread_manager(d):
 
             if total_errors >= max_errors:
                 d.status = Status.error
-                log('Thread manager: too many connection errors', 'maybe network problem or expired link',
-                    start='', sep='\n', showpopup=True)
 
         # speed limit ------------------------------------------------------------------------------------------------
         # wait some time for dynamic connection manager to release all connections

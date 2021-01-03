@@ -152,6 +152,41 @@ class Controller:
         # check for ffmpeg and update file path "config.ffmpeg_actual_path"
         check_ffmpeg()
 
+    def auto_refresh_url(self, d):
+        """refresh an expired url"""
+        log('auto refresh url for:', d.rendered_name)
+        url = d.url
+
+        # request server headers
+        d.update(url)
+
+        # searching for videos
+        playlist = [d]
+        if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
+            playlist = self._create_video_playlist(url)
+
+        refreshed_d = playlist[0]
+
+        # select video stream
+        try:
+            refreshed_d.select_stream(name=d.selected_quality)
+            log('selected video:    ', d.selected_quality)
+            log('New selected video:', refreshed_d.selected_quality)
+        except:
+            pass
+
+        # select audio stream
+        try:
+            match = [s for s in refreshed_d.audio_streams if s.name == d.audio_quality]
+            selected_audio_stream = match[0] if match else None
+            refreshed_d.select_audio(selected_audio_stream)
+            log('selected audio:    ', d.audio_quality)
+            log('New selected audio:', refreshed_d.audio_quality)
+        except:
+            pass
+
+        return refreshed_d
+
     def _process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
 
@@ -852,15 +887,41 @@ class Controller:
                     self.pending_downloads_q.put(d)
                     return
 
-                # start brain in a separate thread
-                if config.SIMULATOR:
-                    t = Thread(target=self.download_simulator, daemon=True, args=(d,))
-                else:
-                    t = Thread(target=brain, daemon=False, args=(d,))
-                t.start()
+                # retry multiple times to download and auto refresh expired url
+                for n in range(3):
+                    # start brain in a separate thread
+                    if config.SIMULATOR:
+                        t = Thread(target=self.download_simulator, daemon=True, args=(d,))
+                    else:
+                        t = Thread(target=brain, daemon=False, args=(d,))
+                    t.start()
 
-                # wait thread to end
-                t.join()
+                    # wait thread to end
+                    t.join()
+
+                    if d.status != Status.error:
+                        break
+
+                    elif n == 2:
+                        log('controller: too many connection errors', 'maybe network problem or expired link',
+                            start='', sep='\n', showpopup=True)
+                    else:  # try auto refreshing url
+
+                        # reset errors and change status
+                        d.status = Status.refreshing_url
+                        d.errors = 0
+
+                        # update view
+                        self._report_d(d)
+
+                        # get new refreshed object
+                        d = self.auto_refresh_url(d)
+
+                        # register observer
+                        d.register_callback(self.observer)
+
+                        # update download map
+                        self.d_map[d.uid] = d
 
                 # update view
                 self._report_d(d)

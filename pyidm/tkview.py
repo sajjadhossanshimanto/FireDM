@@ -1479,7 +1479,8 @@ class DItem(tk.Frame):
     def toggle_blinker(self):
         """an activity blinker "like an led" """
         status = self.status.get()
-        if not self.blinker.on and status in (config.Status.downloading, config.Status.processing):
+        if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
+                                              config.Status.refreshing_url):
             # on blinker
             self.blinker.config(image=self.blinker_on_img)
             self.blinker.on = True
