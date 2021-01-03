@@ -396,13 +396,10 @@ def thread_manager(d):
 
             clear_error_q()
 
-            if total_errors:
-                log('Errors:', errors_descriptions, 'Total:', total_errors)
-                # log('Errors descriptions:', errors_descriptions, log_level=3)
-
             if total_errors >= 1 and limited_connections > 1:
                 limited_connections -= 1
                 conn_increase_interval += 0.5
+                log('Errors:', errors_descriptions, 'Total:', total_errors)
                 log('Thread Manager: received server errors, connections limited to:', limited_connections)
 
             else:
