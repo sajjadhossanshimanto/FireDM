@@ -58,15 +58,16 @@ def check_ffmpeg():
 
     # search in current app directory then default setting folder
     try:
-        for folder in [config.current_directory, config.global_sett_folder]:
-            for file in os.listdir(folder):
-                # print(file)
-                if file == 'ffmpeg.exe':
-                    found = True
-                    config.ffmpeg_actual_path = os.path.join(folder, file)
+        if config.operating_system == 'Windows':
+            for folder in [config.current_directory, config.global_sett_folder]:
+                for file in os.listdir(folder):
+                    # print(file)
+                    if file == 'ffmpeg.exe':
+                        found = True
+                        config.ffmpeg_actual_path = os.path.join(folder, file)
+                        break
+                if found:  # break outer loop
                     break
-            if found:  # break outer loop
-                break
     except:
         pass
 
