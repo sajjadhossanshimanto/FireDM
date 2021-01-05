@@ -1106,14 +1106,14 @@ class Controller:
             latest_version = pkg_info['latest_version']
 
             if current_version is None:
-                msg += f'{pkg}: still loading, try again!\n\n'
+                msg += f'    {pkg}: still loading, try again!\n\n'
             elif latest_version is None:
-                msg += f'{pkg}: {current_version} .... Failed!\n\n'
+                msg += f'    {pkg}: check for update .... Failed!\n\n'
             elif update.parse_version(latest_version) > update.parse_version(current_version):
-                msg += f'{pkg}: {current_version}, New version "{latest_version}" available!\n\n'
+                msg += f'    {pkg}: New version "{latest_version}" Found!\n\n'
                 new_pkgs.append(pkg)
             else:
-                msg += f'{pkg}: {current_version}, Latest {latest_version} - package up to date!\n\n'
+                msg += f'    {pkg}: up to date!\n\n'
 
         if new_pkgs:
             msg += 'Do you want to update now? \n'
