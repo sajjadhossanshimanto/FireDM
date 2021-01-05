@@ -1,3 +1,11 @@
+2021.1.5:
+- Auto refresh expired url, issue #187.
+- prevent using ffmpeg.exe under linux if it exists in pyidm folder.
+- write 'last modified' timestamp to downloaded file, issue #204.
+- Fix multiple D.Items reference to same object.
+- Fix encoding error when writing metadata on windows
+- some bug fixes.
+
 2020.12.25:
 - [CHECKSUM] fix out of memory when calculating checksum for big files.
 - Add option to set a custom "http user agent" issue #199
