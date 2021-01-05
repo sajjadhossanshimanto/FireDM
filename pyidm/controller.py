@@ -927,7 +927,7 @@ class Controller:
                 # update view
                 self._report_d(d)
 
-                # post actions
+                # actions to be done after completing download
                 self._post_download(d)
 
         except Exception as e:
@@ -935,8 +935,8 @@ class Controller:
             if config.TEST_MODE:
                 raise e
 
-    def _post_download(self, d):
-        """action required after done downloading
+    def _download_thumbnail(self, d):
+        """download thumbnail
 
         Args:
             d (ObservableDownloadItem): download item
@@ -949,9 +949,48 @@ class Controller:
                 download_thumbnail(d.thumbnail_url, fp)
 
         except Exception as e:
-            log('controller._post_download()> error:', e)
+            log('controller._download_thumbnail()> error:', e)
             if config.TEST_MODE:
                 raise e
+
+    def _write_timestamp(self, d):
+        """write 'last modified' timestamp to downloaded file
+
+        try to figure out the timestamp of the remote file, and if available make
+        the local file get that same timestamp.
+
+        Args:
+            d (ObservableDownloadItem): download item
+        """
+
+        try:
+
+            if d.status == Status.completed:
+                # get last modified timestamp from server, example: "fri, 09 oct 2020 11:11:34 gmt"
+                headers = get_headers(d.eff_url, http_headers=d.http_headers)
+                timestamp = headers.get('last-modified')
+
+                if timestamp:
+                    # parse timestamp, eg.      "fri, 09 oct 2020 11:11:34 gmt"
+                    t = time.strptime(timestamp, "%a, %d %b %Y %H:%M:%S %Z")
+                    t = time.mktime(t)
+                    log(f'writing last modified timestamp "{timestamp}" to file: {d.name}')
+                    os.utime(d.target_file, (t, t))
+
+        except Exception as e:
+            log('controller._write_timestamp()> error:', e)
+            if config.TEST_MODE:
+                raise e
+
+    def _post_download(self, d):
+        """actions required after done downloading
+
+        Args:
+            d (ObservableDownloadItem): download item
+        """
+
+        self._download_thumbnail(d)
+        self._write_timestamp(d)
 
     def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
