@@ -1,3 +1,7 @@
+2021.1.7:
+- Show Total download speed.
+- [auto refresh url] fix refreshed object gets different uid
+
 2021.1.5:
 - Auto refresh expired url, issue #187.
 - prevent using ffmpeg.exe under linux if it exists in pyidm folder.
