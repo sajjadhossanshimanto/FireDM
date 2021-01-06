@@ -2791,6 +2791,11 @@ class MainWindow(IView):
         # grid side frame
         self.side_frame.grid(row=0, column=0, sticky='wns', rowspan=2)
 
+        # total speed
+        self.total_speed = tk.StringVar()
+        tk.Label(self.main_frame, textvariable=self.total_speed, bg=SF_BG,
+                 fg=SF_FG).grid(row=1, column=0, sticky='s', rowspan=2)
+
         ff = ExpandCollapse(self.main_frame, self.side_frame, MAIN_BG, MAIN_FG)
         ff.grid(row=1, column=1, sticky='ewns')
 
@@ -3515,6 +3520,12 @@ class MainWindow(IView):
         if command == 'signal':
             signal_id = kwargs.get('signal_id')
             self.execute_post_processor(signal_id)
+
+        # total speed
+        if command == 'total_speed':
+            ts = size_format(kwargs.get('total_speed'))
+            self.total_speed.set(ts)
+
     # endregion
 
     # region general

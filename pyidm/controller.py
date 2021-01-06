@@ -286,6 +286,11 @@ class Controller:
 
                     kwargs.update(**extra)
 
+            # calculate total speed
+            total_speed = sum([d.speed for d in self.d_map.values() if d.status == Status.downloading])
+            # print('total speed -------------------------------------------------------', size_format(total_speed))
+            self.view.update_view(command='total_speed', total_speed=total_speed)
+
             self.view.update_view(**kwargs)
             # print('controller._update_view:', kwargs)
         except Exception as e:
