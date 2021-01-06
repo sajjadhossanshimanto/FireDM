@@ -244,7 +244,11 @@ class Controller:
 
     def _observer(self):
         """run in a thread and update views once there is a change in any download item
-        it will update gui/view only on specific time intervals to prevent flooding view with data"""
+        it will update gui/view only on specific time intervals to prevent flooding view with data
+
+        example of an  item in self.observer_q: {'uid': 'fdsfsafsddsfdsfds', 'name': 'some_video.mp4', ...}
+        every item must have "uid" key
+        """
 
         buffer = {}  # key = uid, value = kwargs
         report_interval = 0.5  # sec
@@ -254,12 +258,7 @@ class Controller:
                 item = self.observer_q.get()
                 uid = item.get('uid')
                 if uid:
-                    if uid in buffer:
-                        buffer[uid].update(**item)
-                    else:
-                        buffer[uid] = item
-                else:
-                    buffer[len(buffer)] = item
+                    buffer.setdefault(uid, item).update(**item)
 
             for v in buffer.values():
                 self._update_view(**v)

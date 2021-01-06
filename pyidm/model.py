@@ -62,8 +62,15 @@ class Observable:
             self.notify(key, value)
 
     def notify(self, key, value):
+        """notify observer callbacks with every property change,
+        uid will be sent with every property"""
         if key in self.watch_list:
-            self._notify(**{'uid': self.uid, key: value})
+            # include 'uid' with every property change,
+            # in same time we should avoid repeated 'uid' key in the same dictionary,
+            # note "repeated dictionary keys won't raise an error any way"
+            # see https://bugs.python.org/issue16385
+            buffer = {'uid': self.uid, key: value} if key != 'uid' else {key: value}
+            self._notify(**buffer)
 
     def _notify(self, **kwargs):
         """execute registered callbacks"""
