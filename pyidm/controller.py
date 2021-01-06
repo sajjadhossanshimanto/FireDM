@@ -157,6 +157,8 @@ class Controller:
         """refresh an expired url"""
         log('auto refresh url for:', d.rendered_name)
         url = d.url
+        name = d.name
+        folder = d.folder
 
         # request server headers
         d.update(url)
@@ -167,6 +169,10 @@ class Controller:
             playlist = self._create_video_playlist(url)
 
         refreshed_d = playlist[0]
+
+        # get old name and folder
+        refreshed_d.name = name
+        refreshed_d.folder = folder
 
         # select video stream
         try:
