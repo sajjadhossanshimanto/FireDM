@@ -160,39 +160,48 @@ class Controller:
         name = d.name
         folder = d.folder
 
-        # request server headers
-        d.update(url)
+        # refresh effective url for non video objects
+        if d.type not in [MediaType.video, MediaType.audio]:
+            # get headers
+            headers = get_headers(url)
 
-        # searching for videos
-        playlist = [d]
-        if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
+            eff_url = headers.get('eff_url')
+            content_type = headers.get('content-type', '').split(';')[0]
+
+            if content_type != 'text/html':
+                d.eff_url = eff_url
+
+        else:
+            # process video
             playlist = self._create_video_playlist(url)
+            if playlist:
+                refreshed_d = playlist[0]
 
-        refreshed_d = playlist[0]
+                # get old name and folder
+                refreshed_d.name = name
+                refreshed_d.folder = folder
 
-        # get old name and folder
-        refreshed_d.name = name
-        refreshed_d.folder = folder
+                # select video stream
+                try:
+                    refreshed_d.select_stream(name=d.selected_quality)
+                    log('selected video:    ', d.selected_quality)
+                    log('New selected video:', refreshed_d.selected_quality)
+                except:
+                    pass
 
-        # select video stream
-        try:
-            refreshed_d.select_stream(name=d.selected_quality)
-            log('selected video:    ', d.selected_quality)
-            log('New selected video:', refreshed_d.selected_quality)
-        except:
-            pass
+                # select audio stream
+                try:
+                    match = [s for s in refreshed_d.audio_streams if s.name == d.audio_quality]
+                    selected_audio_stream = match[0] if match else None
+                    refreshed_d.select_audio(selected_audio_stream)
+                    log('selected audio:    ', d.audio_quality)
+                    log('New selected audio:', refreshed_d.audio_quality)
+                except:
+                    pass
 
-        # select audio stream
-        try:
-            match = [s for s in refreshed_d.audio_streams if s.name == d.audio_quality]
-            selected_audio_stream = match[0] if match else None
-            refreshed_d.select_audio(selected_audio_stream)
-            log('selected audio:    ', d.audio_quality)
-            log('New selected audio:', refreshed_d.audio_quality)
-        except:
-            pass
+                d = refreshed_d
 
-        return refreshed_d
+        return d
 
     def _process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
