@@ -10,9 +10,9 @@ with multi-connections, high speed engine,
 it downloads general files and videos from youtube and tons of other streaming websites . <br>
 Developed in Python, based on "LibCurl", and "youtube_dl".
 
-[**Download for Windows**](https://github.com/pyIDM/PyIDM/releases/latest)
+[**Download Latest version!!**](https://github.com/pyIDM/PyIDM/releases/latest)
 
-![screenshot](https://user-images.githubusercontent.com/58998813/92564079-e4fcee00-f278-11ea-83e1-9a272bc06b0f.png)
+![screenshot](https://user-images.githubusercontent.com/58998813/105612490-325f9f00-5dc5-11eb-82bc-0ecf67955eb2.png)
 
 ---
 **Features**:
@@ -20,8 +20,9 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
   [See Speed test of: aria2 vs PyIDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif)
 * Multi-connection downloading "Multithreading"
 * Automatic file segmentation.
-* Resume uncompleted downloads, and Refresh expired urls.
-* Support for Youtube, and a lot of stream websites "using youtube-dl to fetch info and libcurl to download data".
+* Automatic refresh for dead links.
+* Resume uncompleted downloads.
+* Support for Youtube, and a lot of stream websites "using youtube-dl to fetch info and libcurl to download media".
 * download entire video playlist or selected videos.
 * download fragmented video streams, and encrypted/nonencrypted HLS media streams.
 * watch videos while downloading* "some videos will have no audio until
@@ -37,7 +38,7 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
   subtitles.
 * MD5 and SHA256 checksums.
 * user can control a lot of options:
-   -   select and edit themes.
+   - select and edit themes.
    - set proxy.
    - Speed limit.
    - Max. Concurrent downloads.
@@ -48,40 +49,61 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 Refer to user guide at https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md
 
 ----------------------
-# install PyIDM:
-**Windows:**
- - **Windows portable version**:  
-   Latest Windows portable version available
-   [here](https://github.com/pyIDM/PyIDM/releases/latest).  
+# Portable PyIDM versions:
+  
+Run PyIDM without any installation (recommended) 
+ - **Windows portable version** ([Download!](https://github.com/pyIDM/PyIDM/releases/latest)):  
+   available in .zip format.  
    unzip, and run from PyIDM.exe, no installation required.
    
-   for older versions you can check https://github.com/pyIDM/PyIDM/releases
+ - **Linux portable version** ([Download!](https://github.com/pyIDM/PyIDM/releases/latest)):   
+   available in .AppImage format.  
+   download file, then mark it as executable, and run it, no installation required,
+   tested on ubuntu, mint, and manjaro.<br>
+   note: ffmpeg is not included and must be installed separately if not exist <br>
+   
+   mark file as executable by right clicking the file> Properties> Permissions> Allow executing file as a program, 
+   or from terminal by `chmod +x PyIDM_xxx.AppImage` <br>
+   
+   To check for ffmpeg use this command:
+   ```
+    which ffmpeg
+   
+    # expected output if installed
+    /usr/bin/ffmpeg
+   ```
 
+   if ffmpeg is missing you can install it by `sudo apt install ffmpeg` on debian based or `sudo pacman -S ffmpeg`
+    on Arch based distros.
+----------------------
 
-**Linux:**
+# Manually installing PyIDM:
+- **Linux:**
 
     - UBUNTU:
     
         1- verify you have minimum python version 3.6+
-            python3
+        
+            `python3`
         
         2- install pip:
-            sudo apt-install python3-pip
+        
+            `sudo apt-install python3-pip`
             
         3- install dependencies:
-            sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk
+        
+            `sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk`
             
         4- install fonts
-            sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
+        
+            `sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione`
         
         5- install pyidm
-            python3 -m pip install pyidm --user --upgrade --no-cache
-            
-            or if you run into a problem
-            sudo python3 -m pip install pyidm --upgrade --no-cache
-    
-
-**other options:**
+        
+            `python3 -m pip install pyidm --user --upgrade --no-cache`
+             or if you run into a problem
+            `sudo python3 -m pip install pyidm --upgrade --no-cache`
+  
 
 - **PyPi**:<br>
      on windows replace "python3" with "python" in below commands
@@ -160,11 +182,10 @@ Required python packages:
 - [pillow](https://python-pillow.org/): imaging library for python
 - [pystray](https://github.com/moses-palmer/pystray): for systray icon
 
-** please read notes below
 
+Note: PyIDM will do its best to install missing packages automatically using pip3 once you run it. 
 
-PyIDM application will do its best to install missing packages automatically once you run it. or you can install required packages manually using:
-
+you can install required packages manually using:
 ```
 pip install -r requirements.txt
 ```
@@ -175,6 +196,7 @@ pip install -r requirements.txt
 
 **more screenshots**
 
+![screenshot](https://user-images.githubusercontent.com/58998813/92564079-e4fcee00-f278-11ea-83e1-9a272bc06b0f.png)
 ![Main_tab](https://user-images.githubusercontent.com/58998813/94432366-f3af3480-0196-11eb-8449-3e35bfb13e5c.png)
 ![sett_tab](https://user-images.githubusercontent.com/58998813/94432701-6f10e600-0197-11eb-9d5a-397980d8fa57.png)
 
