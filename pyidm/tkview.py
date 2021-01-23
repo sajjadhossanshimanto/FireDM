@@ -511,7 +511,7 @@ class Button(tk.Button):
             options['activebackground'] = parent_bg
             options['highlightbackground'] = parent_bg
             options['highlightthickness'] = 0
-            options['activeforeground'] = BTN_AFG
+            options['activeforeground'] = atk.calc_font_color(parent_bg)
             options['bd'] = 0
         else:
 
