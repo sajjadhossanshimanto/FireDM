@@ -1,0 +1,19 @@
+# ignore all files and directories
+*
+
+# include only the following
+!docs/
+!docs/*
+!pyidm/
+!pyidm/*.py
+!ChangeLog.txt
+!contributors.md
+!LICENSE
+!pyidm.py
+!README.md
+!requirements.txt
+!setup.py
+!todo.md
+!.gitignore
+
+
