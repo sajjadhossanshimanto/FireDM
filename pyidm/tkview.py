@@ -1219,8 +1219,38 @@ class FileProperties(ttk.Frame):
         separator(3)
 
         label('Folder:', r=4, c=0)
-        tk.Entry(self, text='/home/Downloads/', textvariable=self.folder, bg=self.bg, fg=self.fg,
-                 highlightthickness=0, bd=0).grid(row=4, column=1, sticky='we')
+
+        # download folder -------------------------------------------------------------------------------------------
+        def update_frequent_folders(*args):
+            try:
+                config.frequent_download_folders.remove(self.folder.get())
+            except:
+                pass
+
+            # add current folder value at the beginning of the list and limit list size to 10 items
+            config.frequent_download_folders = [self.folder.get()] + config.frequent_download_folders[:9]
+
+            # update combobox
+            cb.config(values=config.frequent_download_folders)
+
+        # style
+        s = ttk.Style()
+        custom_style = 'downloadfolder.TCombobox'
+        arrow_bg = SF_BG
+        textarea_bg = MAIN_BG
+        s.configure(custom_style, arrowcolor=atk.calc_font_color(arrow_bg),
+                    foreground=MAIN_FG, padding=0, relief=tk.RAISED, borderwidth=0)
+        s.map(custom_style, fieldbackground=[('', textarea_bg)], background=[('', arrow_bg)])
+
+        cb = ttk.Combobox(self, exportselection=0, textvariable=self.folder, values=config.frequent_download_folders,
+                          style=custom_style)
+        cb.grid(row=4, column=1, sticky='we')
+        cb.bind('<FocusOut>', update_frequent_folders, add='+')
+        cb.bind('<1>', update_frequent_folders, add='+')
+
+        # update global download folder with every widget edit
+        self.folder.trace_add('write', lambda *args:set_option(download_folder=self.folder.get()))
+
         Button(self, text='...', transparent=True, command=self.change_folder).grid(row=4, column=2, padx=1, pady=0)
 
         separator(5)

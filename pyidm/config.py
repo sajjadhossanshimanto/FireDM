@@ -24,7 +24,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'confirm_on_resume_all', 'confirm_on_stop_all', 'enable_captcha_workaround',
-                 'verify_ssl_cert', 'custom_user_agent']
+                 'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders']
 
 
 # CONSTANTS
@@ -83,6 +83,8 @@ sys.path.insert(0, current_directory)
 sett_folder = None
 global_sett_folder = None
 download_folder = DEFAULT_DOWNLOAD_FOLDER
+
+frequent_download_folders = []
 
 # settings parameters
 # General --------------------------------------------------------------------------------------------------------------
