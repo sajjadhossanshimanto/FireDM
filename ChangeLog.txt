@@ -1,3 +1,9 @@
+2021.2.7:
+- [youtube-dl] Fixed some settings options doesn't get effective until PyIDM restart.
+- [ssl] fixed ssl certificate error in AppImage release, issue #213 .
+- [gui] adjust combobox dropdown menu colors.
+- [gui] add dropdown menu for frequently used download folders, issue #214 .
+
 2021.1.7:
 - Show Total download speed.
 - [auto refresh url] fix refreshed object gets different uid
