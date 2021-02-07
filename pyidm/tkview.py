@@ -536,9 +536,15 @@ class Combobox(ttk.Combobox):
         # style
         s = ttk.Style()
         custom_style = 'custom.TCombobox'
-        s.configure(custom_style, arrowcolor=atk.calc_font_color(SF_BG),
-                    foreground=atk.calc_font_color(BTN_BG), padding=4, relief=tk.RAISED)
-        s.map(custom_style, fieldbackground=[('', BTN_BG)], background=[('', SF_BG)])
+        # combobox is consist of a text area, down arrow, and dropdown menu (listbox)
+        # arrow: arrowcolor, background
+        # text area: foreground, fieldbackground
+        # changing dropdown menu (Listbox) colors will be changed in MainWindow>apply_theme()
+        arrow_bg = SF_BG
+        textarea_bg = BTN_BG
+        s.configure(custom_style, arrowcolor=atk.calc_font_color(arrow_bg),
+                    foreground=atk.calc_font_color(textarea_bg), padding=4, relief=tk.RAISED)
+        s.map(custom_style, fieldbackground=[('', textarea_bg)], background=[('', arrow_bg)])
 
         # default options
         options = dict(state="readonly", values=values, style=custom_style)
@@ -2745,6 +2751,18 @@ class MainWindow(IView):
 
             # update global variables
             globals().update(theme)
+
+        # custom combobox dropdown menu (listbox) https://www.tcl.tk/man/tcl/TkCmd/ttk_combobox.htm
+        # option add *TCombobox*Listbox.background color
+        # option add *TCombobox*Listbox.font font
+        # option add *TCombobox*Listbox.foreground color
+        # option add *TCombobox*Listbox.selectBackground color
+        # option add *TCombobox*Listbox.selectForeground color
+
+        self.root.option_add('*TCombobox*Listbox.background', BTN_BG)
+        self.root.option_add('*TCombobox*Listbox.foreground', atk.calc_font_color(BTN_BG))
+        self.root.option_add('*TCombobox*Listbox.selectBackground', SF_BG)
+        self.root.option_add('*TCombobox*Listbox.selectForeground', atk.calc_font_color(SF_BG))
 
         if self.main_frame:
             self.restart_gui()
