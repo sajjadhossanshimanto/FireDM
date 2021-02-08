@@ -3001,6 +3001,8 @@ class MainWindow(IView):
             anchor='w')
         CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
         CheckOption(tab, 'Enable CAPTCHA! workaround', key='enable_captcha_workaround').pack(anchor='w')
+        CheckOption(tab, 'Add numbers to filenames when downloading thru playlist menu',
+                    key='use_playlist_numbers').pack(anchor='w')
 
         # video extractor backend -------------------------
         extractor_frame = tk.Frame(tab, bg=bg)

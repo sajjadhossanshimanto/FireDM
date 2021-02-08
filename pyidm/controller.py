@@ -1050,14 +1050,19 @@ class Controller:
               subtitles (dict): key=language, value=selected extension
         """
         for vid_idx, s_idx in vsmap.items():
-            d = self.playlist[vid_idx]
+            d = copy(self.playlist[vid_idx])
             d.select_stream(index=s_idx)
             d.folder = config.download_folder
+
+            # add number to name
+            if config.use_playlist_numbers:
+                d.name = f'{vid_idx + 1}- {d.name}'
+
             run_thread(self._download, d, silent=True)
             time.sleep(0.1)
 
             if subtitles:
-                self.download_subtitles(subtitles, video_idx=vid_idx)
+                self.download_subtitles(subtitles, d=d)
 
     def _download_subtitle(self, lang_name, url, extension, d):
         """download one subtitle file"""
@@ -1389,16 +1394,17 @@ class Controller:
         if subs:
             return subs
 
-    def download_subtitles(self, subs, uid=None, video_idx=None):
+    def download_subtitles(self, subs, uid=None, video_idx=None, d=None):
         """download multiple subtitles for the same download item
         Args:
             subs (dict): language name vs extension name
             uid (str): video uid
             video_idx (int): video index in self.playlist
+            d(DownloadItem): DownloadItem object.
         """
 
         # get download item
-        d = self.get_d(uid, video_idx)
+        d = d or self.get_d(uid, video_idx)
 
         if not d:
             return

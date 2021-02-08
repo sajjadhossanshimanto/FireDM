@@ -24,7 +24,8 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'confirm_on_resume_all', 'confirm_on_stop_all', 'enable_captcha_workaround',
-                 'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp']
+                 'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp',
+                 'use_playlist_numbers']
 
 
 # CONSTANTS
@@ -122,6 +123,7 @@ big_playlist_length = 50  # minimum number of videos in big playlist, it will ig
 manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
 write_metadata = True  # write metadata to video file
 enable_captcha_workaround = False
+use_playlist_numbers = True  # add numbers to video file names when downloading thru playlist menu.
 
 # ffmpeg
 ffmpeg_actual_path = None
