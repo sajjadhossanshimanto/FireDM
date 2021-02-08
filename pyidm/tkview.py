@@ -2983,6 +2983,7 @@ class MainWindow(IView):
                     key='autoscroll_download_tab').pack(anchor='w')
         CheckOption(tab, 'Show confirm dialog when press "RESUME ALL" button', key='confirm_on_resume_all').pack(anchor='w')
         CheckOption(tab, 'Show confirm dialog when press "STOP ALL" button', key='confirm_on_stop_all').pack(anchor='w')
+        CheckOption(tab, 'write "last modified" timestamp to downloaded file', key='write_timestamp').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')

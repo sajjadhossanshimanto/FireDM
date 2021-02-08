@@ -962,7 +962,7 @@ class Controller:
 
         try:
             # download thumbnail
-            if config.download_thumbnail and d.status == Status.completed and d.thumbnail_url:
+            if d.status == Status.completed and d.thumbnail_url:
                 fp = os.path.splitext(d.target_file)[0] + '.png'
                 download_thumbnail(d.thumbnail_url, fp)
 
@@ -1007,8 +1007,11 @@ class Controller:
             d (ObservableDownloadItem): download item
         """
 
-        self._download_thumbnail(d)
-        self._write_timestamp(d)
+        if config.download_thumbnail:
+            self._download_thumbnail(d)
+
+        if config.write_timestamp:
+            self._write_timestamp(d)
 
     def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
