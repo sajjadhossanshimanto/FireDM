@@ -333,6 +333,9 @@ class Video(DownloadItem):
 
         self.select_audio()
 
+        # update http-headers
+        self.http_headers = stream.http_headers or self.http_headers or config.http_headers
+
     def select_audio(self, audio_stream=None):
         stream = self.selected_stream
 
@@ -439,6 +442,9 @@ class Stream:
 
         # hls stream specific
         self.manifest_url = stream_info.get('manifest_url', '')
+
+        # get http-headers
+        self.http_headers = stream_info.get('http_headers')
 
         # print(self.name, self.size, isinstance(self.size, int))
 
