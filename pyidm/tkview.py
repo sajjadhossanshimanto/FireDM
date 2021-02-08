@@ -3571,7 +3571,7 @@ class MainWindow(IView):
 
         # total speed
         if command == 'total_speed':
-            ts = size_format(kwargs.get('total_speed'))
+            ts = size_format(kwargs.get('total_speed'), tail='/s')
             self.total_speed.set(ts)
 
     # endregion
