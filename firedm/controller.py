@@ -418,7 +418,7 @@ class Controller:
         def download_webpage_decorator(func):
             # return data
             def newfunc(obj, *args, **kwargs):
-                print('-' * 20, "start download page")
+                # print('-' * 20, "start download page")
                 content = func(obj, *args, **kwargs)
 
                 # search for word captcha in webpage content is not enough
