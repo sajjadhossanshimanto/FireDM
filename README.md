@@ -1,23 +1,23 @@
-![PyPI - Format](https://img.shields.io/pypi/format/pyidm?color=grey&label=PyPI) [![Downloads](https://pepy.tech/badge/pyidm)](https://pepy.tech/project/pyidm)
+![PyPI - Format](https://img.shields.io/pypi/format/firedm?color=grey&label=PyPI) [![Downloads](https://pepy.tech/badge/pyidm)](https://pepy.tech/project/firedm)
 
-![GitHub All Releases](https://img.shields.io/github/downloads/pyidm/pyidm/total?color=blue&label=GitHub%20Releases)
+![GitHub All Releases](https://img.shields.io/github/downloads/firedm/firedm/total?color=blue&label=GitHub%20Releases)
 
-![GitHub issues](https://img.shields.io/github/issues-raw/pyidm/pyidm?color=blue) - ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/pyidm/pyidm?color=blue)
+![GitHub issues](https://img.shields.io/github/issues-raw/firedm/firedm?color=blue) - ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/firedm/firedm?color=blue)
 
 
-PyIDM is a python open source (Internet Download Manager) 
+FireDM is a python open source (Internet Download Manager) 
 with multi-connections, high speed engine, 
 it downloads general files and videos from youtube and tons of other streaming websites . <br>
 Developed in Python, based on "LibCurl", and "youtube_dl".
 
-[**Download Latest version!!**](https://github.com/pyIDM/PyIDM/releases/latest)
+[**Download Latest version!!**](https://github.com/pyIDM/FireDM/releases/latest)
 
 ![screenshot](https://user-images.githubusercontent.com/58998813/105612490-325f9f00-5dc5-11eb-82bc-0ecf67955eb2.png)
 
 ---
 **Features**:
 * High download speeds "based on LibCurl" -
-  [See Speed test of: aria2 vs PyIDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif)
+  [See Speed test of: aria2 vs FireDM](https://user-images.githubusercontent.com/58998813/74993622-361bd080-5454-11ea-8bda-173bfcf16349.gif)
 * Multi-connection downloading "Multithreading"
 * Automatic file segmentation.
 * Automatic refresh for dead links.
@@ -45,25 +45,25 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
    - Max. connections per download.
 
 ---
-# How to use PyIDM:
-Refer to user guide at https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md
+# How to use FireDM:
+Refer to user guide at https://github.com/pyIDM/FireDM/blob/master/docs/user_guide.md
 
 ----------------------
-# Portable PyIDM versions:
+# Portable FireDM versions:
   
-Run PyIDM without any installation (recommended) 
- - **Windows portable version** ([Download!](https://github.com/pyIDM/PyIDM/releases/latest)):  
+Run FireDM without any installation (recommended) 
+ - **Windows portable version** ([Download!](https://github.com/pyIDM/FireDM/releases/latest)):  
    available in .zip format.  
-   unzip, and run from PyIDM.exe, no installation required.
+   unzip, and run from FireDM.exe, no installation required.
    
- - **Linux portable version** ([Download!](https://github.com/pyIDM/PyIDM/releases/latest)):   
+ - **Linux portable version** ([Download!](https://github.com/pyIDM/FireDM/releases/latest)):   
    available in .AppImage format.  
    download file, then mark it as executable, and run it, no installation required,
    tested on ubuntu, mint, and manjaro.<br>
    note: ffmpeg is not included and must be installed separately if not exist <br>
    
    mark file as executable by right clicking the file> Properties> Permissions> Allow executing file as a program, 
-   or from terminal by `chmod +x PyIDM_xxx.AppImage` <br>
+   or from terminal by `chmod +x FireDM_xxx.AppImage` <br>
    
    To check for ffmpeg use this command:
    ```
@@ -77,7 +77,7 @@ Run PyIDM without any installation (recommended)
     on Arch based distros.
 ----------------------
 
-# Manually installing PyIDM:
+# Manually installing FireDM:
 - **Linux:**
 
     - UBUNTU:
@@ -98,60 +98,60 @@ Run PyIDM without any installation (recommended)
         
             `sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione`
         
-        5- install pyidm
+        5- install firedm
         
-            `python3 -m pip install pyidm --user --upgrade --no-cache`
+            `python3 -m pip install firedm --user --upgrade --no-cache`
              or if you run into a problem
-            `sudo python3 -m pip install pyidm --upgrade --no-cache`
+            `sudo python3 -m pip install firedm --upgrade --no-cache`
   
 
 - **PyPi**:<br>
      on windows replace "python3" with "python" in below commands
 
-    `python3 -m pip install pyidm --user --upgrade --no-cache`
+    `python3 -m pip install firedm --user --upgrade --no-cache`
     or
-    `sudo python3 -m pip install pyidm --upgrade --no-cache`
+    `sudo python3 -m pip install firedm --upgrade --no-cache`
     
     then you can run application from Terminal by:  
-    `python3 -m pyidm`          
+    `python3 -m firedm`          
 
     or just  
-    `pyidm` an executable "i.e. pyidm.exe on windows" will be
+    `firedm` an executable "i.e. firedm.exe on windows" will be
     located at "python/scripts", if it doesn't work append
     "python/scripts" folder to PATH.
 
 
 -  **run from github source code**:<br> 
-   PyIDM is a python app. so, it
+   FireDM is a python app. so, it
    can run on any platform that can run python, To run from source, you
    have to have a python installed, "supported python versions is 3.6,
    3.7, and 3.8", then download or clone this repository, and run
-   PyIDM.py (it will install the other required python packages
-   automatically if missing) if PyIDM failed to install required
+   FireDM.py (it will install the other required python packages
+   automatically if missing) if FireDM failed to install required
    packages, you should install it manually, refer to "Dependencies"
    section below.
 
--  **Build PyIDM yourself**:
+-  **Build FireDM yourself**:
    -  get the source code from github: (recommended for latest updated
       version, also shallow clone is preferred)  
-      `git clone --depth 1 https://github.com/pyIDM/PyIDM.git`
+      `git clone --depth 1 https://github.com/pyIDM/FireDM.git`
 
    - or get the source code from PyPi:  
    navigate to https://pypi.org/project/pyIDM/#files and download a tar
-   ball, example file name "pyIDM-2020.3.22.tar.gz", then extract it
+   ball, example file name "FireDM-2020.3.22.tar.gz", then extract it
 
-   - open your terminal or command prompt and navigate to pyidm folder then type below command  
+   - open your terminal or command prompt and navigate to firedm folder then type below command  
         `python3 setup.py install  --user`
 
-   - run PyIDM from Terminal by typing:  
-        `python3 -m pyidm`     or  just `pyidm`
+   - run FireDM from Terminal by typing:  
+        `python3 -m firedm`     or  just `firedm`
 
 # Known Issues:
-- Linux X-server will raise an error if some fonts are missing especially emoji fonts, for more info refer to [issue #200](https://github.com/pyIDM/PyIDM/issues/200).
+- Linux X-server will raise an error if some fonts are missing especially emoji fonts, for more info refer to [issue #200](https://github.com/pyIDM/FireDM/issues/200).
 
 
 - Mac - Tkinter, as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
-refer to [issue #113](https://github.com/pyIDM/PyIDM/issues/113)
+refer to [issue #113](https://github.com/pyIDM/FireDM/issues/113)
 
 
 ---
@@ -162,7 +162,7 @@ below are the requirements to run from source:
 - tkinter
 - [ffmpeg](https://www.ffmpeg.org/) : for merging audio with youtube DASH videos "it will be installed automatically on windows"
 - Fonts: (Linux X-server will raise an error if some fonts are missing especially emoji fonts, below are the 
-recommended fonts to be installed, for more info refer to [issue #200](https://github.com/pyIDM/PyIDM/issues/200).)
+recommended fonts to be installed, for more info refer to [issue #200](https://github.com/pyIDM/FireDM/issues/200).)
 
     ```
     ttf-linux-libertine 
@@ -183,7 +183,7 @@ Required python packages:
 - [pystray](https://github.com/moses-palmer/pystray): for systray icon
 
 
-Note: PyIDM will do its best to install missing packages automatically using pip3 once you run it. 
+Note: FireDM will do its best to install missing packages automatically using pip3 once you run it. 
 
 you can install required packages manually using:
 ```
@@ -200,7 +200,7 @@ pip install -r requirements.txt
 ![Main_tab](https://user-images.githubusercontent.com/58998813/94432366-f3af3480-0196-11eb-8449-3e35bfb13e5c.png)
 ![sett_tab](https://user-images.githubusercontent.com/58998813/94432701-6f10e600-0197-11eb-9d5a-397980d8fa57.png)
 
-[See more ...](https://github.com/pyIDM/PyIDM/issues/13#issuecomment-699985614)
+[See more ...](https://github.com/pyIDM/FireDM/issues/13#issuecomment-699985614)
 
 
 ---
@@ -236,7 +236,7 @@ there is no issues, since most linux distros have curl preinstalled, so pycurl w
 
 ### note for [Youtube-dl](https://github.com/ytdl-org/youtube-dl): <br>
 youtube website changes frequently, if this application failed to retrieve video/playlist data
-you should update youtube-dl module thru PyIDM setting tab or manually by
+you should update youtube-dl module thru FireDM setting tab or manually by
 ```
 python -m pip install youtube_dl --upgrade
 ```
@@ -256,12 +256,12 @@ ChangeLog.txt is included in source code.
 ---
 # How to contribute to this project:
 1- by testing the application and opening
-[new issue](https://github.com/pyIDM/PyIDM/issues/new) for bug
+[new issue](https://github.com/pyIDM/FireDM/issues/new) for bug
 reporting, feature request, or suggestions.  
 2- check
-[developer guidelines](https://github.com/pyIDM/PyIDM/blob/master/docs/developer_guide.md).  
+[developer guidelines](https://github.com/pyIDM/FireDM/blob/master/docs/developer_guide.md).  
 3- check
-[todo list](https://github.com/pyIDM/PyIDM/blob/master/todo.md).  
+[todo list](https://github.com/pyIDM/FireDM/blob/master/todo.md).  
 4- check open issues, see if you can help.  
 5- fork this repo and pull request
 
@@ -270,23 +270,23 @@ reporting, feature request, or suggestions.
 ---
 
 # Some recent articles/reviews on this project*:
-- [ghacks](https://www.ghacks.net/2020/08/13/pyidm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
-- [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/PyIDM.shtml)
+- [ghacks](https://www.ghacks.net/2020/08/13/firedm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
+- [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/FireDM.shtml)
 - [hackermilk](https://www.hackermilk.info/2020/01/an-open-source-alternative-to-internet.html)
 
   *help edit this list by writing a comment in
-  [this issue](https://github.com/pyIDM/PyIDM/issues/136)
+  [this issue](https://github.com/pyIDM/FireDM/issues/136)
 
 ---
 
 # contributors:
 Please check
-[contributors.md](https://github.com/pyIDM/PyIDM/blob/master/contributors.md)
+[contributors.md](https://github.com/pyIDM/FireDM/blob/master/contributors.md)
 for a list of contributors
 
 # Feedback:
 your feedback is most welcomed by filling a
-[new issue](https://github.com/pyIDM/PyIDM/issues/new)  
+[new issue](https://github.com/pyIDM/FireDM/issues/new)  
 or email to: info.pyidm@gmail.com <br>
 
 
@@ -294,5 +294,5 @@ or email to: info.pyidm@gmail.com <br>
 
 Author:  
 Mahmoud Elshahat  
-2019-2020
+2019-2021
 

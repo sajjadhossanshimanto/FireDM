@@ -1,5 +1,5 @@
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
@@ -29,7 +29,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
 
 
 # CONSTANTS
-APP_NAME = 'PyIDM'
+APP_NAME = 'FireDM'
 APP_VERSION = __version__
 APP_TITLE = f'{APP_NAME} version {APP_VERSION} .. an open source download manager'
 DEFAULT_DOWNLOAD_FOLDER = os.path.join(os.path.expanduser("~"), 'Downloads')
@@ -39,8 +39,8 @@ DEFAULT_CONNECTIONS = 10
 # minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.
 DEFAULT_SEGMENT_SIZE = 204800  # 204800 bytes == 200 KB
 DEFAULT_CONCURRENT_CONNECTIONS = 3
-APP_URL = 'https://github.com/pyIDM/PyIDM'
-LATEST_RELEASE_URL = 'https://github.com/pyIDM/PyIDM/releases/latest'
+APP_URL = 'https://github.com/pyIDM/FireDM'
+LATEST_RELEASE_URL = 'https://github.com/pyIDM/FireDM/releases/latest'
 
 # headers,
 DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3721.3'

@@ -1,5 +1,5 @@
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 

@@ -1,5 +1,5 @@
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
@@ -16,7 +16,7 @@ current_directory = os.path.dirname(path)
 
 # get version
 version = {}
-with open(f"{current_directory}/pyidm/version.py") as f:
+with open(f"{current_directory}/firedm/version.py") as f:
     exec(f.read(), version)  # then we can use it as: version['__version__']
 
 # get long description from readme
@@ -31,28 +31,28 @@ except:
                     'awesometkinter >= 2020.12.16']
 
 setuptools.setup(
-    name="PyIDM",
+    name="FireDM",
     version=version['__version__'],
-    scripts=[],  # ['PyIDM.py'], no need since added an entry_points
+    scripts=[],  # ['FireDM.py'], no need since added an entry_points
     author="Mahmoud Elshahat",
     author_email="info.pyidm@gmail.com",
     description="download manager",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pyIDM/PyIDM ",
+    url="https://github.com/pyIDM/FireDM ",
     packages=setuptools.find_packages(),
     keywords="internet download manager youtube downloader pycurl curl youtube-dl",
     project_urls={
-        'Source': 'https://github.com/pyIDM/PyIDM',
-        'Tracker': 'https://github.com/pyIDM/PyIDM/issues',
-        'Releases': 'https://github.com/pyIDM/PyIDM/releases',
-        'Screenshots': 'https://github.com/pyIDM/PyIDM/issues/13#issuecomment-689337428'
+        'Source': 'https://github.com/pyIDM/FireDM',
+        'Tracker': 'https://github.com/pyIDM/FireDM/issues',
+        'Releases': 'https://github.com/pyIDM/FireDM/releases',
+        'Screenshots': 'https://github.com/pyIDM/FireDM/issues/13#issuecomment-689337428'
     },
     install_requires=requirements,
     entry_points={
         # our executable: "exe file on windows for example"
         'console_scripts': [
-            'pyidm = pyidm.PyIDM:main',
+            'firedm = firedm.FireDM:main',
         ]},
     classifiers=[
         "Programming Language :: Python :: 3",

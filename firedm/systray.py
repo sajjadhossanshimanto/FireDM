@@ -1,5 +1,5 @@
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "pyCuRL/curl", and "youtube_dl""
 
@@ -66,7 +66,7 @@ class SysTray:
                 from gi.repository import Gtk
                 self.Gtk = Gtk
 
-                # delete previous icon file (it might contains an icon file for old pyidm versions)
+                # delete previous icon file (it might contains an icon file for old firedm versions)
                 delete_file(self.tray_icon_path)
 
                 # save file to settings folder
@@ -103,7 +103,7 @@ class SysTray:
                 items.append(MenuItem(option, callback, default=True if option == 'Show' else False))
 
             menu = Menu(*items)
-            self.icon = Icon('PyIDM', self.tray_icon, menu=menu)
+            self.icon = Icon('FireDM', self.tray_icon, menu=menu)
             self.active = True
             self.icon.run()
         except Exception as e:
@@ -119,7 +119,7 @@ class SysTray:
 
         try:
             # quit main, might raise (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
-            # but it has no side effect and PyIDM quit normally
+            # but it has no side effect and FireDM quit normally
             self.Gtk.main_quit()
         except:
             pass

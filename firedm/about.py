@@ -1,4 +1,4 @@
-about_notes = """PyIDM is an open source multi-connections download manager, it downloads
+about_notes = """FireDM is an open source multi-connections download manager, it downloads
 general files, support downloading videos, and playlists from youtube, 
 and other media websites.
 
@@ -17,12 +17,12 @@ Conditions and usage restrictions:
          or criminal/illegal behaviours.
   
   - This application is provided "AS IS" without any warranty, it is 
-    under no circumstances the PyIDM author could be held liable for any 
+    under no circumstances the FireDM author could be held liable for any 
     claim, or damages or responsible for any misuse of this application.
 ------------------------------------------------------------------------
 
 your feedback is most welcomed on:
-https://github.com/pyIDM/PyIDM
+https://github.com/pyIDM/FireDM
 email: info.pyidm@gmail.com
 
 Author,

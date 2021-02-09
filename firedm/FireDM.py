@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    pyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
@@ -14,14 +14,14 @@
 # standard modules
 import os, sys
 
-# This code should stay on top to handle relative imports in case of direct call of pyIDM.py
+# This code should stay on top to handle relative imports in case of direct call of FireDM.py
 if __package__ is None:
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(path))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
     
-    __package__ = 'pyidm'
-    import pyidm
+    __package__ = 'firedm'
+    import firedm
 
 # check and auto install external modules
 from .dependency import install_missing_pkgs
@@ -42,12 +42,12 @@ def main():
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
-        # calling PyIDM from command line / terminal with any arguments it will enter interactive mode 
+        # calling FireDM from command line / terminal with any arguments it will enter interactive mode
         # without gui
-        # usage: pyidm "url" --folder "/home/downloads/"
+        # usage: firedm "url" --folder "/home/downloads/"
 
         import argparse
-        parser = argparse.ArgumentParser(description='PyIDM open source internet download manager')
+        parser = argparse.ArgumentParser(description='FireDM open source internet download manager')
 
         parser.add_argument('url', type=str, 
                             help="""url / link of the file you want to download, 

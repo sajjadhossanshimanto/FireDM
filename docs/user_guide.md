@@ -1,17 +1,17 @@
-# PyIDM user guide:
+# FireDM user guide:
 Parts of these guidelines has been taken from an
-[article](https://www.ghacks.net/2020/08/13/pyidm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
-about PyIDM, thanks to Ashwin @ ghacks.net
+[article](https://www.ghacks.net/2020/08/13/firedm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
+about FireDM, thanks to Ashwin @ ghacks.net
 
 
-PyIDM is an open source download manager that can download videos and
+FireDM is an open source download manager that can download videos and
 playlists, written in Python.
 
-The interface of PyIDM has four tabs, The Main tab is used to add new
+The interface of FireDM has four tabs, The Main tab is used to add new
 downloads. The program captures downloads from the clipboard, but you
 can manually start a download by pasting a URL in the Link box.
 
-When PyIDM recognizes that the clipboard contains a link to a
+When FireDM recognizes that the clipboard contains a link to a
 downloadable file, it displays its interface. To be precise, the Main
 tab is brought to focus. It displays the captured link, the name of the
 file, its size, type (ZIP, EXE, etc), and whether the download can be
@@ -20,7 +20,7 @@ resumed or not.
 ![Main Tab](https://user-images.githubusercontent.com/58998813/92562020-939f2f80-f275-11ea-94ea-fe41c9c72abc.png)
 
 Want to download videos? You can, copy the URL or paste it manually in
-the link box and PyIDM will pull up options to download the media. It
+the link box and FireDM will pull up options to download the media. It
 allows you to choose the videos to download, the video format and
 resolution
 
@@ -37,7 +37,7 @@ should enable manual dash audio selection option in settings tab.
 ![dash audio](https://user-images.githubusercontent.com/58998813/94432513-2b1de100-0197-11eb-86d5-6cd27763fba6.png)
 
 You can change the folder where the file will be saved to, before
-clicking on the download button. PyIDM displays the download progress in
+clicking on the download button. FireDM displays the download progress in
 downloads tab that indicates the download's file size progress, the
 speed, time remaining for the process to complete.
 
@@ -75,7 +75,7 @@ the web page, the file's direct link or the playlist's URL.
 
 
 # Settings Tab:
-PyIDM has a lot of options you can tweak, below will list most options
+FireDM has a lot of options you can tweak, below will list most options
 briefly.
 ![rcm](https://user-images.githubusercontent.com/58998813/94432701-6f10e600-0197-11eb-9d5a-397980d8fa57.png)
 
@@ -95,11 +95,11 @@ There is also an option to edit and delete themes, but these options
 available only for custom themes not default themes.
 
 ### Systray:
-you can enable/disable systray icon with an option tosendPyIDM to
+you can enable/disable systray icon with an option tosendFireDM to
 systray when closing main window.
 
 ### Monitor urls:
-PyIDM will monitor clipboard for any copied urls"enabled by default",
+FireDM will monitor clipboard for any copied urls"enabled by default",
 however you can disable this option anytime.
 
 ### Write metadata to video files:
@@ -108,7 +108,7 @@ etc... which can be hardcoded into video file when it gets downloaded.
 
 ### Auto rename:
 if file with the same name exist in download folder,with this option
-enabled, pyidm will rename the new file, generally will add a number
+enabled, firedm will rename the new file, generally will add a number
 suffix to avoid overwriting existing file, if you disable this option, a
 warning popup will show up to ask user to overwrite file or cancel
 download.
@@ -169,9 +169,9 @@ normally this is the website main webpage url.
 
 
 
-## Using cookies with PyIDM:
+## Using cookies with FireDM:
 
-Passing cookies to PyIDM is a good way to work around CAPTCHA, some websites require you to solve in particular
+Passing cookies to FireDM is a good way to work around CAPTCHA, some websites require you to solve in particular
 cases in order to get access (e.g. YouTube, CloudFlare).
 
 you need to extract cookie file from your browser save it some where (for example: cookies.txt) then goto
@@ -202,14 +202,14 @@ segment files for errors.
 
 ### Re-raise exceptions:
 crash application and show detailed error description, useful when
-running PyIDM from source.
+running FireDM from source.
 
 ### ThreadPoolExecuter vs individual threads:
 ThreadPoolExecuter could have less memory footprint but not much,
 however individual threads are more flexible to use.
 
 ### Download Simulator:
-from name, PyIDM will fake downloading a file without writing to disk or
+from name, FireDM will fake downloading a file without writing to disk or
 access network, for testing only.
 
 ---
@@ -217,16 +217,16 @@ access network, for testing only.
 ## Update:
 
 ### check for update frequency:
-PyIDM will try to check for new version on github every "7 days as
+FireDM will try to check for new version on github every "7 days as
 default" it will first ask user for permission to do so, also frequency
 can be changed or uncheck this option to disable periodic check for update
 
-you can check for new PyIDM version manually any time you press refresh
-button in front of PyIDM version.
+you can check for new FireDM version manually any time you press refresh
+button in front of FireDM version.
 
-for Youtube-dl you can check for new version and if found, PyIDM will
+for Youtube-dl you can check for new version and if found, FireDM will
 ask user to install it automatically, after finish, you should restart
-pyidm for new youtube-dl version to be loaded, in case new youtube-dl
+firedm for new youtube-dl version to be loaded, in case new youtube-dl
 version doesn't work as expected, you can press "Rollback update" to
 restore the last youtube-dl version
 

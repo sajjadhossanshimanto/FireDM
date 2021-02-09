@@ -4,12 +4,12 @@
 # include only the following
 !docs/
 !docs/*
-!pyidm/
-!pyidm/*.py
+!firedm/
+!firedm/*.py
 !ChangeLog.txt
 !contributors.md
 !LICENSE
-!pyidm.py
+!firedm.py
 !README.md
 !requirements.txt
 !setup.py

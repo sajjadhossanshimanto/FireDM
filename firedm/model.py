@@ -1,5 +1,5 @@
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "pyCuRL/curl", and "youtube_dl""
 
@@ -46,7 +46,7 @@ class Observable:
         except:
             old_value = None
 
-        # normalize folder path https://github.com/pyIDM/PyIDM/issues/185
+        # normalize folder path https://github.com/pyIDM/FireDM/issues/185
         if key == 'folder':
             value = os.path.normpath(value)
 

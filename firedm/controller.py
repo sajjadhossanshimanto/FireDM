@@ -1,5 +1,5 @@
 """
-    pyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
@@ -501,7 +501,7 @@ class Controller:
             # handle types: url and url transparent
             if _type in ('url', 'url_transparent'):
                 # handle youtube user links ex: https://www.youtube.com/c/MOTORIZADO/videos
-                # issue: https://github.com/pyIDM/PyIDM/issues/146
+                # issue: https://github.com/pyIDM/FireDM/issues/146
                 # info: {'_type': 'url', 'url': 'https://www.youtube.com/playlist?list=UUK32F9z7s_JhACkUdVoWdag',
                 # 'ie_key': 'YoutubePlaylist', 'extractor': 'youtube:user', 'webpage_url': 'https://www.youtube.com/c/MOTORIZADO/videos',
                 # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
@@ -725,7 +725,7 @@ class Controller:
                 # log('Download cancelled, FFMPEG is missing', start='', showpopup=True)
 
                 msg = '\n'.join(['"FFMPEG" is required to process media files',
-                    'executable must be copied into PyIDM folder or add ffmpeg path to system PATH',
+                    'executable must be copied into FireDM folder or add ffmpeg path to system PATH',
                     'you can download it manually from https://www.ffmpeg.org/download.html'])
 
                 options = ['Ok']
@@ -746,7 +746,7 @@ class Controller:
         # in case of missing download folder value will fallback to current download folder
         folder = d.folder or config.download_folder
         try:
-            test_file_path = os.path.join(folder, 'test_file_.pyidm')
+            test_file_path = os.path.join(folder, 'test_file_.firedm')
             with open(test_file_path, 'w') as f:
                 f.write('0')
             delete_file(test_file_path)
@@ -1099,9 +1099,9 @@ class Controller:
 
     # region Application update
     def _check_for_update(self, signal_id=None):
-        """check for newer version of PyIDM, youtube-dl, and youtube-dlc"""
+        """check for newer version of FireDM, youtube-dl, and youtube-dlc"""
 
-        info = {'pyidm': {'current_version': config.APP_VERSION, 'latest_version': None},
+        info = {'firedm': {'current_version': config.APP_VERSION, 'latest_version': None},
                 'youtube_dl': {'current_version': config.youtube_dl_version, 'latest_version': None},
                 'youtube_dlc': {'current_version': config.youtube_dlc_version, 'latest_version': None},
                 }
@@ -1112,7 +1112,7 @@ class Controller:
             log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
-        for pkg in ('pyidm', 'youtube_dl', 'youtube_dlc'):
+        for pkg in ('firedm', 'youtube_dl', 'youtube_dlc'):
             if not info[pkg]['current_version']:
                 log(f'{pkg} still loading, try again')
                 continue
@@ -1145,9 +1145,9 @@ class Controller:
             msg += 'Do you want to update now? \n'
             options = ['Update', 'Cancel']
 
-            # show update notes for pyidm
-            if 'pyidm' in new_pkgs:
-                log('getting PyIDM changelog ....')
+            # show update notes for firedm
+            if 'firedm' in new_pkgs:
+                log('getting FireDM changelog ....')
 
                 # download change log file
                 url = 'https://github.com/pyIDM/pyIDM/raw/master/ChangeLog.txt'
@@ -1160,7 +1160,7 @@ class Controller:
                     # verify server didn't send html page
                     if '<!DOCTYPE html>' not in changelog:
                         msg += '\n\n\n'
-                        msg += 'PyIDM Change Log:\n'
+                        msg += 'FireDM Change Log:\n'
                         msg += changelog
 
             res = self.get_user_response(msg, options)
@@ -1196,7 +1196,7 @@ class Controller:
         self._update_view(command='signal', signal_id=signal_id)
 
     def _auto_check_for_update(self):
-        """auto check for pyidm update"""
+        """auto check for firedm update"""
         if config.check_for_update:
             today = date.today()
             try:
@@ -1206,7 +1206,7 @@ class Controller:
 
             delta = today - last_check
             if delta.days >= config.update_frequency:
-                res = self.get_user_response(f'Check for PyIDM update?\nLast check was {delta.days} days ago',
+                res = self.get_user_response(f'Check for FireDM update?\nLast check was {delta.days} days ago',
                                              options=['Ok', 'Cancel'])
                 if res == 'Ok':
                     self._check_for_update()
@@ -1217,8 +1217,8 @@ class Controller:
     # public API for  a view / GUI (it shouldn't block to prevent gui freeze) ------------------------------------------
     def log_runtime_info(self):
         """Print useful information about the system"""
-        log('-' * 20, 'PyIDM', '-' * 20)
-        log('Starting PyIDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
+        log('-' * 20, 'FireDM', '-' * 20)
+        log('Starting FireDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
         log('operating system:', config.operating_system_info)
         log('Python version:', sys.version)
         log('current working directory:', config.current_directory)
@@ -1622,7 +1622,7 @@ class Controller:
 
     # region Application update
     def check_for_update(self, signal_id=None):
-        """check for newer version of PyIDM, youtube-dl, and youtube-dlc"""
+        """check for newer version of FireDM, youtube-dl, and youtube-dlc"""
         run_thread(self._check_for_update, signal_id)
 
     def auto_check_for_update(self):

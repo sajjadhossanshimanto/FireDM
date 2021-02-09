@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 

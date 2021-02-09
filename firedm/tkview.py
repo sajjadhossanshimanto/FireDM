@@ -1,5 +1,5 @@
 """
-    PyIDM
+    FireDM
 
     multi-connections internet download manager, based on "pyCuRL/curl", and "youtube_dl""
 
@@ -27,8 +27,8 @@ if __package__ is None:
     sys.path.insert(0, os.path.dirname(path))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-    __package__ = 'pyidm'
-    import pyidm
+    __package__ = 'firedm'
+    import firedm
 
 from .view import IView
 from .controller import Controller, set_option, get_option
@@ -2651,7 +2651,7 @@ class MainWindow(IView):
             self.width, self.height = config.DEFAULT_WINDOW_SIZE
 
         center_window(self.root, width=self.width, height=self.height)
-        self.root.title(f'PyIDM ver.{config.APP_VERSION}')
+        self.root.title(f'FireDM ver.{config.APP_VERSION}')
         self.main_frame=None
 
         # set window icon
@@ -2669,7 +2669,7 @@ class MainWindow(IView):
         s = ttk.Style()
         s.theme_use('default')
 
-        # apply pyidm theme
+        # apply firedm theme
         self.apply_theme(config.current_theme)
 
         self.create_main_widgets()
@@ -3128,10 +3128,10 @@ class MainWindow(IView):
             .grid(row=0, column=0, columnspan=2, sticky='w')
         tk.Label(update_frame, bg=bg, fg=fg, text='days', padx=5).grid(row=0, column=2, sticky='w')
 
-        # PyIDM update
-        self.pyidm_update_note = tk.StringVar()
-        self.pyidm_update_note.set(f'PyIDM version: {config.APP_VERSION}')
-        lbl(self.pyidm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
+        # FireDM update
+        self.firedm_update_note = tk.StringVar()
+        self.firedm_update_note.set(f'FireDM version: {config.APP_VERSION}')
+        lbl(self.firedm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
         Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
                command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
 
@@ -3773,7 +3773,7 @@ class MainWindow(IView):
             self.controller.schedule_start(uid=uid, video_idx=video_idx, target_date=dp.selected_date)
 
     def show_about_notes(self):
-        res = self.popup(about_notes, buttons=['Home', 'Help!', 'Close'], title='About PyIDM')
+        res = self.popup(about_notes, buttons=['Home', 'Help!', 'Close'], title='About FireDM')
         if res == 'Help!':
             open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
         elif res == 'Home':

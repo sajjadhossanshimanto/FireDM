@@ -1,5 +1,5 @@
 """
-    pyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
@@ -375,7 +375,7 @@ class DownloadItem:
 
     @property
     def temp_folder(self):
-        name = f'pyidm_{self.uid}'
+        name = f'firedm_{self.uid}'
         return os.path.join(self.folder, name)
 
     @property

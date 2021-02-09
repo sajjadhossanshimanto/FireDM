@@ -1,5 +1,5 @@
 """
-    pyIDM
+    FireDM
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
@@ -37,7 +37,7 @@ def open_update_link():
 
 def check_for_new_version():
     """
-    Check for new PyIDM version
+    Check for new FireDM version
 
     Return:
         changelog text or None
@@ -50,7 +50,7 @@ def check_for_new_version():
     try:
         if config.FROZEN:
             # use github API to get latest version
-            url = 'https://api.github.com/repos/pyidm/pyidm/releases/latest'
+            url = 'https://api.github.com/repos/firedm/firedm/releases/latest'
             buffer = download(url, verbose=False)
 
             if buffer:
@@ -61,13 +61,13 @@ def check_for_new_version():
 
         else:
             # check pypi version
-            latest_version, _ = get_pkg_latest_version('pyidm')
+            latest_version, _ = get_pkg_latest_version('firedm')
 
         if parse_version(latest_version) > parse_version(config.APP_VERSION):
             log('Found new version:', str(latest_version))
 
             # download change log file
-            url = 'https://github.com/pyIDM/pyIDM/raw/master/ChangeLog.txt'
+            url = 'https://github.com/pyIDM/FireDM/raw/master/ChangeLog.txt'
             buffer = download(url, verbose=False)  # get BytesIO object
 
             if buffer:
@@ -95,7 +95,7 @@ def get_pkg_latest_version(pkg, fetch_url=True):
                     </item>
 
     2- json, (slower and bigger file), send all info for the package
-        url pattern: f'https://pypi.org/pypi/{pkg}/json' e.g.    https://pypi.org/pypi/pyidm/json
+        url pattern: f'https://pypi.org/pypi/{pkg}/json' e.g.    https://pypi.org/pypi/firedm/json
         received json will be a dict with:
         keys = 'info', 'last_serial', 'releases', 'urls'
         releases = {'release_version': [{dict for wheel file}, {dict for tar file}], ...}
