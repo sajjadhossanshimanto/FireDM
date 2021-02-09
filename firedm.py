@@ -10,4 +10,4 @@
 
 from firedm import FireDM
 
-PyIDM.main()
+FireDM.main()
