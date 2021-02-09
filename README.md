@@ -137,7 +137,7 @@ Run FireDM without any installation (recommended)
       `git clone --depth 1 https://github.com/pyIDM/FireDM.git`
 
    - or get the source code from PyPi:  
-   navigate to https://pypi.org/project/pyIDM/#files and download a tar
+   navigate to https://pypi.org/project/firedm/#files and download a tar
    ball, example file name "FireDM-2020.3.22.tar.gz", then extract it
 
    - open your terminal or command prompt and navigate to firedm folder then type below command  
