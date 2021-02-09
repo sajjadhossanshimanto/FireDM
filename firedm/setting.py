@@ -9,6 +9,7 @@
 
 import os
 import json
+import shutil
 
 from . import config
 from . import downloaditem
@@ -43,32 +44,42 @@ config.global_sett_folder = get_global_sett_folder()
 
 def locate_setting_folder():
     """check local folder and global setting folder for setting.cfg file"""
+
     # look for previous setting file
-    try:
-        if 'setting.cfg' in os.listdir(config.current_directory):
-            return config.current_directory
-        elif 'setting.cfg' in os.listdir(config.global_sett_folder):
-            return config.global_sett_folder
-    except:
-        pass
+    if os.path.isfile(os.path.join(config.current_directory, 'setting.cfg')):
+        setting_folder = config.current_directory
+    elif os.path.isfile(os.path.join(config.global_sett_folder, 'setting.cfg')):
+        setting_folder = config.global_sett_folder
+    else:
+        # no setting file found will check local folder for writing permission, otherwise will return global sett folder
+        try:
+            folder = config.current_directory
+            with open(os.path.join(folder, 'test'), 'w') as test_file:
+                test_file.write('0')
+            os.unlink(os.path.join(folder, 'test'))
+            setting_folder = config.current_directory
 
-    # no setting file found will check local folder for writing permission, otherwise will return global sett folder
-    try:
-        folder = config.current_directory
-        with open(os.path.join(folder, 'test'), 'w') as test_file:
-            test_file.write('0')
-        os.unlink(os.path.join(folder, 'test'))
-        return config.current_directory
+        except (PermissionError, OSError):
+            log("No enough permission to store setting at local folder:", folder)
+            log('Global setting folder will be selected:', config.global_sett_folder)
 
-    except (PermissionError, OSError):
-        log("No enough permission to store setting at local folder:", folder)
-        log('Global setting folder will be selected:', config.global_sett_folder)
+            # create global setting folder if it doesn't exist
+            if not os.path.isdir(config.global_sett_folder):
+                os.mkdir(config.global_sett_folder)
 
-        # create global setting folder if it doesn't exist
-        if not os.path.isdir(config.global_sett_folder):
-            os.mkdir(config.global_sett_folder)
+            setting_folder = config.global_sett_folder
 
-        return config.global_sett_folder
+        # for compatibility with old project name 'PyIDM', will copy sett. files from old location
+        if config.current_directory != config.global_sett_folder:
+            pyidm_cfg_folder = config.global_sett_folder.replace('FireDM', 'PyIDM')
+            log('found settings files in old application folder:', pyidm_cfg_folder)
+            if os.path.isfile(os.path.join(pyidm_cfg_folder, 'setting.cfg')):
+                for filename in os.listdir(pyidm_cfg_folder):
+                    filepath = os.path.join(pyidm_cfg_folder, filename)
+                    shutil.copy(filepath, setting_folder)
+                    log('copied file:', filepath, 'to:', setting_folder)
+
+    return setting_folder
 
 
 config.sett_folder = locate_setting_folder()
