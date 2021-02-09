@@ -41,7 +41,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/pyIDM/FireDM ",
     packages=setuptools.find_packages(),
-    keywords="internet download manager youtube downloader pycurl curl youtube-dl",
+    keywords="internet download manager youtube hls pycurl curl youtube-dl tkinter",
     project_urls={
         'Source': 'https://github.com/pyIDM/FireDM',
         'Tracker': 'https://github.com/pyIDM/FireDM/issues',
