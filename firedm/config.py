@@ -25,7 +25,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'confirm_on_resume_all', 'confirm_on_stop_all', 'enable_captcha_workaround',
                  'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp',
-                 'use_playlist_numbers']
+                 'use_playlist_numbers', 'refresh_url_retries']
 
 
 # CONSTANTS
@@ -152,6 +152,8 @@ use_proxy_dns = False
 # use_cookies
 use_cookies = False
 cookie_file_path = ''
+
+refresh_url_retries = 1  # number of retries to refresh expired url when downloading a file, zero to disable
 
 # debugging ------------------------------------------------------------------------------------------------------------
 keep_temp = False  # keep temp files / folders after done downloading for debugging

@@ -907,7 +907,7 @@ class Controller:
                     return
 
                 # retry multiple times to download and auto refresh expired url
-                for n in range(3):
+                for n in range(config.refresh_url_retries + 1):
                     # start brain in a separate thread
                     if config.SIMULATOR:
                         t = Thread(target=self.download_simulator, daemon=True, args=(d,))
@@ -921,7 +921,7 @@ class Controller:
                     if d.status != Status.error:
                         break
 
-                    elif n == 2:
+                    elif n >= config.refresh_url_retries:
                         log('controller: too many connection errors', 'maybe network problem or expired link',
                             start='', sep='\n', showpopup=True)
                     else:  # try auto refreshing url

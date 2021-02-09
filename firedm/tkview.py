@@ -3106,6 +3106,9 @@ class MainWindow(IView):
                                       callback=ssl_disable_warning)
         ssl_cert_option.pack(anchor='w')
 
+        LabeledEntryOption(tab, 'Auto refreshing expired urls [Num of retries]: ', entry_key='refresh_url_retries',
+                           width=8, get_text_validator=lambda x: int(x)).pack(anchor='w')
+
         separator()
 
         # Debugging ----------------------------------------------------------------------------------------------------
