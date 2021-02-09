@@ -1,8 +1,8 @@
 ![PyPI - Format](https://img.shields.io/pypi/format/firedm?color=grey&label=PyPI) [![Downloads](https://pepy.tech/badge/pyidm)](https://pepy.tech/project/firedm)
 
-![GitHub All Releases](https://img.shields.io/github/downloads/firedm/firedm/total?color=blue&label=GitHub%20Releases)
+![GitHub All Releases](https://img.shields.io/github/downloads/pyidm/firedm/total?color=blue&label=GitHub%20Releases)
 
-![GitHub issues](https://img.shields.io/github/issues-raw/firedm/firedm?color=blue) - ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/firedm/firedm?color=blue)
+![GitHub issues](https://img.shields.io/github/issues-raw/pyidm/firedm?color=blue) - ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/pyidm/firedm?color=blue)
 
 
 FireDM is a python open source (Internet Download Manager) 
