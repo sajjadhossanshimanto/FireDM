@@ -1,7 +1,10 @@
+2021.2.9:
+- Change Application name from 'PyIDM' to 'FireDM'.
 - [critical] Fix support for multiple video streaming websites, issue #140
 - [Gui] add option to control time-stamp feature, issue #215
 - [Gui] fix total speed format.
 - [playlist] add option to include numbers in playlist filenames, issue #209.
+- [Network] Add option to control num of retries for auto url refreshing.
 
 
 2021.2.7:
