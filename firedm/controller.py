@@ -849,6 +849,18 @@ class Controller:
                     delete_file(d.target_file)
         # ------------------------------------------------------------------
 
+        # warning message for non-resumable downloads
+        if not self.d.resumable:
+            res = self.get_user_response("Warning! \n"
+                                         "This remote server doesn't support chunk downloading, \n"
+                                         "if for any reason download stops resume won't be available and this file "
+                                         "will be downloaded  \n"
+                                         "from the beginning, \n"
+                                         'Are you sure you want to continue??',
+                                         options=['Yes', 'Cancel'])
+            if res != 'Yes':
+                return False
+
         # if above checks passed will return True
         return True
 

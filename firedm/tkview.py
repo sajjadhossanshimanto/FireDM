@@ -3326,14 +3326,6 @@ class MainWindow(IView):
 
                 AudioWindow(self, menu, idx)
 
-        # warning message for non-resumable downloads
-        res = self.popup('Warning!', "This remote server doesn't support chunk downloading,",
-                         "if for any reason download stops resume won't be available and this file will be downloaded "
-                         "from the beginning,", 'Are you sure you want to continue??',
-                         buttons=['Yes', 'Cancel'], title='Download Warning!')
-        if res != 'Yes':
-            return
-
         # download
         self.download(name=self.file_properties.name.get(), folder=self.file_properties.folder.get())
 
