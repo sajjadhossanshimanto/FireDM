@@ -83,8 +83,8 @@ RCM_ABG = None
 RCM_AFG = None
 
 # titlebar
-TITLE_BAR_BG = '#3e474e'
-TITLE_BAR_FG = 'white'
+TITLE_BAR_BG = None
+TITLE_BAR_FG = None
 
 
 themes_table = {
@@ -126,7 +126,7 @@ themes_table = {
         'RCM_AFG': 'white',
 
         # title bar
-        'TITLE_BAR_BG': '#006cff', #'#3e474e'
+        'TITLE_BAR_BG': '#006cff',
         'TITLE_BAR_FG': 'white'
 
     },
@@ -136,21 +136,21 @@ themes_table = {
               "BTN_FG": "black", "BTN_HBG": "#0c1c18", "BTN_ABG": "#0c1c18", "BTN_AFG": "white", "HDG_BG": "#ffffff",
               "HDG_FG": "black", "THUMBNAIL_BD": "#0c1c18", "SBAR_BG": "#313328", "SBAR_FG": "white",
               "RCM_BG": "#313328", "RCM_FG": "white", "RCM_ABG": "#ffffff", "RCM_AFG": "black",
-              "TITLE_BAR_BG": "#006cff", "TITLE_BAR_FG": "white"},
+              "TITLE_BAR_BG": "#ffffff", "TITLE_BAR_FG": "black"},
     "dark2": {"MAIN_BG": "#2b2b2b", "MAIN_FG": "white", "SF_BG": "#3c3f41", "SF_FG": "white", "SF_BTN_BG": "#ffffff",
               "SF_CHKMARK": "#ffffff", "THUMBNAIL_BG": "#3c3f41", "THUMBNAIL_FG": "white", "PBAR_BG": "#353535",
               "PBAR_FG": "white", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#3c3f41", "BTN_BG": "#ffffff",
               "BTN_FG": "black", "BTN_HBG": "#3c3f41", "BTN_ABG": "#3c3f41", "BTN_AFG": "white", "HDG_BG": "#ffffff",
               "HDG_FG": "black", "THUMBNAIL_BD": "white", "SBAR_BG": "#2b2b2b", "SBAR_FG": "white", "RCM_BG": "#2b2b2b",
-              "RCM_FG": "white", "RCM_ABG": "#ffffff", "RCM_AFG": "black", "TITLE_BAR_BG": "#006cff",
-              "TITLE_BAR_FG": "white"},
+              "RCM_FG": "white", "RCM_ABG": "#ffffff", "RCM_AFG": "black", "TITLE_BAR_BG": "#ffffff",
+              "TITLE_BAR_FG": "black"},
     "dark": {"MAIN_BG": "#1c1c21", "MAIN_FG": "white", "SF_BG": "#000300", "SF_FG": "white", "SF_BTN_BG": "#d9dc4b",
              "SF_CHKMARK": "#d9dc4b", "THUMBNAIL_BG": "#000300", "THUMBNAIL_FG": "#d9dc4b", "PBAR_BG": "#26262b",
              "PBAR_FG": "#d9dc4b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#000300", "BTN_BG": "#d9dc4b",
              "BTN_FG": "black", "BTN_HBG": "#000300", "BTN_ABG": "#000300", "BTN_AFG": "white", "HDG_BG": "#d9dc4b",
              "HDG_FG": "black", "THUMBNAIL_BD": "#d9dc4b", "SBAR_BG": "#1c1c21", "SBAR_FG": "white",
              "RCM_BG": "#1c1c21", "RCM_FG": "white", "RCM_ABG": "#d9dc4b", "RCM_AFG": "black",
-             "TITLE_BAR_BG": "#006cff", "TITLE_BAR_FG": "white"}
+             "TITLE_BAR_BG": "#d9dc4b", "TITLE_BAR_FG": "black"}
 }
 
 # hold all user defined themes, previously created themes will be loaded from disk
@@ -496,6 +496,10 @@ class ThemeEditor(tk.Toplevel):
         set_font('RCM_FG', 'RCM_BG')
         set_key('RCM_ABG', 'BTN_BG')
         set_font('RCM_AFG', 'RCM_ABG')
+
+        # title bar
+        set_key('TITLE_BAR_BG', 'BTN_BG')
+        set_key('TITLE_BAR_FG', 'BTN_FG')
 
 
 class Button(tk.Button):
