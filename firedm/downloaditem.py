@@ -471,9 +471,18 @@ class DownloadItem:
 
         # get file name
         name = ''
-        if 'content-disposition' in headers:  # example content-disposition : attachment; filename=ffmpeg.zip
+        if 'content-disposition' in headers:
+            # example 'content-disposition': 'attachment; filename="proxmox-ve_6.3-1.iso"; modification-date="wed, 25 nov 2020 16:51:19 +0100"; size=852299776;'
+            # when both "filename" and "filename*" are present in a single header field value, "filename*" should be used
+            # more info at https://tools.ietf.org/html/rfc6266
+
             try:
-                name = headers['content-disposition'].split('=')[1].strip('"')
+                content = headers['content-disposition'].split(';')
+                match = [x for x in content if 'filename*' in x]
+                if not match:
+                    match = [x for x in content if 'filename' in x]
+
+                name = match[0].split('=')[1].strip('"')
             except:
                 pass
 
