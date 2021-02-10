@@ -1289,8 +1289,8 @@ class FileProperties(ttk.Frame):
             self.type.set(type_)
         if subtype_list:
             self.subtype.set(', '.join(subtype_list))
-        if resumable:
-            self.resumable.set(f'- Resumable: {"yes" if resumable else "no"}')
+
+        self.resumable.set(f'- Resumable: {"Yes" if resumable else "NO!"}')
 
     def reset(self):
         self.name.set('...')
@@ -3325,6 +3325,14 @@ class MainWindow(IView):
                 idx = menu.index(selected_audio) if selected_audio else 0
 
                 AudioWindow(self, menu, idx)
+
+        # warning message for non-resumable downloads
+        res = self.popup('Warning!', "This remote server doesn't support chunk downloading,",
+                         "if for any reason download stops resume won't be available and this file will be downloaded "
+                         "from the beginning,", 'Are you sure you want to continue??',
+                         buttons=['Yes', 'Cancel'], title='Download Warning!')
+        if res != 'Yes':
+            return
 
         # download
         self.download(name=self.file_properties.name.get(), folder=self.file_properties.folder.get())
