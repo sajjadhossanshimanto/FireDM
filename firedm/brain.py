@@ -423,7 +423,6 @@ def thread_manager(d):
         if time.time() - sl_timer < config.max_connections * errors_check_interval:
             worker_sl = (config.speed_limit // config.max_connections) if config.max_connections else 0
         else:
-            # normal calculations
             worker_sl = (config.speed_limit // allowable_connections) if allowable_connections else 0
 
         # Threads ------------------------------------------------------------------------------------------------------
@@ -433,8 +432,9 @@ def thread_manager(d):
                 if job_list:
                     seg = job_list.pop()
                 else:
-                    # share segments and help other workers
-                    remaining_segs = [seg for seg in d.segments if seg.remaining > config.segment_size]
+                    # Auto file segmentation, share segments and help other workers
+                    remaining_segs = [seg for seg in d.segments if seg.range is not None
+                                      and seg.remaining > config.segment_size]
                     remaining_segs = sorted(remaining_segs, key=lambda seg: seg.remaining)
                     # log('x'*20, 'check remaining')
 
