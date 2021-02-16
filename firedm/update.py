@@ -67,7 +67,7 @@ def check_for_new_version():
             log('Found new version:', str(latest_version))
 
             # download change log file
-            url = 'https://github.com/pyIDM/FireDM/raw/master/ChangeLog.txt'
+            url = 'https://github.com/firedm/FireDM/raw/master/ChangeLog.txt'
             buffer = download(url, verbose=False)  # get BytesIO object
 
             if buffer:

@@ -46,7 +46,7 @@ class Observable:
         except:
             old_value = None
 
-        # normalize folder path https://github.com/pyIDM/FireDM/issues/185
+        # normalize folder path https://github.com/firedm/FireDM/issues/185
         if key == 'folder':
             value = os.path.normpath(value)
 

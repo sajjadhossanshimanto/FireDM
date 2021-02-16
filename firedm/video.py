@@ -877,7 +877,7 @@ def download_m3u8(url, http_headers=config.http_headers):
 def parse_subtitles(m3u8_doc, m3u8_url):
     # check subtitles in master m3u8, for some reasons youtube-dl doesn't recognize subtitles in m3u8 files
     # link: https://www.dplay.co.uk/show/ghost-loop/video/dead-and-breakfast/EHD_297528B
-    # github issue: https://github.com/pyIDM/FireDM/issues/77
+    # github issue: https://github.com/firedm/FireDM/issues/77
     # if youtube-dl fixes this problem in future, there is no need for this batch
     subtitles = {}
     lines = m3u8_doc.splitlines()

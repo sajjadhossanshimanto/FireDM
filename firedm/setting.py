@@ -71,11 +71,11 @@ def locate_setting_folder():
 
         # for compatibility with old project name 'PyIDM', will copy sett. files from old location
         if config.current_directory != config.global_sett_folder:
-            pyidm_cfg_folder = config.global_sett_folder.replace('FireDM', 'PyIDM')
-            log('found settings files in old application folder:', pyidm_cfg_folder)
-            if os.path.isfile(os.path.join(pyidm_cfg_folder, 'setting.cfg')):
-                for filename in os.listdir(pyidm_cfg_folder):
-                    filepath = os.path.join(pyidm_cfg_folder, filename)
+            old_cfg_folder = config.global_sett_folder.replace('FireDM', 'PyIDM')
+            log('found settings files in old application folder:', old_cfg_folder)
+            if os.path.isfile(os.path.join(old_cfg_folder, 'setting.cfg')):
+                for filename in os.listdir(old_cfg_folder):
+                    filepath = os.path.join(old_cfg_folder, filename)
                     shutil.copy(filepath, setting_folder)
                     log('copied file:', filepath, 'to:', setting_folder)
 
@@ -262,3 +262,7 @@ def save_setting():
             log('setting saved in:', file)
     except Exception as e:
         log('save_setting() > error', e)
+
+
+
+

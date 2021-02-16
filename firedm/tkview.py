@@ -3782,9 +3782,9 @@ class MainWindow(IView):
     def show_about_notes(self):
         res = self.popup(about_notes, buttons=['Home', 'Help!', 'Close'], title='About FireDM')
         if res == 'Help!':
-            open_webpage('https://github.com/pyIDM/PyIDM/blob/master/docs/user_guide.md')
+            open_webpage('https://github.com/firedm/FireDM/blob/master/docs/user_guide.md')
         elif res == 'Home':
-            open_webpage('https://github.com/pyIDM/PyIDM/')
+            open_webpage('https://github.com/firedm/FireDM')
 
     @busy_callback
     def check_for_update(self):

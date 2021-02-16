@@ -501,7 +501,7 @@ class Controller:
             # handle types: url and url transparent
             if _type in ('url', 'url_transparent'):
                 # handle youtube user links ex: https://www.youtube.com/c/MOTORIZADO/videos
-                # issue: https://github.com/pyIDM/FireDM/issues/146
+                # issue: https://github.com/firedm/FireDM/issues/146
                 # info: {'_type': 'url', 'url': 'https://www.youtube.com/playlist?list=UUK32F9z7s_JhACkUdVoWdag',
                 # 'ie_key': 'YoutubePlaylist', 'extractor': 'youtube:user', 'webpage_url': 'https://www.youtube.com/c/MOTORIZADO/videos',
                 # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
@@ -1041,10 +1041,10 @@ class Controller:
         # ends with 86 for 32 bit and 64 for 64 bit i.e. Win7-64: AMD64 and Vista-32: x86
         if platform.machine().endswith('64'):
             # 64 bit link
-            url = 'https://github.com/pyIDM/PyIDM/releases/download/extra/ffmpeg_64bit.exe'
+            url = 'https://github.com/firedm/FireDM/releases/download/extra/ffmpeg_64bit.exe'
         else:
             # 32 bit link
-            url = 'https://github.com/pyIDM/PyIDM/releases/download/extra/ffmpeg_32bit.exe'
+            url = 'https://github.com/firedm/FireDM/releases/download/extra/ffmpeg_32bit.exe'
 
         log('downloading: ', url)
 
@@ -1162,7 +1162,7 @@ class Controller:
                 log('getting FireDM changelog ....')
 
                 # download change log file
-                url = 'https://github.com/pyIDM/pyIDM/raw/master/ChangeLog.txt'
+                url = 'https://github.com/firedm/FireDM/raw/master/ChangeLog.txt'
                 buffer = download(url, verbose=False)  # get BytesIO object
 
                 if buffer:

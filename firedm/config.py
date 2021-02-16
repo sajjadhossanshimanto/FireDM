@@ -39,8 +39,8 @@ DEFAULT_CONNECTIONS = 10
 # minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.
 DEFAULT_SEGMENT_SIZE = 204800  # 204800 bytes == 200 KB
 DEFAULT_CONCURRENT_CONNECTIONS = 3
-APP_URL = 'https://github.com/pyIDM/FireDM'
-LATEST_RELEASE_URL = 'https://github.com/pyIDM/FireDM/releases/latest'
+APP_URL = 'https://github.com/firedm/FireDM'
+LATEST_RELEASE_URL = 'https://github.com/firedm/FireDM/releases/latest'
 
 # headers,
 DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3721.3'

@@ -22,9 +22,9 @@ Conditions and usage restrictions:
 ------------------------------------------------------------------------
 
 your feedback is most welcomed on:
-https://github.com/pyIDM/FireDM
+https://github.com/firedm/FireDM
 email: info.pyidm@gmail.com
 
 Author,
 Mahmoud Elshahat
-2019-2020"""
+2019-2021"""
