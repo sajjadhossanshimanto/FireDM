@@ -10,6 +10,7 @@
         Main application gui design by tkinter
 """
 import datetime
+import re
 import time
 import tkinter as tk
 import awesometkinter as atk
@@ -200,6 +201,10 @@ def url_watchdog(root):
     old_data = ''
     new_data = ''
 
+    # url regex
+    # capture urls starts with: http, https, ftp, ftps, file, and followed by ://
+    url_reg = re.compile(r"^(http|https|ftp|ftps|file)://")
+
     while True:
         # monitor global termination flag
         if config.shutdown:
@@ -214,7 +219,7 @@ def url_watchdog(root):
 
         # url processing
         if config.monitor_clipboard and new_data != old_data:
-            if new_data.strip().startswith('http'):
+            if url_reg.match(new_data.strip()):
                 root.event_generate('<<urlChangeEvent>>', when="tail")
                 print('url_watchdog, new url: ', new_data)
 
