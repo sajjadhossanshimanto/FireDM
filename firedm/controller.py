@@ -850,7 +850,7 @@ class Controller:
         # ------------------------------------------------------------------
 
         # warning message for non-resumable downloads
-        if not self.d.resumable:
+        if not d.resumable:
             res = self.get_user_response("Warning! \n"
                                          "This remote server doesn't support chunk downloading, \n"
                                          "if for any reason download stops resume won't be available and this file "
