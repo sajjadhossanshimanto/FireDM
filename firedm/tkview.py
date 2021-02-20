@@ -2660,8 +2660,11 @@ class MainWindow(IView):
             self.width, self.height = config.DEFAULT_WINDOW_SIZE
 
         center_window(self.root, width=self.width, height=self.height)
+
+        # prevent window resize to zero
+        self.root.minsize(100, 100)
         self.root.title(f'FireDM ver.{config.APP_VERSION}')
-        self.main_frame=None
+        self.main_frame = None
 
         # set window icon
         global app_icon_img, popup_icon_img
