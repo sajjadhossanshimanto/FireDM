@@ -92,7 +92,7 @@ Run FireDM without any installation (recommended)
             
         3- install dependencies:
         
-            sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk
+            sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus
             
         4- install fonts
         
