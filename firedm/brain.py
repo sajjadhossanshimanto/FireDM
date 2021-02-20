@@ -331,6 +331,7 @@ def thread_manager(d):
     error_timer2 = 0
     conn_increase_interval = 0.5
     errors_check_interval = 0.2  # in seconds
+    segmentation_timer = 0
 
     # speed limit
     sl_timer = time.time()
@@ -367,7 +368,6 @@ def thread_manager(d):
             # empty queue
             for _ in range(config.jobs_q.qsize()):
                 _ = config.jobs_q.get()
-                # job_list.append(job)
 
         # create new workers if user increases max_connections while download is running
         if config.max_connections > len(all_workers):
@@ -431,10 +431,16 @@ def thread_manager(d):
                 seg = None
                 if job_list:
                     seg = job_list.pop()
-                else:
-                    # Auto file segmentation, share segments and help other workers
+
+                # Auto file segmentation, share segments and help other workers
+                elif time.time() - segmentation_timer >= 1:
+                    segmentation_timer = time.time()
+
+                    # calculate minimum segment size based on speed, e.g. for 3 MB/s speed, min seg. size will be 300Kb
+                    min_seg_size = max(config.segment_size, 0.1 * d.speed)
+
                     remaining_segs = [seg for seg in d.segments if seg.range is not None
-                                      and seg.remaining > config.segment_size]
+                                      and seg.remaining > min_seg_size * 2]
                     remaining_segs = sorted(remaining_segs, key=lambda seg: seg.remaining)
                     # log('x'*20, 'check remaining')
 
@@ -443,7 +449,7 @@ def thread_manager(d):
 
                         # range boundaries
                         start = current_seg.range[0]
-                        middle = start + current_seg.remaining // 2
+                        middle = start + current_seg.current_size + current_seg.remaining // 2
                         end = current_seg.range[1]
 
                         # assign new range for current segment
@@ -456,15 +462,16 @@ def thread_manager(d):
 
                         # add to segments
                         d.segments.append(seg)
-                        log('-' * 10, f'new segment {seg.basename} created from {current_seg.basename} '
-                                      f'with range {current_seg.range}', log_level=3)
+                        log('-' * 10, f'new segment: {seg.basename} {seg.range}, updated seg {current_seg.basename} '
+                                      f'{current_seg.range}, minimum seg size:{size_format(min_seg_size)}', log_level=3)
 
                 if seg and not seg.downloaded and not seg.locked:
                     worker = free_workers.pop()
                     # sometimes download chokes when remaining only one worker, will set higher minimum speed and
                     # less timeout for last workers batch
                     if len(job_list) + config.jobs_q.qsize() <= allowable_connections:
-                        minimum_speed, timeout = 20 * 1024, 10  # worker will abort if speed less than 20 KB for 10 seconds
+                        # worker will abort if speed less than 20 KB for 10 seconds
+                        minimum_speed, timeout = 20 * 1024, 10
                     else:
                         minimum_speed = timeout = None  # default as in utils.set_curl_option
 

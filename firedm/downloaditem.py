@@ -268,9 +268,9 @@ class DownloadItem:
                 delta = self.downloaded - self.prev_downloaded_value
                 self.prev_downloaded_value = self.downloaded
                 _speed = delta / time_passed
-
-                # to get a stable speed reading will use an average of multiple speed readings
-                self.speed_buffer.append(_speed)
+                if _speed >= 0:
+                    # to get a stable speed reading will use an average of multiple speed readings
+                    self.speed_buffer.append(_speed)
                 avg_speed = sum(self.speed_buffer) / len(self.speed_buffer)
                 if len(self.speed_buffer) >= 10:
                     self.speed_buffer.popleft()

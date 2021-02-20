@@ -310,7 +310,8 @@ class Controller:
             # print('controller._update_view:', kwargs)
         except Exception as e:
             log('controller._update_view()> error, ', e)
-            # raise e
+            if config.TEST_MODE:
+                raise e
 
     def _report_d(self, d, **kwargs):
         """notify view of all properties of a download item

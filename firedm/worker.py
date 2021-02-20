@@ -352,11 +352,12 @@ class Worker:
 
         # check if we getting over sized
         if self.seg.current_size > self.seg.size > 0:
-            log('Seg', self.seg.basename, 'oversized:',
+            oversize = self.seg.current_size - self.seg.size
+            log('Seg', self.seg.basename, 'oversized:', size_format(oversize),
                 'current segment size:', self.seg.current_size, ' - worker', self.tag, log_level=3)
 
             # re-adjust value of total downloaded data
-            self.d.downloaded -= self.seg.current_size - self.seg.size
+            self.d.downloaded -= oversize
             return -1  # abort
 
 

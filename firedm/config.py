@@ -27,7 +27,6 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp',
                  'use_playlist_numbers', 'refresh_url_retries']
 
-
 # CONSTANTS
 APP_NAME = 'FireDM'
 APP_VERSION = __version__
@@ -37,7 +36,7 @@ DEFAULT_THEME = 'dark'
 DEFAULT_CONNECTIONS = 10
 
 # minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.
-DEFAULT_SEGMENT_SIZE = 204800  # 204800 bytes == 200 KB
+DEFAULT_SEGMENT_SIZE = 102400  # 100 KB
 DEFAULT_CONCURRENT_CONNECTIONS = 3
 APP_URL = 'https://github.com/firedm/FireDM'
 LATEST_RELEASE_URL = 'https://github.com/firedm/FireDM/releases/latest'
