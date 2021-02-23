@@ -202,8 +202,8 @@ def url_watchdog(root):
     new_data = ''
 
     # url regex
-    # capture urls starts with: http, https, ftp, ftps, file, and followed by ://
-    url_reg = re.compile(r"^(http|https|ftp|ftps|file)://")
+    # capture urls with: http, ftp, and file protocols
+    url_reg = re.compile(r"^(https?|ftps?|file)://")
 
     while True:
         # monitor global termination flag
