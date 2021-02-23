@@ -12,6 +12,7 @@
 # todo: change docstring to google format and clean unused code
 
 import os
+import time
 import pycurl
 
 from .config import Status, error_q, jobs_q, max_seg_retries
@@ -29,7 +30,8 @@ class Worker:
         self.file = None
         self.mode = 'wb'  # file opening mode default to new write binary
 
-        self.downloaded = 0
+        self.buffer = 0
+        self.timer1 = 0
 
         # connection parameters
         self.c = pycurl.Curl()
@@ -83,7 +85,7 @@ class Worker:
         # reset variables
         self.file = None
         self.mode = 'wb'  # file opening mode default to new write binary
-        self.downloaded = 0
+        self.buffer = 0
         self.resume_range = None
         self.headers = {}
 
@@ -253,6 +255,11 @@ class Worker:
         # report server error to thread manager, to dynamically control connections number
         error_q.put(description)
 
+    def report_download(self, value):
+        """report downloaded to DownloadItem"""
+        if isinstance(value, (int, float)):
+            self.d.downloaded += value
+
     def run(self):
         try:
 
@@ -303,6 +310,10 @@ class Worker:
                 self.report_error(repr(e))
 
         finally:
+            # report download
+            self.report_download(self.buffer)
+            self.buffer = 0
+
             # close segment file handle
             if self.file:
                 self.file.close()
@@ -345,10 +356,13 @@ class Worker:
         # write to file
         self.file.write(data)
 
-        self.downloaded += len(data)
+        self.buffer += len(data)
 
         # report to download item
-        self.d.downloaded += len(data)
+        if time.time() - self.timer1 >= 1:
+            self.timer1 = time.time()
+            self.report_download(self.buffer)
+            self.buffer = 0
 
         # check if we getting over sized
         if self.seg.current_size > self.seg.size > 0:
@@ -357,7 +371,8 @@ class Worker:
                 'current segment size:', self.seg.current_size, ' - worker', self.tag, log_level=3)
 
             # re-adjust value of total downloaded data
-            self.d.downloaded -= oversize
+            self.report_download(-oversize)
+            # self.d.downloaded -= oversize
             return -1  # abort
 
 
