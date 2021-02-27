@@ -988,11 +988,16 @@ class SideFrame(tk.Frame):
             tab_name (str): button or tab name e.g. Home, Settings, etc
         """
 
-        for frame in self.tabs_mapping.values():
-            frame.grid_remove()
-
         try:
+            # do nothing if current tab already selected
+            if self.tabs_mapping[tab_name].winfo_viewable():
+                return
+
             current_frame = self.tabs_mapping[tab_name]
+            for frame in self.tabs_mapping.values():
+                if frame is not current_frame:
+                    frame.grid_remove()
+
             current_frame.grid(row=1, column=2, sticky='ewns')
             self.activate_checkmark(tab_name)
         except:

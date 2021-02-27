@@ -1076,7 +1076,7 @@ class Controller:
                 d.name = f'{vid_idx + 1}- {d.name}'
 
             run_thread(self._download, d, silent=True)
-            time.sleep(0.1)
+            time.sleep(0.5)
 
             if subtitles:
                 self.download_subtitles(subtitles, d=d)
