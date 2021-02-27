@@ -2158,7 +2158,7 @@ class PlaylistWindow(tk.Toplevel):
 
         # update selected streams
         for vid_idx in self.selected_videos:
-            menu = self.stream_menus[vid_idx]
+            menu = self.stream_menus.get(vid_idx, [])
 
             for s_idx, s_name in enumerate(menu):
                 if s_name.startswith(self.master_selection):
