@@ -3456,13 +3456,21 @@ class MainWindow(IView):
             return
 
         deleted = []
+        # remove from gui
         for uid, item in self.d_items.items():
             if item.selected.get():
                 deleted.append(uid)
                 item.destroy()
-                self.controller.delete(uid)
 
         self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
+
+        # reset select all
+        self.select_all_var.set(False)
+        self.update_selected_count()
+
+        # actual DownloadItem remove by controller
+        for uid in deleted:
+            self.controller.delete(uid)
 
     def delete_all(self):
         """remove all download items from downloads tab and delete all their temp files, completed files on the disk
@@ -3493,7 +3501,7 @@ class MainWindow(IView):
         """update the number of selected download items and display it on a label in downloads tab"""
 
         count = len([item for item in self.d_items.values() if item.selected.get()])
-        self.selected_count['text'] = f'(Selected: {count} of {len(self.d_items)})'
+        self.selected_count['text'] = f'(Selected: {count} of {len(self.d_items)})' if len(self.d_items) else ''
 
     # endregion
 
