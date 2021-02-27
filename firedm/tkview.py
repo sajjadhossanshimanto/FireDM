@@ -982,23 +982,23 @@ class SideFrame(tk.Frame):
         selected_btn.checkmark.config(background=self.checkmark_color)
 
     def select_tab(self, tab_name):
-        """remove all frames and grid only the selected tab / frame in main frame
+        """ungrid all tabs(frames) and grid only the selected tab (frame) in main frame
 
         Args:
-            tab_name (str): button or tab name e.g. Home, Settings, etc
+            tab_name (str): tab name e.g. Home, Settings, etc
         """
 
         try:
-            # do nothing if current tab already selected
+            # do nothing if tab already selected
             if self.tabs_mapping[tab_name].winfo_viewable():
                 return
 
-            current_frame = self.tabs_mapping[tab_name]
-            for frame in self.tabs_mapping.values():
-                if frame is not current_frame:
-                    frame.grid_remove()
+            selected_tab = self.tabs_mapping[tab_name]
+            for tab in self.tabs_mapping.values():
+                if tab is not selected_tab:
+                    tab.grid_remove()
 
-            current_frame.grid(row=1, column=2, sticky='ewns')
+            selected_tab.grid(row=1, column=2, sticky='ewns')
             self.activate_checkmark(tab_name)
         except:
             pass
