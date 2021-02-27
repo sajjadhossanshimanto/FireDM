@@ -743,14 +743,18 @@ class Controller:
                     self._download_ffmpeg()
                 return False
 
-        # validate destination folder for existence and permissions
         # in case of missing download folder value will fallback to current download folder
         folder = d.folder or config.download_folder
+
+        # validate destination folder for existence and permissions
         try:
+            # write test file to download folder
             test_file_path = os.path.join(folder, 'test_file_.firedm')
-            with open(test_file_path, 'w') as f:
-                f.write('0')
-            delete_file(test_file_path)
+            # skip test in case test_file already created by another thread
+            if not os.path.isfile(test_file_path):
+                with open(test_file_path, 'w') as f:
+                    f.write('0')
+                delete_file(test_file_path)
 
             # update download item
             d.folder = folder
