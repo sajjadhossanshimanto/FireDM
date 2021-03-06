@@ -56,7 +56,7 @@ http_headers = {
 DEFAULT_LOG_LEVEL = 2
 
 youtube_dl_version = None
-youtube_dlc_version = None
+yt_dlp_version = None
 
 TEST_MODE = False
 SIMULATOR = False
@@ -113,7 +113,7 @@ window_size = DEFAULT_WINDOW_SIZE
 # video / audio --------------------------------------------------------------------------------------------------------
 # youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.set_interrupt_switch()
 ytdl_abort = False
-video_extractors_list = ['youtube_dl', 'youtube_dlc']
+video_extractors_list = ['youtube_dl', 'yt_dlp']
 active_video_extractor = 'youtube_dl'
 show_thumbnail = True  # auto preview video thumbnail at main tab
 download_thumbnail = False

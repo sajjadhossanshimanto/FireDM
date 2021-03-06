@@ -25,7 +25,7 @@ from .utils import (log, validate_file_name, get_headers, size_format, run_comma
 ytdl = None  # youtube-dl will be imported in a separate thread to save loading time
 
 youtube_dl = None  # youtube-dl will be imported in a separate thread to save loading time
-youtube_dlc = None  # youtube-dlc will be imported in a separate thread to save loading time
+yt_dlp = None  # yt_dlp will be imported in a separate thread to save loading time
 
 
 class Logger(object):
@@ -529,7 +529,7 @@ def load_extractor_engines(reload=False):
         reload (bool): if true it will reload modules instead of importing, needed after modules update
     """
 
-    global youtube_dl, youtube_dlc
+    global youtube_dl, yt_dlp
 
     # youtube-dl ----------------------------------------------------------------------------------------------------
     start = time.time()
@@ -545,19 +545,19 @@ def load_extractor_engines(reload=False):
     load_time = time.time() - start
     log(f'youtube_dl version: {config.youtube_dl_version}, load_time= {int(load_time)} seconds')
 
-    # youtube-dlc ----------------------------------------------------------------------------------------------------
+    # yt_dlp ----------------------------------------------------------------------------------------------------
     start = time.time()
 
-    if reload and youtube_dlc:
-        importlib.reload(youtube_dlc)
+    if reload and yt_dlp:
+        importlib.reload(yt_dlp)
     else:
-        import youtube_dlc
+        import yt_dlp
 
-    config.youtube_dlc_version = youtube_dlc.version.__version__
+    config.yt_dlp_version = yt_dlp.version.__version__
 
     # calculate loading time
     load_time = time.time() - start
-    log(f'youtube_dlc version: {config.youtube_dlc_version}, load_time= {int(load_time)} seconds')
+    log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds')
 
     # set interrupt / kill switch
     set_interrupt_switch()
@@ -571,18 +571,18 @@ def load_extractor_engines(reload=False):
 
 
 def set_default_extractor(extractor=None):
-    """set default extractor engine, e.g. select between youtube-dl and youtube-dlc"""
+    """set default extractor engine, e.g. select between youtube-dl and yt_dlp"""
     extractor = extractor or config.active_video_extractor
 
     global ytdl
-    ytdl = youtube_dl if extractor == 'youtube_dl' else youtube_dlc
+    ytdl = youtube_dl if extractor == 'youtube_dl' else yt_dlp
     log('set default extractor engine to:', extractor, ytdl)
 
 
 def set_interrupt_switch():
-    # override urlopen in Youtube-dl or youtube-dlc for interrupting session anytime
+    # override urlopen in Youtube-dl or yt_dlp for interrupting session anytime
 
-    global youtube_dl, youtube_dlc
+    global youtube_dl, yt_dlp
 
     def urlopen_decorator(func):
         def newfunc(self, *args):
@@ -596,7 +596,7 @@ def set_interrupt_switch():
 
         return newfunc
 
-    for pkg in (youtube_dl, youtube_dlc):
+    for pkg in (youtube_dl, yt_dlp):
         try:
             pkg.YoutubeDL.urlopen = urlopen_decorator(pkg.YoutubeDL.urlopen)
         except Exception as e:

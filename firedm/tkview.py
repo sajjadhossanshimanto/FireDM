@@ -3155,18 +3155,18 @@ class MainWindow(IView):
         Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
                command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
 
-        # youtube-dl and youtube-dlc
+        # youtube-dl and yt_dlp
         self.youtube_dl_update_note = tk.StringVar()
         self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version}')
         lbl(self.youtube_dl_update_note).grid(row=2, column=1, columnspan=2, sticky='w')
         Button(update_frame, text='Rollback update',
                command=lambda: self.rollback_pkg_update('youtube_dl')).grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
 
-        self.youtube_dlc_update_note = tk.StringVar()
-        self.youtube_dlc_update_note.set(f'youtube-dlc version: {config.youtube_dlc_version}')
-        lbl(self.youtube_dlc_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
+        self.yt_dlp_update_note = tk.StringVar()
+        self.yt_dlp_update_note.set(f'yt_dlp version: {config.yt_dlp_version}')
+        lbl(self.yt_dlp_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
         Button(update_frame, text='Rollback update',
-               command=lambda: self.rollback_pkg_update('youtube_dlc')).grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
+               command=lambda: self.rollback_pkg_update('yt_dlp')).grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
 
         # progressbar while updating packages
         self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=100, fg=PBAR_FG, text_bg=bg,
@@ -3706,16 +3706,16 @@ class MainWindow(IView):
                 time.sleep(0.01)
 
     def update_youtube_dl_info(self):
-        """write youtube-dl and youtube-dlc version once it gets imported"""
+        """write youtube-dl and yt_dlp version once it gets imported"""
 
         self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version or "Loading ... "}')
-        self.youtube_dlc_update_note.set(f'youtube-dlc version: {config.youtube_dlc_version or "Loading ... "}')
+        self.yt_dlp_update_note.set(f'yt_dlp version: {config.yt_dlp_version or "Loading ... "}')
 
-        if not all((config.youtube_dl_version, config.youtube_dlc_version)):
+        if not all((config.youtube_dl_version, config.yt_dlp_version)):
             self.root.after(1000, self.update_youtube_dl_info)
 
     def rollback_pkg_update(self, pkg):
-        """restore previous package version e.g. youtube-dl and youtube-dlc"""
+        """restore previous package version e.g. youtube-dl and yt_dlp"""
         response = self.popup(f'Delete last {pkg} update and restore previous version?', buttons=['Ok', 'Cancel'])
 
         if response == 'Ok':

@@ -99,8 +99,8 @@ def get_pkg_latest_version(pkg, fetch_url=True):
         received json will be a dict with:
         keys = 'info', 'last_serial', 'releases', 'urls'
         releases = {'release_version': [{dict for wheel file}, {dict for tar file}], ...}
-        dict for wheel file = {"filename":"youtube_dlc-2020.10.24.post6-py2.py3-none-any.whl", 'url': 'file url'}
-        dict for tar file = {"filename":"youtube_dlc-2020.10.24.post6.tar.gz", 'url': 'file url'}
+        dict for wheel file = {"filename":"yt_dlp-2020.10.24.post6-py2.py3-none-any.whl", 'url': 'file url'}
+        dict for tar file = {"filename":"yt_dlp-2020.10.24.post6.tar.gz", 'url': 'file url'}
 
 
     Args:
@@ -160,7 +160,7 @@ def get_pkg_latest_version(pkg, fetch_url=True):
 
 def update_pkg(pkg, url):
     """updating a package in frozen application folder
-    expect to download and extract a wheel file e.g. "youtube_dlc-2020.10.24.post6-py2.py3-none-any.whl", which in fact
+    expect to download and extract a wheel file e.g. "yt_dlp-2020.10.24.post6-py2.py3-none-any.whl", which in fact
     is a zip file
 
     Args:

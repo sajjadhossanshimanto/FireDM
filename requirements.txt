@@ -1,7 +1,7 @@
 plyer
 certifi
 youtube_dl
-youtube_dlc
+yt_dlp
 pycurl
 Pillow >= 6.0.0
 pystray

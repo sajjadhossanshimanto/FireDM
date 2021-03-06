@@ -176,7 +176,7 @@ recommended fonts to be installed, for more info refer to [issue #200](https://g
 Required python packages: 
 - [pycurl](http://pycurl.io/docs/latest/index.html): is a Python interface to libcurl / curl as our download engine,
 - [youtube_dl](https://github.com/ytdl-org/youtube-dl): famous youtube downloader, limited use for meta information extraction only but videos are downloaded using pycurl
-- [youtube-dlc](https://github.com/blackjack4494/yt-dlc): community version of youtube-dl
+- [yt_dlp](https://github.com/yt-dlp/yt-dlp): a fork of youtube-dlc which is inturn a fork of youtube-dl
 - [certifi](https://github.com/certifi/python-certifi): required by 'pycurl' for validating the trustworthiness of SSL certificates,
 - [plyer](https://github.com/kivy/plyer): for systray area notification.
 - [awesometkinter](https://github.com/Aboghazala/AwesomeTkinter): for

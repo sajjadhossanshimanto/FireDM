@@ -1116,11 +1116,11 @@ class Controller:
 
     # region Application update
     def _check_for_update(self, signal_id=None):
-        """check for newer version of FireDM, youtube-dl, and youtube-dlc"""
+        """check for newer version of FireDM, youtube-dl, and yt_dlp"""
 
         info = {'firedm': {'current_version': config.APP_VERSION, 'latest_version': None},
                 'youtube_dl': {'current_version': config.youtube_dl_version, 'latest_version': None},
-                'youtube_dlc': {'current_version': config.youtube_dlc_version, 'latest_version': None},
+                'yt_dlp': {'current_version': config.yt_dlp_version, 'latest_version': None},
                 }
 
         def fetch_pypi(pkg):
@@ -1129,7 +1129,7 @@ class Controller:
             log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
-        for pkg in ('firedm', 'youtube_dl', 'youtube_dlc'):
+        for pkg in ('firedm', 'youtube_dl', 'yt_dlp'):
             if not info[pkg]['current_version']:
                 log(f'{pkg} still loading, try again')
                 continue
@@ -1381,7 +1381,7 @@ class Controller:
         log('Selected audio:', selected_audio_stream)
 
     def set_video_backend(self, extractor):
-        """select video extractor backend, e.g. youtube-dl, youtube-dlc, ..."""
+        """select video extractor backend, e.g. youtube-dl, yt_dlp, ..."""
         self.ydl = None
         video.ytdl = None
         set_option(active_video_extractor=extractor)
@@ -1641,7 +1641,7 @@ class Controller:
 
     # region Application update
     def check_for_update(self, signal_id=None):
-        """check for newer version of FireDM, youtube-dl, and youtube-dlc"""
+        """check for newer version of FireDM, youtube-dl, and yt_dlp"""
         run_thread(self._check_for_update, signal_id)
 
     def auto_check_for_update(self):
