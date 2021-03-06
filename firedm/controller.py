@@ -1212,6 +1212,9 @@ class Controller:
 
         self._update_view(command='signal', signal_id=signal_id)
 
+        today = date.today()
+        config.last_update_check = (today.year, today.month, today.day)
+
     def _auto_check_for_update(self):
         """auto check for firedm update"""
         if config.check_for_update:
@@ -1228,7 +1231,6 @@ class Controller:
                 if res == 'Ok':
                     self._check_for_update()
 
-            config.last_update_check = (today.year, today.month, today.day)
     # endregion
 
     # public API for  a view / GUI (it shouldn't block to prevent gui freeze) ------------------------------------------

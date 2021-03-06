@@ -3765,8 +3765,9 @@ class MainWindow(IView):
         # update youtube-dl version info once gets loaded
         self.update_youtube_dl_info()
 
-        # auto check for update
-        self.controller.auto_check_for_update()
+        # auto check for update, run after 1 minute to make sure
+        # video extractors loaded completely before checking for update
+        self.root.after(60000, self.controller.auto_check_for_update)
 
     def focus(self):
         """focus main window and bring it to front"""
