@@ -2893,8 +2893,11 @@ class MainWindow(IView):
         self.thumbnail.grid(row=1, column=3, columnspan=1, rowspan=1, padx=5, pady=10, sticky='e')
 
         # video menus --------------------------------------------------------------------------------------------------
+        self.pl_img2 = atk.create_image(b64=playlist_icon, size=20, color=PBAR_FG)
+
         self.pl_menu = MediaListBox(home_tab, bg, 'Playlist:')
         self.pl_menu.grid(row=1, column=0, columnspan=1, rowspan=1, pady=10, padx=5, sticky='nsew')
+        Button(self.pl_menu, image=self.pl_img2, command=self.show_pl_window).place(relx=1, rely=0, x=-40, y=5)
         self.stream_menu = MediaListBox(home_tab, bg, 'Stream Quality:')
         self.stream_menu.grid(row=1, column=1, columnspan=1, rowspan=1, padx=15, pady=10, sticky='nsew')
 
