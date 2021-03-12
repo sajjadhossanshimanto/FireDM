@@ -16,5 +16,14 @@
 !todo.md
 !.gitignore
 !.gitattributes
+!scripts/
+!scripts/utils.py
+!scripts/updatepkg.py
+!scripts/exe_build
+!scripts/exe_build/exe-fullbuild.py
+!scripts/exe_build/exe-quickbuild.py
+!scripts/appimage
+!scripts/appimage/appimage-fullbuild.sh
+!scripts/appimage/appimage-quickbuild.py
 
 
