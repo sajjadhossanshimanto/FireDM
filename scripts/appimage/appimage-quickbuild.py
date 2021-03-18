@@ -33,6 +33,8 @@ project_folder = os.path.dirname(os.path.dirname(current_folder))
 
 sys.path.insert(0,  project_folder)  # for imports to work
 from scripts.utils import download
+from scripts.updatepkg import update_pkg
+
 
 # get application version ----------------------------------------------------------------------------------------------
 with open(os.path.join(project_folder, 'firedm', 'version.py')) as f:
@@ -81,15 +83,14 @@ lib_folder = f'{AppDir}/usr/lib/python3.6/site-packages'
 # update pkgs ----------------------------------------------------------------------------------------------------------
 print('update packages')
 
-# use python interpreter in AppDir folder to prevent errors in compiling
-appimage_python = f'{AppDir}/usr/bin/python3'
-updatepkg_fp = os.path.join(project_folder, 'scripts', 'updatepkg.py')
+# update firedm pkg
 firedm_src = os.path.join(project_folder, 'firedm')
-subprocess.run(f'{appimage_python} {updatepkg_fp} firedm {lib_folder} {firedm_src}', shell=True)
+update_pkg('firedm', lib_folder, src_folder=firedm_src, compile=False)
 
-# update other pkgs
-for pkg_name in ['youtube_dl', 'yt_dlp', 'certifi']:
-    subprocess.run(f'{appimage_python} {updatepkg_fp} {pkg_name} {lib_folder}', shell=True)
+# update other packages
+for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi']:
+    update_pkg(pkg_name,  lib_folder, compile=False)
+
 
 # copy icon ------------------------------------------------------------------------------------------------------------
 print('copy application icon')
@@ -98,17 +99,6 @@ icon_target = f'{AppDir}/usr/share/icons/hicolor/48x48/apps/firedm.png'
 os.makedirs(os.path.dirname(icon_target), exist_ok=True)
 for fp in [icon_target, f'{AppDir}/firedm.png']:
     shutil.copyfile(icon_src, fp)
-
-# update appimage-builder.yml file -------------------------------------------------------------------------------------
-# print('update appimage-builder.yml')
-#
-# yaml_fp = os.path.join(build_folder, 'AppImageBuilder.yml')
-# with open(yaml_fp) as f:
-#     info = yaml.safe_load(f)
-#     info['AppDir']['app_info']['version'] = version
-#
-# with open(yaml_fp, 'w') as f:
-#     yaml.dump(info, f)
 
 # create .desktop file -------------------------------------------------------------------------------------------------
 print('creating firedm.desktop file')
@@ -148,6 +138,10 @@ for i, line in enumerate(data):
 
 with open(env_fp, 'w') as f:
     f.writelines(data)
+
+# Test FireDM (also good to build pyc files for new packages) ----------------------------------------------------------
+print('starting FireDM')
+subprocess.run(f'{AppDir}/AppRun', shell=True)
 
 # build AppImage from current AppDir folder and using appimagetool -----------------------------------------------------
 print('build AppImage file from AppDir')
