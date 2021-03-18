@@ -28,7 +28,7 @@ try:
         requirements = fh.readlines()
 except:
     requirements = ['plyer', 'certifi', 'youtube_dl', 'yt_dlp', 'pycurl', 'pillow >= 6.0.0', 'pystray',
-                    'awesometkinter >= 2020.12.16']
+                    'awesometkinter >= 2021.3.18']
 
 setuptools.setup(
     name="FireDM",

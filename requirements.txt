@@ -5,5 +5,5 @@ yt_dlp
 pycurl
 Pillow >= 6.0.0
 pystray
-awesometkinter >= 2020.12.16
+awesometkinter >= 2021.3.18
 packaging
