@@ -157,6 +157,24 @@ themes_table = {
 # hold all user defined themes, previously created themes will be loaded from disk
 user_themes = {}
 
+# widget's images, it will be updated with theme change
+imgs = {}
+
+
+def create_imgs():
+    """create widget's images, should be called with theme change"""
+    print('x'*20, 'create images')
+    # D_item images
+    imgs['play_img'] = atk.create_image(b64=play_icon, color=BTN_BG, size=10)
+    imgs['pause_img'] = atk.create_image(b64=pause_icon, color=BTN_BG, size=10)
+    imgs['delete_img'] = atk.create_image(b64=delete_icon, color='red', size=10)
+
+    imgs['blinker_on_img'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
+    imgs['blinker_off_img'] = atk.create_image(b64=download_icon, color=MAIN_BG, size=12)
+    imgs['done_img'] = atk.create_image(b64=done_icon, color=BTN_BG)
+    imgs['hourglass_img'] = atk.create_image(b64=hourglass_icon, color=BTN_BG)
+
+
 app_icon_img = None
 popup_icon_img = None
 
@@ -1449,18 +1467,11 @@ class DItem(tk.Frame):
         # buttons
         btns_frame = tk.Frame(self, bg=self.bg)
         btns_frame.grid(row=2, column=1, sticky='w')
-        btn_size = 10
-        btn_color = BTN_BG
-
-        # buttons' images
-        self.play_img = atk.create_image(b64=play_icon, color=btn_color, size=btn_size)
-        self.pause_img = atk.create_image(b64=pause_icon, color=btn_color, size=btn_size)
-        self.delete_img = atk.create_image(b64=delete_icon, color='red', size=btn_size)
 
         # create buttons
-        self.play_button = Button(btns_frame, image=self.play_img)
-        self.pause_button = Button(btns_frame, image=self.pause_img)
-        self.delete_button = Button(btns_frame, image=self.delete_img)
+        self.play_button = Button(btns_frame, image=imgs['play_img'])
+        self.pause_button = Button(btns_frame, image=imgs['pause_img'])
+        self.delete_button = Button(btns_frame, image=imgs['delete_img'])
 
         # pack buttons
         for btn in (self.play_button, self.pause_button, self.delete_button):
@@ -1471,11 +1482,6 @@ class DItem(tk.Frame):
             tk.Label(btns_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
 
         # blinker button, it will blink with received data flow
-        self.blinker_on_img = atk.create_image(b64=download_icon,  color=btn_color, size=12)
-        self.blinker_off_img = atk.create_image(b64=download_icon,  color=self.bg, size=12)
-        self.done_img = atk.create_image(b64=done_icon, color=btn_color)
-        self.hourglass_img = atk.create_image(b64=hourglass_icon, color=btn_color)
-
         self.blinker = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg)
         self.blinker.on = False
         self.blinker.pack(side='left', padx=(0, 10), pady=5)
@@ -1532,18 +1538,18 @@ class DItem(tk.Frame):
         if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
                                               config.Status.refreshing_url):
             # on blinker
-            self.blinker.config(image=self.blinker_on_img)
+            self.blinker.config(image=imgs['blinker_on_img'])
             self.blinker.on = True
 
         elif status == config.Status.completed:
-            self.blinker.config(image=self.done_img)
+            self.blinker.config(image=imgs['done_img'])
 
         elif status in (config.Status.pending, config.Status.scheduled):
-            self.blinker.config(image=self.hourglass_img)
+            self.blinker.config(image=imgs['hourglass_img'])
 
         else:
             # off blinker
-            self.blinker.config(image=self.blinker_off_img)
+            self.blinker.config(image=imgs['blinker_off_img'])
             self.blinker.on = False
 
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
@@ -2811,6 +2817,9 @@ class MainWindow(IView):
         self.root.option_add('*TCombobox*Listbox.selectBackground', SF_BG)
         self.root.option_add('*TCombobox*Listbox.selectForeground', atk.calc_font_color(SF_BG))
 
+        # create images
+        create_imgs()
+
         if self.main_frame:
             self.restart_gui()
 
@@ -3536,17 +3545,18 @@ class MainWindow(IView):
 
     def _update_view(self, **kwargs):
         """real update view"""
-
         command = kwargs.get('command')
         uid = kwargs.get('uid')
         active = kwargs.get('active', None)
 
         # load previous download items in d_tab, needed at startup
         if command == 'd_list':
-            self.create_ditem(**kwargs, focus=False)
+            d_list = kwargs.get('d_list')
+            for i, item in enumerate(d_list):
+                self.root.after(1000 + i * 5, lambda k=item: self.create_ditem(**k, focus=False))
 
         # update playlist menu
-        if command == 'playlist_menu':
+        elif command == 'playlist_menu':
             menu = kwargs['playlist_menu']
             if menu:
                 self.pl_menu.hide_progressbar()
@@ -3563,7 +3573,7 @@ class MainWindow(IView):
                 self.pl_menu.reset()
 
         # update stream menu
-        if command == 'stream_menu':
+        elif command == 'stream_menu':
             video_idx = kwargs['video_idx']
             stream_menu = kwargs['stream_menu']
             stream_idx = kwargs['stream_idx']
@@ -3579,12 +3589,12 @@ class MainWindow(IView):
                 self.pl_window.update_view(video_idx=video_idx, stream_menu=stream_menu, stream_idx=stream_idx)
 
         # create new items
-        if command == 'new' and uid not in self.d_items:
+        elif command == 'new' and uid not in self.d_items:
             self.create_ditem(**kwargs, focus=True)
             self.select_tab('Downloads')
 
         # update current item
-        if command == 'update':
+        elif command == 'update':
             # update active item
             if active:
                 self.file_properties.update(**kwargs)
@@ -3599,12 +3609,12 @@ class MainWindow(IView):
                 self.d_items[uid].update(**kwargs)
 
         # handle signals for post processor callbacks
-        if command == 'signal':
+        elif command == 'signal':
             signal_id = kwargs.get('signal_id')
             self.execute_post_processor(signal_id)
 
         # total speed
-        if command == 'total_speed':
+        elif command == 'total_speed':
             ts = size_format(kwargs.get('total_speed'), tail='/s')
             self.total_speed.set(ts)
 
@@ -3617,9 +3627,8 @@ class MainWindow(IView):
 
     def close(self):
         """hide main window or terminate application"""
-        if config.minimize_to_systray and self.systray.active:
-            self.hide()
-        else:
+        self.hide()
+        if not (config.minimize_to_systray and self.systray.active):
             self.quit()
 
     def quit(self):

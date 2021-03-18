@@ -329,9 +329,13 @@ class Controller:
         self._update_view(**info)
 
     def _get_d_list(self):
+        buff = {'command': 'd_list', 'd_list': []}
         for d in self.d_map.values():
-            time.sleep(0.1)
-            self._report_d(d, command='d_list')
+            properties = d.watch_list
+            info = {k: getattr(d, k, None) for k in properties}
+            buff['d_list'].append(info)
+        self.view.update_view(**buff)
+
     # endregion
 
     # region settings
