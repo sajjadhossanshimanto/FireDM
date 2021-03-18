@@ -1,3 +1,18 @@
+2021.3.18:
+- [critical] Fix automatic file segmentation issue #223
+- [gui] Fix gui realtime update while using too many connections, issue #223
+- Fix filename extraction from http-headers, issue #217
+- fix error for non-resumable files or unknown ranges., issue #217
+- added a warning popup when downloading a non-resumable files.
+- [Gui] fix titlebar color for popup window.
+- [clipboard] extend url monitor to include http, https, ftp, ftps, and file schemes, issue #220
+- [gui] prevent window resize to zero.
+- [gui] fix flickering in "Downloads tab" while downloading playlist
+- [gui] reset select_all status in Downloads tab.
+- [update] auto check for updates fix.
+- [gui] changed playlist download icon, issue #210
+- [gui] enhance startup/shutdown time
+
 2021.2.9:
 - Change Application name from 'PyIDM' to 'FireDM'.
 - [critical] Fix support for multiple video streaming websites, issue #140
