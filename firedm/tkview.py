@@ -3438,7 +3438,7 @@ class MainWindow(IView):
 
         # get user confirmation
         msg = 'Are you sure you want to delete:\n' \
-              f'{self.d_items[uid].name.get()}'
+              f'{self.d_items[uid].name}'
         res = self.popup(msg, buttons=['Ok', 'Cancel'])
 
         if res != 'Ok':
@@ -3470,9 +3470,13 @@ class MainWindow(IView):
     def delete_selected(self):
         """remove selected download items from downloads tab
         only temp files will be removed, completed files on disk will never be deleted"""
-
-        selected_count = len([item for item in self.d_items.values() if item.selected.get()])
+        selected_items = [item for item in self.d_items.values() if item.selected.get()]
+        selected_count = len(selected_items)
         if not selected_count:
+            return
+        elif selected_count == 1:
+            item = selected_items[0]
+            self.delete(item.uid)
             return
 
         # get user confirmation
