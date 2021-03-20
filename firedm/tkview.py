@@ -1404,47 +1404,41 @@ class Thumbnail(tk.Frame):
 
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
-    default_img = None
 
-    def __init__(self, parent, uid, bg=None, fg=None, bar_fg=None):
+    def __init__(self, parent, uid, status, bg=None, fg=None, bar_fg=None):
         self.bg = bg or atk.get_widget_attribute(parent, 'background') or MAIN_BG
         self.fg = fg or MAIN_FG
-        self.bar_fg = bar_fg or 'green'  # progressbar_color
 
         self.uid = uid
 
         tk.Frame.__init__(self, parent, bg=self.bg)
 
-        self.name = tk.StringVar()
-        self.size = tk.StringVar()  # self.size.set('30 MB')
-        self.total_size = tk.StringVar()  # self.total_size.set('of 100 MB')
-        self.speed = tk.StringVar()  # self.speed.set('- Speed: 1.5 MB/s')
-        self.eta = tk.StringVar()  # self.eta.set('- ETA: 30 seconds')
-        self.live_connections = tk.StringVar()  # self.live_connections.set('W8')
-        self.total_parts = None
-        self.completed_parts = tk.StringVar()  # self.current_segment.set('Done: 20 of 150')
-
-        self.status = tk.StringVar()
-        self.extra = tk.StringVar()
-        self.media_type = tk.StringVar()
-        self.media_subtype = tk.StringVar()
+        self.name = ''
+        self.status = status
+        self.size = ''  # '30 MB'
+        self.total_size = ''  # 'of 100 MB'
+        self.speed = ''  # '- Speed: 1.5 MB/s'
+        self.eta = ''  # '- ETA: 30 seconds'
+        self.live_connections = ''  # '8'
+        self.total_parts = ''
+        self.completed_parts = ''  # 'Done: 20 of 150'
+        self.sched = ''
+        self.errors = ''
+        self.media_type = ''
+        self.media_subtype = ''
+        self.progress = 0
 
         # thumbnail
-        self.thumbnail_size = 120
-        if not DItem.default_img:
-            DItem.default_img = atk.create_image(b64=wmap_icon, color=THUMBNAIL_FG, size=self.thumbnail_size)
-
-        self.thumbnail_img = None
-
-        f = tk.Frame(self, bg=THUMBNAIL_BD, width=self.thumbnail_size + 2)
+        self.thumbnail_width = 120
+        self.thumbnail_height = 62
+        f = tk.Frame(self, bg=THUMBNAIL_BD, width=self.thumbnail_width + 2, height=self.thumbnail_height + 2)
         f.pack_propagate(0)
         f.grid(row=0, column=0, rowspan=3, padx=5, sticky='ns')
 
         # thumbnail
-        self.thumbnail_label = tk.Label(f, bg='white', image=self.thumbnail_img, text='', font='any 20 bold',
-                                        fg='black', justify='center', highlightbackground=THUMBNAIL_BD,
-                                        highlightthickness=0)
-
+        self.thumbnail_img = None  # keep reference
+        self.thumbnail_label = tk.Label(f, bg='white', image=None, text='', font='any 20 bold', fg='black',
+                                        justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=0)
         self.thumbnail_label.pack(expand=True, fill='both', padx=2, pady=2)
 
         # check button
@@ -1455,48 +1449,41 @@ class DItem(tk.Frame):
         self.columnconfigure(1, weight=1)
 
         # name text
-        AutoWrappingLabel(self, textvariable=self.name, bg=self.bg, fg=self.fg, anchor='w').grid(row=0, column=1, sticky='ewns')
+        self.name_lbl = AutoWrappingLabel(self, bg=self.bg, fg=self.fg, anchor='w')
+        self.name_lbl.grid(row=0, column=1, sticky='ewns')
 
-        # misc info
-        misc_frame = tk.Frame(self, bg=self.bg)
-        misc_frame.grid(row=1, column=1, sticky='w')
+        self.info_lbl = tk.Label(self, bg=self.bg, fg=self.fg, anchor='w', justify='left')
+        self.info_lbl.grid(row=1, column=1, sticky='w')
 
-        for var in (self.size, self.total_size, self.speed, self.eta, self.live_connections, self.completed_parts):
-            tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 5))
-
-        # buttons
         btns_frame = tk.Frame(self, bg=self.bg)
         btns_frame.grid(row=2, column=1, sticky='w')
 
-        # create buttons
-        self.play_button = Button(btns_frame, image=imgs['play_img'])
-        self.pause_button = Button(btns_frame, image=imgs['pause_img'])
-        self.delete_button = Button(btns_frame, image=imgs['delete_img'])
+        # for non-completed items
+        if self.status != config.Status.completed:
+            #  progressbar
+            self.bar = atk.RadialProgressbar(parent=self, size=(60, 60), fg=PBAR_FG, text_fg=PBAR_TXT,
+                                             font_size_ratio=0.12)
+            self.bar.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
 
-        # pack buttons
-        for btn in (self.play_button, self.pause_button, self.delete_button):
-            btn.pack(side='left', padx=(0, 10))
+            # create buttons
+            self.play_button = Button(btns_frame, image=imgs['play_img'])
+            self.pause_button = Button(btns_frame, image=imgs['pause_img'])
 
-        # status labels
-        for var in (self.status, self.extra):
-            tk.Label(btns_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='left', padx=(0, 10))
+            # pack buttons
+            for btn in (self.play_button, self.pause_button):
+                btn.pack(side='left', padx=(0, 10))
+
+        # make another info label
+        self.info_lbl2 = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
+        self.info_lbl2.pack(side='left', padx=(0, 10), pady=5)
+
+        self.status_lbl = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
+        self.status_lbl.pack(side='left', padx=5, pady=5)
 
         # blinker button, it will blink with received data flow
         self.blinker = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg)
         self.blinker.on = False
-        self.blinker.pack(side='left', padx=(0, 10), pady=5)
-
-        # errors label
-        self.error_lbl = tk.Label(btns_frame, bg=self.bg, text='', fg='red')
-        self.error_lbl.pack(side='left', padx=(0, 10))
-
-        # media type
-        for var in (self.media_subtype, self.media_type):
-            tk.Label(btns_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(side='right', padx=5)
-
-        # progressbar
-        self.bar = atk.RadialProgressbar(parent=self, size=(60, 60), fg=PBAR_FG, text_fg=PBAR_TXT, font_size_ratio=0.12)
-        self.bar.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
+        self.blinker.pack(side='left', padx=5, pady=5)
 
         # separator
         ttk.Separator(self, orient='horizontal').grid(row=3, column=0, columnspan=3, sticky='ew', padx=(5, 0))
@@ -1510,10 +1497,13 @@ class DItem(tk.Frame):
         # call original bind to frame
         tk.Frame.bind(self, sequence, func, add)
 
+        if not isinstance(exclude, list):
+            exclude = [exclude]
+
         # apply bind for all children
         def bind_children(w):
             for child in w.winfo_children():
-                if child is exclude:
+                if child in exclude:
                     continue
                 child.bind(sequence, func, add)
 
@@ -1529,12 +1519,110 @@ class DItem(tk.Frame):
 
     def hide(self):
         """grid self"""
-        # self.grid_remove()
         self.pack_forget()
+
+    def display_info(self):
+        """display info in tkinter widgets"""
+        self.info_lbl.config(text=f'{self.size} of {self.total_size} {self.speed} {self.eta}   {self.errors}')
+        self.info_lbl2.config(
+            text=f'{self.media_subtype} {self.media_type} {self.live_connections} {self.completed_parts}')
+
+        self.status_lbl['text'] = self.status + self.sched
+
+        # an led like, to react with data flow
+        self.toggle_blinker()
+
+        if self.status == config.Status.completed:
+            try:
+                self.play_button.pack_forget()
+                self.pause_button.pack_forget()
+                self.bar.grid_forget()
+            except:
+                pass
+        else:
+            try:
+                self.bar.set(self.progress)
+            except:
+                pass
+
+    def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
+               thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
+               remaining_parts=None, live_connections=None, total_parts=None,
+               **kwargs):
+        """update widgets value"""
+        # print(locals())
+        try:
+
+            if rendered_name:
+                self.name = rendered_name
+                self.name_lbl.config(text=self.name)
+
+            if downloaded is not None:
+                self.size = size_format(downloaded)
+
+            if total_size is not None:
+                self.total_size = size_format(total_size)
+
+            if speed is not None:
+                self.speed = f'- Speed: {size_format(speed)}/s' if speed > 0 else ''
+
+            if time_left is not None:
+                self.eta = f'- ETA: {time_format(time_left)}' if time_left > 0 else ''
+
+            if progress is not None:
+                self.progress = progress
+
+            if thumbnail:
+                self.thumbnail_img = atk.create_image(b64=thumbnail, size=self.thumbnail_width)
+                self.thumbnail_label['image'] = self.thumbnail_img
+
+            if extension:
+                self.thumbnail_label['text'] = extension.replace('.', '').upper()
+
+            if 'errors' in kwargs:
+                errors = kwargs['errors']
+                self.errors = f'[{errors} errs!]' if errors else ''
+
+            if live_connections is not None:
+                self.live_connections = f'- Workers: {live_connections} ' if live_connections > 0 else ''
+
+            if total_parts:
+                self.total_parts = total_parts
+
+            if remaining_parts:
+                if self.total_parts:
+                    completed = self.total_parts - remaining_parts
+                    self.completed_parts = f'- Done: {completed} of {self.total_parts}'
+
+            if status:
+                self.status = status
+                if status == config.Status.completed:
+                    self.errors = ''
+                    self.completed_parts = ''
+
+                if status != config.Status.scheduled:
+                    self.sched = ''
+
+            if sched:
+                if status == config.Status.scheduled:
+                    self.sched = f'@{sched}'
+
+            if type:
+                self.media_type = type
+
+            if isinstance(subtype_list, list):
+                self.media_subtype = ' '.join(subtype_list)
+
+            self.display_info()
+
+        except Exception as e:
+            log('DItem.update()> error:', e)
+            if config.TEST_MODE:
+                raise e
 
     def toggle_blinker(self):
         """an activity blinker "like an led" """
-        status = self.status.get()
+        status = self.status
         if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
                                               config.Status.refreshing_url):
             # on blinker
@@ -1551,82 +1639,6 @@ class DItem(tk.Frame):
             # off blinker
             self.blinker.config(image=imgs['blinker_off_img'])
             self.blinker.on = False
-
-    def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
-               thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
-               remaining_parts=None, live_connections=None, total_parts=None,
-               **kwargs):
-        """update widgets value"""
-        # print(locals())
-        try:
-
-            if rendered_name:
-                self.name.set(rendered_name)
-
-            if downloaded is not None:
-                self.size.set(size_format(downloaded))
-                # print('downloaded:', downloaded, self.size.get())
-
-            if total_size is not None:
-                self.total_size.set(f'of {size_format(total_size)}')
-
-            if speed is not None:
-                self.speed.set(f'- Speed: {size_format(speed)}/s')
-
-            if time_left is not None:
-                self.eta.set(f'- ETA: {time_format(time_left)}')
-
-            if progress is not None:
-                self.bar.set(progress)
-
-            if thumbnail:
-                self.thumbnail_img = atk.create_image(b64=thumbnail, size=self.thumbnail_size)
-                self.thumbnail_label['image'] = self.thumbnail_img
-
-            if extension:
-                self.thumbnail_label['text'] = extension.replace('.', '').upper()
-
-            if 'errors' in kwargs:
-                errors = kwargs['errors']
-                self.error_lbl['text'] = f'[{errors} errs!]' if errors else ''
-
-            if live_connections is not None:
-                self.live_connections.set(f'Workers: {live_connections}, ' if live_connections > 0 else '')
-
-            if total_parts:
-                self.total_parts = total_parts
-
-            if remaining_parts:
-                if self.total_parts:
-                    completed = self.total_parts - remaining_parts
-                    self.completed_parts.set(f'Done: {completed} of {self.total_parts}')
-
-            if status:
-                if status == config.Status.completed:
-                    self.error_lbl['text'] = ''
-                    self.completed_parts.set('')
-                self.status.set(status)
-
-                if status != config.Status.scheduled:
-                    self.extra.set('')
-
-            if sched:
-                if status == config.Status.scheduled:
-                    self.extra.set(f'@{sched}')
-
-            if type:
-                self.media_type.set(type)
-
-            if subtype_list:
-                self.media_subtype.set(subtype_list)
-
-            # an led like, to react with data flow
-            self.toggle_blinker()
-
-        except Exception as e:
-            log('DItem.update()> error:', e)
-            if config.TEST_MODE:
-                raise e
 
 
 class Checkbutton(tk.Checkbutton):
@@ -3247,23 +3259,23 @@ class MainWindow(IView):
             focus (bool): select d_tab and scroll to show ditem after creation
             kwargs: key/values to update a download item
         """
+        status = kwargs.get('status')
 
         # check if item already created before
         if uid in self.d_items:
             return
+        d_item = DItem(self.d_tab, uid, status)
+        excludes = [d_item.chkbtn]
 
-        d_item = DItem(self.d_tab, uid)
-        self.d_items[uid] = d_item
-        d_item.update(**kwargs)
-        d_item.show()
+        if status != config.Status.completed:
+            # bind buttons commands
+            d_item.play_button['command'] = lambda: self.resume_download(d_item.uid)
+            d_item.pause_button['command'] = lambda: self.stop_download(d_item.uid)
 
-        # bind mousewheel
-        atk.scroll_with_mousewheel(d_item, target=self.d_tab, apply_to_children=True)
+            excludes += [d_item.play_button, d_item.pause_button]
 
-        # bind buttons commands
-        d_item.play_button['command'] = lambda: self.resume_download(d_item.uid)
-        d_item.pause_button['command'] = lambda: self.stop_download(d_item.uid)
-        d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
+        # bind double click to play a file
+        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
 
         # right click menu
         right_click_map = {'Open File': lambda x: self.controller.play_file(uid=x),
@@ -3286,11 +3298,16 @@ class MainWindow(IView):
                            callback=lambda option, x=d_item.uid: right_click_map[option](x),
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
-        # bind double click to play files
-        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=d_item.chkbtn)
-
         # trace for checkbutton variable
         d_item.selected.trace_add('write', lambda *args: self.update_selected_count())
+
+        self.d_items[uid] = d_item
+        d_item.update(**kwargs)
+
+        # bind mousewheel
+        atk.scroll_with_mousewheel(d_item, target=self.d_tab, apply_to_children=True)
+
+        d_item.show()
 
     def set_proxy(self, *args):
         enabled = config.enable_proxy
@@ -3380,7 +3397,7 @@ class MainWindow(IView):
         """resume downloading selected and non completed items in downloads tab"""
 
         for uid, item in self.d_items.items():
-            if item.status.get() in (config.Status.cancelled, config.Status.error) and item.selected.get():
+            if item.status in (config.Status.cancelled, config.Status.error) and item.selected.get():
                 self.resume_download(uid)
 
     def resume_all(self):
@@ -3392,7 +3409,7 @@ class MainWindow(IView):
                 return
 
         for uid, item in self.d_items.items():
-            if item.status.get() in (config.Status.cancelled, config.Status.error):
+            if item.status in (config.Status.cancelled, config.Status.error):
                 self.resume_download(uid)
 
     def stop_download(self, uid):
@@ -3444,11 +3461,11 @@ class MainWindow(IView):
             return
 
         for uid, item in self.d_items.items():
-            if item.status.get() == config.Status.completed:
+            if item.status == config.Status.completed:
                 item.destroy()
                 self.controller.delete(uid)
 
-        self.d_items = {uid: item for uid, item in self.d_items.items() if item.status.get() != config.Status.completed}
+        self.d_items = {uid: item for uid, item in self.d_items.items() if item.status != config.Status.completed}
 
     def delete_selected(self):
         """remove selected download items from downloads tab
