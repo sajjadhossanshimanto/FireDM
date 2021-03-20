@@ -1,3 +1,8 @@
+2021.3.19:
+- [critical] Fix checkboxs in downloads tab.
+- [download items] remove buttons and progressbar for completed items to enhance loading time.
+- [download items] fix resume existing item
+
 2021.3.18:
 - [critical] Fix automatic file segmentation issue #223
 - [gui] Fix gui realtime update while using too many connections, issue #223
