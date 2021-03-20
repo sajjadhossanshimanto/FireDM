@@ -3278,24 +3278,28 @@ class MainWindow(IView):
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
 
         # right click menu
-        right_click_map = {'Open File': lambda x: self.controller.play_file(uid=x),
-                           'Open File Location': lambda x: self.controller.open_folder(uid=x),
-                           'Watch while downloading': lambda x: self.controller.play_file(uid=x),
-                           'Refresh url': lambda x: self.refresh_url(self.controller.get_webpage_url(uid=x)),
-                           'copy webpage url': lambda x: self.copy(self.controller.get_webpage_url(uid=x)),
-                           'copy direct url': lambda x: self.copy(self.controller.get_direct_url(uid=x)),
-                           'copy playlist url': lambda x: self.copy(self.controller.get_playlist_url(uid=x)),
-                           'Schedule Item': lambda x: self.schedule(uid=x),
-                           'Cancel schedule!': lambda x: self.controller.schedule_cancel(uid=x),
-                           'properties': lambda x: self.msgbox(self.controller.get_properties(uid=x)),
+        right_click_map = {'Open File': lambda uid: self.controller.play_file(uid=uid),
+                           'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
+                           'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
+                           # 'Refresh url': lambda uid: self.refresh_url(self.controller.get_webpage_url(uid=uid)),
+                           'copy webpage url': lambda uid: self.copy(self.controller.get_webpage_url(uid=uid)),
+                           'copy direct url': lambda uid: self.copy(self.controller.get_direct_url(uid=uid)),
+                           'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
+                           'Schedule Item': lambda uid: self.schedule(uid=uid),
+                           'Cancel schedule!': lambda uid: self.controller.schedule_cancel(uid=uid),
                            '---': None,
-                           'Clear completed items': lambda x: self.delete_completed(),
-                           'Stop all downloads': lambda x: self.stop_all(),
-                           'Clear all items': lambda x: self.delete_all(),
-                           }
+                           'Remove item': lambda uid: self.delete(uid=uid),
+                           'Remove completed items': lambda uid: self.delete_completed(),
+                           'Stop all downloads': lambda uid: self.stop_all(),
+                           'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
+                          }
 
-        atk.RightClickMenu(d_item, right_click_map.keys(),
-                           callback=lambda option, x=d_item.uid: right_click_map[option](x),
+        entries = list(right_click_map.keys())
+        # add another separator, dict doesn't allow duplicate keys
+        entries.insert(-1, '---')
+
+        atk.RightClickMenu(d_item, entries,
+                           callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
         # trace for checkbutton variable
