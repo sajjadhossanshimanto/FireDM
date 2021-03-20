@@ -3606,7 +3606,11 @@ class MainWindow(IView):
                 self.pl_window.update_view(video_idx=video_idx, stream_menu=stream_menu, stream_idx=stream_idx)
 
         # create new items
-        elif command == 'new' and uid not in self.d_items:
+        elif command == 'new':
+            ditem = self.d_items.get(uid)
+            if ditem and ditem.status == config.Status.completed:
+                ditem.destroy()
+                self.d_items.pop(uid)
             self.create_ditem(**kwargs, focus=True)
             self.select_tab('Downloads')
 
