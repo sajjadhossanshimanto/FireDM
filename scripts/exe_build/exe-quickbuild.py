@@ -9,15 +9,15 @@
 
     Module description:
         build an executable (exe) for windows using existing template or download a template from github
-        you should execute this module from command line using: "python buildexe.py"
         this module can be executed from any operating system e.g. linux, windows, etc..
-        to create exe version from scratch use cx_setup.py on windows os
+        to create exe version from scratch use exe_fullbuild.py on windows os
 """
 
 import os
 import re
 import sys
 import json
+import shutil
 
 fp = os.path.realpath(os.path.abspath(__file__))
 current_folder = os.path.dirname(fp)
@@ -37,14 +37,14 @@ app_folder = os.path.join(build_folder, APP_NAME)
 if not os.path.isdir(app_folder):
     print('downloading ', APP_NAME)
     data = download('https://api.github.com/repos/firedm/firedm/releases/latest').decode("utf-8")
-    # "browser_download_url": "https://github.com/firedm/FireDM/releases/download/2021.2.9/FireDM-2021.2.9-x86_64.zip"
+    # example: "browser_download_url": "https://github.com/firedm/FireDM/releases/download/2021.2.9/FireDM_2021.2.9.zip"
     data = json.loads(data)
     assets = data['assets']
 
     url = None
     for asset in assets:
         filename = asset.get('name', '')
-        if filename.lower().endswith('zip'):  # e.g. FireDM-2021.2.9-x86_64.zip
+        if filename.lower().endswith('zip'):  # e.g. FireDM_2021.2.9.zip
             url = asset.get('browser_download_url')
             break
 
@@ -88,7 +88,18 @@ firedm_src = os.path.join(project_folder, 'firedm')
 update_pkg('firedm', lib_folder, src_folder=firedm_src, compile=can_compile)
 
 # update other packages
-for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter']:
+for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi']:
     update_pkg(pkg_name,  lib_folder, compile=can_compile)
+
+# get application version ----------------------------------------------------------------------------------------------
+with open(os.path.join(project_folder, 'firedm', 'version.py')) as f:
+    parsed_dict = {}
+    exec(f.read(), parsed_dict)
+    version = parsed_dict['__version__']
+        
+# create zip file
+output_filename = f'{APP_NAME}_{version}'
+print('prepare final zip filename:', output_filename)
+fname = shutil.make_archive(output_filename, 'zip', base_dir=APP_NAME)
 
 print('Done ...........')
