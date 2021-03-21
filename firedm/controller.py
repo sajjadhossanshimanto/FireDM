@@ -1033,6 +1033,10 @@ class Controller:
 
         if config.write_timestamp:
             self._write_timestamp(d)
+                    
+        if d.shutdown_pc:
+            d.shutdown_pc = False
+            self.shutdown_pc()
 
     def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
@@ -1768,4 +1772,50 @@ class Controller:
 
         self._save_settings()
 
+    def cancel_shutdown(self, uid):
+        """cancel pc shutdown scedule for an item"""
+        d = self.get_d(uid=uid)
+        if d.shutdown_pc:
+            d.shutdown_pc = False
+            log('shutdown schedule cancelled for:', d.rendered_name)
 
+    def _scedule_shutdown(self, uid):
+        d = self.get_d(uid=uid)
+        if d.status == config.Status.completed:
+            return
+        
+        msg = 'Shutdown computer after download complete \n'
+        if config.operating_system == 'Linux':
+            msg += 'Running command: "shutdown --poweroff" might need root privillage \n'
+        msg += 'Are you sure?'
+        
+        res = self.get_user_response(msg, options=['Yes', 'Cancel'])
+        if res != 'Yes':
+            return
+        d.shutdown_pc = True
+
+    def scedule_shutdown(self, uid):
+        run_thread(self._scedule_shutdown, uid)
+
+    def shutdown_pc(self):
+        """shut down computer"""
+        if config.operating_system == 'Windows':
+            cmd = 'shutdown -s -t 120'  
+            abort_cmd = 'shutdown -a'
+        else:
+            # tested on pop os, but it might needs root privillage on other distros.
+            cmd = 'shutdown --poweroff +2' 
+            abort_cmd = 'shutdown -c'
+            
+        # save settings
+        self._save_settings()
+                
+        run_command(cmd)
+        
+        res = self.get_user_response('your device will shutdown after 2 minutes \n'
+                                     'press "ABORT!" to cancel', options=['ABORT!'])
+        if res == 'ABORT!':
+            run_command(abort_cmd)  
+        else:
+            self.view.hide()
+            self.view.quit()

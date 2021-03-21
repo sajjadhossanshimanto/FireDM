@@ -213,6 +213,9 @@ class DownloadItem:
 
         # metadata
         self.metadata_file_content = ''
+        
+        # shutdown computer after completing download
+        self.shutdown_pc = False
 
         # properties names that will be saved on disk
         self.saved_properties = ['_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
