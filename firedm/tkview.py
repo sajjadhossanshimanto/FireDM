@@ -776,8 +776,8 @@ class Popup(tk.Toplevel):
         f = tk.Frame(self, bg=SF_BG)
         f.pack(expand=True, fill='both')
 
-        title_bar = CustomTitleBar(f, bg=TITLE_BAR_BG, fg=TITLE_BAR_FG, afg=BTN_ABG, title=self.window_title)
-        title_bar.pack(side='top', fill='x')
+        # title_bar = CustomTitleBar(f, bg=TITLE_BAR_BG, fg=TITLE_BAR_FG, afg=BTN_ABG, title=self.window_title)
+        # title_bar.pack(side='top', fill='x')
 
         main_frame = tk.Frame(f, bg=self.bg)
         main_frame.pack(padx=(5, 1), pady=(5, 1), expand=True, fill='both')
