@@ -2966,13 +2966,18 @@ class MainWindow(IView):
         btn_fr = tk.Frame(top_fr, bg=MAIN_BG)
         btn_fr.pack(fill='x', pady=5, padx=5)
 
-        self.select_all_var = tk.BooleanVar()
-        self.select_all_var.trace_add('write', lambda *args: self.toggle_selection())
+        self.select_dropdown_image = atk.create_image(b64=dropdown_icon, color=BTN_BG)
+        select_lbl = tk.Label(btn_fr, text='  Select items', image=self.select_dropdown_image, compound='left',
+                              bg=MAIN_BG, fg=MAIN_FG)
+        select_lbl.pack(side='left', padx=5, pady=3)
 
-        atk.Checkbutton(btn_fr, variable=self.select_all_var, bd=0, highlightthickness=0).pack(anchor='w', side='left',
-                                                                                               padx=5)
+        select_menu = atk.RightClickMenu(select_lbl,
+                                         ['Select all', 'Select None', 'Select completed', 'Select non completed'],
+                                         callback=lambda option_name: self.select_ditems(option_name),
+                                         bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
-        tk.Label(btn_fr, text='Select All', bg=MAIN_BG, fg=MAIN_FG, anchor='w').pack(anchor='w', side='left', padx=5)
+        select_lbl.bind("<Button-1>", select_menu.popup)
+
         self.selected_count = tk.Label(btn_fr, text='', bg=MAIN_BG, fg=MAIN_FG, anchor='w')
         self.selected_count.pack(anchor='w', side='left', padx=5)
 
@@ -3519,7 +3524,6 @@ class MainWindow(IView):
         self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
 
         # reset select all
-        self.select_all_var.set(False)
         self.update_selected_count()
 
         # actual DownloadItem remove by controller
@@ -3545,11 +3549,29 @@ class MainWindow(IView):
 
         self.d_items.clear()
 
-    def toggle_selection(self):
-        """toggle selection of all download items"""
+    def select_ditems(self, command):
+        """select ditems in downloads tab
+        Args:
+            command (str): one of ['Select all', 'Select None', 'Select completed', 'Select non completed']
+        """
+        items = self.d_items.values()
 
-        for item in self.d_items.values():
-            item.selected.set(self.select_all_var.get())
+        # reset selection
+        for item in items:
+            item.selected.set(False)
+
+        if command == 'Select None':
+            return
+
+        if command == 'Select completed':
+            items = [item for item in self.d_items.values() if item.status == config.Status.completed]
+
+        elif command == 'Select non completed':
+            items = [item for item in self.d_items.values() if item.status != config.Status.completed]
+
+        # set selection
+        for item in items:
+            item.selected.set(True)
 
     def update_selected_count(self):
         """update the number of selected download items and display it on a label in downloads tab"""
