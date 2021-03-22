@@ -1037,7 +1037,9 @@ class Controller:
         # on completion actions
         if d.status == config.Status.completed:
             if d.on_completion_command:
-                run_command(d.on_completion_command)
+                err, output = run_command(d.on_completion_command)
+                if err:
+                    log(f'error executing command: {d.on_completion_command} \n{output}', showpopup=True)
 
             if d.shutdown_pc:
                 d.shutdown_pc = False
