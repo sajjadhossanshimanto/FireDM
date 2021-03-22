@@ -1428,6 +1428,7 @@ class DItem(tk.Frame):
         self.media_subtype = ''
         self.progress = 0
         self.shutdown_pc = ''
+        self.on_completion_command = ''
 
         # thumbnail
         self.thumbnail_width = 120
@@ -1524,8 +1525,10 @@ class DItem(tk.Frame):
 
     def display_info(self):
         """display info in tkinter widgets"""
-        self.info_lbl.config(text=f'{self.size} of {self.total_size} {self.speed} {self.eta}   {self.errors} {self.shutdown_pc}')
-        self.info_lbl2.config(text=f'{self.media_subtype} {self.media_type} {self.live_connections} {self.completed_parts}')
+        self.info_lbl.config(text=f'{self.size} of {self.total_size} {self.speed} {self.eta}   {self.errors} '
+                                  f'{self.shutdown_pc} {self.on_completion_command}')
+        self.info_lbl2.config(text=f'{self.media_subtype} {self.media_type} {self.live_connections} '
+                                   f'{self.completed_parts}')
 
         self.status_lbl['text'] = self.status + self.sched
 
@@ -1548,7 +1551,7 @@ class DItem(tk.Frame):
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
-               **kwargs):
+               on_completion_command=None, **kwargs):
         """update widgets value"""
         # print(locals())
         try:
@@ -1613,6 +1616,8 @@ class DItem(tk.Frame):
             if isinstance(subtype_list, list):
                 self.media_subtype = ' '.join(subtype_list)
             
+            if on_completion_command is not None:
+                self.on_completion_command = '[-CMD-]' if on_completion_command else ''
             if shutdown_pc is not None:
                 self.shutdown_pc = '[-Shutdown Pc when finish-]' if shutdown_pc else ''
 
@@ -3293,9 +3298,10 @@ class MainWindow(IView):
                            '---': None,
                            'Remove item': lambda uid: self.delete(uid=uid),
                            'Remove completed items': lambda uid: self.delete_completed(),
-                           'Stop all downloads': lambda uid: self.stop_all(),
                            'Shutdown Pc when finish': lambda uid: self.controller.scedule_shutdown(uid),
                            'Cancel Shutdown': lambda uid: self.controller.cancel_shutdown(uid),
+                           'On completion command': lambda uid: self.set_on_completion_command(uid),
+                           'Stop all downloads': lambda uid: self.stop_all(),
                            'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
                           }
 
@@ -3317,6 +3323,16 @@ class MainWindow(IView):
         atk.scroll_with_mousewheel(d_item, target=self.d_tab, apply_to_children=True)
 
         d_item.show()
+
+    def set_on_completion_command(self, uid):
+        current_command = self.controller.get_on_completion_command(uid)
+        button, command = self.popup('Set command to run in terminal after download completes',
+                                     'set blank entry to cancel previous command',
+                                     get_user_input=True, default_user_input=current_command, buttons=['Ok', 'Cancel'])
+        if button != 'Ok':
+            return
+
+        self.controller.set_on_completion_command(uid, command.strip())
 
     def set_proxy(self, *args):
         enabled = config.enable_proxy

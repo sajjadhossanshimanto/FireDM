@@ -217,6 +217,9 @@ class DownloadItem:
         # shutdown computer after completing download
         self.shutdown_pc = False
 
+        # custom command to run in terminal after completing download
+        self.on_completion_command = ''
+
         # properties names that will be saved on disk
         self.saved_properties = ['_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
                                  'resumable', 'selected_quality', '_segment_size', '_downloaded', '_status',

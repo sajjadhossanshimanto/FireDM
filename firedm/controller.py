@@ -1033,6 +1033,9 @@ class Controller:
 
         if config.write_timestamp:
             self._write_timestamp(d)
+
+        if d.on_completion_command:
+            run_command(d.on_completion_command)
                     
         if d.shutdown_pc:
             d.shutdown_pc = False
@@ -1819,3 +1822,11 @@ class Controller:
         else:
             self.view.hide()
             self.view.quit()
+
+    def set_on_completion_command(self, uid, command):
+        d = self.get_d(uid=uid)
+        d.on_completion_command = command
+
+    def get_on_completion_command(self, uid):
+        d = self.get_d(uid=uid)
+        return d.on_completion_command
