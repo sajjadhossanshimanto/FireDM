@@ -767,6 +767,10 @@ class Popup(tk.Toplevel):
 
         self.focus()
 
+        # focus on entry widget
+        if self.get_user_input:
+            self.user_entry.focus()
+
         # block and wait for window to close
         self.wait_window(self)
 
@@ -798,8 +802,9 @@ class Popup(tk.Toplevel):
 
         # get user input
         if self.get_user_input:
-            tk.Entry(main_frame, textvariable=self.user_input, bg=self.bg, fg=self.fg, highlightcolor=ENTRY_BD_COLOR,
-                     highlightbackground=ENTRY_BD_COLOR, ).pack(side='bottom', fill='x', padx=5, pady=5)
+            self.user_entry = tk.Entry(main_frame, textvariable=self.user_input, bg='white', fg='black', relief=tk.FLAT,
+                                       bd=5, highlightcolor=ENTRY_BD_COLOR, highlightbackground=ENTRY_BD_COLOR)
+            self.user_entry.pack(side='bottom', fill='x', padx=5, pady=5)
 
         # msg
         msg_height = len(self.msg.splitlines())
@@ -3831,7 +3836,7 @@ class MainWindow(IView):
         log()
 
         # get download items
-        self.controller.get_d_list()
+        # self.controller.get_d_list()
 
         # start url monitor thread
         run_thread(url_watchdog, self.root, daemon=True)
