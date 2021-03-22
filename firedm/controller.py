@@ -1034,12 +1034,14 @@ class Controller:
         if config.write_timestamp:
             self._write_timestamp(d)
 
-        if d.on_completion_command:
-            run_command(d.on_completion_command)
-                    
-        if d.shutdown_pc:
-            d.shutdown_pc = False
-            self.shutdown_pc()
+        # on completion actions
+        if d.status == config.Status.completed:
+            if d.on_completion_command:
+                run_command(d.on_completion_command)
+
+            if d.shutdown_pc:
+                d.shutdown_pc = False
+                self.shutdown_pc()
 
     def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
@@ -1813,9 +1815,13 @@ class Controller:
         # save settings
         self._save_settings()
                 
-        run_command(cmd)
+        err, output = run_command(cmd)
+        if err:
+            log('error:', output, showpopup=True)
+            return
         
         res = self.get_user_response('your device will shutdown after 2 minutes \n'
+                                     f'{output} \n'
                                      'press "ABORT!" to cancel', options=['ABORT!'])
         if res == 'ABORT!':
             run_command(abort_cmd)  
