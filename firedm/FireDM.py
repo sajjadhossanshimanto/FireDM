@@ -23,9 +23,9 @@ if __package__ is None:
     __package__ = 'firedm'
     import firedm
 
-# check and auto install external modules
-from .dependency import install_missing_pkgs
-install_missing_pkgs()
+# # check and auto install external modules
+# from .dependency import install_missing_pkgs
+# install_missing_pkgs()
 
 
 # local modules
