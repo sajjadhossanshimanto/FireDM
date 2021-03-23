@@ -25,7 +25,7 @@ project_folder = os.path.dirname(os.path.dirname(current_folder))
 sys.path.insert(0,  project_folder)  # for imports to work
 
 from scripts.updatepkg import update_pkg 
-from scripts.utils import download, extract
+from scripts.utils import download, extract, get_pkg_version
 
 
 APP_NAME = 'FireDM'
@@ -61,45 +61,25 @@ if not os.path.isdir(app_folder):
     else:
         print('Failed to download latest version, download manually '
               'from https://github.com/firedm/FireDM/releases/latest')
-        exit()
+        exit(1)
 
 lib_folder = os.path.join(app_folder, 'lib')
 
-# update and compile packages, python version must be python 3.8 otherwise it will cause compilation error
-frozen_python_version = None  
-
-# search for python dll file to parse version e.g. python38.dll
-filenames = ' '.join(os.listdir(app_folder))
-match = re.search(r'python\d\d\.dll', filenames, re.I)
-
-if match:
-    match = match.group()
-    frozen_python_version = f'{match[6]}.{match[7]}'
-active_python_version = f'{sys.version_info[0]}.{sys.version_info[1]}'
-
-can_compile = active_python_version == frozen_python_version
-
-if not can_compile:
-    print(f'warning require python {frozen_python_version} to compile packages, active python version: {active_python_version}')
-    print('will proceed without compiling packages')
-
+# update packages,  ----------------------------------------------------------------------------------------------------
 # update firedm pkg
 firedm_src = os.path.join(project_folder, 'firedm')
-update_pkg('firedm', lib_folder, src_folder=firedm_src, compile=can_compile)
+update_pkg('firedm', lib_folder, src_folder=firedm_src, compile=False)
 
 # update other packages
 for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi']:
-    update_pkg(pkg_name,  lib_folder, compile=can_compile)
+    update_pkg(pkg_name,  lib_folder, compile=False)
 
 # get application version ----------------------------------------------------------------------------------------------
-with open(os.path.join(project_folder, 'firedm', 'version.py')) as f:
-    parsed_dict = {}
-    exec(f.read(), parsed_dict)
-    version = parsed_dict['__version__']
+version = get_pkg_version(os.path.join(project_folder, 'firedm', 'version.py'))
         
 # create zip file
 output_filename = f'{APP_NAME}_{version}'
-print('prepare final zip filename:', output_filename)
+print(f'prepare final zip filename: {output_filename}.zip')
 fname = shutil.make_archive(output_filename, 'zip', base_dir=APP_NAME)
 
 print('Done ...........')

@@ -32,15 +32,12 @@ AppDir = os.path.join(build_folder, 'AppDir')
 project_folder = os.path.dirname(os.path.dirname(current_folder))
 
 sys.path.insert(0,  project_folder)  # for imports to work
-from scripts.utils import download
+from scripts.utils import download, get_pkg_version
 from scripts.updatepkg import update_pkg
 
 
 # get application version ----------------------------------------------------------------------------------------------
-with open(os.path.join(project_folder, 'firedm', 'version.py')) as f:
-    parsed_dict = {}
-    exec(f.read(), parsed_dict)
-    version = parsed_dict['__version__']
+version = get_pkg_version(os.path.join(project_folder, 'firedm', 'version.py'))
 
 # check for app folder existence, otherwise download latest version from github
 if not os.path.isdir(AppDir):
@@ -139,9 +136,9 @@ for i, line in enumerate(data):
 with open(env_fp, 'w') as f:
     f.writelines(data)
 
-# Test FireDM (also good to build pyc files for new packages) ----------------------------------------------------------
-print('starting FireDM')
-subprocess.run(f'{AppDir}/AppRun', shell=True)
+# Start FireDM to build pyc files for new packages  --------------------------------------------------------------------
+# print('starting FireDM')
+# subprocess.run(f'{AppDir}/AppRun', shell=True)
 
 # build AppImage from current AppDir folder and using appimagetool -----------------------------------------------------
 print('build AppImage file from AppDir')

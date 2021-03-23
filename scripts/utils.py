@@ -18,6 +18,7 @@ import shutil
 import time
 import urllib.request
 import zipfile
+import re
 from threading import Thread
 
 
@@ -166,4 +167,19 @@ def compile_pkg(pkg_folder):
 
         time.sleep(0.3)
     print('Finished compiling to .pyc files')
+    
+
+def get_pkg_version(fp):
+    """parse version number from a file
+    it will search for a date based version number
+    can be used with FireDM, youtube-dl, and yt_dlp
+    version file can be normal string or compiled, .py or .pyc code
+    """
+    try:
+        with open(fp, 'rb') as f:
+            text = f.read()
+            match = re.search(rb'\d+\.\d+\.\d+', text)
+            return match.group().decode('utf-8')
+    except:
+        return ''
 

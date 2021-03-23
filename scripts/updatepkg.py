@@ -25,7 +25,7 @@ path = os.path.realpath(os.path.abspath(__file__))
 current_folder = os.path.dirname(path)
 sys.path.insert(0,  os.path.dirname(current_folder))  # for imports to work
 
-from scripts.utils import download, delete_folder, extract, compile_pkg, create_folder, bkup
+from scripts.utils import download, delete_folder, extract, compile_pkg, create_folder, bkup, get_pkg_version
 
 
 def get_pkg_latest_version(pkg_name, fetch_url=True):
@@ -142,6 +142,11 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
     if not src_folder:
         # get download url
         latest_version, url = get_pkg_latest_version(pkg_name)
+        current_version = get_pkg_version(os.path.join(old_pkg_path, 'version.py'))
+        if parse_version(latest_version) <= parse_version(current_version):
+            print(f'{pkg_name} is up-to-date, current: {current_version} - latest: {latest_version}')
+            return
+
         if url:
             print(f'Found {pkg_name} version: {latest_version}')
         else:
@@ -149,14 +154,14 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
             return
 
         # download from pypi
-        print(f'step 1 of 4: downloading {pkg_name} files')
+        print(f'downloading {pkg_name} files')
         data = download(url, fp=z_fp)
         if not data:
             print(f'failed to download {pkg_name}, abort update')
             return
 
         # extract zip file
-        print(f'step 2 of 4: extracting {z_fn}')
+        print(f'extracting {z_fn}')
         extract(z_fp, extract_folder)
     
     else:
@@ -164,12 +169,12 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
         shutil.copytree(src_folder, new_pkg_path)
 
     # compile files from py to pyc
-    print('step 3 of 4: compiling files, please wait')
     if compile:
+        print('compiling files, please wait')
         compile_pkg(new_pkg_path)
 
     # delete old package and replace it with new one
-    print(f'step 4 of 4: overwrite old {pkg_name} files')
+    print(f'overwrite old {pkg_name} files')
     delete_folder(old_pkg_path)
     shutil.move(new_pkg_path, target_folder)
     print('new package copied to:', old_pkg_path)
