@@ -1,3 +1,13 @@
+2021.3.23:
+- [New feature] add on completion pc shutdown option, issue #225.
+- [New feature] add on completion custom command option, issue #225
+- [download tab] fix deleting a download item.
+- [download tab] clean right click menu
+- [download tab] add select menu with ['Select all', 'Select None', 'Select completed', 'Select non completed'] options
+- [popup] disable popup custom titlebar and use system default
+- [dependencies] disable auto installing missing packages when running from open source, to avoid installing packages system wide without user permission.
+- [popup] fix entry widget color and focus.
+
 2021.3.19:
 - [critical] Fix checkboxs in downloads tab.
 - [download items] remove buttons and progressbar for completed items to enhance loading time.
