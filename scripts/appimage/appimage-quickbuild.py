@@ -116,6 +116,7 @@ Keywords=Internet;download
 """
 desktop_fp1 = f'{AppDir}/firedm.desktop'
 desktop_fp2 = f'{AppDir}/usr/share/applications/firedm.desktop'
+os.makedirs(os.path.dirname(desktop_fp2), exist_ok=True)
 with open(desktop_fp1, 'w') as f1, open(desktop_fp2, 'w') as f2:
     f1.write(contents)
     f2.write(contents)
