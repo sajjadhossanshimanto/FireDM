@@ -57,6 +57,7 @@ if not os.path.isdir(app_folder):
         # unzip
         print('extracting, please wait ...')
         extract(z_fp, build_folder)
+        os.remove(z_fp)
 
     else:
         print('Failed to download latest version, download manually '

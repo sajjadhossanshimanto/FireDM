@@ -65,6 +65,7 @@ if not os.path.isdir(AppDir):
         cmd = f'cd "{build_folder}"'  # make executable
         cmd += f' && chmod +x "{z_fp}"'  # make executable
         cmd += f' && "{z_fp}" --appimage-extract'  # extract appimage as "squashfs-root"
+        cmd += f' &&  rm "{z_fp}"'
         subprocess.run(cmd, shell=True)
 
         cmd = f'mv "{extracted_squashfs}" "{AppDir}"'  # rename
