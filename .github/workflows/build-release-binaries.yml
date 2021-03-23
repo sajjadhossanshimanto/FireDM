@@ -38,7 +38,7 @@ jobs:
         run: |
 
           echo building windows zip file ...
-          cd ./FireDM/scripts/exe_build
+          cd ./scripts/exe_build
           python3 ./exe-quickbuild.py
 
           echo building linux appimage file
@@ -52,4 +52,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: './FireDM/scripts/appimage/FireDM*.AppImage ./FireDM/scripts/exe_build/FireDM*.zip'
+          args: './scripts/appimage/FireDM*.AppImage ./scripts/exe_build/FireDM*.zip'
