@@ -3836,7 +3836,7 @@ class MainWindow(IView):
         log()
 
         # get download items
-        # self.controller.get_d_list()
+        self.controller.get_d_list()
 
         # start url monitor thread
         run_thread(url_watchdog, self.root, daemon=True)
