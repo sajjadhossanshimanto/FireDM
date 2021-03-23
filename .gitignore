@@ -28,5 +28,9 @@
 !icons/
 !icons/48x48.png
 !icons/48_32_16.ico
+!.github/
+!.github/workflows/
+!.github/workflows/*
+
 
 
