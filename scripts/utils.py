@@ -68,7 +68,7 @@ def download(url, fp=None, return_data=True, overwrite=False):
             progress_bar = f'[{"="*bar_length}{" "*(10-bar_length)}]'
             progress = f'{progress_bar} {format_size(done)} of {format_size(size)} - {speed}' \
                        f' - {percent}%' if size else ''
-            print(f'\r{progress}            ', end='')
+            # print(f'\r{progress}            ', end='')
         else:
             print('')
             break
