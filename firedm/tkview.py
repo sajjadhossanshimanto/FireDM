@@ -2995,6 +2995,9 @@ class MainWindow(IView):
                                          autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
         self.d_tab.pack(expand=True, fill='both')
 
+        # bind mousewheel
+        atk.scroll_with_mousewheel(self.d_tab)
+
         return tab
 
     def create_settings_tab(self):
@@ -3546,6 +3549,9 @@ class MainWindow(IView):
         for uid in deleted:
             self.controller.delete(uid)
 
+        # solve canvas doesn't auto resize itself
+        self.d_tab.scrolltotop()
+
     def delete_all(self):
         """remove all download items from downloads tab and delete all their temp files, completed files on the disk
         will never be removed"""
@@ -3564,6 +3570,9 @@ class MainWindow(IView):
             self.controller.delete(uid)
 
         self.d_items.clear()
+
+        # solve canvas doesn't auto resize itself
+        self.d_tab.scrolltotop()
 
     def select_ditems(self, command):
         """select ditems in downloads tab
