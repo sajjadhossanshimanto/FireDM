@@ -3104,7 +3104,7 @@ class MainWindow(IView):
 
         def proxy_type_option(text):
             atk.button.Radiobutton(proxy_frame, text=text, value=text, variable=self.proxy_type_var, bg=bg,
-                            fg=fg).pack( side='left', padx=2)
+                                   fg=fg).pack(side='left', padx=2)
 
         proxy_type_option('http')
         proxy_type_option('https')
@@ -3167,6 +3167,17 @@ class MainWindow(IView):
 
         LabeledEntryOption(tab, 'Auto refreshing expired urls [Num of retries]: ', entry_key='refresh_url_retries',
                            width=8, get_text_validator=lambda x: int(x)).pack(anchor='w')
+
+        separator()
+
+        # On Completion actions ----------------------------------------------------------------------------------------
+        heading('On Download Completion:')
+        tk.Label(tab, text='Select action to run after "ALL" download items are completed:', bg=bg,
+                 fg=fg).pack(anchor='w', padx=5)
+
+        CheckEntryOption(tab, ' Run command:  ', entry_key='on_completion_command').pack(anchor='w', fill='x',
+                                                                                         expand=True, padx=(0, 5))
+        CheckOption(tab, ' Shutdown computer', key='shutdown_pc').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         separator()
 

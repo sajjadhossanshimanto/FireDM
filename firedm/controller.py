@@ -150,8 +150,46 @@ class Controller:
         # handle scheduled downloads
         Thread(target=self._scheduled_downloads_handler, daemon=True).start()
 
+        # handle on completion actions
+        Thread(target=self._on_completion_watchdog, daemon=True).start()
+
         # check for ffmpeg and update file path "config.ffmpeg_actual_path"
         check_ffmpeg()
+
+    def _on_completion_watchdog(self):
+        """a separate thread to watch when "ALL" download items are completed and execute on completion action if
+        configured"""
+
+        # make sure user started any item downloading, after setting "on-completion actions"
+        trigger = False
+
+        while True:
+            if config.shutdown:
+                break
+
+            # check for "on-completion actions"
+            if any((config.on_completion_command, config.shutdown_pc)):
+                # check for any active download, then set the trigger
+                if any([d.status in (config.Status.downloading, config.Status.processing) for d in self.d_map.values()]):
+                    trigger = True
+
+                elif trigger:
+                    # check if all items are completed
+                    if all([d.status == config.Status.completed for d in self.d_map.values()]):
+                        # reset the trigger
+                        trigger = False
+
+                        # execute command
+                        if config.on_completion_command:
+                            run_command(config.on_completion_command)
+
+                        # shutdown
+                        if config.shutdown_pc:
+                            self.shutdown_pc()
+            else:
+                trigger = False
+
+            time.sleep(5)
 
     def auto_refresh_url(self, d):
         """refresh an expired url"""

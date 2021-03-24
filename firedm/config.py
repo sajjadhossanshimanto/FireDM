@@ -154,6 +154,9 @@ cookie_file_path = ''
 
 refresh_url_retries = 1  # number of retries to refresh expired url when downloading a file, zero to disable
 
+shutdown_pc = False
+on_completion_command = ''
+
 # debugging ------------------------------------------------------------------------------------------------------------
 keep_temp = False  # keep temp files / folders after done downloading for debugging
 checksum = True  # calculate checksums for completed files MD5 and SHA256
