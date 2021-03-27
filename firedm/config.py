@@ -197,6 +197,10 @@ update_record_path = os.path.join(current_directory, 'update_record.info')
 # -----------------------------------------------------------------------------------------------------
 
 
+# operating modes
+ignore_settings = False  # run application without loading or saving setting files
+
+
 # status class as an Enum
 class Status:
     """used to identify status, work as an Enum"""

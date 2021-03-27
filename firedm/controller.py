@@ -114,7 +114,7 @@ class Controller:
         to tell if data belongs to the current active download item
 
     """
-    def __init__(self, view_class, custom_settings=None):
+    def __init__(self, view_class, custom_settings={}):
         self.observer_q = Queue()  # queue to collect references for updated download items
 
         # youtube-dl object
@@ -126,7 +126,7 @@ class Controller:
         self.pending_downloads_q = Queue()
 
         # load application settings
-        self._load_settings(custom_settings)
+        self._load_settings(**custom_settings)
 
         self.url = ''
         self.playlist = []
@@ -377,27 +377,28 @@ class Controller:
     # endregion
 
     # region settings
-    def _load_settings(self, custom_settings=None):
-        # load stored setting from disk
-        setting.load_setting()
-        
+    def _load_settings(self, **kwargs):
+        if not kwargs.get('ignore_settings'):
+            # load stored setting from disk
+            setting.load_setting()
+
+            # load d_map
+            self.d_map = setting.load_d_map()
+
+            # register observer
+            for d in self.d_map.values():
+                d.register_callback(self.observer)
+
         # update config module with custom settings
-        if custom_settings:
-            config.__dict__.update(custom_settings)
-
-        # load d_map
-        self.d_map = setting.load_d_map()
-
-        # register observer
-        for d in self.d_map.values():
-            d.register_callback(self.observer)
+        config.__dict__.update(**kwargs)
 
     def _save_settings(self):
-        # Save setting to disk
-        setting.save_setting()
+        if not config.ignore_settings:
+            # Save setting to disk
+            setting.save_setting()
 
-        # save d_map
-        setting.save_d_map(self.d_map)
+            # save d_map
+            setting.save_d_map(self.d_map)
     # endregion
 
     # region video

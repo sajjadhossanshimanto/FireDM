@@ -163,7 +163,6 @@ imgs = {}
 
 def create_imgs():
     """create widget's images, should be called with theme change"""
-    print('x'*20, 'create images')
     # D_item images
     imgs['play_img'] = atk.create_image(b64=play_icon, color=BTN_BG, size=10)
     imgs['pause_img'] = atk.create_image(b64=pause_icon, color=BTN_BG, size=10)
