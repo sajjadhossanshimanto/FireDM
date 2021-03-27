@@ -1818,6 +1818,14 @@ class Controller:
 
         self._save_settings()
 
+    def scedule_shutdown(self, uid):
+        """schedule shutdown after an item completed downloading"""
+        d = self.get_d(uid=uid)
+        if d.status == config.Status.completed:
+            return
+
+        d.shutdown_pc = True
+
     def cancel_shutdown(self, uid):
         """cancel pc shutdown scedule for an item"""
         d = self.get_d(uid=uid)
@@ -1825,23 +1833,12 @@ class Controller:
             d.shutdown_pc = False
             log('shutdown schedule cancelled for:', d.rendered_name)
 
-    def _scedule_shutdown(self, uid):
+    def toggle_shutdown(self, uid):
+        """set shutdown flag on/off"""
         d = self.get_d(uid=uid)
         if d.status == config.Status.completed:
             return
-        
-        msg = 'Shutdown computer after download complete \n'
-        if config.operating_system == 'Linux':
-            msg += 'Running command: "shutdown --poweroff" might need root privillage \n'
-        msg += 'Are you sure?'
-        
-        res = self.get_user_response(msg, options=['Yes', 'Cancel'])
-        if res != 'Yes':
-            return
-        d.shutdown_pc = True
-
-    def scedule_shutdown(self, uid):
-        run_thread(self._scedule_shutdown, uid)
+        d.shutdown_pc = not d.shutdown_pc
 
     def shutdown_pc(self):
         """shut down computer"""
@@ -1872,6 +1869,8 @@ class Controller:
 
     def set_on_completion_command(self, uid, command):
         d = self.get_d(uid=uid)
+        if d.status == config.Status.completed:
+            return
         d.on_completion_command = command
 
     def get_on_completion_command(self, uid):

@@ -3318,9 +3318,8 @@ class MainWindow(IView):
                            'Schedule Item': lambda uid: self.schedule(uid=uid),
                            'Cancel schedule!': lambda uid: self.controller.schedule_cancel(uid=uid),
                            '---': None,
-                           'Shutdown Pc when finish': lambda uid: self.controller.scedule_shutdown(uid),
-                           'Cancel Shutdown': lambda uid: self.controller.cancel_shutdown(uid),
-                           'On completion command': lambda uid: self.set_on_completion_command(uid),
+                           'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
+                           'On item completion command': lambda uid: self.set_on_completion_command(uid),
                            'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
                           }
 
@@ -3344,14 +3343,19 @@ class MainWindow(IView):
         d_item.show()
 
     def set_on_completion_command(self, uid):
-        current_command = self.controller.get_on_completion_command(uid)
-        button, command = self.popup('Set command to run in terminal after download completes',
-                                     'set blank entry to cancel previous command',
-                                     get_user_input=True, default_user_input=current_command, buttons=['Ok', 'Cancel'])
-        if button != 'Ok':
+        item = self.d_items.get(uid)
+        if item.status == config.Status.completed:
             return
+        current_command = self.controller.get_on_completion_command(uid)
+        button, command = self.popup('Set command to run in terminal after this item download completes',
+                                     'press "Disable" to disable command',
+                                     get_user_input=True, default_user_input=current_command,
+                                     buttons=['Apply', 'Disable'])
 
-        self.controller.set_on_completion_command(uid, command.strip())
+        if button == 'Apply':
+            self.controller.set_on_completion_command(uid, command.strip())
+        elif button == 'Disable':
+            self.controller.set_on_completion_command(uid, '')
 
     def set_proxy(self, *args):
         enabled = config.enable_proxy
