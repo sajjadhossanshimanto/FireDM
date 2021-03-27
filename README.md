@@ -5,7 +5,7 @@
 
 ![GitHub issues](https://img.shields.io/github/issues-raw/firedm/firedm?color=blue) - ![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/firedm/firedm?color=blue)
 
-
+![logo](https://github.com/firedm/FireDM/blob/master/icons/48x48.png)
 FireDM is a python open source (Internet Download Manager) 
 with multi-connections, high speed engine, 
 it downloads general files and videos from youtube and tons of other streaming websites . <br>
@@ -13,7 +13,7 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 
 [**Download Latest version!!**](https://github.com/firedm/FireDM/releases/latest)
 
-![screenshot](https://user-images.githubusercontent.com/58998813/105612490-325f9f00-5dc5-11eb-82bc-0ecf67955eb2.png)
+![screenshot](https://user-images.githubusercontent.com/58998813/112715559-83852f80-8ee9-11eb-8ea3-d8c0f98a0153.png)
 
 ---
 **Features**:
@@ -37,13 +37,12 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 * proxy support (http, https, socks4, and socks5).
 * user/pass authentication, referee link, use cookies, video thumbnail,
   subtitles.
+* use custom cookies files.
 * MD5 and SHA256 checksums.
-* user can control a lot of options:
-   - select and edit themes.
-   - set proxy.
-   - Speed limit.
-   - Max. Concurrent downloads.
-   - Max. connections per download.
+* Custom gui themes.
+* Set download Speed limit
+* User can run shell commands or shutdown computer on download completion.
+* Control number of Concurrent downloads and Max. connections per each download.
 
 ---
 # How to use FireDM:
@@ -67,7 +66,7 @@ Run FireDM without any installation (recommended)
    or from terminal by `chmod +x FireDM_xxx.AppImage` <br>
    
    To check for ffmpeg use this command:
-   ```
+   ```sh
     which ffmpeg
    
     # expected output if installed
@@ -78,75 +77,72 @@ Run FireDM without any installation (recommended)
     on Arch based distros.
 ----------------------
 
-# Manually installing FireDM:
-- **Linux:**
+## Manually installing FireDM:
+1- check python version (minimum version required is 3.6): `python3 --version`
 
-    - UBUNTU:
-    
-        1- verify you have minimum python version 3.6+
-        
-            python3
-        
-        2- install pip:
-        
-            sudo apt-install python3-pip
-            
-        3- install dependencies:
-        
-            sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus
-            
-        4- install fonts
-        
-            sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
-        
-        5- install firedm
-        
-            python3 -m pip install firedm --user --upgrade --no-cache
-             
-            or if you run into a problem
-            sudo python3 -m pip install firedm --upgrade --no-cache
-  
+2- install required packages first:<br>
+- Linux, ubuntu:<br>
+```sh
+sudo apt-install python3-pip
+sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus
+sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
+```
 
-- **PyPi**:<br>
-     on windows replace "python3" with "python" in below commands
+3- install firedm using pip:<br>
 
-    `python3 -m pip install firedm --user --upgrade --no-cache`
-    or
-    `sudo python3 -m pip install firedm --upgrade --no-cache`
-    
-    then you can run application from Terminal by:  
-    `python3 -m firedm`          
+```sh
+pip install firedm
+or
+python3 -m pip install firedm --user --upgrade --no-cache
+```
 
-    or just  
-    `firedm` an executable "i.e. firedm.exe on windows" will be
-    located at "python/scripts", if it doesn't work append
-    "python/scripts" folder to PATH.
+## Running from source code inside virtual environment:
+1- check python version (minimum version required is 3.6): `python3 --version`
 
+2- install required packages first:<br>
+- Linux, ubuntu:<br>
+```sh
+sudo apt-install python3-pip
+sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus
+sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
+```
 
--  **run from github source code**:<br> 
-   FireDM is a python app. so, it
-   can run on any platform that can run python, To run from source, you
-   have to have a python installed, "supported python versions is 3.6,
-   3.7, and 3.8", then download or clone this repository, and run
-   FireDM.py (it will install the other required python packages
-   automatically if missing) if FireDM failed to install required
-   packages, you should install it manually, refer to "Dependencies"
-   section below.
+3- run below code to clone this repo, create virtual environment, install requirements, create launch script, and finally run FireDM
 
--  **Build FireDM yourself**:
-   -  get the source code from github: (recommended for latest updated
-      version, also shallow clone is preferred)  
-      `git clone --depth 1 https://github.com/firedm/FireDM.git`
+```sh
+git clone --depth 1 https://github.com/firedm/FireDM.git
+python3 -m venv ./.env
+source ./.env/bin/activate
+python3 -m pip install -r ./FireDM/requirements.txt
+cat <<EOF > firedm.sh
+source ./.env/bin/activate
+python3 ./FireDM/firedm.py
+EOF
+chmod +x ./firedm.sh
+./firedm.sh
+```
 
-   - or get the source code from PyPi:  
-   navigate to https://pypi.org/project/firedm/#files and download a tar
-   ball, example file name "FireDM-2020.3.22.tar.gz", then extract it
+> optionally create .desktop file and add FireDM to your applications
+```sh
+cat <<EOF > FireDM.desktop
+[Desktop Entry]
+X-AppImage-Arch=x86_64
+X-AppImage-Version={version}
+X-AppImage-Name=FireDM
+Name=FireDM
+GenericName=FireDM
+Comment=FireDM Download Manager
+Exec=/usr/bin/python3 -m firedm
+Icon=firedm
+Terminal=false
+Type=Application
+Categories=Network;
+Keywords=Internet;download
+EOF
 
-   - open your terminal or command prompt and navigate to firedm folder then type below command  
-        `python3 setup.py install  --user`
-
-   - run FireDM from Terminal by typing:  
-        `python3 -m firedm`     or  just `firedm`
+cp ./FireDM.desktop ~/.local/share/applications/
+cp ./FireDM/icons/48x48.png ~/.local/share/icons/hicolor/48x48/apps/FireDM.png
+```
 
 # Known Issues:
 - Linux X-server will raise an error if some fonts are missing especially emoji fonts, for more info refer to [issue #200](https://github.com/firedm/FireDM/issues/200).
@@ -159,7 +155,6 @@ refer to [issue #113](https://github.com/firedm/FireDM/issues/113)
 ---
 
 # Dependencies:
-below are the requirements to run from source:
 - Python 3.6+: tested with python 3.6 on windows, and 3.7, 3.8 on linux
 - tkinter
 - [ffmpeg](https://www.ffmpeg.org/) : for merging audio with youtube DASH videos "it will be installed automatically on windows"
@@ -173,7 +168,6 @@ recommended fonts to be installed, for more info refer to [issue #200](https://g
     ttf-symbola
     noto-fonts
     ```
-Required python packages: 
 - [pycurl](http://pycurl.io/docs/latest/index.html): is a Python interface to libcurl / curl as our download engine,
 - [youtube_dl](https://github.com/ytdl-org/youtube-dl): famous youtube downloader, limited use for meta information extraction only but videos are downloaded using pycurl
 - [yt_dlp](https://github.com/yt-dlp/yt-dlp): a fork of youtube-dlc which is inturn a fork of youtube-dl
@@ -184,14 +178,27 @@ Required python packages:
 - [pillow](https://python-pillow.org/): imaging library for python
 - [pystray](https://github.com/moses-palmer/pystray): for systray icon
 
+**Note for pycurl:** <br>
+for windows users:
+normal pip install i.e `python -m pip install pycurl` might fail on windows because you need to build libcurl on your system first which is a headache.
+your best choice if pip fail is to download exe file for pycurl from its official download [link](https://dl.bintray.com/pycurl/pycurl/), find the file that match your windows system and python version installed on your system, last checked on 12-06-2020, found available files for almost all Python versions upto version 3.8
 
-Note: FireDM will do its best to install missing packages automatically using pip3 once you run it. 
+example: if you have python 3.6 installed on windows 32bit, you should download "pycurl-7.43.0.2.win32-py3.6.exe" file and install it,
+another example: if you have python 3.7 running on windows 64 bit, you should choose and download "pycurl-7.43.0.3.win-amd64-py3.7.exe" file
 
-you can install required packages manually using:
+other download options include a wheel, zip file, or even a windows installer
+
+for linux users:
+there is no issues, since most linux distros have curl preinstalled, so pycurl will link with libcurl library to get built with no issues, checked with python versions 3.6, 3.7, and 3.8 working with no problems.
+<br>
+
+
+**Note for Youtube-dl:** <br>
+youtube website changes frequently, if this application failed to retrieve video/playlist data
+you should update youtube-dl module thru FireDM setting tab or manually by
 ```
-pip install -r requirements.txt
+python -m pip install youtube_dl --upgrade
 ```
-
 
 
 ---
@@ -217,43 +224,14 @@ one can play dirty games.
 Need to mention, this project is never made to compete with other
 download managers, it is just a "hopefully useful" addition.
 
-
-
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-### note for pycurl: <br>
-for windows users:
-normal pip install i.e `python -m pip install pycurl` might fail on windows because you need to build libcurl on your system first which is a headache. 
-your best choice if pip fail is to download exe file for pycurl from its official download [link](https://dl.bintray.com/pycurl/pycurl/), find the file that match your windows system and python version installed on your system, last checked on 12-06-2020, found available files for almost all Python versions upto version 3.8
-
-example: if you have python 3.6 installed on windows 32bit, you should download "pycurl-7.43.0.2.win32-py3.6.exe" file and install it, 
-another example: if you have python 3.7 running on windows 64 bit, you should choose and download "pycurl-7.43.0.3.win-amd64-py3.7.exe" file
-
-other download options include a wheel, zip file, or even a windows installer
-
-for linux users:
-there is no issues, since most linux distros have curl preinstalled, so pycurl will link with libcurl library to get built with no issues, checked with python versions 3.6, 3.7, and 3.8 working with no problems.
-<br>
-
-
-### note for [Youtube-dl](https://github.com/ytdl-org/youtube-dl): <br>
-youtube website changes frequently, if this application failed to retrieve video/playlist data
-you should update youtube-dl module thru FireDM setting tab or manually by
-```
-python -m pip install youtube_dl --upgrade
-```
-
 ---
 
-<br><br>
+<br>
 
 # Versions change log:
 ChangeLog.txt is included in source code.
 
-
-
-
-<br><br>
+<br>
 
 ---
 # How to contribute to this project:
@@ -267,11 +245,11 @@ reporting, feature request, or suggestions.
 4- check open issues, see if you can help.  
 5- fork this repo and pull request
 
-<br><br>
+<br>
 
 ---
 
-# Some recent articles/reviews on this project*:
+# Some articles/reviews on this project*:
 - [ghacks](https://www.ghacks.net/2020/08/13/firedm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
 - [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/FireDM.shtml)
 - [hackermilk](https://www.hackermilk.info/2020/01/an-open-source-alternative-to-internet.html)
@@ -285,6 +263,8 @@ reporting, feature request, or suggestions.
 Please check
 [contributors.md](https://github.com/firedm/FireDM/blob/master/contributors.md)
 for a list of contributors
+
+---
 
 # Feedback:
 your feedback is most welcomed by filling a
