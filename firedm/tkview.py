@@ -3037,13 +3037,9 @@ class MainWindow(IView):
         CheckOption(tab, 'Monitor clipboard for copied urls', key='monitor_clipboard').pack(anchor='w')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
 
-        # CheckOption(tab, 'Show download window', key='show_download_window').pack(anchor='w')
-        # CheckOption(tab, 'Auto close download window after finish downloading', key='auto_close_download_window').pack(anchor='w')
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
         CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item "requires application restart"',
                     key='autoscroll_download_tab').pack(anchor='w')
-        CheckOption(tab, 'Show confirm dialog when press "RESUME ALL" button', key='confirm_on_resume_all').pack(anchor='w')
-        CheckOption(tab, 'Show confirm dialog when press "STOP ALL" button', key='confirm_on_stop_all').pack(anchor='w')
         CheckOption(tab, 'write "last modified" timestamp to downloaded file', key='write_timestamp').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
@@ -3448,18 +3444,6 @@ class MainWindow(IView):
             if item.status in (config.Status.cancelled, config.Status.error) and item.selected.get():
                 self.resume_download(uid)
 
-    def resume_all(self):
-        """resume downloading all non completed items in downloads tab"""
-
-        if config.confirm_on_resume_all:
-            res = self.popup('Resume all non-completed downloads?', buttons=['Yes', 'No'])
-            if res != 'Yes':
-                return
-
-        for uid, item in self.d_items.items():
-            if item.status in (config.Status.cancelled, config.Status.error):
-                self.resume_download(uid)
-
     def stop_download(self, uid):
         self.controller.stop_download(uid)
 
@@ -3469,17 +3453,6 @@ class MainWindow(IView):
         for uid, item in self.d_items.items():
             if item.selected.get():
                 self.stop_download(uid)
-
-    def stop_all(self):
-        """stop all downloads"""
-
-        if config.confirm_on_stop_all:
-            res = self.popup('Stop all active downloads?', buttons=['Yes', 'No'])
-            if res != 'Yes':
-                return
-
-        for uid in self.d_items:
-            self.stop_download(uid)
 
     def delete(self, uid):
         """delete download item"""

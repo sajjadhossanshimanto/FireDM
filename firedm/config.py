@@ -23,7 +23,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
-                 'autoscroll_download_tab', 'confirm_on_resume_all', 'confirm_on_stop_all', 'enable_captcha_workaround',
+                 'autoscroll_download_tab', 'enable_captcha_workaround',
                  'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp',
                  'use_playlist_numbers', 'refresh_url_retries']
 
@@ -97,8 +97,6 @@ auto_close_download_window = True
 segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 autoscroll_download_tab = False
-confirm_on_resume_all = True  # resume all non completed downloads
-confirm_on_stop_all = True  # stop all active downloads
 write_timestamp = True  # write 'last modified' timestamp to downloaded file
 
 # systray, it will be disabled by default since it doesn't work properly on most operating systems except Windows.
