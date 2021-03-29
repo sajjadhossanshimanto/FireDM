@@ -124,15 +124,13 @@ chmod +x ./firedm.sh
 
 > optionally create .desktop file and add FireDM to your applications
 ```sh
+FireDMLSPATH=$(realpath ./firedm.sh)
 cat <<EOF > FireDM.desktop
 [Desktop Entry]
-X-AppImage-Arch=x86_64
-X-AppImage-Version={version}
-X-AppImage-Name=FireDM
 Name=FireDM
 GenericName=FireDM
 Comment=FireDM Download Manager
-Exec=/usr/bin/python3 -m firedm
+Exec=$FireDMLSPATH
 Icon=firedm
 Terminal=false
 Type=Application
