@@ -139,7 +139,8 @@ Keywords=Internet;download
 EOF
 
 cp ./FireDM.desktop ~/.local/share/applications/
-cp ./FireDM/icons/48x48.png ~/.local/share/icons/hicolor/48x48/apps/FireDM.png
+mkdir -p ~/.local/share/icons/hicolor/48x48/apps/
+cp ./FireDM/icons/48x48.png ~/.local/share/icons/hicolor/48x48/apps/firedm.png
 ```
 
 # Known Issues:
