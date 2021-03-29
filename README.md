@@ -77,7 +77,7 @@ Run FireDM without any installation (recommended)
     on Arch based distros.
 ----------------------
 
-## Manually installing FireDM:
+## Manually installing FireDM with pip:
 1- check python version (minimum version required is 3.6): `python3 --version`
 
 2- install required packages first:<br>
@@ -91,8 +91,6 @@ sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emoj
 3- install firedm using pip:<br>
 
 ```sh
-pip install firedm
-or
 python3 -m pip install firedm --user --upgrade --no-cache
 ```
 
