@@ -2992,6 +2992,8 @@ class MainWindow(IView):
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
                                          autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
+        self.configure_scrollbar(self.d_tab.vsb, width=10)
+
         self.d_tab.pack(expand=True, fill='both')
 
         # bind mousewheel
@@ -3004,6 +3006,7 @@ class MainWindow(IView):
         fg = MAIN_FG
 
         tab = atk.ScrollableFrame(self.main_frame, bg=bg, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
+        self.configure_scrollbar(tab.vsb, width=10)
 
         def heading(text):
             tk.Label(tab, text=' ' + text, bg=HDG_BG, fg=HDG_FG, anchor='w',
@@ -3248,6 +3251,7 @@ class MainWindow(IView):
         # around 100 KB in memory
         self.log_text = atk.ScrolledText(tab, max_chars=100000, bg=bg, fg=fg, bd=1, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG,
                                          highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=5)
+        self.configure_scrollbar(self.log_text.vbar, width=10)
 
         def copy_log():
             self.copy(self.log_text.get(1.0, tk.END))
@@ -3268,6 +3272,12 @@ class MainWindow(IView):
         self.log_text.pack(expand=True, fill='both')
 
         return tab
+
+    def configure_scrollbar(self, scrollbar, **kwargs):
+        """workaround to change AwesomeTkinter scrollbar width in scrollable frame and scrollable text"""
+        bar_style = scrollbar['style']
+        s = ttk.Style()
+        s.configure(bar_style, **kwargs)
 
     def select_tab(self, tab_name):
         """select and focus tab
