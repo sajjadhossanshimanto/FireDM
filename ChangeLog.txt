@@ -1,3 +1,10 @@
+2021.3.30:
+- Add pc-shutdown and on-completion command to global settings, issue #225
+- [download tab] fix tab resize when deleting multiple d_items.
+- [cmd line] add some cmd line options.
+- [gui] wider scrollbars, issue #229
+- [video] fix for crunchyroll.com, issue #230
+
 2021.3.23:
 - [New feature] add on completion pc shutdown option, issue #225.
 - [New feature] add on completion custom command option, issue #225
