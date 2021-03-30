@@ -137,6 +137,9 @@ def set_curl_options(c, http_headers=None):
     c.setopt(pycurl.TIMEOUT, 300)
     c.setopt(pycurl.AUTOREFERER, 1)
 
+    # Accept encoding "compressed content"
+    c.setopt(pycurl.ACCEPT_ENCODING, '')
+
 
 def get_headers(url, verbose=False, http_headers=None):
     """return dictionary of headers"""
