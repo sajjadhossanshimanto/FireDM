@@ -132,14 +132,15 @@ for i, line in enumerate(data):
     if line.startswith('EXEC_PATH'):
         data[i] = 'EXEC_PATH=$APPDIR/usr/bin/python3\n'
     elif line.startswith('EXEC_ARGS'):
-        data[i] = 'EXEC_ARGS=-m firedm\n'
+        # Use '$@' to forward CLI parameters
+        data[i] = 'EXEC_ARGS=-m firedm $@\n'
 
 with open(env_fp, 'w') as f:
     f.writelines(data)
 
-# Start FireDM to build pyc files for new packages  --------------------------------------------------------------------
-# print('starting FireDM')
-# subprocess.run(f'{AppDir}/AppRun', shell=True)
+# Start FireDM with "--imports-only" flag to build pyc files for new packages  -----------------------------------------
+print('starting FireDM')
+subprocess.run(f'{AppDir}/AppRun --imports-only', shell=True)
 
 # build AppImage from current AppDir folder and using appimagetool -----------------------------------------------------
 print('build AppImage file from AppDir')
