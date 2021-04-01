@@ -1546,7 +1546,7 @@ class DItem(tk.Frame):
         # apply bind for all children
         def bind_children(w):
             for child in w.winfo_children():
-                if child in exclude:
+                if child in exclude or child.winfo_class() == 'Menu':
                     continue
                 child.bind(sequence, func, add)
 
@@ -3427,15 +3427,18 @@ class MainWindow(IView):
                            'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
                            'Schedule Item': lambda uid: self.schedule(uid=uid),
                            'Cancel schedule!': lambda uid: self.controller.schedule_cancel(uid=uid),
-                           '---': None,
+                           'Resume': lambda uid: self.resume_selected(),
+                           'Pause': lambda uid: self.stop_selected(),
+                           'Delete': lambda uid: self.delete_selected(),
                            'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
                            'On item completion command': lambda uid: self.set_on_completion_command(uid),
                            'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
                            }
 
         entries = list(right_click_map.keys())
-        # add another separator, dict doesn't allow duplicate keys
-        entries.insert(-1, '---')
+        # add separators
+        for i in (-6, -3, -1):
+            entries.insert(i, '---')
 
         atk.RightClickMenu(d_item, entries,
                            callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
@@ -3564,9 +3567,7 @@ class MainWindow(IView):
 
     def on_item_rightclick(self, uid):
         item = self.d_items[uid]
-        print('item.selected:', item.selected, item.name)
 
-        # self.root.focus()
         if not item.selected:
             self.on_toggle_ditem(uid)
 
