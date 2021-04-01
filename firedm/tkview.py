@@ -87,6 +87,10 @@ RCM_AFG = None
 TITLE_BAR_BG = None
 TITLE_BAR_FG = None
 
+# selection color for DItem, TODO: should add them later to themes
+SEL_BG = 'blue'
+SEL_FG = 'white'
+
 
 themes_table = {
     'default': {
@@ -1409,13 +1413,13 @@ class Thumbnail(tk.Frame):
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
 
-    def __init__(self, parent, uid, status, bg=None, fg=None, bar_fg=None):
+    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None):
         self.bg = bg or atk.get_widget_attribute(parent, 'background') or MAIN_BG
         self.fg = fg or MAIN_FG
 
         self.uid = uid
 
-        tk.Frame.__init__(self, parent, bg=self.bg)
+        tk.Frame.__init__(self, parent, bg=self.bg, highlightbackground=self.bg, highlightthickness=5)
 
         self.name = ''
         self.status = status
@@ -1433,24 +1437,23 @@ class DItem(tk.Frame):
         self.progress = 0
         self.shutdown_pc = ''
         self.on_completion_command = ''
+        self.on_toggle_callback = on_toggle_callback
 
         # thumbnail
         self.thumbnail_width = 120
         self.thumbnail_height = 62
-        f = tk.Frame(self, bg=THUMBNAIL_BD, width=self.thumbnail_width + 2, height=self.thumbnail_height + 2)
-        f.pack_propagate(0)
-        f.grid(row=0, column=0, rowspan=3, padx=5, sticky='ns')
 
         # thumbnail
-        self.thumbnail_img = None  # keep reference
-        self.thumbnail_label = tk.Label(f, bg='white', image=None, text='', font='any 20 bold', fg='black',
-                                        justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=0)
-        self.thumbnail_label.pack(expand=True, fill='both', padx=2, pady=2)
+        self.thumbnail_img = tk.PhotoImage()  # keep reference
+        # should assign an image property for tkinter to use pixels for width and height instead of characters
+        self.thumbnail_label = tk.Label(self, bg='white', image=self.thumbnail_img, text='', font='any 20 bold', fg='black',
+                                        justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=2,
+                                        compound='center', width=self.thumbnail_width, height=self.thumbnail_height)
+        self.thumbnail_label.grid(row=0, column=0, rowspan=3, padx=(0, 5), sticky='ns')
 
         # check button
-        self.selected = tk.BooleanVar()
-        self.chkbtn = atk.Checkbutton(f, variable=self.selected, bg='white', bd=0, highlightthickness=0)
-        self.chkbtn.place(x=2, y=2, anchor="nw")
+        self.selected = False
+        self.chkbtn = None
 
         self.columnconfigure(1, weight=1)
 
@@ -1492,16 +1495,50 @@ class DItem(tk.Frame):
         self.blinker.pack(side='left', padx=5, pady=5)
 
         # separator
-        ttk.Separator(self, orient='horizontal').grid(row=3, column=0, columnspan=3, sticky='ew', padx=(5, 0))
+        ttk.Separator(self, orient='horizontal').grid(row=3, column=0, columnspan=3, sticky='ew', padx=0)
 
     def __repr__(self):
         return f'DItem({self.uid})'
 
-    def bind(self, sequence=None, func=None, add=None, exclude=None):
+    def select(self, flag=True):
+        """select self"""
+        if flag == self.selected:
+            return
+        else:
+            self.selected = flag
+
+        # change highlight color
+        highlight_bg = SEL_BG if flag else self.bg
+        highlight_fg = SEL_FG if flag else self.fg
+        self.config(highlightbackground=highlight_bg, background=highlight_bg)
+
+        def change_background(w):
+            for child in w.winfo_children():
+                try:
+                    if child is not self.thumbnail_label and child.winfo_class() not in ('TSeparator', 'Menu'):
+                        atk.configure_widget(child, background=highlight_bg, foreground=highlight_fg)
+                except:
+                    pass
+
+                # recursive call
+                if child.winfo_children():
+                    change_background(child)
+
+        change_background(self)
+
+        # call associated callback
+        if callable(self.on_toggle_callback):
+            self.on_toggle_callback()
+
+    def toggle(self):
+        """toggle item selection"""
+        self.select(flag=not self.selected)
+
+    def bind(self, sequence=None, func=None, add='+', exclude=None):
         """bind events to self and all children widgets"""
 
         # call original bind to frame
-        tk.Frame.bind(self, sequence, func, add)
+        tk.Frame.bind(self, sequence, func, add=add)
 
         if not isinstance(exclude, list):
             exclude = [exclude]
@@ -1579,12 +1616,12 @@ class DItem(tk.Frame):
             if progress is not None:
                 self.progress = progress
 
-            if thumbnail:
-                self.thumbnail_img = atk.create_image(b64=thumbnail, size=self.thumbnail_width)
-                self.thumbnail_label['image'] = self.thumbnail_img
-
             if extension:
                 self.thumbnail_label['text'] = extension.replace('.', '').upper()
+
+            if thumbnail:
+                self.thumbnail_img = atk.create_image(b64=thumbnail, size=self.thumbnail_width)
+                self.thumbnail_label.config(image=self.thumbnail_img, text='')
 
             if 'errors' in kwargs:
                 errors = kwargs['errors']
@@ -3288,66 +3325,6 @@ class MainWindow(IView):
 
         self.side_frame.select_tab(tab_name)
 
-    def create_ditem(self, uid, **kwargs):
-        """create new DItem and show it in downloads tab
-
-        Args:
-            uid (str): download item's uid
-            focus (bool): select d_tab and scroll to show ditem after creation
-            kwargs: key/values to update a download item
-        """
-        status = kwargs.get('status')
-
-        # check if item already created before
-        if uid in self.d_items:
-            return
-        d_item = DItem(self.d_tab, uid, status)
-        excludes = [d_item.chkbtn]
-
-        if status != config.Status.completed:
-            # bind buttons commands
-            d_item.play_button['command'] = lambda: self.resume_download(d_item.uid)
-            d_item.pause_button['command'] = lambda: self.stop_download(d_item.uid)
-
-            excludes += [d_item.play_button, d_item.pause_button]
-
-        # bind double click to play a file
-        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
-
-        # right click menu
-        right_click_map = {'Open File': lambda uid: self.controller.play_file(uid=uid),
-                           'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
-                           'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
-                           'copy webpage url': lambda uid: self.copy(self.controller.get_webpage_url(uid=uid)),
-                           'copy direct url': lambda uid: self.copy(self.controller.get_direct_url(uid=uid)),
-                           'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
-                           'Schedule Item': lambda uid: self.schedule(uid=uid),
-                           'Cancel schedule!': lambda uid: self.controller.schedule_cancel(uid=uid),
-                           '---': None,
-                           'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
-                           'On item completion command': lambda uid: self.set_on_completion_command(uid),
-                           'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
-                          }
-
-        entries = list(right_click_map.keys())
-        # add another separator, dict doesn't allow duplicate keys
-        entries.insert(-1, '---')
-
-        atk.RightClickMenu(d_item, entries,
-                           callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
-                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
-
-        # trace for checkbutton variable
-        d_item.selected.trace_add('write', lambda *args: self.update_selected_count())
-
-        self.d_items[uid] = d_item
-        d_item.update(**kwargs)
-
-        # bind mousewheel
-        atk.scroll_with_mousewheel(d_item, target=self.d_tab, apply_to_children=True)
-
-        d_item.show()
-
     def set_on_completion_command(self, uid):
         item = self.d_items.get(uid)
         if item.status == config.Status.completed:
@@ -3414,6 +3391,205 @@ class MainWindow(IView):
 
     # endregion
 
+    # region DItem
+    def create_ditem(self, uid, **kwargs):
+        """create new DItem and show it in downloads tab
+
+        Args:
+            uid (str): download item's uid
+            focus (bool): select d_tab and scroll to show ditem after creation
+            kwargs: key/values to update a download item
+        """
+        status = kwargs.get('status')
+
+        # check if item already created before
+        if uid in self.d_items:
+            return
+        d_item = DItem(self.d_tab, uid, status, on_toggle_callback=self.update_selection_lbl)
+        excludes = [d_item.chkbtn]
+
+        if status != config.Status.completed:
+            # bind buttons commands
+            d_item.play_button['command'] = lambda: self.resume_download(d_item.uid)
+            d_item.pause_button['command'] = lambda: self.stop_download(d_item.uid)
+
+            excludes += [d_item.play_button, d_item.pause_button]
+
+        # bind double click to play a file
+        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
+
+        # right click menu
+        right_click_map = {'Open File': lambda uid: self.controller.play_file(uid=uid),
+                           'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
+                           'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
+                           'copy webpage url': lambda uid: self.copy(self.controller.get_webpage_url(uid=uid)),
+                           'copy direct url': lambda uid: self.copy(self.controller.get_direct_url(uid=uid)),
+                           'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
+                           'Schedule Item': lambda uid: self.schedule(uid=uid),
+                           'Cancel schedule!': lambda uid: self.controller.schedule_cancel(uid=uid),
+                           '---': None,
+                           'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
+                           'On item completion command': lambda uid: self.set_on_completion_command(uid),
+                           'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
+                           }
+
+        entries = list(right_click_map.keys())
+        # add another separator, dict doesn't allow duplicate keys
+        entries.insert(-1, '---')
+
+        atk.RightClickMenu(d_item, entries,
+                           callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
+                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
+
+        # trace for checkbutton variable
+        # d_item.selected.trace_add('write', lambda *args: self.update_selection_lbl())
+
+        self.d_items[uid] = d_item
+        d_item.update(**kwargs)
+
+        # bind mousewheel
+        atk.scroll_with_mousewheel(d_item, target=self.d_tab, apply_to_children=True)
+
+        d_item.bind('<Button-1>', lambda event, uid=uid: self.on_toggle_ditem(uid))
+        d_item.bind('<Button-2>', lambda event, uid=uid: self.on_item_rightclick(uid), add='+')
+        d_item.bind('<Button-3>', lambda event, uid=uid: self.on_item_rightclick(uid), add='+')
+        d_item.bind('<Control-1>', lambda event: d_item.toggle())
+        d_item.bind('<Shift-1>', lambda event, uid=uid: self.on_shift_click(uid))
+
+        d_item.show()
+
+    def on_shift_click(self, uid):
+        """batch select ditems in downloads tab"""
+        current_item = self.d_items[uid]
+        current_item.select()
+
+        items_list = list(self.d_items.values())
+        selected_numbers = [items_list.index(item) for item in items_list if item.selected]
+        if len(selected_numbers) > 1:
+            for i in range(selected_numbers[0], selected_numbers[-1] + 1):
+                items_list[i].select()
+
+    def resume_selected(self):
+        """resume downloading selected and non completed items in downloads tab"""
+
+        for uid, item in self.d_items.items():
+            if item.status in (config.Status.cancelled, config.Status.error) and item.selected:
+                self.resume_download(uid)
+
+    def stop_selected(self):
+        """stop downloading selected items in downloads tab"""
+        for uid, item in self.d_items.items():
+            if item.selected:
+                self.stop_download(uid)
+
+    def delete(self, uid):
+        """delete download item"""
+        # get user confirmation
+        msg = 'Are you sure you want to delete:\n' \
+              f'{self.d_items[uid].name}'
+        res = self.popup(msg, buttons=['Ok', 'Cancel'])
+
+        if res != 'Ok':
+            return
+
+        # pop d
+        d = self.d_items.pop(uid)
+
+        d.destroy()
+
+        self.controller.delete(uid)
+
+    def delete_selected(self):
+        """remove selected download items from downloads tab
+        only temp files will be removed, completed files on disk will never be deleted"""
+        selected_items = self.get_selected_items()
+        selected_count = len(selected_items)
+        if not selected_count:
+            return
+        elif selected_count == 1:
+            item = selected_items[0]
+            self.delete(item.uid)
+            return
+
+        # get user confirmation
+        msg = 'Are you sure you want to clear selected download items from downloads list?\n' \
+              'note: only temp files will be removed, completed files on disk will never be deleted\n' \
+              'Write the word "delete" below to confirm.'
+        res, txt = self.popup(msg, buttons=['Ok', 'Cancel'], get_user_input=True)
+
+        if res != 'Ok' or txt.lower().strip() != 'delete':
+            return
+
+        deleted = []
+        # remove from gui
+        for uid, item in self.d_items.items():
+            if item.selected:
+                deleted.append(uid)
+                item.destroy()
+
+        self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
+
+        self.update_selection_lbl()
+
+        # actual DownloadItem remove by controller
+        for uid in deleted:
+            self.controller.delete(uid)
+
+        # solve canvas doesn't auto resize itself
+        self.d_tab.scrolltotop()
+
+    def select_ditems(self, command):
+        """select ditems in downloads tab
+        Args:
+            command (str): one of ['Select all', 'Select None', 'Select completed', 'Select non completed']
+        """
+        items = self.d_items.values()
+
+        # reset selection
+        for item in items:
+            item.select(False)
+
+        if command == 'Select None':
+            return
+
+        if command == 'Select completed':
+            items = [item for item in self.d_items.values() if item.status == config.Status.completed]
+
+        elif command == 'Select non completed':
+            items = [item for item in self.d_items.values() if item.status != config.Status.completed]
+
+        # set selection
+        for item in items:
+            item.select()
+
+    def on_item_rightclick(self, uid):
+        item = self.d_items[uid]
+        print('item.selected:', item.selected, item.name)
+
+        # self.root.focus()
+        if not item.selected:
+            self.on_toggle_ditem(uid)
+
+    def on_toggle_ditem(self, uid):
+        current_item = self.d_items[uid]
+        current_item.select()
+
+        for item in self.d_items.values():
+            if item is not current_item:
+                item.select(False)
+
+    def get_selected_items(self):
+        """return a list of selected items"""
+        return [item for item in self.d_items.values() if item.selected]
+
+    def update_selection_lbl(self):
+        """update the number of selected download items and display it on a label in downloads tab"""
+
+        count = len(self.get_selected_items())
+        self.selected_count['text'] = f'(Selected: {count} of {len(self.d_items)})' if len(self.d_items) else ''
+
+    # endregion
+
     # region download
     def download_btn_callback(self):
         """callback for download button in main tab"""
@@ -3438,6 +3614,9 @@ class MainWindow(IView):
         """
         self.controller.download(uid, **kwargs)
 
+    def stop_download(self, uid):
+        self.controller.stop_download(uid)
+
     def resume_download(self, uid):
         """start / resume download for a download item
 
@@ -3446,150 +3625,6 @@ class MainWindow(IView):
         """
 
         self.download(uid)
-
-    def resume_selected(self):
-        """resume downloading selected and non completed items in downloads tab"""
-
-        for uid, item in self.d_items.items():
-            if item.status in (config.Status.cancelled, config.Status.error) and item.selected.get():
-                self.resume_download(uid)
-
-    def stop_download(self, uid):
-        self.controller.stop_download(uid)
-
-    def stop_selected(self):
-        """stop downloading selected items in downloads tab"""
-
-        for uid, item in self.d_items.items():
-            if item.selected.get():
-                self.stop_download(uid)
-
-    def delete(self, uid):
-        """delete download item"""
-
-        # get user confirmation
-        msg = 'Are you sure you want to delete:\n' \
-              f'{self.d_items[uid].name}'
-        res = self.popup(msg, buttons=['Ok', 'Cancel'])
-
-        if res != 'Ok':
-            return
-
-        # pop d
-        d = self.d_items.pop(uid)
-
-        d.destroy()
-
-        self.controller.delete(uid)
-
-    def delete_completed(self):
-        """delete completed items"""
-        # get user confirmation
-        msg = 'Are you sure you want to remove completed items from the list?'
-        res = self.popup(msg, buttons=['Yes', 'Cancel'])
-
-        if res != 'Yes':
-            return
-
-        for uid, item in self.d_items.items():
-            if item.status == config.Status.completed:
-                item.destroy()
-                self.controller.delete(uid)
-
-        self.d_items = {uid: item for uid, item in self.d_items.items() if item.status != config.Status.completed}
-
-    def delete_selected(self):
-        """remove selected download items from downloads tab
-        only temp files will be removed, completed files on disk will never be deleted"""
-        selected_items = [item for item in self.d_items.values() if item.selected.get()]
-        selected_count = len(selected_items)
-        if not selected_count:
-            return
-        elif selected_count == 1:
-            item = selected_items[0]
-            self.delete(item.uid)
-            return
-
-        # get user confirmation
-        msg = 'Are you sure you want to clear selected download items from downloads list?\n' \
-              'note: only temp files will be removed, completed files on disk will never be deleted\n'\
-              'Write the word "delete" below to confirm.'
-        res, txt = self.popup(msg, buttons=['Ok', 'Cancel'], get_user_input=True)
-
-        if res != 'Ok' or txt.lower().strip() != 'delete':
-            return
-
-        deleted = []
-        # remove from gui
-        for uid, item in self.d_items.items():
-            if item.selected.get():
-                deleted.append(uid)
-                item.destroy()
-
-        self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
-
-        # reset select all
-        self.update_selected_count()
-
-        # actual DownloadItem remove by controller
-        for uid in deleted:
-            self.controller.delete(uid)
-
-        # solve canvas doesn't auto resize itself
-        self.d_tab.scrolltotop()
-
-    def delete_all(self):
-        """remove all download items from downloads tab and delete all their temp files, completed files on the disk
-        will never be removed"""
-
-        # get user confirmation
-        msg = 'Are you sure you want to clear all download items from downloads list?\n' \
-              'note: only temp files will be removed, completed files on disk will never be deleted\n'\
-              'Write the word "delete" below to confirm.'
-        res, txt = self.popup(msg, buttons=['Ok', 'Cancel'], get_user_input=True)
-
-        if res != 'Ok' or txt.lower().strip() != 'delete':
-            return
-
-        for uid, item in self.d_items.items():
-            item.destroy()
-            self.controller.delete(uid)
-
-        self.d_items.clear()
-
-        # solve canvas doesn't auto resize itself
-        self.d_tab.scrolltotop()
-
-    def select_ditems(self, command):
-        """select ditems in downloads tab
-        Args:
-            command (str): one of ['Select all', 'Select None', 'Select completed', 'Select non completed']
-        """
-        items = self.d_items.values()
-
-        # reset selection
-        for item in items:
-            item.selected.set(False)
-
-        if command == 'Select None':
-            return
-
-        if command == 'Select completed':
-            items = [item for item in self.d_items.values() if item.status == config.Status.completed]
-
-        elif command == 'Select non completed':
-            items = [item for item in self.d_items.values() if item.status != config.Status.completed]
-
-        # set selection
-        for item in items:
-            item.selected.set(True)
-
-    def update_selected_count(self):
-        """update the number of selected download items and display it on a label in downloads tab"""
-
-        count = len([item for item in self.d_items.values() if item.selected.get()])
-        self.selected_count['text'] = f'(Selected: {count} of {len(self.d_items)})' if len(self.d_items) else ''
-
     # endregion
 
     # region update view
