@@ -1408,6 +1408,7 @@ class Thumbnail(tk.Frame):
             self.current_img = img
             self.label['image'] = img
 
+
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
 
@@ -3421,10 +3422,9 @@ class MainWindow(IView):
                            'copy webpage url': lambda uid: self.copy(self.controller.get_webpage_url(uid=uid)),
                            'copy direct url': lambda uid: self.copy(self.controller.get_direct_url(uid=uid)),
                            'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
-                           'Schedule Item': lambda uid: self.schedule(uid=uid),
-                           'Cancel schedule!': lambda uid: self.controller.schedule_cancel(uid=uid),
                            'Resume': lambda uid: self.resume_selected(),
                            'Pause': lambda uid: self.stop_selected(),
+                           'Schedule / unschedule': lambda uid: self.schedule_selected(),
                            'Delete': lambda uid: self.delete_selected(),
                            'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
                            'On item completion command': lambda uid: self.set_on_completion_command(uid),
@@ -3433,7 +3433,7 @@ class MainWindow(IView):
 
         entries = list(right_click_map.keys())
         # add separators
-        for i in (-6, -3, -1):
+        for i in (-7, -3, -1):
             entries.insert(i, '---')
 
         atk.RightClickMenu(d_item, entries,
@@ -3916,13 +3916,18 @@ class MainWindow(IView):
     def unhide(self):
         self.root.deiconify()
 
-    def schedule(self, uid=None, video_idx=None):
-        """schedule download item"""
-
-        # show date picker
-        dp = DatePicker(self.root, title='Schedule Download Item')
-        if dp.selected_date:
-            self.controller.schedule_start(uid=uid, video_idx=video_idx, target_date=dp.selected_date)
+    def schedule_selected(self):
+        selected_items = self.get_selected_items()
+        sched_items = [item for item in selected_items if item.status == config.Status.scheduled]
+        if sched_items:
+            for item in sched_items:
+                self.controller.schedule_cancel(uid=item.uid)
+        else:
+            # show date picker
+            dp = DatePicker(self.root, title='Schedule Download Item')
+            if dp.selected_date:
+                for item in selected_items:
+                    self.controller.schedule_start(uid=item.uid, target_date=dp.selected_date)
 
     def show_about_notes(self):
         res = self.popup(about_notes, buttons=['Home', 'Help!', 'Close'], title='About FireDM')
