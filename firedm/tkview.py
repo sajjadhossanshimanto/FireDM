@@ -3005,7 +3005,7 @@ class MainWindow(IView):
         btn_fr.pack(fill='x', pady=5, padx=5)
 
         self.select_dropdown_image = atk.create_image(b64=dropdown_icon, color=BTN_BG)
-        select_lbl = tk.Label(btn_fr, text='  Select items', image=self.select_dropdown_image, compound='left',
+        select_lbl = tk.Label(btn_fr, text='', image=self.select_dropdown_image, compound='left',
                               bg=MAIN_BG, fg=MAIN_FG)
         select_lbl.pack(side='left', padx=5, pady=3)
 
@@ -3016,12 +3016,13 @@ class MainWindow(IView):
 
         select_lbl.bind("<Button-1>", select_menu.popup)
 
-        self.selected_count = tk.Label(btn_fr, text='', bg=MAIN_BG, fg=MAIN_FG, anchor='w')
-        self.selected_count.pack(anchor='w', side='left', padx=5)
+        self.stat_lbl = tk.Label(btn_fr, text='',
+                                 bg=MAIN_BG, fg=MAIN_FG, anchor='w')
+        self.stat_lbl.pack(anchor='w', side='left', padx=5)
 
-        Button(btn_fr, text='Delete', command=self.delete_selected).pack(side='right', padx=5, pady=3)
-        Button(btn_fr, text='Stop', command=self.stop_selected).pack(side='right', padx=5, pady=3)
-        Button(btn_fr, text='Resume', command=self.resume_selected).pack(side='right', padx=5, pady=3)
+        # Button(btn_fr, text='Delete', command=self.delete_selected).pack(side='right', padx=5, pady=3)
+        # Button(btn_fr, text='Stop', command=self.stop_selected).pack(side='right', padx=5, pady=3)
+        # Button(btn_fr, text='Resume', command=self.resume_selected).pack(side='right', padx=5, pady=3)
 
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
@@ -3402,7 +3403,7 @@ class MainWindow(IView):
         # check if item already created before
         if uid in self.d_items:
             return
-        d_item = DItem(self.d_tab, uid, status, on_toggle_callback=self.update_selection_lbl)
+        d_item = DItem(self.d_tab, uid, status, on_toggle_callback=self.update_stat_lbl)
         excludes = []
 
         if status != config.Status.completed:
@@ -3439,9 +3440,6 @@ class MainWindow(IView):
         atk.RightClickMenu(d_item, entries,
                            callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
-
-        # trace for checkbutton variable
-        # d_item.selected.trace_add('write', lambda *args: self.update_selection_lbl())
 
         self.d_items[uid] = d_item
         d_item.update(**kwargs)
@@ -3502,10 +3500,11 @@ class MainWindow(IView):
         """remove selected download items from downloads tab
         only temp files will be removed, completed files on disk will never be deleted"""
         selected_items = self.get_selected_items()
-        selected_count = len(selected_items)
-        if not selected_count:
+        num = len(selected_items)
+        if not num:
             return
-        elif selected_count == 1:
+
+        elif num == 1:
             item = selected_items[0]
             self.delete(item.uid)
             return
@@ -3528,7 +3527,7 @@ class MainWindow(IView):
 
         self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
 
-        self.update_selection_lbl()
+        self.update_stat_lbl()
 
         # actual DownloadItem remove by controller
         for uid in deleted:
@@ -3579,11 +3578,17 @@ class MainWindow(IView):
         """return a list of selected items"""
         return [item for item in self.d_items.values() if item.selected]
 
-    def update_selection_lbl(self):
+    def update_stat_lbl(self):
         """update the number of selected download items and display it on a label in downloads tab"""
-
         count = len(self.get_selected_items())
-        self.selected_count['text'] = f'(Selected: {count} of {len(self.d_items)})' if len(self.d_items) else ''
+        s = [item.status for item in self.d_items.values()]
+
+        self.stat_lbl['text'] = f'  Selected [{count} of {len(self.d_items)}]     ' \
+                                f'Downloading: {s.count(config.Status.downloading)}, ' \
+                                f'Completed: {s.count(config.Status.completed)},  ' \
+                                f'Cancelled: {s.count(config.Status.cancelled)},  ' \
+                                f'Sceduled: {s.count(config.Status.scheduled)}, ' \
+                                f'Pending: {s.count(config.Status.pending)}'
 
     # endregion
 
@@ -3655,6 +3660,9 @@ class MainWindow(IView):
         command = kwargs.get('command')
         uid = kwargs.get('uid')
         active = kwargs.get('active', None)
+
+        if 'status' in kwargs:
+            self.root.after(100, self.update_stat_lbl)
 
         # load previous download items in d_tab, needed at startup
         if command == 'd_list':
