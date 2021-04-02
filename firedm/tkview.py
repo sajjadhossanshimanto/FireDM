@@ -173,7 +173,6 @@ def create_imgs():
     imgs['delete_img'] = atk.create_image(b64=delete_icon, color='red', size=10)
 
     imgs['blinker_on_img'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
-    imgs['blinker_off_img'] = atk.create_image(b64=download_icon, color=MAIN_BG, size=12)
     imgs['done_img'] = atk.create_image(b64=done_icon, color=BTN_BG)
     imgs['hourglass_img'] = atk.create_image(b64=hourglass_icon, color=BTN_BG)
 
@@ -1409,7 +1408,6 @@ class Thumbnail(tk.Frame):
             self.current_img = img
             self.label['image'] = img
 
-
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
 
@@ -1438,24 +1436,22 @@ class DItem(tk.Frame):
         self.shutdown_pc = ''
         self.on_completion_command = ''
         self.on_toggle_callback = on_toggle_callback
+        self.selected = False
+
+        self.columnconfigure(1, weight=1)
+        self.blank_img = tk.PhotoImage()
 
         # thumbnail
         self.thumbnail_width = 120
         self.thumbnail_height = 62
 
         # thumbnail
-        self.thumbnail_img = tk.PhotoImage()  # keep reference
+        self.thumbnail_img = None
         # should assign an image property for tkinter to use pixels for width and height instead of characters
-        self.thumbnail_label = tk.Label(self, bg='white', image=self.thumbnail_img, text='', font='any 20 bold', fg='black',
+        self.thumbnail_label = tk.Label(self, bg='white', image=self.blank_img, text='', font='any 20 bold', fg='black',
                                         justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=2,
                                         compound='center', width=self.thumbnail_width, height=self.thumbnail_height)
         self.thumbnail_label.grid(row=0, column=0, rowspan=3, padx=(0, 5), sticky='ns')
-
-        # check button
-        self.selected = False
-        self.chkbtn = None
-
-        self.columnconfigure(1, weight=1)
 
         # name text
         self.name_lbl = AutoWrappingLabel(self, bg=self.bg, fg=self.fg, anchor='w')
@@ -1486,11 +1482,8 @@ class DItem(tk.Frame):
         self.info_lbl2 = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
         self.info_lbl2.pack(side='left', padx=(0, 10), pady=5)
 
-        self.status_lbl = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
-        self.status_lbl.pack(side='left', padx=5, pady=5)
-
         # blinker button, it will blink with received data flow
-        self.blinker = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg)
+        self.blinker = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12, height=12)
         self.blinker.on = False
         self.blinker.pack(side='left', padx=5, pady=5)
 
@@ -1566,14 +1559,14 @@ class DItem(tk.Frame):
 
     def display_info(self):
         """display info in tkinter widgets"""
+
         self.info_lbl.config(text=f'{self.size} of {self.total_size} {self.speed} {self.eta}   {self.errors} '
                                   f'{self.shutdown_pc} {self.on_completion_command}')
+
         self.info_lbl2.config(text=f'{self.media_subtype} {self.media_type} {self.live_connections} '
-                                   f'{self.completed_parts}')
+                                   f'{self.completed_parts} - {self.status} {self.sched}')
 
-        self.status_lbl['text'] = self.status + self.sched
-
-        # an led like, to react with data flow
+        # a led like blinking button, to react with data flow
         self.toggle_blinker()
 
         if self.status == config.Status.completed:
@@ -1617,7 +1610,10 @@ class DItem(tk.Frame):
                 self.progress = progress
 
             if extension:
-                self.thumbnail_label['text'] = extension.replace('.', '').upper()
+                ext = extension.replace('.', '').upper()
+                # negative font size will force character size in pixels
+                f = f'any {int(- self.thumbnail_width * 0.8 // len(ext))} bold'
+                self.thumbnail_label.config(text=ext, font=f)
 
             if thumbnail:
                 self.thumbnail_img = atk.create_image(b64=thumbnail, size=self.thumbnail_width)
@@ -1670,7 +1666,7 @@ class DItem(tk.Frame):
                 raise e
 
     def toggle_blinker(self):
-        """an activity blinker "like an led" """
+        """an activity blinker "like a blinking led" """
         status = self.status
         if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
                                               config.Status.refreshing_url):
@@ -1686,7 +1682,7 @@ class DItem(tk.Frame):
 
         else:
             # off blinker
-            self.blinker.config(image=imgs['blinker_off_img'])
+            self.blinker.config(image=self.blank_img)
             self.blinker.on = False
 
 
@@ -3406,7 +3402,7 @@ class MainWindow(IView):
         if uid in self.d_items:
             return
         d_item = DItem(self.d_tab, uid, status, on_toggle_callback=self.update_selection_lbl)
-        excludes = [d_item.chkbtn]
+        excludes = []
 
         if status != config.Status.completed:
             # bind buttons commands
