@@ -66,17 +66,24 @@ def main():
         import importlib, time
         total_time = 0
 
-        for module in ['plyer', 'certifi', 'youtube_dl', 'yt_dlp', 'pycurl', 'PIL', 'pystray', 'awesometkinter',
-                       'tkinter']:
-            start = time.time()
-            m = importlib.import_module(module)
-            version = ''
+        def getversion(mod):
             try:
                 version = m.version.__version__
             except:
-                pass
-            total_time += time.time() - start
-            print(f'imported module: {module} {version}, in {round(time.time() - start, 1)} sec')
+                version = ''
+            return version
+
+        for module in ['plyer', 'certifi', 'youtube_dl', 'yt_dlp', 'pycurl', 'PIL', 'pystray', 'awesometkinter',
+                       'tkinter']:
+            start = time.time()
+
+            try:
+                m = importlib.import_module(module)
+                version = getversion(m)
+                total_time += time.time() - start
+                print(f'imported module: {module} {version}, in {round(time.time() - start, 1)} sec')
+            except Exception as e:
+                print(module, 'package import error:', e)
 
         print(f'Done, All modules are loaded succesfully, total time: {round(total_time, 2)} sec ...')
         exit(0)
