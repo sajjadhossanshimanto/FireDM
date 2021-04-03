@@ -12,15 +12,15 @@
 import datetime
 import re
 import time
+import pycurl
 import tkinter as tk
 import awesometkinter as atk
-import PIL
-from awesometkinter.version import __version__ as atk_version
-import pycurl
-from queue import Queue
 from tkinter import ttk, filedialog, colorchooser
+from awesometkinter.version import __version__ as atk_version
+import PIL
+from queue import Queue
 import os, sys
-from threading import Thread
+from packaging.version import parse as parse_version
 
 
 if __package__ is None:
@@ -3868,6 +3868,14 @@ class MainWindow(IView):
         # log extra pkgs info
         log('Tkinter version:', self.root.call("info", "patchlevel"))
         log('AwesomeTkinter version:', atk_version)
+        # minimum AwesomeTkinter version warning
+        atk_min_version = '2021.4.2'
+        if parse_version(atk_version) < parse_version(atk_min_version):
+            atk_warning = f'WARNING!, "AwesomeTkinter" package is outdated, ' \
+                          f'please upgrade to latest version, to avoid application malfunctioning \n' \
+                          f'use command: python3 -m pip install awesometkinter --upgrade'
+            log(atk_warning, file=sys.stderr)
+
         log('Pillow version:', PIL.__version__)
         log('PyCUrl version:', pycurl.version)
         log()

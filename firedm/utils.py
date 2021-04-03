@@ -307,7 +307,7 @@ def time_format(t, tail=''):
         return t
 
 
-def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False):
+def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **kwargs):
     """print messages to stdout and execute any function or method in config.log_callbacks
 
     Args:
@@ -328,7 +328,7 @@ def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False):
     text = sep.join(map(str, args))
 
     try:
-        print(start + text + end, end='')
+        print(start + text + end, end='', **kwargs)
 
         # execute registered log callbacks
         for f in config.log_callbacks:
