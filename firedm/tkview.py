@@ -1257,7 +1257,14 @@ class FileProperties(ttk.Frame):
 
         separator(3)
 
-        label('Folder:', r=4, c=0)
+        misc_frame = tk.Frame(self, bg=self.bg)
+        misc_frame.grid(row=4, column=0, columnspan=3, sticky='ew')
+        for var in (self.type, self.subtype, self.resumable):
+            tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
+
+        separator(5)
+
+        label('Folder:', r=6, c=0)
 
         # download folder -------------------------------------------------------------------------------------------
         def update_frequent_folders(*args):
@@ -1278,26 +1285,20 @@ class FileProperties(ttk.Frame):
         arrow_bg = SF_BG
         textarea_bg = MAIN_BG
         s.configure(custom_style, arrowcolor=atk.calc_font_color(arrow_bg),
-                    foreground=MAIN_FG, padding=0, relief=tk.RAISED, borderwidth=0)
+                    foreground=MAIN_FG, padding=2, relief=tk.RAISED, borderwidth=0, arrowsize=15)
         s.map(custom_style, fieldbackground=[('', textarea_bg)], background=[('', arrow_bg)])
 
         cb = ttk.Combobox(self, exportselection=0, textvariable=self.folder, values=config.frequent_download_folders,
                           style=custom_style)
-        cb.grid(row=4, column=1, sticky='we')
+        cb.grid(row=6, column=1, sticky='we')
         cb.bind('<FocusOut>', update_frequent_folders, add='+')
         cb.bind('<1>', update_frequent_folders, add='+')
 
         # update global download folder with every widget edit
         self.folder.trace_add('write', lambda *args:set_option(download_folder=self.folder.get()))
 
-        Button(self, text='...', transparent=True, command=self.change_folder).grid(row=4, column=2, padx=1, pady=0)
-
-        separator(5)
-
-        misc_frame = tk.Frame(self, bg=self.bg)
-        misc_frame.grid(row=6, column=0, columnspan=3, sticky='ew')
-        for var in (self.type, self.subtype, self.resumable):
-            tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
+        self.folder_img = atk.create_image(b64=folder_icon, color=BTN_BG)
+        Button(self, text='', image=self.folder_img, transparent=True, command=self.change_folder).grid(row=6, column=2, padx=1, pady=5)
 
         separator(7)
 
