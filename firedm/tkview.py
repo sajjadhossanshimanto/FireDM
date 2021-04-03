@@ -1314,7 +1314,7 @@ class FileProperties(ttk.Frame):
         folder = kwargs.get('folder', None)
         type_ = kwargs.get('type', '')
         subtype_list = kwargs.get('subtype_list', '')
-        resumable = kwargs.get('resumable', '')
+        resumable = kwargs.get('resumable', None)
 
         if name:
             self.raw_name = name
@@ -1330,7 +1330,7 @@ class FileProperties(ttk.Frame):
         if subtype_list:
             self.subtype.set(', '.join(subtype_list))
 
-        self.resumable.set(f'- Resumable: {"Yes" if resumable else "NO!"}')
+        self.resumable.set(f'- Resumable: {resumable}' if resumable is not None else '')
 
     def reset(self):
         self.name.set('...')
