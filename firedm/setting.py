@@ -16,8 +16,6 @@ from . import downloaditem
 from . import model
 from .utils import log, handle_exceptions, update_object
 
-# todo: replace save_d_list and load_d_list, with save_d_map and load_d_map for future releases
-
 
 def get_global_sett_folder():
     """return a proper global setting folder"""
@@ -75,59 +73,6 @@ def locate_setting_folder():
 config.sett_folder = locate_setting_folder()
 
 
-def load_d_list():
-    """deprecated: kept only to load download list for legacy versions starting from version equal or older
-    than 2020.9.26 .
-
-    create and return a list of 'DownloadItem objects' based on data extracted from 'downloads.cfg' file
-
-    """
-    d_list = []
-
-    try:
-        # log('Load previous download items from', config.sett_folder)
-
-        # get d_list
-        file = os.path.join(config.sett_folder, 'downloads.cfg')
-        with open(file, 'r') as f:
-            # expecting a list of dictionaries
-            data = json.load(f)
-
-        # converting list of dictionaries to list of DownloadItem() objects
-        for dict_ in data:
-            d = update_object(downloaditem.DownloadItem(), dict_)
-            if d:  # if update_object() returned an updated object not None
-                d_list.append(d)
-
-        # get thumbnails
-        file = os.path.join(config.sett_folder, 'thumbnails.cfg')
-        with open(file, 'r') as f:
-            # expecting a list of dictionaries
-            thumbnails = json.load(f)
-
-        # clean d_list and load thumbnails
-        for i, d in enumerate(d_list):
-            d.live_connections = 0
-
-            if d.status != config.Status.completed:
-                d.status = config.Status.cancelled
-
-            # use encode() to convert base64 string to byte, however it does work without it, will keep it to be safe
-            d.thumbnail = thumbnails.get(str(i), '').encode()
-
-            # update progress info
-            d.load_progress_info()
-
-    except FileNotFoundError:
-        log('downloads.cfg file not found')
-    except Exception as e:
-        log(f'load_d_list()>: {e}')
-    finally:
-        if not isinstance(d_list, list):
-            d_list = []
-        return d_list
-
-
 def load_d_map():
     """create and return a dictionary of 'uid: DownloadItem objects' based on data extracted from 'downloads.dat' file
 
@@ -169,15 +114,6 @@ def load_d_map():
 
             # update progress info
             d.load_progress_info()
-
-    except FileNotFoundError:
-        # check for legacy download.cfg file
-        log('downloads.dat file not found, looking for legacy "downloads.cfg" file')
-        d_list = load_d_list()
-
-        for d in d_list:
-            obs_d = update_object(model.ObservableDownloadItem(), d.__dict__)
-            d_map[obs_d.uid] = obs_d
 
     except Exception as e:
         log(f'load_d_map()>: {e}')
