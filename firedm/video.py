@@ -627,7 +627,7 @@ def pre_process_hls(d):
     # tbr for videos calculated by youtube-dl == BANDWIDTH/1000
     def refresh_urls(m3u8_doc, m3u8_url):
         # using youtube-dl internal function
-        extract_m3u8_formats = ytdl.extractor.common.InfoExtractor._parse_m3u8_formats
+        extract_m3u8_formats = youtube_dl.extractor.common.InfoExtractor._parse_m3u8_formats
 
         # get formats list [{'format_id': 'hls-160000mp4a.40.2-spa', 'url': 'http://ex.com/exp=15...'}, ...]
         # what we need is format_id and url
