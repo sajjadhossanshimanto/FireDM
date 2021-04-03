@@ -3001,28 +3001,20 @@ class MainWindow(IView):
         top_fr = tk.Frame(tab, bg=HDG_BG)
         top_fr.pack(fill='x', pady=5, padx=(5, 0))
 
-        btn_fr = tk.Frame(top_fr, bg=MAIN_BG)
-        btn_fr.pack(fill='x', pady=5, padx=5)
+        self.select_dropdown_image = atk.create_image(b64=dropdown_icon, color=HDG_FG)
+        self.select_lbl = tk.Label(top_fr, text='', image=self.select_dropdown_image, compound='left',
+                                   bg=HDG_BG, fg=HDG_FG)
+        self.select_lbl.pack(side='left', padx=5, pady=10)
 
-        self.select_dropdown_image = atk.create_image(b64=dropdown_icon, color=BTN_BG)
-        select_lbl = tk.Label(btn_fr, text='', image=self.select_dropdown_image, compound='left',
-                              bg=MAIN_BG, fg=MAIN_FG)
-        select_lbl.pack(side='left', padx=5, pady=3)
-
-        select_menu = atk.RightClickMenu(select_lbl,
+        select_menu = atk.RightClickMenu(self.select_lbl,
                                          ['Select all', 'Select None', 'Select completed', 'Select non completed'],
                                          callback=lambda option_name: self.select_ditems(option_name),
                                          bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
-        select_lbl.bind("<Button-1>", select_menu.popup)
+        self.select_lbl.bind("<Button-1>", select_menu.popup)
 
-        self.stat_lbl = tk.Label(btn_fr, text='',
-                                 bg=MAIN_BG, fg=MAIN_FG, anchor='w')
-        self.stat_lbl.pack(anchor='w', side='left', padx=5)
-
-        # Button(btn_fr, text='Delete', command=self.delete_selected).pack(side='right', padx=5, pady=3)
-        # Button(btn_fr, text='Stop', command=self.stop_selected).pack(side='right', padx=5, pady=3)
-        # Button(btn_fr, text='Resume', command=self.resume_selected).pack(side='right', padx=5, pady=3)
+        self.stat_lbl = tk.Label(top_fr, text='', bg=HDG_BG, fg=HDG_FG, anchor='w')
+        self.stat_lbl.pack(anchor='w', side='right', padx=10)
 
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
@@ -3574,8 +3566,8 @@ class MainWindow(IView):
         count = len(self.get_selected_items())
         s = [item.status for item in self.d_items.values()]
 
-        self.stat_lbl['text'] = f'  Selected [{count} of {len(self.d_items)}]     ' \
-                                f'Downloading: {s.count(config.Status.downloading)}, ' \
+        self.select_lbl['text'] = f'  Selected [{count} of {len(self.d_items)}]'
+        self.stat_lbl['text'] = f'Downloading: {s.count(config.Status.downloading)}, ' \
                                 f'Completed: {s.count(config.Status.completed)},  ' \
                                 f'Cancelled: {s.count(config.Status.cancelled)},  ' \
                                 f'Sceduled: {s.count(config.Status.scheduled)}, ' \
