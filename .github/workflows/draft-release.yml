@@ -47,6 +47,10 @@ jobs:
           cd ./scripts/appimage
           python3 ./appimage-quickbuild.py
 
+      - name: get version name
+        run: |
+          echo "version=$(cat ./firedm/version.py | grep -Po '\d+\.\d+\.\d+')" >> $GITHUB_ENV
+
       - name: create release body
         run: |
           echo 'Release info:
@@ -71,7 +75,7 @@ jobs:
           **changelog:**
           '  > ./release-body.txt
 
-          sed 's/\r$//' ./FireDM/ChangeLog.txt | sed -e '/^$/,$d' >> ./release-body.txt
+          sed 's/\r$//' ./ChangeLog.txt | sed -e '/^$/,$d' >> ./release-body.txt
 
 
       - name: Create Release
