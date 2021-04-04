@@ -97,4 +97,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           releaseId: ${{ steps.create_release.outputs.id }}
-          args: './FireDM/scripts/appimage/FireDM*.AppImage ./FireDM/scripts/exe_build/FireDM*.zip'
+          args: './scripts/appimage/FireDM*.AppImage ./scripts/exe_build/FireDM*.zip'
