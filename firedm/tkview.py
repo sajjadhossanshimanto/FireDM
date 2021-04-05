@@ -1295,10 +1295,12 @@ class FileProperties(ttk.Frame):
                 pass
 
             # add current folder value at the beginning of the list and limit list size to 10 items
-            config.frequent_download_folders = [self.folder.get()] + config.frequent_download_folders[:9]
+            if self.folder.get():
+                config.frequent_download_folders = [self.folder.get()] + config.frequent_download_folders[:9]
 
-            # update combobox
-            cb.config(values=config.frequent_download_folders)
+                # update combobox
+                cb.config(values=config.frequent_download_folders)
+
 
         # style
         s = ttk.Style()
@@ -1314,6 +1316,7 @@ class FileProperties(ttk.Frame):
         cb.grid(row=row['folder'], column=1, sticky='we')
         cb.bind('<FocusOut>', update_frequent_folders, add='+')
         cb.bind('<1>', update_frequent_folders, add='+')
+        cb.bind('<<ComboboxSelected>>', lambda event: cb.selection_clear(), add='+')
 
         # update global download folder with every widget edit
         self.folder.trace_add('write', lambda *args: set_option(download_folder=self.folder.get()))
