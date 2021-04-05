@@ -1226,9 +1226,9 @@ class FileProperties(ttk.Frame):
         self.config(style=self.style)
 
         # variables
-        self.raw_name = ''  # name without processing
+        self.raw_name = tk.StringVar()  # name without processing
         self.name = tk.StringVar()  # file's rendered name to fix arabic display on linux, "refer to DownloadItem"
-        self.name.get = lambda: self.raw_name  # return raw name instead of rendered name
+        self.name.get = lambda: self.raw_name.get().strip()  # return raw name instead of rendered name
 
         self.folder = tk.StringVar()
         self.size = tk.StringVar()
@@ -1245,34 +1245,49 @@ class FileProperties(ttk.Frame):
         self.create_widgets()
 
     def create_widgets(self):
-        def label(text='', textvariable=None, r=0, c=0, rs=1, cs=1, sticky='we'):
+        def label(text='', textvariable=None, r=1, c=0, rs=1, cs=1, sticky='we'):
             return AutoWrappingLabel(self, text=text, textvariable=textvariable, bg=self.bg, fg=self.fg, anchor='w'). \
                 grid(row=r, column=c, rowspan=rs, columnspan=cs, sticky=sticky)
 
         def separator(r):
             return ttk.Separator(self, orient='horizontal').grid(sticky='ew', pady=0, row=r, column=0, columnspan=3)
 
+        row = dict(name=1, folder=3, size=5, misc=7)
+        separator(2)
+        separator(4)
+        separator(6)
+        separator(8)
+
+        # name ---------------------------------------------------------------------------------------------------------
         label('Name:', sticky='nw')
-        label('Nasa Misson to Mars.mp4', textvariable=self.name, r=0, c=1)
-        Button(self, text='...', transparent=True, command=self.edit_name).grid(row=0, column=2, padx=1, pady=0)
+        # making a label widget to display rendered name and Entry widget to edit raw name, this workaround to solve
+        # bad Arabic names rendering in tkinter, issue #88
+        self.name_entry = tk.Entry(self, textvariable=self.raw_name)
+        self.name_entry.grid(row=row['name'], column=1, columnspan=2, sticky='we')
+        self.name_entry.grid_remove()
 
-        separator(1)
+        self.name_lbl = AutoWrappingLabel(self, textvariable=self.name,  bg=self.bg, fg=self.fg, anchor='w')
+        self.name_lbl.grid(row=row['name'], column=1, columnspan=2, sticky='we')
 
-        label('Size:', r=2, c=0)
-        label('540 MB', textvariable=self.size, r=2, c=1)
+        # hide label and show entry widget when left click
+        self.name_lbl.bind('<1>', lambda event: self.start_name_edit())
 
-        separator(3)
+        # hide entry widget and show label widget
+        self.name_entry.bind('<FocusOut>', lambda event: self.done_name_edit())
 
+        # size ---------------------------------------------------------------------------------------------------------
+        label('Size:', r=row['size'], c=0)
+        label('540 MB', textvariable=self.size, r=row['size'], c=1)
+
+        # misc ---------------------------------------------------------------------------------------------------------
         misc_frame = tk.Frame(self, bg=self.bg)
-        misc_frame.grid(row=4, column=0, columnspan=3, sticky='ew')
+        misc_frame.grid(row=row['misc'], column=0, columnspan=3, sticky='ew')
         for var in (self.type, self.subtype, self.resumable):
             tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
 
-        separator(5)
-
-        label('Folder:', r=6, c=0)
-
         # download folder -------------------------------------------------------------------------------------------
+        label('Folder:', r=row['folder'], c=0)
+
         def update_frequent_folders(*args):
             try:
                 config.frequent_download_folders.remove(self.folder.get())
@@ -1296,17 +1311,16 @@ class FileProperties(ttk.Frame):
 
         cb = ttk.Combobox(self, exportselection=0, textvariable=self.folder, values=config.frequent_download_folders,
                           style=custom_style)
-        cb.grid(row=6, column=1, sticky='we')
+        cb.grid(row=row['folder'], column=1, sticky='we')
         cb.bind('<FocusOut>', update_frequent_folders, add='+')
         cb.bind('<1>', update_frequent_folders, add='+')
 
         # update global download folder with every widget edit
-        self.folder.trace_add('write', lambda *args:set_option(download_folder=self.folder.get()))
+        self.folder.trace_add('write', lambda *args: set_option(download_folder=self.folder.get()))
 
         self.folder_img = atk.create_image(b64=folder_icon, color=BTN_BG)
-        Button(self, text='', image=self.folder_img, transparent=True, command=self.change_folder).grid(row=6, column=2, padx=1, pady=5)
-
-        separator(7)
+        Button(self, text='', image=self.folder_img, transparent=True,
+               command=self.change_folder).grid(row=row['folder'], column=2, padx=1, pady=5)
 
     def update(self, **kwargs):
         """update widget's variable
@@ -1314,7 +1328,7 @@ class FileProperties(ttk.Frame):
         'type': 'video', 'subtype_list': ['dash', 'fragmented'], 'resumable': True, 'total_size': 100000}
 
         """
-        name = kwargs.get('name', None)
+        raw_name = kwargs.get('name', None)
         rendered_name = kwargs.get('rendered_name', None)
         size = kwargs.get('total_size', None)
         folder = kwargs.get('folder', None)
@@ -1322,8 +1336,8 @@ class FileProperties(ttk.Frame):
         subtype_list = kwargs.get('subtype_list', '')
         resumable = kwargs.get('resumable', None)
 
-        if name:
-            self.raw_name = name
+        if raw_name:
+            self.raw_name.set(raw_name)
 
         if rendered_name:
             self.name.set(rendered_name)
@@ -1353,34 +1367,30 @@ class FileProperties(ttk.Frame):
             self.folder.set(folder)
             set_option(download_folder=folder)
 
-    def edit_name(self):
-        """Show popup to edit file name"""
-        if self.edit_name_popup:
-            self.edit_name_popup.focus()
-            return
+    def start_name_edit(self):
+        """remove label and show edit entry with raw name"""
+        self.name_lbl.grid_remove()
+        self.name_entry.grid()
+        self.name_entry.focus()
+        self.name_entry.icursor("end")
 
-        self.edit_name_popup = True
+    def done_name_edit(self):
+        """hide name entry widget, create rendered name and show it in name label"""
+        self.name_entry.grid_remove()
+        self.name_lbl.grid()
 
-        self.edit_name_popup = Popup('Change File Name To:', parent=self.winfo_toplevel(), get_user_input=True, default_user_input=self.name.get(),
-                                     title='Change File Name', buttons=['Rename', 'Cancel'])
-        button, name = self.edit_name_popup.show()
+        name = self.raw_name.get().strip()
 
-        self.edit_name_popup = None
+        # fix tkinter bad arabic language display in linux
+        if config.operating_system == 'Linux':
+            try:
+                title, extension = os.path.splitext(name)
 
-        if button == 'Rename' and name:
-            name = name.strip()
-            self.raw_name = name
-
-            # fix tkinter bad arabic language display in linux
-            if config.operating_system == 'Linux':
-                try:
-                    title, extension = os.path.splitext(name)
-
-                    name = arabic_renderer(title)
-                    name += extension
-                except:
-                    pass
-            self.name.set(name)
+                name = arabic_renderer(title)
+                name += extension
+            except:
+                pass
+        self.name.set(name)
 
 
 class Thumbnail(tk.Frame):
@@ -2956,8 +2966,8 @@ class MainWindow(IView):
         self.url_var = tk.StringVar()
         self.url_var.trace_add('write', self.url_entry_callback)
 
-        self.url_entry = tk.Entry(home_tab, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR, highlightbackground=ENTRY_BD_COLOR,
-                                  fg=MAIN_FG, textvariable=self.url_var)
+        self.url_entry = tk.Entry(home_tab, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR,
+                                  highlightbackground=ENTRY_BD_COLOR, fg=MAIN_FG, textvariable=self.url_var)
         self.url_entry.grid(row=0, column=0, columnspan=4, padx=5, pady=(40, 5), sticky='ew', ipady=8, ipadx=5)
 
         # retry button -------------------------------------------------------------------------------------------------
@@ -2998,6 +3008,9 @@ class MainWindow(IView):
         # file properties ----------------------------------------------------------------------------------------------
         self.file_properties = FileProperties(parent=home_tab)
         self.file_properties.grid(row=2, column=0, columnspan=3, rowspan=1, sticky='wes', padx=5, pady=10)
+
+        # bind click anywhere on main frame to unfocus name widget
+        home_tab.bind('<1>', lambda event: self.root.focus(), add='+')
 
         # download button ----------------------------------------------------------------------------------------------
         Button(home_tab, text='Download', command=self.download_btn_callback,
