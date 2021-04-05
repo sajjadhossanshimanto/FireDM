@@ -795,6 +795,10 @@ class Popup(tk.Toplevel):
             Button(btns_fr, command=lambda button_name=btn_name: self.button_callback(button_name),
                    text=btn_name).pack(side='left', padx=(5, 2), pady=5)
 
+            # bind Enter key for first key
+            if btn_name == self.buttons[0]:
+                self.bind('<Return>', lambda event: self.button_callback(self.buttons[0]))
+
         # separator
         ttk.Separator(main_frame, orient='horizontal').pack(side='bottom', fill='x')
 
@@ -818,6 +822,8 @@ class Popup(tk.Toplevel):
                                    height=min(15, msg_height + 1))
             txt.set(self.msg)
             txt.pack(side='top', fill='x', expand=True, padx=5, pady=5)
+
+        self.bind('<Escape>', lambda event: self.close())
 
     def button_callback(self, button_name):
         self.destroy()
@@ -2780,6 +2786,10 @@ class MainWindow(IView):
         # the associated callback
         self.post_processors = {}
 
+        # set global binds
+        self.bind_keyboard('<Delete>', self.delete_selected, widgets=[self.d_tab])
+        self.bind_keyboard('<Return>', self.open_selected_file, widgets=[self.d_tab])
+
     # region themes
     def save_user_themes(self):
         try:
@@ -3401,7 +3411,7 @@ class MainWindow(IView):
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
 
         # right click menu
-        right_click_map = {'Open File': lambda uid: self.controller.play_file(uid=uid),
+        right_click_map = {'Open File  (Enter)': lambda uid: self.controller.play_file(uid=uid),
                            'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
                            'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
                            'copy webpage url': lambda uid: self.copy(self.controller.get_webpage_url(uid=uid)),
@@ -3409,8 +3419,8 @@ class MainWindow(IView):
                            'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
                            'Resume': lambda uid: self.resume_selected(),
                            'Pause': lambda uid: self.stop_selected(),
+                           'Delete  (Del)': lambda uid: self.delete_selected(),
                            'Schedule / unschedule': lambda uid: self.schedule_selected(),
-                           'Delete': lambda uid: self.delete_selected(),
                            'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
                            'On item completion command': lambda uid: self.set_on_completion_command(uid),
                            'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
@@ -3450,18 +3460,23 @@ class MainWindow(IView):
             for i in range(selected_numbers[0], selected_numbers[-1] + 1):
                 items_list[i].select()
 
+    def open_selected_file(self):
+        selected_items = self.get_selected_items()
+        if len(selected_items) == 1:
+            item = selected_items[0]
+            self.controller.open_file(uid=item.uid)
+
     def resume_selected(self):
         """resume downloading selected and non completed items in downloads tab"""
 
-        for uid, item in self.d_items.items():
-            if item.status in (config.Status.cancelled, config.Status.error) and item.selected:
+        for uid, item in self.get_selected_items():
+            if item.status in (config.Status.cancelled, config.Status.error):
                 self.resume_download(uid)
 
     def stop_selected(self):
         """stop downloading selected items in downloads tab"""
-        for uid, item in self.d_items.items():
-            if item.selected:
-                self.stop_download(uid)
+        for uid, item in self.get_selected_items():
+            self.stop_download(uid)
 
     def delete(self, uid):
         """delete download item"""
@@ -3724,6 +3739,20 @@ class MainWindow(IView):
     # endregion
 
     # region general
+    def bind_keyboard(self, seq, callback, add='+', widgets=None):
+        """bind keyboard keys, it should be bind to root to work correctly
+        widgets: list of widgets that must be visible to execute the callback
+        """
+
+        def custom_callback(*args):
+            if widgets:
+                if any([widget.winfo_viewable() for widget in widgets]):
+                    callback()
+            else:
+                callback()
+
+        self.root.bind(seq, custom_callback, add=add)
+
     def run(self):
         """run application"""
         self.root.mainloop()
