@@ -254,7 +254,7 @@ def create_imgs():
     # D_item images
     imgs['play_img'] = atk.create_image(b64=play_icon, color=BTN_BG, size=10)
     imgs['pause_img'] = atk.create_image(b64=pause_icon, color=BTN_BG, size=10)
-    imgs['delete_img'] = atk.create_image(b64=delete_icon, color='red', size=10)
+    imgs['delete_img'] = atk.create_image(b64=delete_icon, color=BTN_BG, size=10)
 
     imgs['blinker_on_img'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
     imgs['done_img'] = atk.create_image(b64=done_icon, color=BTN_BG)
@@ -1504,6 +1504,8 @@ class DItem(tk.Frame):
             # pack buttons
             for btn in (self.play_button, self.pause_button):
                 btn.pack(side='left', padx=(0, 10))
+        self.delete_button = Button(btns_frame, image=imgs['delete_img'])
+        self.delete_button.pack(side='left', padx=(0, 10))
 
         # make another info label
         self.info_lbl2 = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
@@ -3448,6 +3450,8 @@ class MainWindow(IView):
             d_item.pause_button['command'] = lambda: self.stop_download(d_item.uid)
 
             excludes += [d_item.play_button, d_item.pause_button]
+
+        d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
 
         # bind double click to play a file
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
