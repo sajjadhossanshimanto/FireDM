@@ -3069,7 +3069,7 @@ class MainWindow(IView):
         self.select_lbl.bind("<Button-1>", select_menu.popup)
 
         self.stat_lbl = tk.Label(top_fr, text='', bg=HDG_BG, fg=HDG_FG, anchor='w')
-        self.stat_lbl.pack(anchor='w', side='right', padx=10)
+        self.stat_lbl.pack(anchor='w', side='right', padx=10, pady=10)
 
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
