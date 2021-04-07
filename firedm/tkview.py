@@ -3121,8 +3121,12 @@ class MainWindow(IView):
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
 
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
-        CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item "requires application restart"',
-                    key='autoscroll_download_tab').pack(anchor='w')
+
+        def autoscroll():
+            self.d_tab.autoscroll = config.autoscroll_download_tab
+
+        CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item.',
+                    key='autoscroll_download_tab', callback=autoscroll).pack(anchor='w')
         CheckOption(tab, 'write "last modified" timestamp to downloaded file', key='write_timestamp').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
