@@ -2981,6 +2981,24 @@ class MainWindow(IView):
                                   highlightbackground=ENTRY_BD_COLOR, fg=MAIN_FG, textvariable=self.url_var)
         self.url_entry.grid(row=0, column=0, columnspan=4, padx=5, pady=(40, 5), sticky='ew', ipady=8, ipadx=5)
 
+        def url_rcm_handler(option):
+            if option == 'Copy selection':
+                try:
+                    self.copy(self.url_entry.selection_get())
+                except:
+                    pass
+            elif option == 'Paste':
+                try:
+                    self.url_entry.delete("sel.first", "sel.last")
+                except:
+                    pass
+                self.url_entry.insert(tk.INSERT, self.paste())
+            elif option == 'Clear field':
+                self.url_var.set('')
+
+        atk.RightClickMenu(self.url_entry, ['Paste', 'Clear field', 'Copy selection'], callback=url_rcm_handler,
+                           bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
+
         # retry button -------------------------------------------------------------------------------------------------
         self.refresh_img = atk.create_image(b64=refresh_icon, color=PBAR_FG)
         self.retry_btn = Button(home_tab, image=self.refresh_img, command=lambda: self.refresh_url(self.url))
