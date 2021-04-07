@@ -87,13 +87,74 @@ RCM_AFG = None
 TITLE_BAR_BG = None
 TITLE_BAR_FG = None
 
-# selection color for DItem, TODO: should add them later to themes
-SEL_BG = 'blue'
-SEL_FG = 'white'
+# selection color for DItem
+SEL_BG = None
+SEL_FG = None
+
+# key:(reference key, description), reference key will be used to get the color value in case of missing key, but in
+# case of some font keys, reference key is refering to background color which will be used to calculate font color
+# if reference key is None, this means it can't be calculated if missing
+theme_map = dict(
+    # main colors
+    MAIN_BG=(None, 'Main background'),
+    MAIN_FG=('MAIN_BG', 'Main text color'),
+
+    # side frame colors
+    SF_BG=(None, 'Side frame background'),
+    SF_BTN_BG=(None, 'Side frame button color'),
+    SF_FG=('SF_BG', 'Side frame text color'),
+    SF_CHKMARK=('SF_BTN_BG', 'Side Frame check mark color'),
+
+    # Thumbnails
+    THUMBNAIL_BG=('SF_BG', 'Thumbnail background'),
+    THUMBNAIL_FG=('MAIN_FG', 'Default Thumbnail image color'),
+    THUMBNAIL_BD=('MAIN_FG', 'Thumbnail border width'),
+
+    # progressbar
+    PBAR_BG=(None, 'Progressbar inactive ring color'),
+    PBAR_FG=('MAIN_FG', 'Progressbar active ring color'),
+    PBAR_TXT=('MAIN_BG', 'Progressbar text color'),
+
+    # Entry
+    ENTRY_BD_COLOR=('SF_BG', 'Entry widget border color'),
+
+    # Button
+    BTN_BG=('SF_BTN_BG', 'Button background'),
+    BTN_FG=('BTN_BG', 'Button text color'),
+    BTN_HBG=('SF_BG', 'Button highlight background'),
+    BTN_ABG=('SF_BG', 'Button active background'),
+    BTN_AFG=('BTN_ABG', 'Button active text color'),
+
+    # Heading e.g. "Network:" heading in Settings tab
+    HDG_BG=('SF_BTN_BG', 'Heading title background'),
+    HDG_FG=('HDG_BG', 'Heading title text color'),
+
+    # scrollbar
+    SBAR_BG=('MAIN_BG', 'Scrollbar background'),
+    SBAR_FG=('MAIN_FG', 'scrollbar active color'),
+
+    # right click menu
+    RCM_BG=('MAIN_BG', 'Right click menu background'),
+    RCM_FG=('RCM_BG', 'Right click menu text color'),
+    RCM_ABG=('BTN_BG', 'Right click menu active background'),
+    RCM_AFG=('RCM_ABG', 'Right click menu active text color'),
+
+    # Window titlebar
+    TITLE_BAR_BG=('BTN_BG', 'Window custom titlebar background'),
+    TITLE_BAR_FG=('BTN_FG', 'Window custom titlebar text color'),
+
+    # Download item (DItem)
+    SEL_BG=('SF_BG', 'Download item selection background'),
+    SEL_FG=('SF_FG', 'Download item selection foreground')
+    )
 
 
-themes_table = {
-    'default': {
+# fonts keys in theme map
+theme_fonts_keys = ('MAIN_FG', 'SF_FG', 'BTN_FG', 'BTN_AFG', 'PBAR_TXT', 'HDG_FG', 'RCM_FG', 'RCM_AFG')
+
+
+builtin_themes = {
+    'light': {
         'MAIN_BG': 'white',
         'MAIN_FG': 'black',
 
@@ -132,24 +193,14 @@ themes_table = {
 
         # title bar
         'TITLE_BAR_BG': '#006cff',
-        'TITLE_BAR_FG': 'white'
+        'TITLE_BAR_FG': 'white',
+
+        # selection color for DItem
+        'SEL_BG': 'blue',
+        'SEL_FG': 'white'
 
     },
-    "olive": {"MAIN_BG": "#313328", "MAIN_FG": "white", "SF_BG": "#0c1c18", "SF_FG": "white", "SF_BTN_BG": "#ffffff",
-              "SF_CHKMARK": "#ffffff", "THUMBNAIL_BG": "#0c1c18", "THUMBNAIL_FG": "white", "PBAR_BG": "#3b3d32",
-              "PBAR_FG": "white", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#0c1c18", "BTN_BG": "#ffffff",
-              "BTN_FG": "black", "BTN_HBG": "#0c1c18", "BTN_ABG": "#0c1c18", "BTN_AFG": "white", "HDG_BG": "#ffffff",
-              "HDG_FG": "black", "THUMBNAIL_BD": "#0c1c18", "SBAR_BG": "#313328", "SBAR_FG": "white",
-              "RCM_BG": "#313328", "RCM_FG": "white", "RCM_ABG": "#ffffff", "RCM_AFG": "black",
-              "TITLE_BAR_BG": "#ffffff", "TITLE_BAR_FG": "black"},
-    "dark2": {"MAIN_BG": "#2b2b2b", "MAIN_FG": "white", "SF_BG": "#3c3f41", "SF_FG": "white", "SF_BTN_BG": "#ffffff",
-              "SF_CHKMARK": "#ffffff", "THUMBNAIL_BG": "#3c3f41", "THUMBNAIL_FG": "white", "PBAR_BG": "#353535",
-              "PBAR_FG": "white", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#3c3f41", "BTN_BG": "#ffffff",
-              "BTN_FG": "black", "BTN_HBG": "#3c3f41", "BTN_ABG": "#3c3f41", "BTN_AFG": "white", "HDG_BG": "#ffffff",
-              "HDG_FG": "black", "THUMBNAIL_BD": "white", "SBAR_BG": "#2b2b2b", "SBAR_FG": "white", "RCM_BG": "#2b2b2b",
-              "RCM_FG": "white", "RCM_ABG": "#ffffff", "RCM_AFG": "black", "TITLE_BAR_BG": "#ffffff",
-              "TITLE_BAR_FG": "black"},
-    "dark": {"MAIN_BG": "#1c1c21", "MAIN_FG": "white", "SF_BG": "#000300", "SF_FG": "white", "SF_BTN_BG": "#d9dc4b",
+    'dark': {"MAIN_BG": "#1c1c21", "MAIN_FG": "white", "SF_BG": "#000300", "SF_FG": "white", "SF_BTN_BG": "#d9dc4b",
              "SF_CHKMARK": "#d9dc4b", "THUMBNAIL_BG": "#000300", "THUMBNAIL_FG": "#d9dc4b", "PBAR_BG": "#26262b",
              "PBAR_FG": "#d9dc4b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#000300", "BTN_BG": "#d9dc4b",
              "BTN_FG": "black", "BTN_HBG": "#000300", "BTN_ABG": "#000300", "BTN_AFG": "white", "HDG_BG": "#d9dc4b",
@@ -158,8 +209,41 @@ themes_table = {
              "TITLE_BAR_BG": "#d9dc4b", "TITLE_BAR_FG": "black"}
 }
 
-# hold all user defined themes, previously created themes will be loaded from disk
+
+def calculate_missing_theme_keys(theme):
+    """calculate missing key colors
+    Args:
+        theme (dict): theme dictionary
+    """
+
+    # make sure we have main keys
+    main_keys = ('MAIN_BG', 'SF_BG', 'SF_BTN_BG')
+    default_theme = builtin_themes[config.DEFAULT_THEME]
+    for key in main_keys:
+        theme.setdefault(key, default_theme[key])
+
+    # progressbar
+    theme.setdefault('PBAR_BG', atk.calc_contrast_color(theme['MAIN_BG'], 10))
+
+    for key in theme_fonts_keys:
+        bg_key = theme_map[key][0]
+        bg = theme.get(bg_key, default_theme[bg_key])
+        theme.setdefault(key, atk.calc_font_color(bg))
+
+    for key, v in theme_map.items():
+        fallback_key = v[0]
+        if fallback_key is not None:
+            theme.setdefault(key, theme.get(fallback_key, default_theme[fallback_key]))
+
+
+# calculate missing keys for builtin themes
+for t in builtin_themes.values():
+    calculate_missing_theme_keys(t)
+
+
+# hold all user defined themes, user themes with the same names will override same builtin_themes
 user_themes = {}
+
 
 # widget's images, it will be updated with theme change
 imgs = {}
@@ -292,7 +376,7 @@ class ThemeEditor(tk.Toplevel):
     in advanced mode, all colors will be available to edit
 
     """
-    def __init__(self, main, mode):
+    def __init__(self, main, theme_name):
         """initialize
 
         Args:
@@ -301,7 +385,6 @@ class ThemeEditor(tk.Toplevel):
         """
         tk.Toplevel.__init__(self)
         self.main = main
-        self.mode = mode
         self.title('Theme Editor')
         self.use_all_options = False
 
@@ -310,18 +393,13 @@ class ThemeEditor(tk.Toplevel):
         center_window(self, 100, 100, set_geometry_wh=False)
 
         # get theme name and current theme ----------------------------------------------------------------------------
-        if self.mode == 'new':
-            theme_name = f'user defined {len(user_themes)}'
-        else:
-            theme_name = config.current_theme
-
         self.theme_name = tk.StringVar()
         self.theme_name.set(theme_name)
-        self.current_theme = user_themes.get(config.current_theme) or themes_table['default']
+        self.current_theme = user_themes.get(config.current_theme) or builtin_themes.get(config.current_theme) or \
+                             builtin_themes[config.DEFAULT_THEME]
 
         # some theme keys description ---------------------------------------------------------------------------------
-        self.key_description = {'MAIN_BG': 'Main background', 'SF_BG': 'Side Frame BG', 'SF_BTN_BG': 'Side Button color',
-                                'PBAR_FG': 'Progressbar color', 'MAIN_FG': 'Main Text color'}
+        self.key_description = {k: v[1] for k, v in theme_map.items()}
 
         # frames ------------------------------------------------------------------------------------------------------
         self.main_frame = tk.Frame(self, bg='white')
@@ -352,7 +430,7 @@ class ThemeEditor(tk.Toplevel):
         ttk.Separator(self.top_frame).pack(expand=True, fill='both')
 
         # advanced colors ---------------------------------------------------------------------------------------------
-        advanced_options = [k for k in themes_table['default'].keys() if k not in basic_options]
+        advanced_options = [k for k in theme_map if k not in basic_options]
         self.advanced_vars = {k: tk.StringVar() for k in advanced_options}
 
         # add advanced options
@@ -368,6 +446,8 @@ class ThemeEditor(tk.Toplevel):
         atk.scroll_with_mousewheel(basic_frame, target=self.top_frame, apply_to_children=True)
         atk.scroll_with_mousewheel(self.advanced_frame, target=self.top_frame, apply_to_children=True)
 
+        self.bind('<Escape>', lambda event: self.destroy())
+
     def toggle_advanced_options(self):
         self.use_all_options = not self.use_all_options
 
@@ -377,6 +457,7 @@ class ThemeEditor(tk.Toplevel):
         else:
             self.advanced_frame.pack_forget()
             self.advanced_btn['text'] = 'Advanced'
+            self.top_frame.scrolltotop()
 
     def create_options(self, parent, vars_map):
         """create option widgets
@@ -393,7 +474,7 @@ class ThemeEditor(tk.Toplevel):
             name = self.key_description.get(key) or key
 
             f = tk.Frame(parent)
-            entry = tk.Entry(f, textvariable=var, bg=bg, fg=fg)
+            entry = tk.Entry(f, textvariable=var)
             btn = tk.Button(f, text=name, bg=bg, activebackground=bg, fg=fg, activeforeground=fg)
             btn['command'] = lambda v=var, b=btn, e=entry: self.pick_color(v, b, e)
             btn.pack(side='left', expand=True, fill='x')
@@ -407,14 +488,11 @@ class ThemeEditor(tk.Toplevel):
             color = 'white'
         new_color = colorchooser.askcolor(color=color, parent=self)
         if new_color:
-            # print(new_color)
             new_color = new_color[-1]
-            # print(new_color)
             if new_color:
                 var.set(new_color)
                 fg = atk.calc_font_color(new_color)
                 btn.config(bg=new_color, activebackground=new_color, fg=fg)
-                entry.config(bg=new_color, fg=fg)
 
     def apply(self):
 
@@ -422,109 +500,37 @@ class ThemeEditor(tk.Toplevel):
         self.destroy()
 
         theme_name = self.theme_name.get()
-        if self.mode == 'edit' and theme_name != config.current_theme:
-            # edit theme name
-            user_themes[theme_name] = user_themes.pop(config.current_theme)
+
+        # avoid builtin theme name
+        if theme_name in builtin_themes:
+            all_names = list(builtin_themes.keys()) + list(user_themes.keys())
+            i = 2
+            name = f'{theme_name}{i}'
+            while name in all_names:
+                i += 1
+                name = f'{theme_name}{i}'
+
+            theme_name = name
 
         vars_map = {}
         vars_map.update(self.basic_vars)
 
         if self.use_all_options:
             vars_map.update(self.advanced_vars)
+        else:
+            # get user changes in advanced options
+            changed = {k: var for k, var in self.advanced_vars.items() if self.current_theme[k] != var.get()}
+            vars_map.update(changed)
 
-        kwargs = {k: v.get() for k, v in vars_map.items()}
+        kwargs = {k: v.get() for k, v in vars_map.items() if self.is_color(v.get())}
 
-        self.edit_theme(theme_name, **kwargs)
+        theme = user_themes[theme_name] = kwargs
+
+        # theme.update(kwargs)
+        calculate_missing_theme_keys(theme)
 
         # apply theme
         self.main.apply_theme(theme_name)
-
-    def edit_theme(self, theme_name, **kwargs):
-        """modify or create new theme
-        pass any number of "key=color" pairs and the rest will be auto calculated
-
-        Args:
-            theme_name (str): any existing key in theme_table, if key not found, a new theme will be created
-            kwargs: key, value pairs where key is any key name in default theme, and value is a color
-
-        Example:
-            edit_theme(theme_name='user_defined1', MAIN_BG='grey', SF_BG='black', SF_BTN_BG='blue')
-
-        """
-
-        # get theme reference or create new one
-        default_theme = themes_table['default']
-        theme = user_themes.setdefault(theme_name, self.current_theme.copy())
-
-        # get any missing keys from default theme
-        missing = {k: default_theme[k] for k in default_theme if k not in theme}
-
-        # add missing keys to theme
-        for k, v in missing.items():
-            theme[k] = v
-
-        # remove invalid colors
-        kwargs = {k: v for k, v in kwargs.items() if self.is_color(v)}
-
-        # calculating colors values which is not passed in kwargs -----------------------------------------------------
-        def set_key(key, default=None):
-            # set color for a key from kwargs or set default value
-            if not default:
-                default = key
-            value = kwargs.get(key) or theme[default]
-            theme[key] = value
-
-        def set_font(key, bg_key):
-            # set font color from kwargs or set 'black' for light background and 'white' for dark background
-            value = kwargs.get(key) or atk.calc_font_color(theme[bg_key])
-            theme[key] = value
-
-        # main colors
-        set_key('MAIN_BG')
-        set_font('MAIN_FG', 'MAIN_BG')
-
-        # side bar
-        set_key('SF_BG')
-        set_font('SF_FG', 'SF_BG')
-        set_key('SF_BTN_BG')
-        set_key('SF_CHKMARK', 'SF_BTN_BG')
-
-        # buttons
-        set_key('BTN_BG', 'SF_BTN_BG')
-        set_font('BTN_FG', 'BTN_BG')
-        set_key('BTN_HBG', 'SF_BG')  # highlight background
-        set_key('BTN_ABG', 'SF_BG')  # active background
-        set_font('BTN_AFG', 'BTN_ABG')
-
-        # progressbar
-        theme['PBAR_BG'] = kwargs.get('PBAR_BG') or atk.calc_contrast_color(theme['MAIN_BG'], 10)
-        set_key('PBAR_FG', 'MAIN_FG')
-        set_font('PBAR_TXT', 'MAIN_BG')
-
-        # thumbnail
-        set_key('THUMBNAIL_BG', 'SF_BG')  # color of thumbnail frame in Home
-        set_key('THUMBNAIL_FG', 'PBAR_FG')  # color of base thumbnail photo
-        set_key('THUMBNAIL_BD', 'PBAR_FG')  # thumbnail border color
-
-        set_key('ENTRY_BD_COLOR', 'SF_BG')
-
-        # heading e.g. "Network:" heading in Settings tab
-        set_key('HDG_BG', 'SF_BTN_BG')
-        set_font('HDG_FG', 'HDG_BG')
-
-        # scrollbars
-        set_key('SBAR_BG', 'MAIN_BG')
-        set_key('SBAR_FG', 'MAIN_FG')
-
-        # right click menu
-        set_key('RCM_BG', 'MAIN_BG')
-        set_font('RCM_FG', 'RCM_BG')
-        set_key('RCM_ABG', 'BTN_BG')
-        set_font('RCM_AFG', 'RCM_ABG')
-
-        # title bar
-        set_key('TITLE_BAR_BG', 'BTN_BG')
-        set_key('TITLE_BAR_FG', 'BTN_FG')
 
 
 class Button(tk.Button):
@@ -2849,22 +2855,21 @@ class MainWindow(IView):
             return False
 
     def edit_theme(self):
-        if config.current_theme in user_themes:
-            ThemeEditor(self, mode='edit')
-        else:
-            self.msgbox('can not edit builtin themes, press "New" instead')
+        ThemeEditor(self, self.themes_menu.get())
 
     def new_theme(self):
-        ThemeEditor(self, mode='new')
+        ThemeEditor(self, f'custom_{len(user_themes) + 1}')
 
     def del_theme(self):
-        if config.current_theme in user_themes:
-            res = self.popup(f'Delete theme with name "{config.current_theme}"', 'are you sure?', buttons=['Yes', 'Cancel'])
-            if res == 'Yes':
-                user_themes.pop(config.current_theme)
-                self.apply_theme('default')
-        else:
-            self.msgbox('can not delete builtin themes')
+        try:
+            sel = self.themes_menu.get()
+            user_themes.pop(sel)
+            values = list(self.themes_menu['values'])
+            values.remove(sel)
+            self.themes_menu.config(values=values)
+            self.themes_menu.current(0)
+        except:
+            pass
 
     def apply_theme(self, theme_name=None):
         """change global color variables
@@ -2873,16 +2878,19 @@ class MainWindow(IView):
                theme_name (str): theme name
         """
 
-        theme_name = theme_name or self.themes_menu.get() or 'default'
+        theme_name = theme_name or self.themes_menu.get() or config.DEFAULT_THEME
 
-        # look first in default themes, then in user theme
-        theme = themes_table.get(theme_name) or user_themes.get(theme_name) or themes_table.get('default')
+        # look first in user themes, then in builtin theme
+        theme = user_themes.get(theme_name) or builtin_themes.get(theme_name) or builtin_themes.get(config.DEFAULT_THEME)
 
         if theme:
             # clean invalid color values
             theme = {k: v for k, v in theme.items() if self.is_color(v)}
 
             config.current_theme = theme_name
+
+            # add missing keys to other builtin themes
+            calculate_missing_theme_keys(theme)
 
             # update global variables
             globals().update(theme)
@@ -3077,13 +3085,13 @@ class MainWindow(IView):
         tk.Label(themes_frame, bg=bg, fg=fg, text='Select Theme:  ').pack(side='left')
 
         # sorted themes names
-        themes_names = natural_sort(list(themes_table.keys()) + list(user_themes.keys()))
+        themes_names = natural_sort(list(builtin_themes.keys()) + list(user_themes.keys()))
 
         self.themes_menu = Combobox(themes_frame, values=themes_names, selection=config.current_theme)
-        self.themes_menu.callback = lambda: self.apply_theme(self.themes_menu.selection)
-
         self.themes_menu.pack(side='left', ipadx=5)
-        Button(themes_frame, text='delete', command=self.del_theme).pack(side='right', padx=5)
+        Button(themes_frame, text='Apply', command=self.apply_theme).pack(side='left', padx=5)
+
+        Button(themes_frame, text='Delete', command=self.del_theme).pack(side='right', padx=5)
         Button(themes_frame, text='New', command=self.new_theme).pack(side='right', padx=5)
         Button(themes_frame, text='Edit', command=self.edit_theme).pack(side='right', padx=5)
 

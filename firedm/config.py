@@ -20,7 +20,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'segment_size', 'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections',
                  'update_frequency', 'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy',
                  'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
-                 'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'dynamic_theme_change', 'checksum',
+                 'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'enable_captcha_workaround',
@@ -89,8 +89,6 @@ frequent_download_folders = []
 # settings parameters
 # General --------------------------------------------------------------------------------------------------------------
 current_theme = DEFAULT_THEME
-all_themes = []
-dynamic_theme_change = True
 monitor_clipboard = True
 show_download_window = True
 auto_close_download_window = True
