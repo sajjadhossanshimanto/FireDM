@@ -3538,12 +3538,21 @@ class MainWindow(IView):
         if res != 'Ok':
             return
 
+        # temporarily disable autoscroll
+        if config.autoscroll_download_tab:
+            self.d_tab.autoscroll = False
+
         # pop d
         d = self.d_items.pop(uid)
 
         d.destroy()
 
         self.controller.delete(uid)
+
+        if config.autoscroll_download_tab:
+            # enable autoscroll
+            self.root.update_idletasks()
+            self.d_tab.autoscroll = True
 
     def delete_selected(self):
         """remove selected download items from downloads tab
