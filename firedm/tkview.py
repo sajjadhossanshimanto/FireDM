@@ -1307,7 +1307,6 @@ class FileProperties(ttk.Frame):
                 # update combobox
                 cb.config(values=config.frequent_download_folders)
 
-
         # style
         s = ttk.Style()
         custom_style = 'downloadfolder.TCombobox'
@@ -1329,7 +1328,7 @@ class FileProperties(ttk.Frame):
 
         self.folder_img = atk.create_image(b64=folder_icon, color=BTN_BG)
         Button(self, text='', image=self.folder_img, transparent=True,
-               command=self.change_folder).grid(row=row['folder'], column=2, padx=1, pady=5)
+               command=self.change_folder).grid(row=row['folder'], column=2, padx=(8, 1), pady=5)
 
     def update(self, **kwargs):
         """update widget's variable
