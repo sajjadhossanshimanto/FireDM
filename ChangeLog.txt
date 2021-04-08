@@ -1,3 +1,16 @@
+2021.4.8:
+- [video] Fix hls extractor, issue #233
+- [gui] bind some keyboard keys to downloads tab and popup window, e.g. Enter, Delete, and Escape keys.
+- [gui - Main tab] direct filename edit, instead of popup window, issue #229
+- [gui - Main tab] discard blank values for download folder in frequent used folders list.
+- [gui] enhancement for theme editor.
+- [gui - Main tab] right click menu for copy/paste/clear url entry, issue #235
+- [gui - downloads tab] add delete button back to download item, issue #235
+- [gui - downloads tab] no need to restart application to enable/disable autoscroll for downloads tab.
+- [gui - downloads tab] fix stat label size change when selecting an item.
+- [gui] Create new tab for application "update".
+- [appimage] fix update issue on appimage releases, since it can't be automatically updated, it will only open a latest release page.
+
 2021.4.3:
 - [downloads tab] Natural items select, click anywhere to select an item, issue #229, removed checkbox, use control, and shift for multiple selection
 - [ditem] fix extension letters doesn't fit in thumbnail if its more than letters, e.g. .AppImage
