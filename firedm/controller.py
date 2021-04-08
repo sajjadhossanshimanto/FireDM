@@ -1183,7 +1183,8 @@ class Controller:
             log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
-        for pkg in ('firedm', 'youtube_dl', 'yt_dlp'):
+        pkgs = ('firedm',) if config.isappimage else ('firedm', 'youtube_dl', 'yt_dlp')
+        for pkg in pkgs:
             if not info[pkg]['current_version']:
                 log(f'{pkg} still loading, try again')
                 continue
@@ -1198,7 +1199,8 @@ class Controller:
         # update
         msg = 'Check for update Status:\n\n'
         new_pkgs = []
-        for pkg, pkg_info in info.items():
+        for pkg in pkgs:
+            pkg_info = info[pkg]
             current_version = pkg_info['current_version']
             latest_version = pkg_info['latest_version']
 
@@ -1236,30 +1238,33 @@ class Controller:
 
             res = self.get_user_response(msg, options)
             if res == options[0]:
-
-                # start updating modules
-                done_pkgs = {}
-                for pkg in new_pkgs:
-                    latest_version, url = update.get_pkg_latest_version(pkg, fetch_url=True)
-
-                    log('Installing', pkg, latest_version)
-                    try:
-                        success = update.update_pkg(pkg, url)
-                        done_pkgs[pkg] = success
-
-                    except Exception as e:
-                        log(f'failed to update {pkg}:', e)
-
-                msg = 'Update results:\n\n'
-                for pkg, success in done_pkgs.items():
-                    msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
-
-                if any(done_pkgs.values()):
-                    msg += 'Please Restart application for update to take effect!'
+                if config.isappimage:
+                    # open webpage only
+                    open_webpage('https://github.com/firedm/FireDM/releases/latest')
                 else:
-                    msg += 'Update failed!!!! ... try again'
+                    # start updating modules
+                    done_pkgs = {}
+                    for pkg in new_pkgs:
+                        latest_version, url = update.get_pkg_latest_version(pkg, fetch_url=True)
 
-                log(msg, showpopup=True)
+                        log('Installing', pkg, latest_version)
+                        try:
+                            success = update.update_pkg(pkg, url)
+                            done_pkgs[pkg] = success
+
+                        except Exception as e:
+                            log(f'failed to update {pkg}:', e)
+
+                    msg = 'Update results:\n\n'
+                    for pkg, success in done_pkgs.items():
+                        msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
+
+                    if any(done_pkgs.values()):
+                        msg += 'Please Restart application for update to take effect!'
+                    else:
+                        msg += 'Update failed!!!! ... try again'
+
+                    log(msg, showpopup=True)
 
         else:
             log(msg, showpopup=True)

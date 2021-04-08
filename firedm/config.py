@@ -67,6 +67,9 @@ FROZEN = getattr(sys, "frozen", False)  # check if app is being compiled by cx_f
 operating_system = platform.system()
 operating_system_info = f'{platform.platform()} - {platform.machine()}'  # i.e. Win7-64 and Vista-32
 
+# release type
+isappimage = False  # AppImage release
+
 # application exit flag
 terminate = False  # for main window and downloads
 shutdown = False  # complete shutdown flag

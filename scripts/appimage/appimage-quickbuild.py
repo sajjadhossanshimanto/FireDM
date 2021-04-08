@@ -138,6 +138,12 @@ for i, line in enumerate(data):
 with open(env_fp, 'w') as f:
     f.writelines(data)
 
+# batch config file ----------------------------------------------------------------------------------------------------
+print('edit "config" file')
+config_fp = f'{lib_folder}/firedm/config.py'
+with open(config_fp, 'a') as f:
+    f.write('\nisappimage = True\n')
+
 # Start FireDM with "--imports-only" flag to build pyc files for new packages  -----------------------------------------
 print('starting FireDM')
 subprocess.run(f'{AppDir}/AppRun --imports-only', shell=True)
