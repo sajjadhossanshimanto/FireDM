@@ -1000,7 +1000,7 @@ class SideFrame(tk.Frame):
 
         # grid button, will add padding for first button to keep space on top
         if len(self.buttons_map) == 1:
-            f.grid(sticky='ew', pady=(50, 0))
+            f.grid(sticky='ew', pady=(20, 0))
         else:
             f.grid(sticky='ew')
 
@@ -2951,6 +2951,11 @@ class MainWindow(IView):
         self.side_frame.create_button('Settings', b64=sett_icon, target=self.sett_frame)
         self.side_frame.create_button('Log', b64=log_icon, target=self.log_tab)
 
+        if not config.disable_update_feature:
+            # update tab
+            self.update_tab = self.create_update_tab()
+            self.side_frame.create_button('Update', b64=refresh_icon, target=self.update_tab)
+
         # set default button
         self.side_frame.set_default('Home')
 
@@ -3275,46 +3280,6 @@ class MainWindow(IView):
 
         separator()
 
-        # update -----------------------------------------------------------------------------------------------------
-        update_frame = tk.Frame(tab, bg=bg)
-
-        def lbl(var):
-            return tk.Label(update_frame, bg=bg, fg=fg, textvariable=var, padx=5)
-
-        CheckEntryOption(update_frame, 'Check for update every: ', entry_key='update_frequency', width=4, justify='center',
-                         check_key='check_for_update', get_text_validator=lambda x: int(x) if int(x) > 0 else 7)\
-            .grid(row=0, column=0, columnspan=2, sticky='w')
-        tk.Label(update_frame, bg=bg, fg=fg, text='days', padx=5).grid(row=0, column=2, sticky='w')
-
-        # FireDM update
-        self.firedm_update_note = tk.StringVar()
-        self.firedm_update_note.set(f'FireDM version: {config.APP_VERSION}')
-        lbl(self.firedm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
-        Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
-               command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
-
-        # youtube-dl and yt_dlp
-        self.youtube_dl_update_note = tk.StringVar()
-        self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version}')
-        lbl(self.youtube_dl_update_note).grid(row=2, column=1, columnspan=2, sticky='w')
-        Button(update_frame, text='Rollback update',
-               command=lambda: self.rollback_pkg_update('youtube_dl')).grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
-
-        self.yt_dlp_update_note = tk.StringVar()
-        self.yt_dlp_update_note.set(f'yt_dlp version: {config.yt_dlp_version}')
-        lbl(self.yt_dlp_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
-        Button(update_frame, text='Rollback update',
-               command=lambda: self.rollback_pkg_update('yt_dlp')).grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
-
-        # progressbar while updating packages
-        self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=100, fg=PBAR_FG, text_bg=bg,
-                                                        text_fg=PBAR_TXT)
-        self.update_progressbar.grid(row=1, column=4, rowspan=3, pady=5, padx=20, sticky='e')
-
-        if not config.disable_update_feature:
-            heading('Update:')
-            update_frame.pack(anchor='w', fill='x', expand=True)
-
         # add padding
         for w in tab.pack_slaves():
             if not w.pack_info().get('pady'):
@@ -3353,6 +3318,59 @@ class MainWindow(IView):
 
         btn_frame.pack(pady=5, expand=True, fill='x')
         self.log_text.pack(expand=True, fill='both')
+
+        return tab
+
+    def create_update_tab(self):
+        # update -----------------------------------------------------------------------------------------------------
+        bg = MAIN_BG
+        fg = MAIN_FG
+        tab = tk.Frame(self.main_frame, bg=bg)
+
+        tk.Label(tab, text=' Update Tab:', bg=HDG_BG, fg=HDG_FG, anchor='w',
+                 font='any 10 bold').pack(anchor='n', expand=False, fill='x', ipady=3, pady=(0, 5))
+
+        update_frame = tk.Frame(tab, bg=bg)
+        update_frame.pack(anchor='n', fill='both', expand=True, pady=(20, 0))
+
+        update_frame.columnconfigure(2, weight=1)
+
+        def lbl(var):
+            return tk.Label(update_frame, bg=bg, fg=fg, textvariable=var, padx=5)
+
+        CheckEntryOption(update_frame, 'Check for update every: ', entry_key='update_frequency', width=4,
+                         justify='center',
+                         check_key='check_for_update', get_text_validator=lambda x: int(x) if int(x) > 0 else 7) \
+            .grid(row=0, column=0, columnspan=2, sticky='w')
+        tk.Label(update_frame, bg=bg, fg=fg, text='days', padx=5).grid(row=0, column=2, sticky='w')
+
+        # FireDM update
+        self.firedm_update_note = tk.StringVar()
+        self.firedm_update_note.set(f'FireDM version: {config.APP_VERSION}')
+        lbl(self.firedm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
+        Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
+               command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
+
+        # youtube-dl and yt_dlp
+        self.youtube_dl_update_note = tk.StringVar()
+        self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version}')
+        lbl(self.youtube_dl_update_note).grid(row=2, column=1, columnspan=2, sticky='w', pady=20)
+
+        self.yt_dlp_update_note = tk.StringVar()
+        self.yt_dlp_update_note.set(f'yt_dlp version: {config.yt_dlp_version}')
+        lbl(self.yt_dlp_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
+
+        if config.FROZEN and config.operating_system == 'Windows':
+            Button(update_frame, text='Rollback update', command=lambda: self.rollback_pkg_update('youtube_dl'))\
+                .grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
+
+            Button(update_frame, text='Rollback update', command=lambda: self.rollback_pkg_update('yt_dlp'))\
+                .grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
+
+        # progressbar while updating packages
+        self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=100, fg=PBAR_FG, text_bg=bg,
+                                                        text_fg=PBAR_TXT)
+        self.update_progressbar.grid(row=1, column=4, rowspan=3, pady=5, padx=20, sticky='e')
 
         return tab
 
