@@ -3,7 +3,7 @@
 
     multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
 
-    :copyright: (c) 2019-2020 by Mahmoud Elshahat.
+    :copyright: (c) 2019-2021 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 
     module description:
@@ -156,41 +156,7 @@ class Controller:
         # check for ffmpeg and update file path "config.ffmpeg_actual_path"
         check_ffmpeg()
 
-    def _on_completion_watchdog(self):
-        """a separate thread to watch when "ALL" download items are completed and execute on completion action if
-        configured"""
-
-        # make sure user started any item downloading, after setting "on-completion actions"
-        trigger = False
-
-        while True:
-            if config.shutdown:
-                break
-
-            # check for "on-completion actions"
-            if any((config.on_completion_command, config.shutdown_pc)):
-                # check for any active download, then set the trigger
-                if any([d.status in (config.Status.downloading, config.Status.processing) for d in self.d_map.values()]):
-                    trigger = True
-
-                elif trigger:
-                    # check if all items are completed
-                    if all([d.status == config.Status.completed for d in self.d_map.values()]):
-                        # reset the trigger
-                        trigger = False
-
-                        # execute command
-                        if config.on_completion_command:
-                            run_command(config.on_completion_command)
-
-                        # shutdown
-                        if config.shutdown_pc:
-                            self.shutdown_pc()
-            else:
-                trigger = False
-
-            time.sleep(5)
-
+    # region process url
     def auto_refresh_url(self, d):
         """refresh an expired url"""
         log('auto refresh url for:', d.rendered_name)
@@ -287,6 +253,30 @@ class Controller:
 
         return playlist
 
+    def process_url(self, url):
+        """take url and return a a list of ObservableDownloadItem objects
+
+        when a "view" call this method it should expect a playlist menu (list of names) to be passed to its update
+        method,
+
+        Examples:
+            playlist_menu=['1- Nasa mission to Mars', '2- how to train your dragon', ...]
+            or
+            playlist_menu=[] if no video playlist
+
+        """
+        self.url = url
+        self.reset()
+
+        if url:
+            try:
+                run_thread(self._process_url, url)
+            except Exception as e:
+                log("process_url:", e)
+                if config.TEST_MODE:
+                    raise e
+    # endregion
+
     # region update view
     def observer(self, **kwargs):
         """This is an observer method which get notified when change/update properties in ObservableDownloadItem
@@ -365,14 +355,6 @@ class Controller:
         info.update(**kwargs)
 
         self._update_view(**info)
-
-    def _get_d_list(self):
-        buff = {'command': 'd_list', 'd_list': []}
-        for d in self.d_map.values():
-            properties = d.watch_list
-            info = {k: getattr(d, k, None) for k in properties}
-            buff['d_list'].append(info)
-        self.view.update_view(**buff)
 
     # endregion
 
@@ -696,6 +678,51 @@ class Controller:
         self._update_stream_menu(command='stream_menu', stream_menu=vid.stream_menu, video_idx=idx,
                                  stream_idx=vid.stream_menu_map.index(vid.selected_stream))
         self._report_d(self.d, active=active)
+
+    def select_playlist_video(self, idx, active=True):
+        """
+        select video from playlist menu and update stream menu
+        idx: index in playlist menu
+
+        to see expected notifications to "view" and example:
+            *read _select_playlist_video() doc string
+        """
+
+        run_thread(self._select_playlist_video, idx, active=active)
+
+    def select_stream(self, idx, active=True):
+        """select stream for current selected video in playlist menu
+        idx: index in stream menu
+        expected notifications: info of current selected video in playlist menu
+        """
+
+        self.d.select_stream(index=idx)
+        self._report_d(self.d, active=active)
+
+    def select_audio(self, audio_idx, uid=None, video_idx=None):
+        """select audio from audio menu
+        Args:
+            audio_idx (int): index of audio stream
+            uid: unique video uid
+            video_idx (int): index of video in self.playlist
+        """
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d or not d.audio_streams:
+            return None
+
+        selected_audio_stream = d.audio_streams[audio_idx]
+
+        d.select_audio(selected_audio_stream)
+        log('Selected audio:', selected_audio_stream)
+
+    def set_video_backend(self, extractor):
+        """select video extractor backend, e.g. youtube-dl, yt_dlp, ..."""
+        self.ydl = None
+        video.ytdl = None
+        set_option(active_video_extractor=extractor)
+        video.set_default_extractor(extractor)
     # endregion
 
     # region download
@@ -937,6 +964,39 @@ class Controller:
                 print('download simulator cancelled for:', d.uid, d.name)
                 break
 
+    def download(self, uid=None, **kwargs):
+        """download an item
+
+        Args:
+            uid (str): unique identifier property for a download item in self.d_map, if none, self.d will be downloaded
+            kwargs: key/value for any legit attributes in DownloadItem
+        """
+
+        if uid is None:
+            d = copy(self.d)
+            silent = False
+        else:
+            d = self.d_map.get(uid, None)
+            silent = True
+
+        if d is None:
+            log('Nothing to download', showpopup=True)
+            return
+
+        # validate file name and extension
+        name = kwargs.get('name', None)
+        if name:
+            title, ext = os.path.splitext(name)
+            if ext != d.extension:
+                kwargs['name'] = title + d.extension
+
+        update_object(d, kwargs)
+
+        run_thread(self._download, d, silent)
+        # Thread(target=self._download, args=(d, silent)).start()
+
+        return True
+
     def _download(self, d, silent=False):
         """start downloading an item
 
@@ -1012,6 +1072,17 @@ class Controller:
             log('download()> error:', e)
             if config.TEST_MODE:
                 raise e
+
+    def stop_download(self, uid):
+        """stop downloading
+        Args:
+            uid (str): unique identifier property for a download item in self.d_map
+        """
+
+        d = self.d_map.get(uid)
+
+        if d and d.status in (Status.downloading, Status.processing, Status.pending):
+            d.status = Status.cancelled
 
     def _download_thumbnail(self, d):
         """download thumbnail
@@ -1114,6 +1185,15 @@ class Controller:
 
         run_thread(self._download, d, silent=True)
 
+    def download_playlist(self, vsmap, subtitles=None):
+        """download playlist
+        Args:
+            vsmap (dict): key=video idx, value=stream idx
+            subtitles (dict): key=language, value=selected extension
+        """
+
+        run_thread(self._download_playlist, vsmap, subtitles)
+
     def _download_playlist(self, vsmap, subtitles=None):
         """download playlist
           Args:
@@ -1166,9 +1246,15 @@ class Controller:
 
         except Exception as e:
             log('download_subtitle() error', e)
+
     # endregion
 
     # region Application update
+
+    def check_for_update(self, signal_id=None):
+        """check for newer version of FireDM, youtube-dl, and yt_dlp"""
+        run_thread(self._check_for_update, signal_id)
+
     def _check_for_update(self, signal_id=None):
         """check for newer version of FireDM, youtube-dl, and yt_dlp"""
 
@@ -1274,6 +1360,10 @@ class Controller:
         today = date.today()
         config.last_update_check = (today.year, today.month, today.day)
 
+    def auto_check_for_update(self):
+        if not config.disable_update_feature:
+            run_thread(self._auto_check_for_update)
+
     def _auto_check_for_update(self):
         """auto check for firedm update"""
         if config.check_for_update:
@@ -1290,161 +1380,11 @@ class Controller:
                 if res == 'Ok':
                     self._check_for_update()
 
-    # endregion
-
-    # public API for  a view / GUI (it shouldn't block to prevent gui freeze) ------------------------------------------
-    def log_runtime_info(self):
-        """Print useful information about the system"""
-        log('-' * 20, 'FireDM', '-' * 20)
-        log('Starting FireDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
-        log('operating system:', config.operating_system_info)
-        log('Python version:', sys.version)
-        log('current working directory:', config.current_directory)
-        log('FFMPEG:', config.ffmpeg_actual_path)
-
-    def process_url(self, url):
-        """take url and return a a list of ObservableDownloadItem objects
-
-        when a "view" call this method it should expect a playlist menu (list of names) to be passed to its update
-        method,
-
-        Examples:
-            playlist_menu=['1- Nasa mission to Mars', '2- how to train your dragon', ...]
-            or
-            playlist_menu=[] if no video playlist
-
-        """
-        self.url = url
-        self.reset()
-
-        if url:
-            try:
-                run_thread(self._process_url, url)
-            except Exception as e:
-                log("process_url:", e)
-                if config.TEST_MODE:
-                    raise e
-
-    def reset(self):
-        """reset controller and cancel ongoing operation"""
-        # stop youyube-dl
-        config.ytdl_abort = True
-        self.d = None
-        self.playlist = []
-
-    def delete(self, uid):
-        """delete download item from the list
-        Args:
-            uid (str): unique identifier property for a download item in self.d_map
-        """
-
-        d = self.d_map.pop(uid)
-
-        d.status = Status.cancelled
-
-        # delete files
-        run_thread(d.delete_tempfiles())
-
-    # region download
-    def download(self, uid=None, **kwargs):
-        """download an item
-
-        Args:
-            uid (str): unique identifier property for a download item in self.d_map, if none, self.d will be downloaded
-            kwargs: key/value for any legit attributes in DownloadItem
-        """
-
-        if uid is None:
-            d = copy(self.d)
-            silent = False
-        else:
-            d = self.d_map.get(uid, None)
-            silent = True
-
-        if d is None:
-            log('Nothing to download', showpopup=True)
-            return
-
-        # validate file name and extension
-        name = kwargs.get('name', None)
-        if name:
-            title, ext = os.path.splitext(name)
-            if ext != d.extension:
-                kwargs['name'] = title + d.extension
-
-        update_object(d, kwargs)
-
-        run_thread(self._download, d, silent)
-        # Thread(target=self._download, args=(d, silent)).start()
-
-        return True
-
-    def download_playlist(self, vsmap, subtitles=None):
-        """download playlist
-        Args:
-            vsmap (dict): key=video idx, value=stream idx
-            subtitles (dict): key=language, value=selected extension
-        """
-
-        run_thread(self._download_playlist, vsmap, subtitles)
-
-    def stop_download(self, uid):
-        """stop downloading
-        Args:
-            uid (str): unique identifier property for a download item in self.d_map
-        """
-
-        d = self.d_map.get(uid)
-
-        if d and d.status in (Status.downloading, Status.processing, Status.pending):
-            d.status = Status.cancelled
-    # endregion
-
-    # region video
-    def select_playlist_video(self, idx, active=True):
-        """
-        select video from playlist menu and update stream menu
-        idx: index in playlist menu
-
-        to see expected notifications to "view" and example:
-            *read _select_playlist_video() doc string
-        """
-
-        run_thread(self._select_playlist_video, idx, active=active)
-
-    def select_stream(self, idx, active=True):
-        """select stream for current selected video in playlist menu
-        idx: index in stream menu
-        expected notifications: info of current selected video in playlist menu
-        """
-
-        self.d.select_stream(index=idx)
-        self._report_d(self.d, active=active)
-
-    def select_audio(self, audio_idx, uid=None, video_idx=None):
-        """select audio from audio menu
-        Args:
-            audio_idx (int): index of audio stream
-            uid: unique video uid
-            video_idx (int): index of video in self.playlist
-        """
-        # get download item
-        d = self.get_d(uid, video_idx)
-
-        if not d or not d.audio_streams:
-            return None
-
-        selected_audio_stream = d.audio_streams[audio_idx]
-
-        d.select_audio(selected_audio_stream)
-        log('Selected audio:', selected_audio_stream)
-
-    def set_video_backend(self, extractor):
-        """select video extractor backend, e.g. youtube-dl, yt_dlp, ..."""
-        self.ydl = None
-        video.ytdl = None
-        set_option(active_video_extractor=extractor)
-        video.set_default_extractor(extractor)
+    def rollback_pkg_update(self, pkg):
+        try:
+            run_thread(update.rollback_pkg_update, pkg, daemon=True)
+        except Exception as e:
+            log(f'failed to restore {pkg}:', e)
     # endregion
 
     # region subtitles
@@ -1503,7 +1443,7 @@ class Controller:
                 log('subtitle:', lang, 'Not available for:', d.name)
     # endregion
 
-    # region open file/folder
+    # region file/folder operations
     def play_file(self, uid=None, video_idx=None):
         """open download item target file or temp file"""
         # get download item
@@ -1543,6 +1483,19 @@ class Controller:
             return
 
         open_folder(d.folder)
+
+    def delete(self, uid):
+        """delete download item from the list
+        Args:
+            uid (str): unique identifier property for a download item in self.d_map
+        """
+
+        d = self.d_map.pop(uid)
+
+        d.status = Status.cancelled
+
+        # delete files
+        run_thread(d.delete_tempfiles())
     # endregion
 
     # region get info
@@ -1550,6 +1503,14 @@ class Controller:
         """update previous download list in view"""
         log('controller.get_d_list()> sending d_list')
         run_thread(self._get_d_list)
+
+    def _get_d_list(self):
+        buff = {'command': 'd_list', 'd_list': []}
+        for d in self.d_map.values():
+            properties = d.watch_list
+            info = {k: getattr(d, k, None) for k in properties}
+            buff['d_list'].append(info)
+        self.view.update_view(**buff)
 
     def get_webpage_url(self, uid=None, video_idx=None):
         # get download item
@@ -1662,6 +1623,16 @@ class Controller:
             d = self.d
 
         return d
+
+    def log_runtime_info(self):
+        """Print useful information about the system"""
+        log('-' * 20, 'FireDM', '-' * 20)
+        log('Starting FireDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
+        log('operating system:', config.operating_system_info)
+        log('Python version:', sys.version)
+        log('current working directory:', config.current_directory)
+        log('FFMPEG:', config.ffmpeg_actual_path)
+
     # endregion
 
     # region schedul
@@ -1696,22 +1667,6 @@ class Controller:
         log(f'Schedule for: {d.name} has been cancelled')
         d.status = Status.cancelled
         d.sched = None
-    # endregion
-
-    # region Application update
-    def check_for_update(self, signal_id=None):
-        """check for newer version of FireDM, youtube-dl, and yt_dlp"""
-        run_thread(self._check_for_update, signal_id)
-
-    def auto_check_for_update(self):
-        if not config.disable_update_feature:
-            run_thread(self._auto_check_for_update)
-
-    def rollback_pkg_update(self, pkg):
-        try:
-            run_thread(update.rollback_pkg_update, pkg, daemon=True)
-        except Exception as e:
-            log(f'failed to restore {pkg}:', e)
     # endregion
 
     # region cmd view
@@ -1795,33 +1750,41 @@ class Controller:
         config.shutdown = True
     # endregion
 
-    def get_user_response(self, msg, options):
-        """get user response from current view
+    # region on completion command / shutdown
+    def _on_completion_watchdog(self):
+        """a separate thread to watch when "ALL" download items are completed and execute on completion action if
+        configured"""
 
-        Args:
-            msg(str): a message to show
-            options (list): a list of options, example: ['yes', 'no', 'cancel']
+        # make sure user started any item downloading, after setting "on-completion actions"
+        trigger = False
 
-        Returns:
-            (str): response from user as a selected item from "options"
-        """
+        while True:
+            if config.shutdown:
+                break
 
-        response = self.view.get_user_response(msg, options)
+            # check for "on-completion actions"
+            if any((config.on_completion_command, config.shutdown_pc)):
+                # check for any active download, then set the trigger
+                if any([d.status in (config.Status.downloading, config.Status.processing) for d in self.d_map.values()]):
+                    trigger = True
 
-        return response
+                elif trigger:
+                    # check if all items are completed
+                    if all([d.status == config.Status.completed for d in self.d_map.values()]):
+                        # reset the trigger
+                        trigger = False
 
-    def run(self):
-        """run current "view" main loop"""
-        self.view.run()
-        config.shutdown = True  # set global shutdown flag
-        config.ytdl_abort = True
+                        # execute command
+                        if config.on_completion_command:
+                            run_command(config.on_completion_command)
 
-        # cancel all current downloads
-        print('Stop all downloads')
-        for d in self.d_map.values():
-            self.stop_download(d.uid)
+                        # shutdown
+                        if config.shutdown_pc:
+                            self.shutdown_pc()
+            else:
+                trigger = False
 
-        self._save_settings()
+            time.sleep(5)
 
     def scedule_shutdown(self, uid):
         """schedule shutdown after an item completed downloading"""
@@ -1881,3 +1844,42 @@ class Controller:
     def get_on_completion_command(self, uid):
         d = self.get_d(uid=uid)
         return d.on_completion_command
+    # endregion
+
+    # region general
+    def get_user_response(self, msg, options):
+        """get user response from current view
+
+        Args:
+            msg(str): a message to show
+            options (list): a list of options, example: ['yes', 'no', 'cancel']
+
+        Returns:
+            (str): response from user as a selected item from "options"
+        """
+
+        response = self.view.get_user_response(msg, options)
+
+        return response
+
+    def run(self):
+        """run current "view" main loop"""
+        self.view.run()
+        config.shutdown = True  # set global shutdown flag
+        config.ytdl_abort = True
+
+        # cancel all current downloads
+        print('Stop all downloads')
+        for d in self.d_map.values():
+            self.stop_download(d.uid)
+
+        self._save_settings()
+
+    def reset(self):
+        """reset controller and cancel ongoing operation"""
+        # stop youyube-dl
+        config.ytdl_abort = True
+        self.d = None
+        self.playlist = []
+
+    # endregion
