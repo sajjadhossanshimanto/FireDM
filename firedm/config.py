@@ -25,7 +25,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'enable_captcha_workaround',
                  'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp',
-                 'use_playlist_numbers', 'refresh_url_retries']
+                 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top']
 
 # CONSTANTS
 APP_NAME = 'FireDM'
@@ -98,6 +98,7 @@ auto_close_download_window = True
 segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 autoscroll_download_tab = False
+ditem_show_top = True
 write_timestamp = True  # write 'last modified' timestamp to downloaded file
 
 # systray, it will be disabled by default since it doesn't work properly on most operating systems except Windows.

@@ -1579,7 +1579,8 @@ class DItem(tk.Frame):
 
     def show(self):
         """grid self"""
-        self.pack(expand=True, fill='x', pady=5)
+        side = 'bottom' if config.ditem_show_top else 'top'
+        self.pack(side=side, expand=True, fill='x', pady=5)
 
     def hide(self):
         """grid self"""
@@ -3126,11 +3127,24 @@ class MainWindow(IView):
 
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
 
-        def autoscroll():
+        def autoscroll_callback():
             self.d_tab.autoscroll = config.autoscroll_download_tab
+            if config.ditem_show_top:
+                autotop.set(False)
+                config.ditem_show_top = False
 
-        CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item.',
-                    key='autoscroll_download_tab', callback=autoscroll).pack(anchor='w')
+        def autotop_callback():
+            if config.autoscroll_download_tab:
+                autoscroll.set(False)
+                self.d_tab.autoscroll = config.autoscroll_download_tab = False
+
+        autoscroll = CheckOption(tab, 'Autoscroll downloads tab to bottom when adding new item.',
+                                 key='autoscroll_download_tab', callback=autoscroll_callback)
+        autoscroll.pack(anchor='w')
+        autotop = CheckOption(tab, 'Show new download item at the top of downloads tab.',
+                              key='ditem_show_top', callback=autotop_callback)
+        autotop.pack(anchor='w')
+
         CheckOption(tab, 'write "last modified" timestamp to downloaded file', key='write_timestamp').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
