@@ -983,13 +983,6 @@ class Controller:
             log('Nothing to download', showpopup=True)
             return
 
-        # validate file name and extension
-        name = kwargs.get('name', None)
-        if name:
-            title, ext = os.path.splitext(name)
-            if ext != d.extension:
-                kwargs['name'] = title + d.extension
-
         update_object(d, kwargs)
 
         run_thread(self._download, d, silent)
