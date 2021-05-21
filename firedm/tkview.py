@@ -1232,23 +1232,28 @@ class FileProperties(ttk.Frame):
         self.config(style=self.style)
 
         # variables
-        self.raw_name = tk.StringVar()  # name without processing
-        self.name = tk.StringVar()  # file's rendered name to fix arabic display on linux, "refer to DownloadItem"
-        self.name.get = lambda: self.raw_name.get().strip()  # return raw name instead of rendered name
-
+        self.title = tk.StringVar()
+        self.extension = tk.StringVar()
         self.folder = tk.StringVar()
         self.size = tk.StringVar()
         self.type = tk.StringVar()
         self.subtype = tk.StringVar()
         self.resumable = tk.StringVar()
 
-        # keep track of active popup window
-        self.edit_name_popup = False
-
         # show default folder value
         self.update(folder=config.download_folder)
 
         self.create_widgets()
+
+    @property
+    def name(self):
+        title = atk.render_bidi_text(self.title.get())
+
+        ext = self.extension.get()
+        if not ext.startswith('.'):
+            ext = '.' + ext
+
+        return title + ext
 
     def create_widgets(self):
         def label(text='', textvariable=None, r=1, c=0, rs=1, cs=1, sticky='we'):
@@ -1258,28 +1263,40 @@ class FileProperties(ttk.Frame):
         def separator(r):
             return ttk.Separator(self, orient='horizontal').grid(sticky='ew', pady=0, row=r, column=0, columnspan=3)
 
-        row = dict(name=1, folder=3, size=5, misc=7)
-        separator(2)
-        separator(4)
-        separator(6)
-        separator(8)
+        # order of properties
+        fields = ('name', 'extension', 'folder', 'size', 'misc')
+        row = {k: fields.index(k)*2+1 for k in fields}
+
+        for n in row.values():
+            separator(n + 1)
 
         # name ---------------------------------------------------------------------------------------------------------
         label('Name:', sticky='nw')
-        # making a label widget to display rendered name and Entry widget to edit raw name, this workaround to solve
-        # bad Arabic names rendering in tkinter, issue #88
-        self.name_entry = tk.Entry(self, textvariable=self.raw_name)
-        self.name_entry.grid(row=row['name'], column=1, columnspan=2, sticky='we')
-        self.name_entry.grid_remove()
+        # can not make an auto wrapping entry, will use both label and entry as a workaround
+        self.title_entry = tk.Entry(self, textvariable=self.title)
+        self.title_entry.grid(row=row['name'], column=1, columnspan=2, sticky='we')
+        self.title_entry.grid_remove()
 
-        self.name_lbl = AutoWrappingLabel(self, textvariable=self.name,  bg=self.bg, fg=self.fg, anchor='w')
-        self.name_lbl.grid(row=row['name'], column=1, columnspan=2, sticky='we')
+        # add bidi support for entry widget to enable editing Arabic titles
+        atk.add_bidi_support(self.title_entry)
+
+        self.title_lbl = AutoWrappingLabel(self, textvariable=self.title,  bg=self.bg, fg=self.fg, anchor='w')
+        self.title_lbl.grid(row=row['name'], column=1, columnspan=2, sticky='we')
 
         # hide label and show entry widget when left click
-        self.name_lbl.bind('<1>', lambda event: self.start_name_edit())
+        self.title_lbl.bind('<1>', lambda event: self.start_name_edit())
 
         # hide entry widget and show label widget
-        self.name_entry.bind('<FocusOut>', lambda event: self.done_name_edit())
+        self.title_entry.bind('<FocusOut>', lambda event: self.done_name_edit())
+
+        # extension ----------------------------------------------------------------------------------------------------
+        label('Ext:', r=row['extension'], c=0)
+
+        self.ext_entry = tk.Entry(self, textvariable=self.extension, bg=self.bg, fg=self.fg, highlightthickness=0,
+                                  relief='flat')
+        self.ext_entry.grid(row=row['extension'], column=1, columnspan=2, sticky='ew')
+        self.ext_entry.bind('<FocusIn>', lambda event: self.ext_entry.config(bg='white', fg='black'))
+        self.ext_entry.bind('<FocusOut>', lambda event: self.ext_entry.config(bg=self.bg, fg=self.fg))
 
         # size ---------------------------------------------------------------------------------------------------------
         label('Size:', r=row['size'], c=0)
@@ -1336,7 +1353,8 @@ class FileProperties(ttk.Frame):
         'type': 'video', 'subtype_list': ['dash', 'fragmented'], 'resumable': True, 'total_size': 100000}
 
         """
-        raw_name = kwargs.get('name', None)
+        title = kwargs.get('title', None)
+        extension = kwargs.get('extension', None)
         rendered_name = kwargs.get('rendered_name', None)
         size = kwargs.get('total_size', None)
         folder = kwargs.get('folder', None)
@@ -1344,11 +1362,13 @@ class FileProperties(ttk.Frame):
         subtype_list = kwargs.get('subtype_list', '')
         resumable = kwargs.get('resumable', None)
 
-        if raw_name:
-            self.raw_name.set(raw_name)
+        if title:
+            rendered_title = atk.render_bidi_text(title)
+            self.title.set(rendered_title)
 
-        if rendered_name:
-            self.name.set(rendered_name)
+        if extension:
+            self.extension.set(extension.replace('.', ''))  # remove '.'
+
         if folder:
             self.folder.set(folder)
         if size is not None:
@@ -1361,7 +1381,8 @@ class FileProperties(ttk.Frame):
         self.resumable.set(f'- Resumable: {resumable}' if resumable is not None else '')
 
     def reset(self):
-        self.name.set('...')
+        self.title.set('')
+        self.extension.set('')
         self.folder.set(config.download_folder)
         self.size.set('...')
         self.type.set('')
@@ -1377,29 +1398,15 @@ class FileProperties(ttk.Frame):
 
     def start_name_edit(self):
         """remove label and show edit entry with raw name"""
-        self.name_lbl.grid_remove()
-        self.name_entry.grid()
-        self.name_entry.focus()
-        self.name_entry.icursor("end")
+        self.title_lbl.grid_remove()
+        self.title_entry.grid()
+        self.title_entry.focus()
+        self.title_entry.icursor("end")
 
     def done_name_edit(self):
         """hide name entry widget, create rendered name and show it in name label"""
-        self.name_entry.grid_remove()
-        self.name_lbl.grid()
-
-        name = self.raw_name.get().strip()
-
-        # fix tkinter bad arabic language display in linux
-        if config.operating_system == 'Linux':
-            try:
-                title, extension = os.path.splitext(name)
-
-                name = arabic_renderer(title)
-                name += extension
-            except:
-                pass
-        self.name.set(name)
-
+        self.title_entry.grid_remove()
+        self.title_lbl.grid()
 
 class Thumbnail(tk.Frame):
     """Thumbnail image in home tab"""
@@ -3694,7 +3701,7 @@ class MainWindow(IView):
                 AudioWindow(self, menu, idx)
 
         # download
-        self.download(name=self.file_properties.name.get(), folder=self.file_properties.folder.get())
+        self.download(name=self.file_properties.name, folder=self.file_properties.folder.get())
 
     def download(self, uid=None, **kwargs):
         """Send command to controller to download an item
