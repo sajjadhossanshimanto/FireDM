@@ -1001,14 +1001,13 @@ class SideFrame(tk.Frame):
         checkmark.grid(row=0, column=0, sticky='wns')
 
         # create radio button
-        # self.side_btn_style = 'TButton'
         btn = ttk.Radiobutton(f, text=text, image=img, compound='top', style=self.side_btn_style, variable=self.var,
                               value=text, cursor='hand2')
         btn.grid(row=0, column=1, sticky='ewns', padx=5, pady=10)
 
-        # on mouse hover effect
-        btn.bind('<Enter>', lambda e: btn.config(image=img.zoomed))
-        btn.bind('<Leave>', lambda e: btn.config(image=img))
+        # on mouse hover effect, bind frame instead of button for smoother animation transition between side buttons
+        f.bind('<Enter>', lambda e: btn.config(image=img.zoomed))
+        f.bind('<Leave>', lambda e: btn.config(image=img))
 
         # make some references
         btn.checkmark = checkmark
