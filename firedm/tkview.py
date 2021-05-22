@@ -3105,8 +3105,19 @@ class MainWindow(IView):
 
         self.select_btn.bind("<Button-1>", select_menu.popup)
 
-        Button(top_fr, text='Stop All', command=self.stop_all).pack(side='right', padx=5)
-        Button(top_fr, text='Resume All', command=self.resume_all).pack(side='right', padx=5)
+        def resume_all_handler():
+            caption = self.resume_all_btn['text'].strip()
+            # caption will be changed from self.update_stat_lbl() method
+            if caption == 'Resume All':
+                self.resume_all()
+            else:
+                self.stop_all()
+
+        self.resume_all_btn = Button(top_fr, text='Resume All', bg=SF_BG, fg=SF_BTN_BG, command=resume_all_handler)
+        self.resume_all_btn.pack(side='right', padx=5)
+
+        self.resume_all_btn.bind('<Enter>', lambda e: self.resume_all_btn.config(text=' ' + self.resume_all_btn['text'] + ' '))
+        self.resume_all_btn.bind('<Leave>', lambda e: self.resume_all_btn.config(text=self.resume_all_btn['text'].strip()))
 
         self.stat_lbl = tk.Label(tab, text='', bg=SF_BG, fg=SF_BTN_BG, anchor='w')
         self.stat_lbl.pack(fill='x', padx=(5, 0), pady=2, ipadx=5)
@@ -3713,6 +3724,11 @@ class MainWindow(IView):
                                 f'Sceduled: {s.count(config.Status.scheduled)}, ' \
                                 f'Pending: {s.count(config.Status.pending)}'
 
+        if s.count(config.Status.downloading) > 0:
+            self.resume_all_btn['text'] = 'Stop All'
+        else:
+            self.resume_all_btn['text'] = 'Resume All'
+
     # endregion
 
     # region download
@@ -3766,8 +3782,7 @@ class MainWindow(IView):
 
     def stop_all(self):
         for uid, item in self.d_items.items():
-            if item.status in config.Status.active_states:
-                self.stop_download(uid)
+            self.stop_download(uid)
     # endregion
 
     # region update view
