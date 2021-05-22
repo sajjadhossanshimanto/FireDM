@@ -4051,14 +4051,6 @@ class MainWindow(IView):
         # log extra pkgs info
         log('Tkinter version:', self.root.call("info", "patchlevel"))
         log('AwesomeTkinter version:', atk_version)
-        # minimum AwesomeTkinter version warning
-        atk_min_version = '2021.4.2'
-        if parse_version(atk_version) < parse_version(atk_min_version):
-            atk_warning = f'WARNING!, "AwesomeTkinter" package is outdated, ' \
-                          f'please upgrade to latest version, to avoid application malfunctioning \n' \
-                          f'use command: python3 -m pip install awesometkinter --upgrade'
-            log(atk_warning, file=sys.stderr)
-
         log('Pillow version:', PIL.__version__)
         log('PyCUrl version:', pycurl.version)
         log()
