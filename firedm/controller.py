@@ -1134,7 +1134,7 @@ class Controller:
         if config.download_thumbnail:
             self._download_thumbnail(d)
 
-        if config.write_timestamp:
+        if config.use_server_timestamp:
             self._write_timestamp(d)
 
         # on completion actions

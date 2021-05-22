@@ -99,7 +99,7 @@ segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 autoscroll_download_tab = False
 ditem_show_top = True
-write_timestamp = True  # write 'last modified' timestamp to downloaded file
+use_server_timestamp = False  # write 'last modified' timestamp to downloaded file
 
 # systray, it will be disabled by default since it doesn't work properly on most operating systems except Windows.
 enable_systray = True if operating_system == 'Windows' else False

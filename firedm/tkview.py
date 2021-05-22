@@ -3196,7 +3196,8 @@ class MainWindow(IView):
                               key='ditem_show_top', callback=autotop_callback)
         autotop.pack(anchor='w')
 
-        CheckOption(tab, 'write "last modified" timestamp to downloaded file', key='write_timestamp').pack(anchor='w')
+        CheckOption(tab, 'use server timestamp as a "last modified" property for downloaded file',
+                    key='use_server_timestamp').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')
