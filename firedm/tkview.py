@@ -35,6 +35,7 @@ from .view import IView
 from .controller import Controller, set_option, get_option
 from .utils import *
 from . import config
+from . import iconsbase64
 from .iconsbase64 import *
 from .systray import SysTray
 from .about import about_notes
@@ -251,14 +252,26 @@ imgs = {}
 
 def create_imgs():
     """create widget's images, should be called with theme change"""
-    # D_item images
-    imgs['play_img'] = atk.create_image(b64=play_icon, color=BTN_BG, size=10)
-    imgs['pause_img'] = atk.create_image(b64=pause_icon, color=BTN_BG, size=10)
-    imgs['delete_img'] = atk.create_image(b64=delete_icon, color=BTN_BG, size=10)
 
-    imgs['blinker_on_img'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
-    imgs['done_img'] = atk.create_image(b64=done_icon, color=BTN_BG)
-    imgs['hourglass_img'] = atk.create_image(b64=hourglass_icon, color=BTN_BG)
+    for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'dropdown_icon', 'folder_icon',
+              'play_icon', 'pause_icon', 'delete_icon'):
+        v = iconsbase64.__dict__[k]
+
+        if k == 'dropdown_icon':
+            color = HDG_FG
+        else:
+            color = BTN_BG
+
+        img = atk.create_image(b64=v, color=color)
+
+        # on mouse hover image
+        img.zoomed = atk.create_image(b64=v, color=color, size=int(img.width() * 1.2))
+        imgs[k] = img
+
+
+    imgs['blinker_icon'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
+    imgs['done_icon'] = atk.create_image(b64=done_icon, color=BTN_BG)
+    imgs['hourglass_icon'] = atk.create_image(b64=hourglass_icon, color=BTN_BG)
 
 
 app_icon_img = None
@@ -539,6 +552,8 @@ class Button(tk.Button):
         options = {}
         parent_bg = atk.get_widget_attribute(parent, 'background')
         image = kwargs.get('image', None)
+        options['cursor'] = 'hand2'
+
         if image or transparent:
             # make transparent
             options['bg'] = parent_bg
@@ -548,8 +563,8 @@ class Button(tk.Button):
             options['highlightthickness'] = 0
             options['activeforeground'] = atk.calc_font_color(parent_bg)
             options['bd'] = 0
-        else:
 
+        else:
             options['bg'] = BTN_BG
             options['fg'] = BTN_FG
             options['highlightbackground'] = BTN_HBG
@@ -560,6 +575,11 @@ class Button(tk.Button):
         options.update(kwargs)
 
         tk.Button.__init__(self, parent, **options)
+
+        # on mouse hover effect
+        if image and hasattr(image, 'zoomed'):
+            self.bind('<Enter>', lambda e: self.config(image=image.zoomed))
+            self.bind('<Leave>', lambda e: self.config(image=image))
 
 
 class Combobox(ttk.Combobox):
@@ -1330,12 +1350,12 @@ class FileProperties(ttk.Frame):
         arrow_bg = SF_BG
         textarea_bg = MAIN_BG
         s.configure(custom_style, arrowcolor=atk.calc_font_color(arrow_bg),
-                    foreground=MAIN_FG, padding=2, relief=tk.RAISED, borderwidth=0, arrowsize=15)
+                    foreground=MAIN_FG, padding=2, relief=tk.RAISED, borderwidth=0, arrowsize=16)
         s.map(custom_style, fieldbackground=[('', textarea_bg)], background=[('', arrow_bg)])
 
         cb = ttk.Combobox(self, exportselection=0, textvariable=self.folder, values=config.frequent_download_folders,
                           style=custom_style)
-        cb.grid(row=row['folder'], column=1, sticky='we')
+        cb.grid(row=row['folder'], column=1, sticky='we', pady=5)
         cb.bind('<FocusOut>', update_frequent_folders, add='+')
         cb.bind('<1>', update_frequent_folders, add='+')
         cb.bind('<<ComboboxSelected>>', lambda event: cb.selection_clear(), add='+')
@@ -1343,9 +1363,8 @@ class FileProperties(ttk.Frame):
         # update global download folder with every widget edit
         self.folder.trace_add('write', lambda *args: set_option(download_folder=self.folder.get()))
 
-        self.folder_img = atk.create_image(b64=folder_icon, color=BTN_BG)
-        Button(self, text='', image=self.folder_img, transparent=True,
-               command=self.change_folder).grid(row=row['folder'], column=2, padx=(8, 1), pady=5)
+        Button(self, text='', image=imgs['folder_icon'], transparent=True,
+               command=self.change_folder).grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
 
     def update(self, **kwargs):
         """update widget's variable
@@ -1504,13 +1523,13 @@ class DItem(tk.Frame):
             self.bar.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
 
             # create buttons
-            self.play_button = Button(btns_frame, image=imgs['play_img'])
-            self.pause_button = Button(btns_frame, image=imgs['pause_img'])
+            self.play_button = Button(btns_frame, image=imgs['play_icon'])
+            self.pause_button = Button(btns_frame, image=imgs['pause_icon'])
 
             # pack buttons
             for btn in (self.play_button, self.pause_button):
                 btn.pack(side='left', padx=(0, 10))
-        self.delete_button = Button(btns_frame, image=imgs['delete_img'])
+        self.delete_button = Button(btns_frame, image=imgs['delete_icon'])
         self.delete_button.pack(side='left', padx=(0, 10))
 
         # make another info label
@@ -1707,14 +1726,14 @@ class DItem(tk.Frame):
         if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
                                               config.Status.refreshing_url):
             # on blinker
-            self.blinker.config(image=imgs['blinker_on_img'])
+            self.blinker.config(image=imgs['blinker_icon'])
             self.blinker.on = True
 
         elif status == config.Status.completed:
-            self.blinker.config(image=imgs['done_img'])
+            self.blinker.config(image=imgs['done_icon'])
 
         elif status in (config.Status.pending, config.Status.scheduled):
-            self.blinker.config(image=imgs['hourglass_img'])
+            self.blinker.config(image=imgs['hourglass_icon'])
 
         else:
             # off blinker
@@ -2993,7 +3012,7 @@ class MainWindow(IView):
 
         self.url_entry = tk.Entry(home_tab, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR,
                                   highlightbackground=ENTRY_BD_COLOR, fg=MAIN_FG, textvariable=self.url_var)
-        self.url_entry.grid(row=0, column=0, columnspan=4, padx=5, pady=(40, 5), sticky='ew', ipady=8, ipadx=5)
+        self.url_entry.grid(row=0, column=0, columnspan=4, padx=5, pady=(45, 5), sticky='ew', ipady=8, ipadx=5)
 
         def url_rcm_handler(option):
             if option == 'Copy selection':
@@ -3014,8 +3033,7 @@ class MainWindow(IView):
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
 
         # retry button -------------------------------------------------------------------------------------------------
-        self.refresh_img = atk.create_image(b64=refresh_icon, color=PBAR_FG)
-        self.retry_btn = Button(home_tab, image=self.refresh_img, command=lambda: self.refresh_url(self.url))
+        self.retry_btn = Button(home_tab, image=imgs['refresh_icon'], command=lambda: self.refresh_url(self.url))
         # self.retry_btn.image = retry_img
         self.retry_btn.grid(row=0, column=4, padx=(0, 5), pady=(40, 5))
 
@@ -3024,11 +3042,9 @@ class MainWindow(IView):
         self.thumbnail.grid(row=1, column=3, columnspan=1, rowspan=1, padx=5, pady=10, sticky='e')
 
         # video menus --------------------------------------------------------------------------------------------------
-        self.pl_img2 = atk.create_image(b64=playlist_icon, size=20, color=PBAR_FG)
-
         self.pl_menu = MediaListBox(home_tab, bg, 'Playlist:')
         self.pl_menu.grid(row=1, column=0, columnspan=1, rowspan=1, pady=10, padx=5, sticky='nsew')
-        Button(self.pl_menu, image=self.pl_img2, command=self.show_pl_window).place(relx=1, rely=0, x=-40, y=5)
+        Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window).place(relx=1, rely=0, x=-40, y=5)
         self.stream_menu = MediaListBox(home_tab, bg, 'Stream Quality:')
         self.stream_menu.grid(row=1, column=1, columnspan=1, rowspan=1, padx=15, pady=10, sticky='nsew')
 
@@ -3037,14 +3053,11 @@ class MainWindow(IView):
         self.stream_menu.listbox.bind('<<ListboxSelect>>', self.stream_select_callback)
 
         # playlist download, sub buttons -------------------------------------------------------------------------------
-        self.pl_img = atk.create_image(b64=playlist_icon, color=PBAR_FG)
-        self.sub_img = atk.create_image(b64=subtitle_icon, color=PBAR_FG)
-        self.about_img = atk.create_image(b64=about_icon, color=PBAR_FG)
-
         pl_sub_frame = tk.Frame(home_tab, background=MAIN_BG)
-        Button(pl_sub_frame, image=self.pl_img, command=self.show_pl_window).pack(pady=0, padx=5)
-        Button(pl_sub_frame, image=self.sub_img, command=self.show_subtitles_window).pack(pady=20, padx=5)
-        Button(pl_sub_frame, image=self.about_img, command=self.show_about_notes).pack(pady=0, padx=5)
+
+        Button(pl_sub_frame, image=imgs['playlist_icon'], command=self.show_pl_window).pack(pady=0, padx=5)
+        Button(pl_sub_frame, image=imgs['subtitle_icon'], command=self.show_subtitles_window).pack(pady=20, padx=5)
+        Button(pl_sub_frame, image=imgs['about_icon'], command=self.show_about_notes).pack(pady=0, padx=5)
 
         pl_sub_frame.grid(row=1, column=4, padx=5, pady=10)
 
@@ -3059,6 +3072,9 @@ class MainWindow(IView):
         Button(home_tab, text='Download', command=self.download_btn_callback,
                font='any 12').grid(row=2, column=3, padx=1, pady=5, sticky='es')
 
+        # spacer to keep the column with a fixed size for zoomed button images to look better on mouse hover
+        tk.Frame(home_tab, width=60, background=MAIN_BG).grid(row=2, column=4, padx=5, pady=10)
+
         return home_tab
 
     def create_downloads_tab(self):
@@ -3068,17 +3084,17 @@ class MainWindow(IView):
         top_fr = tk.Frame(tab, bg=HDG_BG)
         top_fr.pack(fill='x', pady=5, padx=(5, 0))
 
-        self.select_dropdown_image = atk.create_image(b64=dropdown_icon, color=HDG_FG)
-        self.select_lbl = tk.Label(top_fr, text='', image=self.select_dropdown_image, compound='left',
-                                   bg=HDG_BG, fg=HDG_FG)
+        self.select_btn = Button(top_fr, text='', image=imgs['dropdown_icon'])
+        self.select_btn.pack(side='left', padx=5, pady=10)
+        self.select_lbl = tk.Label(top_fr, text='', bg=HDG_BG, fg=HDG_FG)
         self.select_lbl.pack(side='left', padx=5, pady=10)
 
-        select_menu = atk.RightClickMenu(self.select_lbl,
+        select_menu = atk.RightClickMenu(self.select_btn,
                                          ['Select all', 'Select None', 'Select completed', 'Select non completed'],
                                          callback=lambda option_name: self.select_ditems(option_name),
                                          bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
-        self.select_lbl.bind("<Button-1>", select_menu.popup)
+        self.select_btn.bind("<Button-1>", select_menu.popup)
 
         self.stat_lbl = tk.Label(top_fr, text='', bg=HDG_BG, fg=HDG_FG, anchor='w')
         self.stat_lbl.pack(anchor='w', side='right', padx=10, pady=10)
@@ -3368,7 +3384,7 @@ class MainWindow(IView):
         self.firedm_update_note = tk.StringVar()
         self.firedm_update_note.set(f'FireDM version: {config.APP_VERSION}')
         lbl(self.firedm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
-        Button(update_frame, image=self.refresh_img, text='  Manually Check for update!', compound='left',
+        Button(update_frame, image=imgs['refresh_icon'], text='  Manually Check for update!', compound='left',
                command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
 
         # youtube-dl and yt_dlp
