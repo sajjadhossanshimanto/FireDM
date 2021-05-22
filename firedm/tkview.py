@@ -1524,8 +1524,8 @@ class DItem(tk.Frame):
         # for non-completed items
         if self.status != config.Status.completed:
             #  progressbar
-            self.bar = atk.RadialProgressbar(parent=self, size=(60, 60), fg=PBAR_FG, text_fg=PBAR_TXT,
-                                             font_size_ratio=0.12)
+            self.bar = atk.RadialProgressbar(parent=self, size=(80, 80), fg=PBAR_FG, text_fg=PBAR_TXT,
+                                             font_size_ratio=0.18)
             self.bar.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
 
             # create buttons
