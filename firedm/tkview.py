@@ -986,6 +986,7 @@ class SideFrame(tk.Frame):
 
         # create image from specified path
         img = atk.create_image(fp=fp, color=color, size=size, b64=b64)
+        img.zoomed = atk.create_image(b64=b64, color=color, size=int(img.width() * 1.2))
 
         # create frame to hold custom widget
         f = tk.Frame(self, bg=SF_BG)
@@ -1002,8 +1003,12 @@ class SideFrame(tk.Frame):
         # create radio button
         # self.side_btn_style = 'TButton'
         btn = ttk.Radiobutton(f, text=text, image=img, compound='top', style=self.side_btn_style, variable=self.var,
-                              value=text)
+                              value=text, cursor='hand2')
         btn.grid(row=0, column=1, sticky='ewns', padx=5, pady=10)
+
+        # on mouse hover effect
+        btn.bind('<Enter>', lambda e: btn.config(image=img.zoomed))
+        btn.bind('<Leave>', lambda e: btn.config(image=img))
 
         # make some references
         btn.checkmark = checkmark
