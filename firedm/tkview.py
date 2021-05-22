@@ -1427,6 +1427,7 @@ class FileProperties(ttk.Frame):
         self.title_entry.grid_remove()
         self.title_lbl.grid()
 
+
 class Thumbnail(tk.Frame):
     """Thumbnail image in home tab"""
     def __init__(self, parent):
@@ -1524,11 +1525,8 @@ class DItem(tk.Frame):
 
             # create buttons
             self.play_button = Button(btns_frame, image=imgs['play_icon'])
-            self.pause_button = Button(btns_frame, image=imgs['pause_icon'])
+            self.play_button .pack(side='left', padx=(0, 10))
 
-            # pack buttons
-            for btn in (self.play_button, self.pause_button):
-                btn.pack(side='left', padx=(0, 10))
         self.delete_button = Button(btns_frame, image=imgs['delete_icon'])
         self.delete_button.pack(side='left', padx=(0, 10))
 
@@ -1627,7 +1625,6 @@ class DItem(tk.Frame):
         if self.status == config.Status.completed:
             try:
                 self.play_button.pack_forget()
-                self.pause_button.pack_forget()
                 self.bar.grid_forget()
             except:
                 pass
@@ -1697,6 +1694,18 @@ class DItem(tk.Frame):
 
                 if status != config.Status.scheduled:
                     self.sched = ''
+
+                # toggle play/pause icons
+                try:
+                    if status in config.Status.active_states:
+                        img = imgs['pause_icon']
+                    else:
+                        img = imgs['play_icon']
+                    self.play_button.config(image=img)
+                    self.play_button.bind('<Enter>', lambda e: self.play_button.config(image=img.zoomed))
+                    self.play_button.bind('<Leave>', lambda e: self.play_button.config(image=img))
+                except:
+                    pass
 
             if sched:
                 if status == config.Status.scheduled:
@@ -3504,10 +3513,9 @@ class MainWindow(IView):
 
         if status != config.Status.completed:
             # bind buttons commands
-            d_item.play_button['command'] = lambda: self.resume_download(d_item.uid)
-            d_item.pause_button['command'] = lambda: self.stop_download(d_item.uid)
+            d_item.play_button['command'] = lambda: self.toggle_download(d_item.uid)
 
-            excludes += [d_item.play_button, d_item.pause_button]
+            excludes += [d_item.play_button]
 
         d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
 
@@ -3727,6 +3735,15 @@ class MainWindow(IView):
             kwargs: key/value for any legit attributes in DownloadItem
         """
         self.controller.download(uid, **kwargs)
+
+    def toggle_download(self, uid):
+        item = self.d_items[uid]
+
+        if item.status in config.Status.active_states:
+            self.stop_download(uid)
+        else:
+            self.resume_download(uid)
+
 
     def stop_download(self, uid):
         self.controller.stop_download(uid)

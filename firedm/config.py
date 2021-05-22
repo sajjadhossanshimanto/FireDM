@@ -212,6 +212,7 @@ class Status:
     error = 'error'
     scheduled = 'scheduled'
     refreshing_url = 'refreshing url'
+    active_states = (downloading, processing, refreshing_url)
 
 
 # media type class
