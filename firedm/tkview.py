@@ -3650,11 +3650,10 @@ class MainWindow(IView):
 
         # get user confirmation
         msg = 'Are you sure you want to clear selected download items from downloads list?\n' \
-              'note: only temp files will be removed, completed files on disk will never be deleted\n' \
-              'Write the word "delete" below to confirm.'
-        res, txt = self.popup(msg, buttons=['Ok', 'Cancel'], get_user_input=True)
+              'note: only temp files will be removed, completed files on disk will never be deleted\n'
+        res = self.popup(msg, buttons=['Ok', 'Cancel'])
 
-        if res != 'Ok' or txt.lower().strip() != 'delete':
+        if res != 'Ok':
             return
 
         deleted = []
