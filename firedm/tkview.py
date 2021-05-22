@@ -3089,9 +3089,9 @@ class MainWindow(IView):
     def create_downloads_tab(self):
         tab = tk.Frame(self.main_frame, background=MAIN_BG)
 
-        # buttons frame
+        # top frame
         top_fr = tk.Frame(tab, bg=HDG_BG)
-        top_fr.pack(fill='x', pady=5, padx=(5, 0))
+        top_fr.pack(fill='x', pady=(5, 0), padx=(5, 0))
 
         self.select_btn = Button(top_fr, text='', image=imgs['dropdown_icon'])
         self.select_btn.pack(side='left', padx=5, pady=10)
@@ -3105,8 +3105,11 @@ class MainWindow(IView):
 
         self.select_btn.bind("<Button-1>", select_menu.popup)
 
-        self.stat_lbl = tk.Label(top_fr, text='', bg=HDG_BG, fg=HDG_FG, anchor='w')
-        self.stat_lbl.pack(anchor='w', side='right', padx=10, pady=10)
+        Button(top_fr, text='Stop All', command=self.stop_all).pack(side='right', padx=5)
+        Button(top_fr, text='Resume All', command=self.resume_all).pack(side='right', padx=5)
+
+        self.stat_lbl = tk.Label(tab, text='', bg=SF_BG, fg=SF_BTN_BG, anchor='w')
+        self.stat_lbl.pack(fill='x', padx=(5, 0), pady=2, ipadx=5)
 
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
@@ -3744,7 +3747,6 @@ class MainWindow(IView):
         else:
             self.resume_download(uid)
 
-
     def stop_download(self, uid):
         self.controller.stop_download(uid)
 
@@ -3756,6 +3758,16 @@ class MainWindow(IView):
         """
 
         self.download(uid)
+
+    def resume_all(self):
+        for uid, item in self.d_items.items():
+            if item.status not in config.Status.active_states and item.status != config.Status.completed:
+                self.resume_download(uid)
+
+    def stop_all(self):
+        for uid, item in self.d_items.items():
+            if item.status in config.Status.active_states:
+                self.stop_download(uid)
     # endregion
 
     # region update view
