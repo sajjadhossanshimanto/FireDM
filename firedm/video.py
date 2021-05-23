@@ -15,7 +15,8 @@ import importlib
 
 from . import config
 from .downloaditem import DownloadItem, Segment
-from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file)
+from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file,
+                    run_thread)
 
 
 # todo: change docstring to google format and clean unused code
@@ -529,45 +530,57 @@ def load_extractor_engines(reload=False):
         reload (bool): if true it will reload modules instead of importing, needed after modules update
     """
 
-    global youtube_dl, yt_dlp
-
     # youtube-dl ----------------------------------------------------------------------------------------------------
-    start = time.time()
+    def import_youtube_dl():
+        global youtube_dl
+        start = time.time()
 
-    if reload and youtube_dl:
-        importlib.reload(youtube_dl)
-    else:
-        import youtube_dl
+        if reload and youtube_dl:
+            importlib.reload(youtube_dl)
+        else:
+            import youtube_dl
 
-    config.youtube_dl_version = youtube_dl.version.__version__
+        config.youtube_dl_version = youtube_dl.version.__version__
 
-    # calculate loading time
-    load_time = time.time() - start
-    log(f'youtube_dl version: {config.youtube_dl_version}, load_time= {int(load_time)} seconds')
+        # calculate loading time
+        load_time = time.time() - start
+        log(f'youtube_dl version: {config.youtube_dl_version}, load_time= {int(load_time)} seconds')
+
+        # get a random user agent and update headers
+        if not config.custom_user_agent:
+            config.http_headers['User-Agent'] = youtube_dl.utils.random_user_agent()
+
+        # set interrupt / kill switch
+        set_interrupt_switch()
+
+        # set default extractor
+        set_default_extractor()
 
     # yt_dlp ----------------------------------------------------------------------------------------------------
-    start = time.time()
+    def import_yt_dlp():
+        global yt_dlp
 
-    if reload and yt_dlp:
-        importlib.reload(yt_dlp)
-    else:
-        import yt_dlp
+        start = time.time()
 
-    config.yt_dlp_version = yt_dlp.version.__version__
+        if reload and yt_dlp:
+            importlib.reload(yt_dlp)
+        else:
+            import yt_dlp
 
-    # calculate loading time
-    load_time = time.time() - start
-    log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds')
+        config.yt_dlp_version = yt_dlp.version.__version__
 
-    # set interrupt / kill switch
-    set_interrupt_switch()
+        # calculate loading time
+        load_time = time.time() - start
+        log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds')
 
-    # set default extractor
-    set_default_extractor()
+        # set interrupt / kill switch
+        set_interrupt_switch()
 
-    # get a random user agent and update headers
-    if not config.custom_user_agent:
-        config.http_headers['User-Agent'] = youtube_dl.utils.random_user_agent()
+        # set default extractor
+        set_default_extractor()
+
+    run_thread(import_youtube_dl, daemon=True)
+    run_thread(import_yt_dlp, daemon=True)
 
 
 def set_default_extractor(extractor=None):
