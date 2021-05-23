@@ -1621,7 +1621,15 @@ class Controller:
     def log_runtime_info(self):
         """Print useful information about the system"""
         log('-' * 20, 'FireDM', '-' * 20)
-        log('Starting FireDM version:', config.APP_VERSION, 'Frozen' if config.FROZEN else 'Non-Frozen')
+
+        if config.isappimage:
+            release_type = 'AppImage'
+        elif config.FROZEN:
+            release_type = 'Frozen'
+        else:
+            release_type =  'Non-Frozen'
+
+        log('Starting FireDM version:', config.APP_VERSION, release_type)
         log('operating system:', config.operating_system_info)
         log('Python version:', sys.version)
         log('current working directory:', config.current_directory)
