@@ -1271,7 +1271,7 @@ class FileProperties(ttk.Frame):
 
     @property
     def name(self):
-        title = atk.render_bidi_text(self.title.get())
+        title = render_bidi_text(self.title.get())
 
         ext = self.extension.get()
         if not ext.startswith('.'):
@@ -1302,7 +1302,7 @@ class FileProperties(ttk.Frame):
         self.title_entry.grid_remove()
 
         # add bidi support for entry widget to enable editing Arabic titles
-        atk.add_bidi_support(self.title_entry)
+        add_bidi_support(self.title_entry)
 
         self.title_lbl = AutoWrappingLabel(self, textvariable=self.title,  bg=self.bg, fg=self.fg, anchor='w')
         self.title_lbl.grid(row=row['name'], column=1, columnspan=2, sticky='we')
@@ -1386,7 +1386,7 @@ class FileProperties(ttk.Frame):
         resumable = kwargs.get('resumable', None)
 
         if title:
-            rendered_title = atk.render_bidi_text(title)
+            rendered_title = render_bidi_text(title)
             self.title.set(rendered_title)
 
         if extension:

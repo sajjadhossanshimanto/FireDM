@@ -28,6 +28,14 @@ from PIL import Image
 
 from . import config
 
+# bidi support on linux
+if config.operating_system == 'Linux':
+    from awesometkinter.bidi import add_bidi_support, render_bidi_text
+else:
+    # on other operating systems just do nothing
+    add_bidi_support = lambda widget: widget
+    render_bidi_text = lambda text: text
+
 # todo: change docstring to google format and clean unused code
 
 
@@ -1140,9 +1148,8 @@ __all__ = [
     'size_splitter', 'delete_folder', 'get_seg_size', 'run_command', 'print_object', 'update_object', 'truncate',
     'sort_dictionary', 'compare_versions', 'translate_server_code', 'validate_url', 'open_file', 'delete_file',
     'rename_file', 'load_json', 'save_json', 'echo_stdout', 'echo_stderr', 'log_recorder', 'natural_sort', 'is_pkg_exist',
-    'parse_bytes', 'set_curl_options', 'version_value',
-    'reset_queue', 'open_folder', 'auto_rename', 'calc_md5', 'calc_md5_sha256',
-    'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image', 'run_thread', 'generate_unique_name',
-    'open_log_file', 'open_webpage', 'download_thumbnail'
+    'parse_bytes', 'set_curl_options', 'version_value', 'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
+    'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image', 'run_thread',
+    'generate_unique_name', 'open_log_file', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_bidi_text'
 
 ]
