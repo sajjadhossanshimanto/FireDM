@@ -57,6 +57,7 @@ DEFAULT_LOG_LEVEL = 2
 
 youtube_dl_version = None
 yt_dlp_version = None
+atk_version = None  # awesometkinter
 
 TEST_MODE = False
 SIMULATOR = False

@@ -1254,6 +1254,7 @@ class Controller:
         info = {'firedm': {'current_version': config.APP_VERSION, 'latest_version': None},
                 'youtube_dl': {'current_version': config.youtube_dl_version, 'latest_version': None},
                 'yt_dlp': {'current_version': config.yt_dlp_version, 'latest_version': None},
+                'awesometkinter': {'current_version': config.atk_version, 'latest_version': None},
                 }
 
         def fetch_pypi(pkg):
@@ -1262,7 +1263,7 @@ class Controller:
             log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
-        pkgs = ('firedm',) if config.isappimage else ('firedm', 'youtube_dl', 'yt_dlp')
+        pkgs = ('firedm',) if config.isappimage else info.keys()
         for pkg in pkgs:
             if not info[pkg]['current_version']:
                 log(f'{pkg} still loading, try again')

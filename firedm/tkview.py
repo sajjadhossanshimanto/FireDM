@@ -40,6 +40,7 @@ from .iconsbase64 import *
 from .systray import SysTray
 from .about import about_notes
 
+config.atk_version = atk_version
 
 # theme colors as global constants, you must set their values before creating widgets
 # use MainWindow.apply_theme() to set all values
