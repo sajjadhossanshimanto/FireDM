@@ -1500,8 +1500,8 @@ class DItem(tk.Frame):
         self.blank_img = tk.PhotoImage()
 
         # thumbnail
-        self.thumbnail_width = 120
-        self.thumbnail_height = 62
+        self.thumbnail_width = 160
+        self.thumbnail_height = 80
 
         # thumbnail
         self.thumbnail_img = None
@@ -1525,7 +1525,7 @@ class DItem(tk.Frame):
         if self.status != config.Status.completed:
             #  progressbar
             self.bar = atk.RadialProgressbar(parent=self, size=(80, 80), fg=PBAR_FG, text_fg=PBAR_TXT,
-                                             font_size_ratio=0.18)
+                                             font_size_ratio=0.16)
             self.bar.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
 
             # create buttons
