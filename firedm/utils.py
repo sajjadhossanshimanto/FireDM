@@ -28,13 +28,18 @@ from PIL import Image
 
 from . import config
 
+
+# ignore bidi support on non-Linux operating systems
+add_bidi_support = lambda widget: widget
+render_bidi_text = lambda text: text
+
+
 # bidi support on linux
 if config.operating_system == 'Linux':
-    from awesometkinter.bidirender import add_bidi_support, render_bidi_text
-else:
-    # on other operating systems just do nothing
-    add_bidi_support = lambda widget: widget
-    render_bidi_text = lambda text: text
+    try:
+        from awesometkinter.bidirender import add_bidi_support, render_bidi_text
+    except Exception as e:
+        print('Bidi support error:', e)
 
 
 def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,  app_name=config.APP_TITLE):
