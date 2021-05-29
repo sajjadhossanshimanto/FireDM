@@ -16,7 +16,7 @@ import sys
 import shutil
 import subprocess
 
-# from cx_Freeze import setup, Executable
+from cx_Freeze import setup, Executable
 
 APP_NAME = 'FireDM'
 
@@ -54,6 +54,7 @@ with open(version_fp) as f:
 # get required packages
 with open(requirements_fp) as f:
     packages = [line.strip().split(' ')[0] for line in f.readlines() if line.strip()] + ['firedm']
+    packages.remove('Pillow')
     print(packages)
 
 includes = []
