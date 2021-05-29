@@ -573,14 +573,23 @@ class Button(tk.Button):
             options['activeforeground'] = BTN_AFG
             options['padx'] = 8
 
-        options.update(kwargs)
 
-        tk.Button.__init__(self, parent, **options)
+        tk.Button.__init__(self, parent)
+
+        if 'tooltip' in kwargs:
+            tooltip_text = kwargs.pop('tooltip')
+            try:
+                atk.tooltip(self, tooltip_text)
+            except Exception as e:
+                print(e)
+
+        options.update(kwargs)
+        atk.configure_widget(self, **options)
 
         # on mouse hover effect
         if image and hasattr(image, 'zoomed'):
-            self.bind('<Enter>', lambda e: self.config(image=image.zoomed))
-            self.bind('<Leave>', lambda e: self.config(image=image))
+            self.bind('<Enter>', lambda e: self.config(image=image.zoomed), add='+')
+            self.bind('<Leave>', lambda e: self.config(image=image), add='+')
 
 
 class Combobox(ttk.Combobox):
@@ -1369,7 +1378,7 @@ class FileProperties(ttk.Frame):
         self.folder.trace_add('write', lambda *args: set_option(download_folder=self.folder.get()))
 
         Button(self, text='', image=imgs['folder_icon'], transparent=True,
-               command=self.change_folder).grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
+               command=self.change_folder, tooltip='Browse').grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
 
     def update(self, **kwargs):
         """update widget's variable
@@ -3047,7 +3056,7 @@ class MainWindow(IView):
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
 
         # retry button -------------------------------------------------------------------------------------------------
-        self.retry_btn = Button(home_tab, image=imgs['refresh_icon'], command=lambda: self.refresh_url(self.url))
+        self.retry_btn = Button(home_tab, image=imgs['refresh_icon'], command=lambda: self.refresh_url(self.url), tooltip='Retry')
         # self.retry_btn.image = retry_img
         self.retry_btn.grid(row=0, column=4, padx=(0, 5), pady=(40, 5))
 
@@ -3058,7 +3067,7 @@ class MainWindow(IView):
         # video menus --------------------------------------------------------------------------------------------------
         self.pl_menu = MediaListBox(home_tab, bg, 'Playlist:')
         self.pl_menu.grid(row=1, column=0, columnspan=1, rowspan=1, pady=10, padx=5, sticky='nsew')
-        Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window).place(relx=1, rely=0, x=-40, y=5)
+        Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').place(relx=1, rely=0, x=-40, y=5)
         self.stream_menu = MediaListBox(home_tab, bg, 'Stream Quality:')
         self.stream_menu.grid(row=1, column=1, columnspan=1, rowspan=1, padx=15, pady=10, sticky='nsew')
 
@@ -3069,9 +3078,9 @@ class MainWindow(IView):
         # playlist download, sub buttons -------------------------------------------------------------------------------
         pl_sub_frame = tk.Frame(home_tab, background=MAIN_BG)
 
-        Button(pl_sub_frame, image=imgs['playlist_icon'], command=self.show_pl_window).pack(pady=0, padx=5)
-        Button(pl_sub_frame, image=imgs['subtitle_icon'], command=self.show_subtitles_window).pack(pady=20, padx=5)
-        Button(pl_sub_frame, image=imgs['about_icon'], command=self.show_about_notes).pack(pady=0, padx=5)
+        Button(pl_sub_frame, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').pack(pady=0, padx=5)
+        Button(pl_sub_frame, image=imgs['subtitle_icon'], command=self.show_subtitles_window, tooltip='Download Subtitle').pack(pady=20, padx=5)
+        Button(pl_sub_frame, image=imgs['about_icon'], command=self.show_about_notes, tooltip='About').pack(pady=0, padx=5)
 
         pl_sub_frame.grid(row=1, column=4, padx=5, pady=10)
 
