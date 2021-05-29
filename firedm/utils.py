@@ -30,38 +30,30 @@ from . import config
 
 # bidi support on linux
 if config.operating_system == 'Linux':
-    from awesometkinter.bidi import add_bidi_support, render_bidi_text
+    from awesometkinter.bidirender import add_bidi_support, render_bidi_text
 else:
     # on other operating systems just do nothing
     add_bidi_support = lambda widget: widget
     render_bidi_text = lambda text: text
-
-# todo: change docstring to google format and clean unused code
 
 
 def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,  app_name=config.APP_TITLE):
     """
     show os notification at systray area
 
-    :param title: Title of the notification
-    :param message: Message of the notification
-    :param app_name: Name of the app launching this notification
-    :param app_icon: Icon to be displayed along with the message
-    :param timeout: time to display the message for, defaults to 10
-    :param ticker: text to display on status bar as the notification arrives
-    :param toast: simple Android message instead of full notification
+    Args:
 
-    :type title: str
-    :type message: str
-    :type app_name: str
-    :type app_icon: str
-    :type timeout: int
-    :type ticker: str
-    :type toast: bool
+        title(str): Title of the notification
+        message(str): Message of the notification
+        app_name(str): Name of the app launching this notification
+        app_icon(str): Icon to be displayed along with the message
+        timeout(int): time to display the message for, defaults to 10
+        ticker(str): text to display on status bar as the notification arrives
+        toast(bool): simple Android message instead of full notification
 
-    .. note::
-       When called on Windows, ``app_icon`` has to be a path to
-       a file in .ICO format.
+
+    Note:
+       When called on Windows, "app_icon" has to be a path to a file in .ICO format.
     """
 
     try:
@@ -79,7 +71,18 @@ def handle_exceptions(error):
 
 
 def set_curl_options(c, http_headers=None):
-    """take pycurl object as an argument and set basic options"""
+    """take pycurl object as an argument and set basic options
+
+    Args:
+        c: pycurl object.
+        http_headers: a dictionary of initialization options.
+
+    Return:
+        None
+
+    Side effect:
+        change  pycurl object "c" inplace 
+    """
 
     # use default headers if no http-headers assigned or passed empty headers
     http_headers = http_headers or config.http_headers
@@ -215,11 +218,15 @@ def get_headers(url, verbose=False, http_headers=None):
 def download(url, file_name=None, verbose=True, http_headers=None):
     """
     simple file download, into bytesio buffer and store it on disk if file_name is given
-    :param url: string url/link
-    :param file_name: string type for file path
-    :param verbose: bool, log events if true
-    :param http_headers: key, value dict for http headers to be sent to the server
-    :return: bytesIo buffer or None
+
+    Args:
+        url: string url/link
+        file_name: string type for file path
+        verbose: bool, log events if true
+        http_headers: key, value dict for http headers to be sent to the server
+
+    Return:
+        bytesIo buffer or None
     """
 
     if not url:
@@ -472,13 +479,17 @@ def get_seg_size(seg):
 def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblocking=False):
     """
     run command in a subprocess
-    :param cmd: string of actual command to be executed
-    :param verbose: if true will re-route subprocess output to log()
-    :param shell: True or False
-    :param hide_window: True or False, hide shell window
-    :param d: DownloadItem object mainly use "status" property to terminate subprocess
-    :param nonblocking: if True, run subprocess and exit in other words it will not block until finish subprocess
-    :return: error (True or False), output (string of stdout/stderr output)
+
+    Args:
+        cmd: string of actual command to be executed
+        verbose: if true will re-route subprocess output to log()
+        shell: True or False
+        hide_window: True or False, hide shell window
+        d: DownloadItem object mainly use "status" property to terminate subprocess
+        nonblocking: if True, run subprocess and exit in other words it will not block until finish subprocess
+    
+    Return:
+        error (True or False), output (string of stdout/stderr output)
     """
 
     # override shell parameter currently can't kill subprocess if shell=True at least on windows, more investigation required
@@ -570,7 +581,6 @@ def update_object(obj, new_values):
 
 def truncate(string, length):
     """truncate a string to specified length by adding ... in the middle of the string"""
-    # print(len(string), string)
     sep = '...'
     if length < len(sep) + 2:
         string = string[:length]
@@ -700,8 +710,12 @@ def open_file(file):
 def open_folder(path):
     """
     open target folder in file manager and select the file if path is file
-    :param path: path to folder or file
-    :return: None
+    
+    Args:
+        path: path to folder or file
+
+    Return:
+        None
     """
 
     log('utils> open_folder()> ', path, log_level=2)
@@ -897,8 +911,12 @@ def parse_bytes(bytestr):
 def version_value(text):
     """
     convert date based version number into date object for comparision purpose
-    :param text: version with dot separated digits i.e. "2020.4.27"
-    :return: datetime.date
+    
+    Args:
+        text: version with dot separated digits i.e. "2020.4.27"
+
+    Return:
+        datetime.date
     """
 
     try:
@@ -926,9 +944,13 @@ def is_pkg_exist(pkg):
 def auto_rename(file_name, parent_folder):
     """
     rename file to avoid clash with existing file name
-    :param file_name: file name without path
-    :param parent_folder: path to parent folder, used to verify name doesn't exist
-    :return: new name without path
+
+    Args:
+        file_name: file name without path
+        parent_folder: path to parent folder, used to verify name doesn't exist
+
+    Return:
+        new name without path
     """
 
     name, ext = os.path.splitext(file_name)
@@ -1049,8 +1071,12 @@ def calc_md5_sha256(fp=None, buffer=None):
 def get_range_list(file_size):
     """
     return a list of ranges depend on config.segment_size and config.max_connections
-    :param file_size: file size
-    :return: list of ranges i.e. [[0, 100], [101, 2000], ... ]
+    
+    Args:
+        file_size: file size
+
+    Return:
+        list of ranges i.e. [[0, 100], [101, 2000], ... ]
     """
 
     if file_size == 0:
