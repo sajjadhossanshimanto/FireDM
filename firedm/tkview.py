@@ -1245,6 +1245,82 @@ class MediaListBox(tk.Frame):
         self.title_var.set(title)
 
 
+class FileDialog():
+    def __init__(self, foldersonly=False):
+        self.use = 'TK'  #, 'GTK', or 'WIN'
+        self.foldersonly = foldersonly
+        self.title = 'FireDM - ' 
+        self.title += 'Select a folder' if self.foldersonly else 'Select a file'
+
+        if config.operating_system == 'Linux':
+            try:
+                import gi
+
+                gi.require_version("Gtk", "3.0")
+                from gi.repository import Gtk 
+                self.GTK = Gtk
+
+                self.use = 'GTK'
+            except:
+                pass
+
+        elif config.operating_system == 'Windows':
+            self.use = 'WIN'
+
+    def run(self, initialdir=''):
+        initialdir = initialdir or config.download_folder
+        if self.use == 'GTK':
+            try:
+                Gtk = self.GTK
+                w = Gtk.Window()
+
+                dialog = Gtk.FileChooserDialog(
+                    title=self.title,
+                    parent=w,
+                    action=Gtk.FileChooserAction.SELECT_FOLDER if self.foldersonly else Gtk.FileChooserAction.OPEN,
+                )
+                dialog.add_buttons(
+                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, "Select", Gtk.ResponseType.OK
+                )
+                if isinstance(initialdir, str):
+                    dialog.set_current_folder(initialdir)
+                selected_path = None
+
+                response = dialog.run()
+                if response == Gtk.ResponseType.OK:
+                    selected_path = dialog.get_filename()
+                    
+                dialog.destroy()
+
+                while Gtk.events_pending ():
+                  Gtk.main_iteration ()
+
+                return selected_path
+            except:
+                raise
+        
+        elif self.use == 'WIN':
+            try:
+                raise "not implemented"
+            except:
+                pass
+
+        self.run_default(initialdir=initialdir)
+
+    def run_default(self, initialdir=''):
+        # use ugly tkinter filechooser
+        if self.foldersonly:
+            selected_path = filedialog.askdirectory(initialdir=initialdir)
+        else:
+            selected_path = filedialog.askopenfilename(initialdir=initialdir)
+        
+        return selected_path
+
+
+filechooser = FileDialog().run
+folderchooser = FileDialog(foldersonly=True).run
+
+
 class FileProperties(ttk.Frame):
     """file info display
 
@@ -1425,8 +1501,7 @@ class FileProperties(ttk.Frame):
 
     def change_folder(self):
         """select folder from system and update folder field"""
-        folder = filedialog.askdirectory(initialdir=self.folder.get())
-        print('-'*30, folder)
+        folder = folderchooser()
         if folder:
             self.folder.set(folder)
             set_option(download_folder=folder)
@@ -3292,7 +3367,7 @@ class MainWindow(IView):
         # cookies ---------------------------------------------
         def get_cookie_file(target):
             """get cookie file path"""
-            fp = filedialog.askopenfilename()
+            fp = filechooser()
             if fp:
                 target.set(fp)
 
@@ -4213,7 +4288,7 @@ class MainWindow(IView):
         btn = self.popup(msg, buttons=['Select file', 'Cancel'], title='Captcha found')
 
         if btn == 'Select file':
-            fp = filedialog.askopenfilename()
+            fp = filechooser()
 
         return fp
 
