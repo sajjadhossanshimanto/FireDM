@@ -1281,7 +1281,8 @@ class FileProperties(ttk.Frame):
 
     @property
     def name(self):
-        title = render_bidi_text(self.title.get())
+        # convert rendered bidi text to its logical order 
+        title = vis2log(self.title.get())
 
         ext = self.extension.get()
         if not ext.startswith('.'):
@@ -1425,6 +1426,7 @@ class FileProperties(ttk.Frame):
     def change_folder(self):
         """select folder from system and update folder field"""
         folder = filedialog.askdirectory(initialdir=self.folder.get())
+        print('-'*30, folder)
         if folder:
             self.folder.set(folder)
             set_option(download_folder=folder)
