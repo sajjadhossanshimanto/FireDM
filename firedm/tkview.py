@@ -1251,7 +1251,6 @@ class FileDialog():
         self.foldersonly = foldersonly
         self.title = 'FireDM - ' 
         self.title += 'Select a folder' if self.foldersonly else 'Select a file'
-
         if config.operating_system == 'Linux':
             try:
                 import gi
@@ -1262,7 +1261,15 @@ class FileDialog():
 
                 self.use = 'GTK'
             except:
-                pass
+                # looking for zenity
+                error, zenity_path = run_command('which zenity')
+                if zenity_path:
+                    self.use = 'zenity'
+                else:
+                    # looking for kdialog
+                    error, kdialog_path = run_command('which kdialog')
+                    if kdialog_path:
+                        self.use = 'kdialog'
 
         elif config.operating_system == 'Windows':
             self.use = 'WIN'
@@ -1297,11 +1304,37 @@ class FileDialog():
 
                 return selected_path
             except:
-                raise
+                pass
+
+        elif self.use == 'zenity':
+            cmd = 'zenity --file-selection'
+            if self.foldersonly:
+                cmd += ' --directory'
+            if isinstance(initialdir, str):
+                cmd += f' --filename="{initialdir}"'
+            retcode, selected_path = run_command(cmd, ignore_stderr=True)
+            # zenity will return either 0, 1 or 5, depending on whether the user pressed OK, Cancel or timeout has been reached
+            if retcode in (0, 1, 5):
+                return selected_path
+
+        elif self.use == 'kdialog':
+            cmd = 'kdialog'
+            if self.foldersonly:
+                cmd += ' --getexistingdirectory'
+            else:
+                cmd += ' --getopenfilename'
+
+            if isinstance(initialdir, str):
+                cmd += f' "{initialdir}"'
+
+            retcode, selected_path = run_command(cmd, ignore_stderr=True)
+            # kdialog will return either 0, 1 depending on whether the user pressed OK, Cancel
+            if retcode in (0, 1):
+                return selected_path
         
         elif self.use == 'WIN':
             try:
-                raise "not implemented"
+                raise "not implemented yet"
             except:
                 pass
 

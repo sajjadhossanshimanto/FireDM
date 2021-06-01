@@ -482,7 +482,7 @@ def get_seg_size(seg):
         return 0
 
 
-def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblocking=False):
+def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblocking=False, ignore_stderr=False):
     """
     run command in a subprocess
 
@@ -522,8 +522,8 @@ def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblo
 
         # start subprocess using Popen instead of subprocess.run() to get a real-time output
         # since run() gets the output only when finished
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, encoding='utf-8',
-                                   errors='replace', shell=shell, startupinfo=startupinfo)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=None if ignore_stderr else subprocess.STDOUT, 
+                                   encoding='utf-8', errors='replace', shell=shell, startupinfo=startupinfo)
 
         if nonblocking:
             return
