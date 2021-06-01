@@ -112,10 +112,9 @@ git clone --depth 1 https://github.com/firedm/FireDM.git
 python3 -m venv ./.env
 source ./.env/bin/activate
 python3 -m pip install -r ./FireDM/requirements.txt
-cat <<EOF > firedm.sh
-source ./.env/bin/activate
-python3 ./FireDM/firedm.py
-EOF
+echo "source ./.env/bin/activate
+python3 ./FireDM/firedm.py \$@
+" > firedm.sh
 chmod +x ./firedm.sh
 ./firedm.sh
 ```
@@ -123,8 +122,7 @@ chmod +x ./firedm.sh
 > optionally create .desktop file and add FireDM to your applications
 ```sh
 FireDMLSPATH=$(realpath ./firedm.sh)
-cat <<EOF > FireDM.desktop
-[Desktop Entry]
+echo "[Desktop Entry]
 Name=FireDM
 GenericName=FireDM
 Comment=FireDM Download Manager
@@ -134,8 +132,7 @@ Terminal=false
 Type=Application
 Categories=Network;
 Keywords=Internet;download
-EOF
-
+" > FireDM.desktop
 cp ./FireDM.desktop ~/.local/share/applications/
 mkdir -p ~/.local/share/icons/hicolor/48x48/apps/
 cp ./FireDM/icons/48x48.png ~/.local/share/icons/hicolor/48x48/apps/firedm.png
