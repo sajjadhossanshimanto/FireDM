@@ -32,13 +32,13 @@ from . import config
 # ignore bidi support on non-Linux operating systems
 add_bidi_support = lambda widget: widget
 render_bidi_text = lambda text: text
-vis2log = lambda text: text
+derender_bidi_text = lambda text: text
 
 
 # bidi support on linux
 if config.operating_system == 'Linux':
     try:
-        from awesometkinter.bidirender import add_bidi_support, render_bidi_text, vis2log
+        from awesometkinter.bidirender import add_bidi_support, render_bidi_text, derender_bidi_text
     except Exception as e:
         print('Bidi support error:', e)
 
@@ -1183,6 +1183,6 @@ __all__ = [
     'parse_bytes', 'set_curl_options', 'version_value', 'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
     'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image', 'run_thread',
     'generate_unique_name', 'open_log_file', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_bidi_text',
-    'vis2log'
+    'derender_bidi_text'
 
 ]

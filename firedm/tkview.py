@@ -1391,7 +1391,7 @@ class FileProperties(ttk.Frame):
     @property
     def name(self):
         # convert rendered bidi text to its logical order 
-        title = vis2log(self.title.get())
+        title = derender_bidi_text(self.title.get())
 
         ext = self.extension.get()
         if not ext.startswith('.'):
