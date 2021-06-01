@@ -551,10 +551,11 @@ def load_extractor_engines(reload=False):
             config.http_headers['User-Agent'] = youtube_dl.utils.random_user_agent()
 
         # set interrupt / kill switch
-        set_interrupt_switch()
+        set_interrupt_switch(youtube_dl)
 
         # set default extractor
-        set_default_extractor()
+        if config.active_video_extractor == 'youtube_dl':
+            set_default_extractor('youtube_dl')
 
     # yt_dlp ----------------------------------------------------------------------------------------------------
     def import_yt_dlp():
@@ -574,10 +575,11 @@ def load_extractor_engines(reload=False):
         log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds')
 
         # set interrupt / kill switch
-        set_interrupt_switch()
+        set_interrupt_switch(yt_dlp)
 
         # set default extractor
-        set_default_extractor()
+        if config.active_video_extractor == 'yt_dlp':
+            set_default_extractor('yt_dlp')
 
     run_thread(import_youtube_dl, daemon=True)
     run_thread(import_yt_dlp, daemon=True)
@@ -592,28 +594,25 @@ def set_default_extractor(extractor=None):
     log('set default extractor engine to:', extractor, ytdl)
 
 
-def set_interrupt_switch():
+def set_interrupt_switch(extractor):
     # override urlopen in Youtube-dl or yt_dlp for interrupting session anytime
-
-    global youtube_dl, yt_dlp
 
     def urlopen_decorator(func):
         def newfunc(self, *args):
             # print('urlopen started ............................................')
             if config.ytdl_abort:
                 # print('urlopen aborted ............................................')
-                raise Exception('Youtube-dl aborted by user')
+                raise Exception(f'video extractor aborted by user')
                 # return None
             data = func(self, *args)
             return data
 
         return newfunc
 
-    for pkg in (youtube_dl, yt_dlp):
-        try:
-            pkg.YoutubeDL.urlopen = urlopen_decorator(pkg.YoutubeDL.urlopen)
-        except Exception as e:
-            log('video.set_interrupt_switch() error:', e)
+    try:
+        extractor.YoutubeDL.urlopen = urlopen_decorator(extractor.YoutubeDL.urlopen)
+    except Exception as e:
+        log('video.set_interrupt_switch() error:', e)
 
 
 def pre_process_hls(d):
