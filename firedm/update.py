@@ -175,8 +175,8 @@ def update_pkg(pkg, url):
     # if run from source, we will update system installed package and exit
     if not config.FROZEN:
         cmd = f'"{sys.executable}" -m pip install {pkg} --upgrade'
-        success, output = run_command(cmd)
-        if success:
+        error, output = run_command(cmd)
+        if not error:
             log(f'successfully updated {pkg}')
         return True
 

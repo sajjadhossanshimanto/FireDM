@@ -551,7 +551,7 @@ def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblo
 
         # get return code
         process.poll()
-        error = process.returncode != 0  # True or False
+        error = process.returncode  # non zero value indicate an error
 
     except Exception as e:
         log('error running command: ', e, ' - cmd:', cmd)
