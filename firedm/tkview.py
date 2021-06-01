@@ -1262,12 +1262,12 @@ class FileDialog():
                 self.use = 'GTK'
             except:
                 # looking for zenity
-                error, zenity_path = run_command('which zenity')
+                error, zenity_path = run_command('which zenity', verbose=False)
                 if zenity_path:
                     self.use = 'zenity'
                 else:
                     # looking for kdialog
-                    error, kdialog_path = run_command('which kdialog')
+                    error, kdialog_path = run_command('which kdialog', verbose=False)
                     if kdialog_path:
                         self.use = 'kdialog'
 
@@ -4047,7 +4047,10 @@ class MainWindow(IView):
     def quit(self):
         """Quit application and systray"""
         config.shutdown = True
-        self.root.destroy()  # destroy all widgets and quit mainloop
+        # start = time.time()
+        # self.root.destroy()  # destroy all widgets and quit mainloop, consume 4~5 seconds to destroy widgets???
+        self.root.quit()  # quit main loop without destroying widgets, faster to quit application
+        # print(time.time() - start) 
 
         # save themes
         self.save_user_themes()
