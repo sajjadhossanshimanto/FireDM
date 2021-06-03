@@ -30,15 +30,15 @@ from . import config
 
 
 # ignore bidi support on non-Linux operating systems
-add_bidi_support = lambda widget: widget
-render_bidi_text = lambda text: text
-derender_bidi_text = lambda text: text
+add_bidi_support = lambda widget, *args, **kwargs: widget
+render_text = lambda text, *args, **kwargs: text
+derender_text = lambda text, *args, **kwargs: text
 
 
 # bidi support on linux
 if config.operating_system == 'Linux':
     try:
-        from awesometkinter.bidirender import add_bidi_support, render_bidi_text, derender_bidi_text
+        from awesometkinter.bidirender import add_bidi_support, render_text, derender_text
     except Exception as e:
         print('Bidi support error:', e)
 
@@ -1175,6 +1175,7 @@ def open_webpage(url):
         log('utils.open_webpage()> error:', e)
 
 
+
 __all__ = [
     'notify', 'handle_exceptions', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name',
     'size_splitter', 'delete_folder', 'get_seg_size', 'run_command', 'print_object', 'update_object', 'truncate',
@@ -1182,7 +1183,7 @@ __all__ = [
     'rename_file', 'load_json', 'save_json', 'echo_stdout', 'echo_stderr', 'log_recorder', 'natural_sort', 'is_pkg_exist',
     'parse_bytes', 'set_curl_options', 'version_value', 'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
     'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image', 'run_thread',
-    'generate_unique_name', 'open_log_file', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_bidi_text',
-    'derender_bidi_text'
+    'generate_unique_name', 'open_log_file', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
+    'derender_text',
 
 ]

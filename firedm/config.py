@@ -24,7 +24,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'enable_captcha_workaround',
-                 'verify_ssl_cert', 'custom_user_agent', 'frequent_download_folders', 'write_timestamp',
+                 'verify_ssl_cert', 'custom_user_agent', 'recent_folders', 'write_timestamp',
                  'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top']
 
 # CONSTANTS
@@ -88,7 +88,7 @@ sett_folder = None
 global_sett_folder = None
 download_folder = DEFAULT_DOWNLOAD_FOLDER
 
-frequent_download_folders = []
+recent_folders = []
 
 # settings parameters
 # General --------------------------------------------------------------------------------------------------------------

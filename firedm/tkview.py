@@ -266,9 +266,8 @@ def create_imgs():
         img = atk.create_image(b64=v, color=color)
 
         # on mouse hover image
-        img.zoomed = atk.create_image(b64=v, color=color, size=int(img.width() * 1.2))
+        img.zoomed = atk.create_image(b64=v, color=color, size=img.width() + 5)
         imgs[k] = img
-
 
     imgs['blinker_icon'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
     imgs['done_icon'] = atk.create_image(b64=done_icon, color=BTN_BG)
@@ -579,7 +578,7 @@ class Button(tk.Button):
         if 'tooltip' in kwargs:
             tooltip_text = kwargs.pop('tooltip')
             try:
-                atk.tooltip(self, tooltip_text)
+                atk.tooltip(self, tooltip_text, xoffset=15, yoffset=15)
             except Exception as e:
                 print(e)
 
@@ -1377,7 +1376,7 @@ class FileProperties(ttk.Frame):
         # variables
         self.title = tk.StringVar()
         self.extension = tk.StringVar()
-        self.folder = tk.StringVar()
+        self.foldervar = tk.StringVar()
         self.size = tk.StringVar()
         self.type = tk.StringVar()
         self.subtype = tk.StringVar()
@@ -1391,13 +1390,28 @@ class FileProperties(ttk.Frame):
     @property
     def name(self):
         # convert rendered bidi text to its logical order 
-        title = derender_bidi_text(self.title.get())
+        title = derender_text(self.title.get())
 
         ext = self.extension.get()
         if not ext.startswith('.'):
             ext = '.' + ext
 
         return title + ext
+
+    @property
+    def folder(self):
+        path = self.foldervar.get()
+
+        if config.operating_system == 'Linux':
+            path = derender_text(path, ispath=True)
+        return path
+
+    @folder.setter
+    def folder(self, path):
+        if config.operating_system == 'Linux':
+            path = render_text(path, ispath=True)
+
+        self.foldervar.set(path)
 
     def create_widgets(self):
         def label(text='', textvariable=None, r=1, c=0, rs=1, cs=1, sticky='we'):
@@ -1422,7 +1436,7 @@ class FileProperties(ttk.Frame):
         self.title_entry.grid_remove()
 
         # add bidi support for entry widget to enable editing Arabic titles
-        add_bidi_support(self.title_entry)
+        add_bidi_support(self.title_entry, render_copy_paste=True, copy_paste_menu=True, ispath=False)
 
         self.title_lbl = AutoWrappingLabel(self, textvariable=self.title,  bg=self.bg, fg=self.fg, anchor='w')
         self.title_lbl.grid(row=row['name'], column=1, columnspan=2, sticky='we')
@@ -1439,8 +1453,8 @@ class FileProperties(ttk.Frame):
         self.ext_entry = tk.Entry(self, textvariable=self.extension, bg=self.bg, fg=self.fg, highlightthickness=0,
                                   relief='flat')
         self.ext_entry.grid(row=row['extension'], column=1, columnspan=2, sticky='ew')
-        self.ext_entry.bind('<FocusIn>', lambda event: self.ext_entry.config(bg='white', fg='black'))
-        self.ext_entry.bind('<FocusOut>', lambda event: self.ext_entry.config(bg=self.bg, fg=self.fg))
+        self.ext_entry.bind('<FocusIn>', lambda event: self.ext_entry.config(bg='white', fg='black'), add='+')
+        self.ext_entry.bind('<FocusOut>', lambda event: self.ext_entry.config(bg=self.bg, fg=self.fg), add='+')
 
         # size ---------------------------------------------------------------------------------------------------------
         label('Size:', r=row['size'], c=0)
@@ -1455,40 +1469,65 @@ class FileProperties(ttk.Frame):
         # download folder -------------------------------------------------------------------------------------------
         label('Folder:', r=row['folder'], c=0)
 
-        def update_frequent_folders(*args):
-            try:
-                config.frequent_download_folders.remove(self.folder.get())
-            except:
-                pass
+        folder_entry = tk.Entry(self, textvariable=self.foldervar, bg=self.bg, fg=self.fg, highlightthickness=0,
+                                  relief='flat')
+        folder_entry.grid(row=row['folder'], column=1, sticky='we', pady=5)
 
-            # add current folder value at the beginning of the list and limit list size to 10 items
-            if self.folder.get():
-                config.frequent_download_folders = [self.folder.get()] + config.frequent_download_folders[:9]
+        add_bidi_support(folder_entry, render_copy_paste=True, copy_paste_menu=True, ispath=True)
 
-                # update combobox
-                cb.config(values=config.frequent_download_folders)
+        # colors
+        folder_entry.bind('<FocusIn>', lambda event: folder_entry.config(bg='white', fg='black'), add='+')
+        folder_entry.bind('<FocusOut>', lambda event: folder_entry.config(bg=self.bg, fg=self.fg), add='+')
 
-        # style
-        s = ttk.Style()
-        custom_style = 'downloadfolder.TCombobox'
-        arrow_bg = SF_BG
-        textarea_bg = MAIN_BG
-        s.configure(custom_style, arrowcolor=atk.calc_font_color(arrow_bg),
-                    foreground=MAIN_FG, padding=2, relief=tk.RAISED, borderwidth=0, arrowsize=16)
-        s.map(custom_style, fieldbackground=[('', textarea_bg)], background=[('', arrow_bg)])
+        folder_entry.bind('<FocusOut>', self.update_recent_folders, add='+')
+        folder_entry.bind('<1>', self.update_recent_folders, add='+') 
 
-        cb = ttk.Combobox(self, exportselection=0, textvariable=self.folder, values=config.frequent_download_folders,
-                          style=custom_style)
-        cb.grid(row=row['folder'], column=1, sticky='we', pady=5)
-        cb.bind('<FocusOut>', update_frequent_folders, add='+')
-        cb.bind('<1>', update_frequent_folders, add='+')
-        cb.bind('<<ComboboxSelected>>', lambda event: cb.selection_clear(), add='+')
+        
+        # # handle copy paste actions
+        # override_copy_paste(folder_entry, ispath=True)
+        
 
-        # update global download folder with every widget edit
-        self.folder.trace_add('write', lambda *args: set_option(download_folder=self.folder.get()))
+        self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))       
 
-        Button(self, text='', image=imgs['folder_icon'], transparent=True,
-               command=self.change_folder, tooltip='Browse').grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
+        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True) #,
+        browse_btn.grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
+
+        self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
+        self.recent_menu.add_command(label='Browse ...', command=self.change_folder)
+        self.recent_menu.add_separator()
+
+        browse_btn.bind("<Button-1>", self.recent_menu.popup, add='+')
+        
+        self.update_recent_menu()
+
+    def on_menu_selection(self, x):
+        self.foldervar.set(x)
+        self.update_recent_folders()
+
+    def update_recent_menu(self):
+        try:
+            self.recent_menu.delete(2, tk.END)
+        except:
+            pass
+        
+        for item in config.recent_folders:
+            self.recent_menu.add_command(label=item, command=lambda x=item: self.on_menu_selection(x))
+
+    def update_recent_folders(self, *args):
+        value = self.foldervar.get().strip()
+        try:
+            if config.recent_folders[0] == value:
+                return
+
+            config.recent_folders.remove(value)
+        except:
+            pass
+
+        # add current folder value at the beginning of the list and limit list size to 10 items
+        if value:
+            config.recent_folders = [value] + config.recent_folders[:8]
+
+            self.update_recent_menu()
 
     def update(self, **kwargs):
         """update widget's variable
@@ -1506,14 +1545,14 @@ class FileProperties(ttk.Frame):
         resumable = kwargs.get('resumable', None)
 
         if title:
-            rendered_title = render_bidi_text(title)
+            rendered_title = render_text(title)
             self.title.set(rendered_title)
 
         if extension:
             self.extension.set(extension.replace('.', ''))  # remove '.'
 
         if folder:
-            self.folder.set(folder)
+            self.folder = folder
         if size is not None:
             self.size.set(f'{size_format(size) if size > 0 else "unknown"}')
         if type_:
@@ -1526,7 +1565,7 @@ class FileProperties(ttk.Frame):
     def reset(self):
         self.title.set('')
         self.extension.set('')
-        self.folder.set(config.download_folder)
+        self.folder = config.download_folder
         self.size.set('...')
         self.type.set('')
         self.subtype.set('')
@@ -1536,8 +1575,9 @@ class FileProperties(ttk.Frame):
         """select folder from system and update folder field"""
         folder = folderchooser()
         if folder:
-            self.folder.set(folder)
+            self.folder = folder
             set_option(download_folder=folder)
+            self.update_recent_folders()
 
     def start_name_edit(self):
         """remove label and show edit entry with raw name"""
@@ -3868,7 +3908,7 @@ class MainWindow(IView):
                 AudioWindow(self, menu, idx)
 
         # download
-        self.download(name=self.file_properties.name, folder=self.file_properties.folder.get())
+        self.download(name=self.file_properties.name, folder=self.file_properties.folder)
 
     def download(self, uid=None, **kwargs):
         """Send command to controller to download an item
