@@ -1481,22 +1481,16 @@ class FileProperties(ttk.Frame):
 
         folder_entry.bind('<FocusOut>', self.update_recent_folders, add='+')
         folder_entry.bind('<1>', self.update_recent_folders, add='+') 
-
         
-        # # handle copy paste actions
-        # override_copy_paste(folder_entry, ispath=True)
-        
-
         self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))       
 
         browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True) #,
         browse_btn.grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
 
-        self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
+        self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG,
+            bind_left_click=True, bind_right_click=False)
         self.recent_menu.add_command(label='Browse ...', command=self.change_folder)
         self.recent_menu.add_separator()
-
-        browse_btn.bind("<Button-1>", self.recent_menu.popup, add='+')
         
         self.update_recent_menu()
 
@@ -3265,9 +3259,8 @@ class MainWindow(IView):
         select_menu = atk.RightClickMenu(self.select_btn,
                                          ['Select all', 'Select None', 'Select completed', 'Select non completed'],
                                          callback=lambda option_name: self.select_ditems(option_name),
-                                         bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
-
-        self.select_btn.bind("<Button-1>", select_menu.popup)
+                                         bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True, 
+                                         bind_right_click=False)
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
