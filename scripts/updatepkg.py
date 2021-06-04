@@ -25,7 +25,7 @@ path = os.path.realpath(os.path.abspath(__file__))
 current_folder = os.path.dirname(path)
 sys.path.insert(0,  os.path.dirname(current_folder))  # for imports to work
 
-from scripts.utils import download, delete_folder, extract, compile_pkg, create_folder, bkup, get_pkg_version
+from scripts.utils import download, delete_folder, extract, compile_pkg, create_folder, bkup, get_pkg_version, move_folders
 
 
 def get_pkg_latest_version(pkg_name, fetch_url=True):
@@ -128,9 +128,7 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
     old_pkg_path = os.path.join(target_folder, pkg_name)
     new_pkg_path = os.path.join(extract_folder, pkg_name)
 
-    # make temp folder structure
     delete_folder(temp_folder)
-    create_folder(extract_folder)  
 
     # start processing -------------------------------------------------------
     print(f'start updating {pkg_name} please wait ...')
@@ -139,12 +137,18 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
         print(f'backup {pkg_name}')
         bkup(old_pkg_path)
 
-    if not src_folder:
+    if src_folder:
+        # copy pkg folder to temp folder
+        shutil.copytree(src_folder, new_pkg_path,  dirs_exist_ok=True)
+    
+    else:
+
         # get download url
         latest_version, url = get_pkg_latest_version(pkg_name)
-        current_version = get_pkg_version(os.path.join(old_pkg_path, 'version.py'))
+        current_version = get_pkg_version(old_pkg_path)
+        print(f'{pkg_name}, current: {current_version} - latest: {latest_version}')
         if parse_version(latest_version) <= parse_version(current_version):
-            print(f'{pkg_name} is up-to-date, current: {current_version} - latest: {latest_version}')
+            print(f'{pkg_name} is up-to-date')
             return
 
         if url:
@@ -160,24 +164,24 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
             print(f'failed to download {pkg_name}, abort update')
             return
 
+        # make temp folder structure
+        create_folder(extract_folder) 
+
         # extract zip file
         print(f'extracting {z_fn}')
         extract(z_fp, extract_folder)
     
-    else:
-        # copy pkg folder to temp folder
-        shutil.copytree(src_folder, new_pkg_path)
+    
+    # # compile files from py to pyc
+    # if compile:
+    #     print('compiling files, please wait')
+    #     compile_pkg(new_pkg_path)
 
-    # compile files from py to pyc
-    if compile:
-        print('compiling files, please wait')
-        compile_pkg(new_pkg_path)
-
-    # delete old package and replace it with new one
-    print(f'overwrite old {pkg_name} files')
-    delete_folder(old_pkg_path)
-    shutil.move(new_pkg_path, target_folder)
-    print('new package copied to:', old_pkg_path)
+    # # delete old package and replace it with new one
+    # print(f'overwrite old {pkg_name} files')
+    # delete_folder(old_pkg_path)
+    # shutil.move(new_pkg_path, target_folder)
+    # print('new package copied to:', old_pkg_path)
 
     # .dist-info folder, eg: FireDM-2021.2.9.dist-info
     r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
@@ -189,17 +193,33 @@ def update_pkg(pkg_name, target_folder, src_folder=None, create_bkup=False, comp
         delete_folder(old_dist_info_folder)
         print('delete old dist-info folder:', old_dist_info_folder)
 
-    # copy new dist-info folder to destination folder
-    match = list(filter(r.match, os.listdir(extract_folder)))
-    if match:
-        new_dist_info_folder = os.path.join(extract_folder, match[0])
-        shutil.move(new_dist_info_folder, target_folder)
-        print('install new dist-info folder:', new_dist_info_folder)
+    # # copy new dist-info folder to destination folder
+    # match = list(filter(r.match, os.listdir(extract_folder)))
+    # if match:
+    #     new_dist_info_folder = os.path.join(extract_folder, match[0])
+    #     shutil.move(new_dist_info_folder, target_folder)
+    #     print('install new dist-info folder:', new_dist_info_folder)
+
+    # move folders under extracted folder to target folder (e.g: sitepackages)
+    src, dest = extract_folder, target_folder
+    folders = [f for f in os.listdir(src) if os.path.isdir(os.path.join(src, f))]
+
+    # execlude .data folders
+    folders = [f for f in folders if not f.endswith('.data')]
+
+    src_folders = [os.path.join(src, f) for f in folders]
+    dest_folders = [os.path.join(dest, f) for f in folders]
+
+    # delete dest folders
+    for folder in dest_folders:
+        delete_folder(folder)
+
+    for folder in src_folders:
+        shutil.move(folder, dest)
 
     # clean old files
-    print('delete temp folder')
-    delete_folder(temp_folder)
-    print(f'{pkg_name} ..... done updating')
+    delete_folder(temp_folder, verbose=True)
+    print(f'{pkg_name} ..... done updating \n')
     return True
 
 

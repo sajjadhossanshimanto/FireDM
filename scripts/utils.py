@@ -108,8 +108,22 @@ def delete_folder(folder, verbose=False):
         shutil.rmtree(folder)
         if verbose:
             print('deleted:', folder)
-    except:
-        pass
+    except Exception as e:
+        if verbose:
+            print('delete_folder:', e)
+        
+
+def move_folders(src, dest):
+    folders = [f for f in os.listdir(src) if os.path.isdir(os.path.join(src, f))]
+    src_folders = [os.path.join(src, f) for f in folders]
+    dest_folders = [os.path.join(dest, f) for f in folders]
+
+    # delete dest folders
+    for folder in dest_folders:
+        delete_folder(folder)
+
+    for folder in src_folders:
+        shutil.move(folder, dest)
 
 
 def create_folder(folder_path):
@@ -169,17 +183,48 @@ def compile_pkg(pkg_folder):
     print('Finished compiling to .pyc files')
     
 
-def get_pkg_version(fp):
-    """parse version number from a file
-    it will search for a date based version number
+def get_pkg_version(pkg_path):
+    """parse version number for a package
+    using .dist-info folder 
+    or as afallback it will search for a date based version number
     can be used with FireDM, youtube-dl, and yt_dlp
     version file can be normal string or compiled, .py or .pyc code
+
+    Args:
+        pkg_path(str): path to package folder
+
+    Returns:
+        (str): version number or empty string
     """
+
+    version = ''
     try:
-        with open(fp, 'rb') as f:
-            text = f.read()
-            match = re.search(rb'\d+\.\d+\.\d+', text)
-            return match.group().decode('utf-8')
+        # try to parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info
+        parent_folder = os.path.dirname(pkg_path)
+        pkg_name = os.path.basename(pkg_path)
+
+        # .dist-info folder, eg: FireDM-2021.2.9.dist-info
+        r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
+
+        # delete old dist-info folder if found
+        match = list(filter(r.match, os.listdir(parent_folder)))
+        if match:
+            name = match[0]
+            name = name.replace(pkg_name + '-', '')
+            name = name.replace('.dist-info', '')
+            version = name
     except:
-        return ''
+        pass
+
+    if not version:
+        try:
+            fp = os.path.join(pkg_path, 'version.py')
+            with open(fp, 'rb') as f:
+                text = f.read()
+                match = re.search(rb'\d+\.\d+\.\d+', text)
+                version = match.group().decode('utf-8')
+        except:
+            pass
+
+    return version
 
