@@ -254,6 +254,8 @@ imgs = {}
 def create_imgs():
     """create widget's images, should be called with theme change"""
 
+    sizes = {'playlist_icon': 25}
+
     for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'dropdown_icon', 'folder_icon',
               'play_icon', 'pause_icon', 'delete_icon'):
         v = iconsbase64.__dict__[k]
@@ -263,7 +265,7 @@ def create_imgs():
         else:
             color = BTN_BG
 
-        img = atk.create_image(b64=v, color=color)
+        img = atk.create_image(b64=v, color=color, size=sizes.get(k, None))
 
         # on mouse hover image
         img.zoomed = atk.create_image(b64=v, color=color, size=img.width() + 5)
@@ -1488,9 +1490,8 @@ class FileProperties(ttk.Frame):
         browse_btn.grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
 
         self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG,
-            bind_left_click=True, bind_right_click=False)
+                                              bind_left_click=True, bind_right_click=False)
         self.recent_menu.add_command(label='Browse ...', command=self.change_folder)
-        self.recent_menu.add_separator()
         
         self.update_recent_menu()
 
@@ -1499,13 +1500,15 @@ class FileProperties(ttk.Frame):
         self.update_recent_folders()
 
     def update_recent_menu(self):
-        try:
-            self.recent_menu.delete(2, tk.END)
-        except:
-            pass
+
+        if self.recent_menu.index(tk.END) >= 1:
+            self.recent_menu.delete(1, tk.END)
+
+        if config.recent_folders:
+            self.recent_menu.add_separator()
         
-        for item in config.recent_folders:
-            self.recent_menu.add_command(label=item, command=lambda x=item: self.on_menu_selection(x))
+            for item in config.recent_folders:
+                self.recent_menu.add_command(label=item, command=lambda x=item: self.on_menu_selection(x))
 
     def update_recent_folders(self, *args):
         value = self.foldervar.get().strip()
@@ -1519,9 +1522,17 @@ class FileProperties(ttk.Frame):
 
         # add current folder value at the beginning of the list and limit list size to 10 items
         if value:
-            config.recent_folders = [value] + config.recent_folders[:8]
+            config.recent_folders = [value] + config.recent_folders[:9]
 
             self.update_recent_menu()
+
+    def change_folder(self, *args):
+        """select folder from system and update folder field"""
+        folder = folderchooser()
+        if folder:
+            self.folder = folder
+            set_option(download_folder=folder)
+            self.update_recent_folders()
 
     def update(self, **kwargs):
         """update widget's variable
@@ -1564,14 +1575,6 @@ class FileProperties(ttk.Frame):
         self.type.set('')
         self.subtype.set('')
         self.resumable.set('')
-
-    def change_folder(self):
-        """select folder from system and update folder field"""
-        folder = folderchooser()
-        if folder:
-            self.folder = folder
-            set_option(download_folder=folder)
-            self.update_recent_folders()
 
     def start_name_edit(self):
         """remove label and show edit entry with raw name"""
@@ -3222,7 +3225,7 @@ class MainWindow(IView):
         # playlist download, sub buttons -------------------------------------------------------------------------------
         pl_sub_frame = tk.Frame(home_tab, background=MAIN_BG)
 
-        Button(pl_sub_frame, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').pack(pady=0, padx=5)
+        # Button(pl_sub_frame, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').pack(pady=0, padx=5)
         Button(pl_sub_frame, image=imgs['subtitle_icon'], command=self.show_subtitles_window, tooltip='Download Subtitle').pack(pady=20, padx=5)
         Button(pl_sub_frame, image=imgs['about_icon'], command=self.show_about_notes, tooltip='About').pack(pady=0, padx=5)
 
