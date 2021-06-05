@@ -56,7 +56,7 @@ jobs:
           echo '# Release info:
           **Windows: [.zip file]**
           - Portable version for windows 32bit and 64bit, no installation needed, just extract to any folder and run FireDM.exe file
-          - ffmpeg.exe included, you can download latest version [here](https://ffmpeg.zeranoe.com/builds/)
+          - ffmpeg.exe included, you can download latest version [here](https://ffmpeg.org/)
           - The binary version ".exe" prepared by "cx_freeze" on python 3.8, windows8x32bit
           ---
 

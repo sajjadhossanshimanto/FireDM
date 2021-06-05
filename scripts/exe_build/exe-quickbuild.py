@@ -76,7 +76,7 @@ for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi', 'python_bi
     update_pkg(pkg_name,  lib_folder, compile=False)
 
 # get application version ----------------------------------------------------------------------------------------------
-version = get_pkg_version(os.path.join(project_folder, 'firedm', 'version.py'))
+version = get_pkg_version(os.path.join(project_folder, 'firedm'))
         
 # create zip file
 output_filename = f'{APP_NAME}_{version}'

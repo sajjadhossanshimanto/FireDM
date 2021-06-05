@@ -37,7 +37,7 @@ from scripts.updatepkg import update_pkg
 
 
 # get application version ----------------------------------------------------------------------------------------------
-version = get_pkg_version(os.path.join(project_folder, 'firedm', 'version.py'))
+version = get_pkg_version(os.path.join(project_folder, 'firedm'))
 
 # check for app folder existence, otherwise download latest version from github
 if not os.path.isdir(AppDir):
