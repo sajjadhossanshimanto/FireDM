@@ -1275,6 +1275,8 @@ class FileDialog():
         elif config.operating_system == 'Windows':
             self.use = 'WIN'
 
+        self.use = 'WIN'
+
     def run(self, initialdir=''):
         initialdir = initialdir or config.download_folder
         if self.use == 'GTK':
@@ -1339,7 +1341,9 @@ class FileDialog():
             except:
                 pass
 
-        self.run_default(initialdir=initialdir)
+        selected_path = self.run_default(initialdir=initialdir)
+
+        return selected_path
 
     def run_default(self, initialdir=''):
         # use ugly tkinter filechooser
