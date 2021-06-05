@@ -1275,8 +1275,6 @@ class FileDialog():
         elif config.operating_system == 'Windows':
             self.use = 'WIN'
 
-        self.use = 'WIN'
-
     def run(self, initialdir=''):
         initialdir = initialdir or config.download_folder
         if self.use == 'GTK':
