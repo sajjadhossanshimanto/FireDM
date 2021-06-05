@@ -218,7 +218,17 @@ def get_pkg_version(pkg_path):
 
     if not version:
         try:
+            version_module = {}
             fp = os.path.join(pkg_path, 'version.py')
+            with open(fp) as f:
+                exec(f.read(), version_module)  # then we can use it as: version_module['__version__']
+                version = version_module['__version__']
+        except:
+            pass
+
+    if not version:        
+        try:
+            fp = os.path.join(pkg_path, 'version.pyc')
             with open(fp, 'rb') as f:
                 text = f.read()
                 match = re.search(rb'\d+\.\d+\.\d+', text)
@@ -227,4 +237,3 @@ def get_pkg_version(pkg_path):
             pass
 
     return version
-
