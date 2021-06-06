@@ -1,3 +1,5 @@
+Homepage: https://github.com/firedm/FireDM
+
 [![Downloads](https://static.pepy.tech/personalized-badge/pyidm?period=total&units=international_system&left_color=grey&right_color=blue&left_text=PyIDM%20Downloads%20(pypi))](https://pepy.tech/project/pyidm)
 [![Downloads](https://static.pepy.tech/personalized-badge/firedm?period=total&units=international_system&left_color=grey&right_color=blue&left_text=FireDM%20Downloads%20(pypi))](https://pepy.tech/project/firedm)
 
@@ -137,6 +139,11 @@ cp ./FireDM.desktop ~/.local/share/applications/
 mkdir -p ~/.local/share/icons/hicolor/48x48/apps/
 cp ./FireDM/icons/48x48.png ~/.local/share/icons/hicolor/48x48/apps/firedm.png
 ```
+
+## Arch-linux (AUR):
+ - Firedm available for arch linux on AUR https://aur.archlinux.org/packages/firedm/ , Special Thanks to qontinuum for maintaining this package.
+
+---
 
 # Known Issues:
 - Linux X-server will raise an error if some fonts are missing especially emoji fonts, for more info refer to [issue #200](https://github.com/firedm/FireDM/issues/200).
