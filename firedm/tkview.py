@@ -4229,7 +4229,8 @@ class MainWindow(IView):
             log('systray disabled in settings ...')
 
         # update youtube-dl version info once gets loaded
-        self.update_youtube_dl_info()
+        if not config.disable_update_feature:
+            self.update_youtube_dl_info()
 
         # auto check for update, run after 1 minute to make sure
         # video extractors loaded completely before checking for update
