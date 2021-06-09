@@ -25,7 +25,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'enable_captcha_workaround',
                  'verify_ssl_cert', 'custom_user_agent', 'recent_folders', 'write_timestamp',
-                 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top']
+                 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top', 'disable_log_popups']
 
 # CONSTANTS
 APP_NAME = 'FireDM'
@@ -222,3 +222,90 @@ class MediaType:
     video = 'video'
     audio = 'audio'
     key = 'key'
+
+
+# popup windows, get user responses
+disable_log_popups = False
+
+popups = {
+    1: {'tag': 'html contents', 
+        'description': 'Show "Contents might be an html web page warning".',
+        'body': 'Contents might be a web page / html, Download anyway?', 
+        'options': ['Ok', 'Cancel'],
+        'default': 'Ok',
+        'show': True
+        },
+
+    2: {'tag': 'ffmpeg', 
+        'description': 'Prompt to download "FFMPEG" if not found on windows os.',
+        'body': 'FFMPEG is missing!', 
+        'options': ['Download', 'Cancel'],
+        'default': 'Download',
+        'show': True
+        },
+
+    3: {'tag': 'overwrite d_list', 
+        'description': 'Show "Item already exist in download list warning".',
+        'body': 'Item with the same name already exist in download list', 
+        'options': ['Resume', 'Overwrite', 'Cancel'],
+        'default': 'Resume',
+        'show': True
+        },
+
+    4: {'tag': 'overwrite file', 
+        'description': 'Ask what to do if same file already exist on disk.',
+        'body': 'File with the same name already exist on disk', 
+        'options': ['Overwrite', 'Rename', 'Cancel'],
+        'default': 'Rename',
+        'show': True
+        },
+
+    5: {'tag': 'non-resumable', 
+        'description': 'Show "Non-resumable downloads warning".',
+        'body':  ("Warning! \n"
+                 "This remote server doesn't support chunk downloading, \n"
+                 "if for any reason download stops resume won't be available and this file will be downloaded  \n"
+                 "from the beginning, \n"
+                 'Are you sure you want to continue??'),
+        'options': ['Yes', 'Cancel'],
+        'default': 'Yes',
+        'show': True
+        },
+
+    6: {'tag': 'ssl-warning', 
+        'description': 'Show warning when Disabling SSL verification.',
+        'body': ('WARNING: disabling verification of SSL certificate allows bad guys to man-in-the-middle the '
+                 'communication without you know it and makes the communication insecure. '
+                 'Just having encryption on a transfer is not enough as you cannot be sure that you are '
+                 'communicating with the correct end-point. \n'
+                 'Are you sure?'),
+        'options': ['Yes', 'Cancel'],
+        'default': 'Yes',
+        'show': True
+        },
+
+    7: {'tag': 'delete-item', 
+        'description': 'Confirm when deleting an item from download list.',
+        'body': 'Remove item(s) from the list?\nAre you sure',
+        'options': ['Yes', 'Cancel'],
+        'default': 'Yes',
+        'show': True
+        },
+}
+
+
+for k in popups.keys():
+    var_name = f'popup_{k}'
+    globals()[var_name] = True
+    settings_keys.append(var_name)
+
+def get_popup(k):
+    item = popups[k]
+    var_name = f'popup_{k}'
+    item['show'] = globals()[var_name]
+    return item
+
+def enable_popup(k, value):
+    item = popups[k]
+    var_name = f'popup_{k}'
+    globals()[var_name] = value  # True or false

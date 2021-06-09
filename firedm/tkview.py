@@ -742,7 +742,7 @@ class Popup(tk.Toplevel):
 
     """
     def __init__(self, *args, buttons=None, parent=None, title='Attention', get_user_input=False, default_user_input='',
-                 bg=None, fg=None, custom_widget=None):
+                 bg=None, fg=None, custom_widget=None, optout_id=None):
         """initialize
 
         Args:
@@ -754,6 +754,7 @@ class Popup(tk.Toplevel):
             default_user_input (str): what to display in entry widget if get_user_input is True
             bg (str): background color
             fg (str): text color
+            optout_id(int): popup number as in config.popups dict, if exist will show "don't show again" option
             custom_widget: any tk widget you need to add to popup window
 
         """
@@ -766,6 +767,7 @@ class Popup(tk.Toplevel):
         self.get_user_input = get_user_input
         self.default_user_input = default_user_input
         self.custom_widget = custom_widget
+        self.optout_id = optout_id
 
         # entry variable
         self.user_input = tk.StringVar()
@@ -839,6 +841,13 @@ class Popup(tk.Toplevel):
         # separator
         ttk.Separator(main_frame, orient='horizontal').pack(side='bottom', fill='x')
 
+        # don't show this message again
+        if self.optout_id:
+            self.optout_var = tk.BooleanVar()
+            atk.Checkbutton(main_frame, text="Don't show this message again", bd=0, 
+                            command=self.optout_handler, onvalue=True, offvalue=False,
+                            variable=self.optout_var).pack(side='bottom', anchor='w', padx=5)
+
         # custom widget
         if self.custom_widget:
             self.custom_widget.pack(side='bottom', fill='x')
@@ -861,6 +870,10 @@ class Popup(tk.Toplevel):
             txt.pack(side='top', fill='x', expand=True, padx=5, pady=5)
 
         self.bind('<Escape>', lambda event: self.close())
+
+    def optout_handler(self):
+        value = not self.optout_var.get()
+        config.enable_popup(self.optout_id, value)
 
     def button_callback(self, button_name):
         self.destroy()
@@ -3461,14 +3474,7 @@ class MainWindow(IView):
         # verify server's ssl certificate
         def ssl_disable_warning():
             if not config.verify_ssl_cert:
-                # get user confirmation
-                msg = ('WARNING: disabling verification of SSL certificate allows bad guys to man-in-the-middle the '
-                       'communication without you know it and makes the communication insecure. '
-                       'Just having encryption on a transfer is not enough as you cannot be sure that you are '
-                       'communicating with the correct end-point. \n'
-                       'Are you sure?')
-
-                res = self.popup(msg, buttons=['Yes', 'Cancel'])
+                res = self.show_popup(6)
 
                 if res != 'Yes':
                     ssl_cert_option.set(True)
@@ -3490,6 +3496,19 @@ class MainWindow(IView):
         CheckEntryOption(tab, ' Run command:  ', entry_key='on_completion_command').pack(anchor='w', fill='x',
                                                                                          expand=True, padx=(0, 5))
         CheckOption(tab, ' Shutdown computer', key='shutdown_pc').pack(anchor='w', fill='x', expand=True, padx=(0, 5))
+
+        separator()
+
+        # Popup messages------------------------------------------------------------------------------------------------
+        heading('Popup messages:')
+        
+        for k, item in config.popups.items():
+            description = item['description']
+            var_name = f'popup_{k}'
+            CheckOption(tab, description, key=var_name).pack(anchor='w')
+
+        CheckOption(tab, 'Disable extra info popups, "same info will be available in the log tab"', 
+                    key='disable_log_popups').pack(anchor='w')
 
         separator()
 
@@ -3769,12 +3788,10 @@ class MainWindow(IView):
 
     def delete(self, uid):
         """delete download item"""
-        # get user confirmation
-        msg = 'Are you sure you want to delete:\n' \
-              f'{self.d_items[uid].name}'
-        res = self.popup(msg, buttons=['Ok', 'Cancel'])
 
-        if res != 'Ok':
+        res = self.show_popup(7)
+
+        if res != 'Yes':
             return
 
         # temporarily disable autoscroll
@@ -3807,12 +3824,14 @@ class MainWindow(IView):
             return
 
         # get user confirmation
-        msg = 'Are you sure you want to clear selected download items from downloads list?\n' \
-              'note: only temp files will be removed, completed files on disk will never be deleted\n'
-        res = self.popup(msg, buttons=['Ok', 'Cancel'])
+        res = self.show_popup(7)
 
-        if res != 'Ok':
+        if res != 'Yes':
             return
+
+        # temporarily disable autoscroll
+        if config.autoscroll_download_tab:
+            self.d_tab.autoscroll = False
 
         deleted = []
         # remove from gui
@@ -3829,8 +3848,12 @@ class MainWindow(IView):
         for uid in deleted:
             self.controller.delete(uid)
 
-        # solve canvas doesn't auto resize itself
-        self.d_tab.scrolltotop()
+        # # solve canvas doesn't auto resize itself
+        # self.d_tab.scrolltotop()
+        if config.autoscroll_download_tab:
+            # enable autoscroll
+            self.root.update_idletasks()
+            self.d_tab.autoscroll = True
 
     def select_ditems(self, command):
         """select ditems in downloads tab
@@ -4229,8 +4252,7 @@ class MainWindow(IView):
             log('systray disabled in settings ...')
 
         # update youtube-dl version info once gets loaded
-        if not config.disable_update_feature:
-            self.update_youtube_dl_info()
+        self.update_youtube_dl_info()
 
         # auto check for update, run after 1 minute to make sure
         # video extractors loaded completely before checking for update
@@ -4355,6 +4377,8 @@ class MainWindow(IView):
         """get the file path of the offline webpage contents as a workaround for captcha
         """
 
+        # todo: delete this junk, and make an offline webpage option
+
         msg = 'Found Captcha when downloading webpage contents, you should open this link in your browser' \
               ' and  save webpage manually on the disk (as htm or html), then press below "select file" button to ' \
               'select your saved webpage file'
@@ -4449,16 +4473,19 @@ class MainWindow(IView):
     # endregion
 
     # region log and popup
-    def get_user_response(self, msg, options):
+    def get_user_response(self, msg, options, popup_id=None):
         """thread safe - get user response
         it will be called by controller to get user decision
-        don't call it internally, it will freeze gui, instead use self.popup()
+        don't call it internally, it will freeze gui, instead use self.show_popup() or self.popup()
 
         Args:
             msg (str): message to be displayed in popup message
             options (list, tuple): names of buttons in popup window
         """
-        res = self.run_method(self.popup, msg, buttons=options, get_response=True)
+        if popup_id:
+            res = self.run_method(self.show_popup, popup_id, get_response=True)
+        else:
+            res = self.run_method(self.popup, msg, buttons=options, get_response=True)
         return res
 
     def msgbox(self, *args):
@@ -4469,10 +4496,30 @@ class MainWindow(IView):
         """
         self.run_method(self.popup, *args, get_response=False, buttons=['Ok'], title='Info')
 
+    def show_popup(self, popup_id, **kwargs):
+        """
+        show a preset popup
+
+        Args:
+            popup_id(int): popup message key as in config.popups dict
+
+        Returns:
+            str or tuple(str, str)
+        """
+
+        popup = config.get_popup(popup_id)
+        msg = popup['body']
+        options = popup['options']
+        if not popup['show']:
+            return popup['default']
+
+        res = self.popup(msg, buttons=options, optout_id=popup_id, **kwargs)
+        return res
+
     def popup(self, *args, buttons=None, title='Attention', get_user_input=False, default_user_input='', bg=None,
-              fg=None):
+              fg=None, **kwargs):
         x = Popup(*args, buttons=buttons, parent=self.root, title=title, get_user_input=get_user_input,
-                  default_user_input=default_user_input, bg=bg, fg=fg)
+                  default_user_input=default_user_input, bg=bg, fg=fg, **kwargs)
         response = x.show()
         return response
 
@@ -4483,7 +4530,8 @@ class MainWindow(IView):
 
     def log_popup(self, start, text, end):
         """thread safe log popup callback to be executed when calling utils.log with showpopup=True"""
-        self.msgbox(text)
+        if not config.disable_log_popups:
+            self.msgbox(text)
 
     # endregion
 

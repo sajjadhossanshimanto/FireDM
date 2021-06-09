@@ -762,18 +762,11 @@ class Controller:
             (bool): True on success, False on failure
         """
 
-        if not d:
+        if not (d or d.url):
             log('Nothing to download', start='', showpopup=True)
             return False
-        elif not d.url:
-            log('Nothing to download, no url given', start='', showpopup=True)
-            return False
-        elif not d.type:
-            response = self.get_user_response('None type or bad response code \nForce download?', ['Ok', 'Cancel'])
-            if response != 'Ok':
-                return False
-        elif d.type == 'text/html':
-            response = self.get_user_response('Contents might be a web page / html, Download anyway?', ['Ok', 'Cancel'])
+        elif not d.type or d.type == 'text/html':
+            response = self.get_user_response(popup_id=1)
             if response == 'Ok':
                 d.accept_html = True
             else:
@@ -793,24 +786,14 @@ class Controller:
         # check for ffmpeg availability
         if d.type in (MediaType.video, MediaType.audio, MediaType.key):
             if not check_ffmpeg():
-                # log('Download cancelled, FFMPEG is missing', start='', showpopup=True)
-
-                msg = '\n'.join(['"FFMPEG" is required to process media files',
-                    'executable must be copied into FireDM folder or add ffmpeg path to system PATH',
-                    'you can download it manually from https://www.ffmpeg.org/download.html'])
-
-                options = ['Ok']
-
                 if config.operating_system == 'Windows':
-                    msg += '\n\n'
-                    msg += f'Press "Download" button to download ffmpeg executable into: {config.sett_folder}'
+                    res = self.get_user_response(popup_id=2)
+                    if res == 'Download':
+                        # download ffmpeg from github
+                        self._download_ffmpeg() 
+                else:
+                    log('FFMPEG is missing', start='', showpopup=True)
 
-                    options = ['Download', 'Cancel']
-
-                res = self.get_user_response(msg, options=options)
-                if res == 'Download':
-                    # download ffmpeg from github
-                    self._download_ffmpeg()
                 return False
 
         # in case of missing download folder value will fallback to current download folder
@@ -862,11 +845,7 @@ class Controller:
 
             if not silent:
                 #  show dialogue
-                msg = f'File with the same name: \n{d.name},\n' \
-                      f'already exist in download list,\n' \
-                      'Do you want to resume this file?\n\n'
-
-                response = self.get_user_response(msg, ['Resume', 'Overwrite', 'Cancel'])
+                response = self.get_user_response(popup_id=3)
 
             if response not in ('Resume', 'Overwrite'):
                 log('Download cancelled by user')
@@ -882,15 +861,6 @@ class Controller:
 
                     d.downloaded = d_from_list.downloaded
                 else:
-                    if not silent:
-                        msg = f'Resume not possible, New "download item" has differnet properties than existing one \n' \
-                              f'New item size={size_format(d.size)}, selected quality={d.selected_quality}\n' \
-                              f'current item size={size_format(d_from_list.size)}, selected quality={d_from_list.selected_quality}\n' \
-                              f'if you continue, previous download will be overwritten'
-                        response = self.get_user_response(msg, ['Ok', 'Cancel'])
-                        if response != 'Ok':
-                            log('aborted by user')
-                            return False
                     log('file:', d.name, 'has different properties and will be downloaded from the beginning')
                     d.delete_tempfiles(force_delete=True)
 
@@ -905,39 +875,44 @@ class Controller:
         if os.path.isfile(d.target_file):
             # auto rename option
             if config.auto_rename:
-                d = copy(d)
-                d.name = auto_rename(d.name, d.folder)
-                d.calculate_uid()
+                d = self.rename(d)
                 log('File with the same name exist in download folder, generate new name:', d.name)
                 self._download(d)
                 return False
             else:
                 #  show dialogue
-                msg = 'File with the same name already exists \n' + d.target_file + '\nDo you want to overwrite file?'
-                options = ['Overwrite', 'Cancel download']
-                response = self.get_user_response(msg, options)
-
-                if response != options[0]:
-                    log('Download cancelled by user')
+                response = self.get_user_response(popup_id=4)
+                    
+                if response == 'Overwrite':
+                    delete_file(d.target_file)
+                elif response == 'Rename':
+                    d = self.rename(d)
+                    self._download(d)
                     return False
                 else:
-                    delete_file(d.target_file)
+                    log('Download cancelled by user')
+                    return False
+
         # ------------------------------------------------------------------
 
         # warning message for non-resumable downloads
         if not d.resumable:
-            res = self.get_user_response("Warning! \n"
-                                         "This remote server doesn't support chunk downloading, \n"
-                                         "if for any reason download stops resume won't be available and this file "
-                                         "will be downloaded  \n"
-                                         "from the beginning, \n"
-                                         'Are you sure you want to continue??',
-                                         options=['Yes', 'Cancel'])
+            res = self.get_user_response(popup_id=5)
             if res != 'Yes':
                 return False
 
         # if above checks passed will return True
         return True
+
+    def rename(self, d):
+        """
+        rename download item and return a copy of it
+        """
+        d = copy(d)
+        d.name = auto_rename(d.name, d.folder)
+        d.calculate_uid()
+        
+        return d
 
     def download_simulator(self, d):
         print('start download simulator for id:', d.uid, d.name)
@@ -1849,7 +1824,7 @@ class Controller:
     # endregion
 
     # region general
-    def get_user_response(self, msg, options):
+    def get_user_response(self, msg='', options=[], popup_id=None):
         """get user response from current view
 
         Args:
@@ -1860,9 +1835,16 @@ class Controller:
             (str): response from user as a selected item from "options"
         """
 
-        response = self.view.get_user_response(msg, options)
+        if popup_id:
+            popup = config.get_popup(popup_id)
+            msg = popup['body']
+            options = popup['options']
+            if not popup['show']:
+                return popup['default']
+        
+        res = self.view.get_user_response(msg, options, popup_id=popup_id)
 
-        return response
+        return res
 
     def run(self):
         """run current "view" main loop"""

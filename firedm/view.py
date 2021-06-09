@@ -28,7 +28,7 @@ class IView(ABC):
         pass
 
     @abstractmethod
-    def get_user_response(self, msg, options):
+    def get_user_response(self, msg, options, **kwargs):
         """get user choice and send it back to controller, 
         mainly this is a popup window or input() method in terminal
 

@@ -55,7 +55,7 @@ class CmdView(IView):
             
             self.print_progress_bar(progress, prefix=prefix, suffix=suffix, length=bar_length)
 
-    def get_user_response(self, msg, options):
+    def get_user_response(self, msg, options, **kwargs):
         """a mimic for a popup window in terminal, to get user response, 
         example: if msg =   "File with the same name already exists\n
                             /home/mahmoud/Downloads/7z1900.exe\n
