@@ -7,3 +7,4 @@ Pillow >= 6.0.0
 pystray
 awesometkinter >= 2021.6.4
 packaging
+distro; platform_system == "Linux"

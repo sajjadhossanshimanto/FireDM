@@ -66,7 +66,17 @@ FROZEN = getattr(sys, "frozen", False)  # check if app is being compiled by cx_f
 
 # current operating system  ('Windows', 'Linux', 'Darwin')
 operating_system = platform.system()
-operating_system_info = f'{platform.platform()} - {platform.machine()}'  # i.e. Win7-64 and Vista-32
+
+# Example output: Os: Linux - Platform: Linux-5.11.0-7614-generic-x86_64-with-glibc2.32 - Machine: x86_64
+operating_system_info = f"Os: {platform.system()} - Platform: {platform.platform()} - Machine: {platform.machine()}"
+
+try:
+    import distro
+
+    # Example output: Distribution: ('Pop!_OS', '20.10', 'groovy')
+    operating_system_info += f"\nDistribution: {distro.linux_distribution(full_distribution_name=True)}"
+except:
+    pass
 
 # release type
 isappimage = False  # AppImage release
