@@ -72,43 +72,77 @@ class SysTray:
                 # save file to settings folder
                 self.tray_icon.save(self.tray_icon_path, format='png')
 
+                # creating menu
+                menu = Gtk.Menu()
+                for option, callback in options_map.items():
+                    item = Gtk.MenuItem(label=option)
+                    item.connect('activate', callback)
+                    menu.append(item)
+                menu.show_all()
+
+                APPINDICATOR_ID = config.APP_NAME
+
+                # we can use notify system, example below
+                # gi.require_version('Notify', '0.7')
+                # from gi.repository import Notify as notify
+                # self.Gtk_notify = notify  # get reference for later deinitialize when quit systray
+                # notify.init(APPINDICATOR_ID)  # initialize first
+                # notify.Notification.new("Joke", 'silly joke ...', self.tray_icon_path).show()  # to show notification
+
+                # try appindicator
+                try:
+                    gi.require_version('AppIndicator3', '0.1')
+                    from gi.repository import AppIndicator3 as appindicator
+
+                    indicator = appindicator.Indicator.new(APPINDICATOR_ID, self.tray_icon_path, appindicator.IndicatorCategory.APPLICATION_STATUS)
+                    indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
+                    indicator.set_menu(menu)
+
+                    # use .set_name to prevent error, Gdk-CRITICAL **: gdk_window_thaw_toplevel_updates: assertion 'window->update_and_descendants_freeze_count > 0' failed
+                    indicator.set_name = APPINDICATOR_ID
+
+                    # can set label beside systray icon
+                    # indicator.set_label('1.2 MB/s', '')
+
+                    self.active = True
+                    log('Systray active backend: Gtk.AppIndicator')
+                    Gtk.main()
+                    return
+                except:
+                    pass
+
+                # try GTK StatusIcon
                 def icon_right_click(icon, button, time):
-                    menu = Gtk.Menu()
-
-                    for option, callback in options_map.items():
-                        item = Gtk.MenuItem(label=option)
-                        item.connect('activate', callback)
-                        menu.append(item)
-
-                    menu.show_all()
                     menu.popup(None, None, None, icon, button, time)
 
                 icon = Gtk.StatusIcon()
-                icon.set_from_file(self.tray_icon_path)
-                icon.connect("popup-menu", icon_right_click)
-                icon.connect('activate', self.show_main_window)
+                icon.set_from_file(self.tray_icon_path)  # DeprecationWarning: Gtk.StatusIcon.set_from_file is deprecated
+                icon.connect("popup-menu", icon_right_click)  # right click
+                icon.connect('activate', self.show_main_window)  # left click
+                icon.set_name = APPINDICATOR_ID
 
                 self.active = True
+                log('Systray active backend: Gtk.StatusIcon')
                 Gtk.main()
                 return
             except Exception as e:
                 log('Systray Gtk 3.0:', e, log_level=2)
                 self.active = False
+        else:
+            # let pystray run for other platforms, basically windows
+            try:
+                from pystray import Icon, Menu, MenuItem
+                items = []
+                for option, callback in options_map.items():
+                    items.append(MenuItem(option, callback, default=True if option == 'Show' else False))
 
-        # let pystray decide which backend to run
-        try:
-            from pystray import Icon, Menu, MenuItem
-            items = []
-            for option, callback in options_map.items():
-                items.append(MenuItem(option, callback, default=True if option == 'Show' else False))
-
-            menu = Menu(*items)
-            self.icon = Icon('FireDM', self.tray_icon, menu=menu)
-            self.active = True
-            self.icon.run()
-        except Exception as e:
-            log('systray: - run() - ', e)
-            self.active = False
+                menu = Menu(*items)
+                self.icon = Icon(config.APP_NAME, self.tray_icon, menu=menu)
+                self.active = True
+                self.icon.run()
+            except Exception as e:
+                log('systray: - run() - ', e)
+                self.active = False
 
     def shutdown(self):
         try:
@@ -118,9 +152,13 @@ class SysTray:
             pass
 
         try:
-            # quit main, might raise (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
-            # but it has no side effect and FireDM quit normally
+            # Gtk.main_quit(), if called from a thread might raise 
+            # (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
+            # should call this from main thread
             self.Gtk.main_quit()
+
+            # if we use Gtk notify we should deinitialize
+            self.Gtk_notify.uninit()
         except:
             pass
 
