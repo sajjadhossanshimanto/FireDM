@@ -3776,15 +3776,14 @@ class MainWindow(IView):
 
     def resume_selected(self):
         """resume downloading selected and non completed items in downloads tab"""
-
-        for uid, item in self.get_selected_items():
+        for item in self.get_selected_items():
             if item.status in (config.Status.cancelled, config.Status.error):
-                self.resume_download(uid)
+                self.resume_download(item.uid)
 
     def stop_selected(self):
         """stop downloading selected items in downloads tab"""
-        for uid, item in self.get_selected_items():
-            self.stop_download(uid)
+        for item in self.get_selected_items():
+            self.stop_download(item.uid)
 
     def delete(self, uid):
         """delete download item"""
