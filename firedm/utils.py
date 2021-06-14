@@ -697,18 +697,25 @@ def validate_url(url):
         return False
 
 
-def open_file(file):
+def open_file(file, silent=False):
     try:
         if config.operating_system == 'Windows':
             os.startfile(file)
+            return
 
-        elif config.operating_system == 'Linux':
+        if config.operating_system == 'Linux':
             cmd = f'xdg-open "{file}"'
-            subprocess.Popen(shlex.split(cmd))
 
         elif config.operating_system == 'Darwin':
             cmd = f'open "{file}"'
+
+        # run command
+        if silent:
+            # ignore output, useful when playing video files, to stop player junk to fill up terminal
+            subprocess.Popen(shlex.split(cmd), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
             subprocess.Popen(shlex.split(cmd))
+
     except Exception as e:
         log('open_file(): ', e, log_level=2)
 

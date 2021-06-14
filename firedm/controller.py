@@ -1421,10 +1421,9 @@ class Controller:
         if not d:
             return
 
-        if os.path.isfile(d.target_file):
-            open_file(d.target_file)
-        else:
-            open_file(d.temp_file)
+        fp = d.target_file if os.path.isfile(d.target_file) else d.temp_file
+        
+        open_file(fp, silent=True)
 
     def open_file(self, uid=None, video_idx=None):
         # get download item
