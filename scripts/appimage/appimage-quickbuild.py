@@ -86,7 +86,7 @@ firedm_src = os.path.join(project_folder, 'firedm')
 update_pkg('firedm', lib_folder, src_folder=firedm_src, compile=False)
 
 # update other packages
-for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi', 'python_bidi']:
+for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi', 'python_bidi', 'distro']:
     update_pkg(pkg_name,  lib_folder, compile=False)
 
 # copy icon ------------------------------------------------------------------------------------------------------------
