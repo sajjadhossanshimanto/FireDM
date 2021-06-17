@@ -2957,10 +2957,10 @@ class MainWindow(IView):
         self.counter = 0  # a counter to give a unique number
         self.update_view_q = Queue()
 
+        run_thread(self.issue256_workaround)
+
         # root ----------------------------------------------------------------------------------------------------
         self.root = tk.Tk()
-
-        self.issue265_workaround()
 
         # # default font
         # self.root.option_add("*Font", "helvetica")
@@ -3026,15 +3026,17 @@ class MainWindow(IView):
         self.bind_keyboard('<Delete>', self.delete_selected, widgets=[self.d_tab])
         self.bind_keyboard('<Return>', self.open_selected_file, widgets=[self.d_tab])
 
-    def issue265_workaround(self):
+    def issue256_workaround(self):
         # issue 256: https://github.com/firedm/FireDM/issues/256
         # because of ibus bug, FireDM take longer time to load with every run as time goes on, same as 
         # any tkinter application.
         # workaround is to kill ibus-x11 then restart ibus again after FireDM finish loading
         # reported bug at https://github.com/ibus/ibus/issues/2324
+        # however this workaround makes FireDM loads faster, ibus will still affect gui performance when 
+        # it gets restarted again.
+        # hope they fix this bug as soon as possible
         p = subprocess.Popen(['ps', '-A'], stdout=subprocess.PIPE, universal_newlines=True)
         output, error = p.communicate()
-        print('error:', error)
         if error: return
 
         for line in output.splitlines():
@@ -3042,8 +3044,9 @@ class MainWindow(IView):
                 pid = int(line.split(None, 1)[0])
                 try:
                     os.kill(pid, signal.SIGKILL)
-                    log('stopped ibus temporarily to fix issue at https://github.com/firedm/FireDM/issues/256 and https://github.com/ibus/ibus/issues/2324')
-                    self.root.after(6000, self.start_ibus)
+                    log('stopped ibus-x11 temporarily to fix issue at https://github.com/firedm/FireDM/issues/256 and https://github.com/ibus/ibus/issues/2324')
+                    time.sleep(10)  # wait some time for Gui to fully load
+                    self.start_ibus()
                 except Exception as e:
                     print(e)
 
@@ -3051,9 +3054,12 @@ class MainWindow(IView):
         # will use default ibus parameter as in Pop!_OS 20.10 - GNOME 3.38.3: ibus-daemon --panel disable --xim
         # also will add -d to run as a daemon, and -r to replace all and start ibus-x11 again
         cmd = ['ibus-daemon', '--panel', 'disable', '--xim', '-d', '-r']
-        p = subprocess.run(cmd)
-        if p.returncode == 0:
-            log(f'restarted ibus-daemon successfully, (cmd: {" ".join(cmd)})')
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        output, error = p.communicate()
+        if error:
+            log('output, error:', output, error)
+        else:
+            log(f'restarted ibus-daemon successfully, issue 256, (cmd: {" ".join(cmd)})')
 
     # region themes
     def save_user_themes(self):
@@ -4040,12 +4046,11 @@ class MainWindow(IView):
         # load previous download items in d_tab, needed at startup
         if command == 'd_list':
             d_list = kwargs.get('d_list')
-            self.select_tab('Downloads')
             for i, item in enumerate(d_list):
                 # self.root.after(1000 + i * 5, lambda k=item: self.create_ditem(**k, focus=False))
                 self.create_ditem(**item, focus=False)
             self.root.update_idletasks()
-            log('Gui Load time:', time.time() - starter)
+            log('Gui Loading time:', round(time.time() - starter, 2), 'seconds')
 
         # update playlist menu
         elif command == 'playlist_menu':
