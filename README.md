@@ -85,8 +85,7 @@ Run FireDM without any installation (recommended)
 2- install required packages first:<br>
 - Linux, ubuntu:<br>
 ```sh
-sudo apt-install python3-pip
-sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus
+sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus gir1.2-appindicator3-0.1
 sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
 ```
 
@@ -102,8 +101,7 @@ python3 -m pip install firedm --user --upgrade --no-cache
 2- install required packages first:<br>
 - Linux, ubuntu:<br>
 ```sh
-sudo apt-install python3-pip
-sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus
+sudo apt install ffmpeg libcurl4-openssl-dev libssl-dev python3-pip python3-pil python3-pil.imagetk python3-tk python3-dbus gir1.2-appindicator3-0.1
 sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emojione
 ```
 
@@ -152,7 +150,7 @@ cp ./FireDM/icons/48x48.png ~/.local/share/icons/hicolor/48x48/apps/firedm.png
 - Mac - Tkinter, as mentioned in "python.org" the Apple-supplied Tcl/Tk 8.5 has serious bugs that can cause application crashes. If you wish to use Tkinter, do not use the Apple-supplied Pythons. Instead, install and use a newer version of Python from python.org or a third-party distributor that supplies or links with a newer version of Tcl/Tk. <br>
 refer to [issue #113](https://github.com/firedm/FireDM/issues/113)
 
-
+- systray icon: depends on Gtk+3 and AppIndicator3 on linux, please refer to your distro guides on how to install these packages if you need systray to run properly
 ---
 
 # Dependencies:
