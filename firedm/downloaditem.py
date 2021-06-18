@@ -608,6 +608,16 @@ class DownloadItem:
         load progress info from disk, update segments' info, verify actual segments' size on disk
         :return: None
         """
+
+        # check if file already exist
+        if self.status != config.Status.completed and os.path.isfile(self.target_file):
+            log('file already exist .............', self.target_file)
+            # report completed
+            self.status = config.Status.completed 
+            self.size = os.path.getsize(self.target_file)
+            self.downloaded = self.size
+            self.delete_tempfiles()
+
         # log('load_progress_info()> Loading progress info')
         progress_info = None
 
