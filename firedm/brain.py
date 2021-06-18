@@ -399,14 +399,14 @@ def thread_manager(d):
             if total_errors >= 1 and limited_connections > 1:
                 limited_connections -= 1
                 conn_increase_interval += 0.5
-                log('Errors:', errors_descriptions, 'Total:', total_errors)
-                log('Thread Manager: received server errors, connections limited to:', limited_connections)
+                log('Errors:', errors_descriptions, 'Total:', total_errors, log_level=3)
+                log('Thread Manager: received server errors, connections limited to:', limited_connections, log_level=3)
 
             else:
                 if limited_connections < config.max_connections and time.time() - error_timer2 >= conn_increase_interval:
                     error_timer2 = time.time()
                     limited_connections += 1
-                    log('Thread Manager: allowable connections:', limited_connections, log_level=2)
+                    log('Thread Manager: allowable connections:', limited_connections, log_level=3)
 
             # reset total errors if received any data
             if downloaded != d.downloaded:
