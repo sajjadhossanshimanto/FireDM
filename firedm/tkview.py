@@ -24,8 +24,6 @@ from packaging.version import parse as parse_version
 import subprocess
 import signal
 
-starter = time.time()
-
 if __package__ is None:
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(path))
@@ -2960,6 +2958,7 @@ class MainWindow(IView):
         run_thread(self.issue256_workaround)
 
         # root ----------------------------------------------------------------------------------------------------
+        self.starter = time.time()
         self.root = tk.Tk()
 
         # # default font
@@ -4050,7 +4049,7 @@ class MainWindow(IView):
                 # self.root.after(1000 + i * 5, lambda k=item: self.create_ditem(**k, focus=False))
                 self.create_ditem(**item, focus=False)
             self.root.update_idletasks()
-            log('Gui Loading time:', round(time.time() - starter, 2), 'seconds')
+            log('Gui Loading time:', round(time.time() - self.starter, 2), 'seconds')
 
         # update playlist menu
         elif command == 'playlist_menu':
