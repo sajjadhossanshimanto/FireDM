@@ -730,11 +730,11 @@ class Controller:
         """handle pending downloads, should run in a dedicated thread"""
 
         while True:
-            active_downloads = len([d for d in self.d_map.values() if d.status in (Status.downloading, Status.processing)])
+            active_downloads = len([d for d in self.d_map.values() if d.status in Status.active_states])
             if active_downloads < config.max_concurrent_downloads:
                 d = self.pending_downloads_q.get()
                 if d.status == Status.pending:
-                    self._download(d, silent=True)
+                    run_thread(self._download, d, silent=True)
 
             time.sleep(3)
 
@@ -772,7 +772,7 @@ class Controller:
             else:
                 return False
 
-        if d.status in (Status.downloading, Status.processing):
+        if d.status in Status.active_states:
             log('download is already in progress for this item')
             return False
 
@@ -988,7 +988,7 @@ class Controller:
 
                 # if max concurrent downloads exceeded, this download job will be added to pending queue
                 active_downloads = len(
-                    [d for d in self.d_map.values() if d.status in (Status.downloading, Status.processing)])
+                    [d for d in self.d_map.values() if d.status in Status.active_states])
                 if active_downloads >= config.max_concurrent_downloads:
                     d.status = Status.pending
                     self.pending_downloads_q.put(d)
@@ -1049,7 +1049,7 @@ class Controller:
 
         d = self.d_map.get(uid)
 
-        if d and d.status in (Status.downloading, Status.processing, Status.pending):
+        if d and d.status in (*Status.active_states, Status.pending):
             d.status = Status.cancelled
 
     def _download_thumbnail(self, d):
@@ -1113,7 +1113,7 @@ class Controller:
             self._write_timestamp(d)
 
         # on completion actions
-        if d.status == config.Status.completed:
+        if d.status == Status.completed:
             if d.on_completion_command:
                 err, output = run_command(d.on_completion_command)
                 if err:
@@ -1741,12 +1741,12 @@ class Controller:
             # check for "on-completion actions"
             if any((config.on_completion_command, config.shutdown_pc)):
                 # check for any active download, then set the trigger
-                if any([d.status in (config.Status.downloading, config.Status.processing) for d in self.d_map.values()]):
+                if any([d.status in Status.active_states for d in self.d_map.values()]):
                     trigger = True
 
                 elif trigger:
                     # check if all items are completed
-                    if all([d.status == config.Status.completed for d in self.d_map.values()]):
+                    if all([d.status == Status.completed for d in self.d_map.values()]):
                         # reset the trigger
                         trigger = False
 
@@ -1765,7 +1765,7 @@ class Controller:
     def scedule_shutdown(self, uid):
         """schedule shutdown after an item completed downloading"""
         d = self.get_d(uid=uid)
-        if d.status == config.Status.completed:
+        if d.status == Status.completed:
             return
 
         d.shutdown_pc = True
@@ -1780,7 +1780,7 @@ class Controller:
     def toggle_shutdown(self, uid):
         """set shutdown flag on/off"""
         d = self.get_d(uid=uid)
-        if d.status == config.Status.completed:
+        if d.status == Status.completed:
             return
         d.shutdown_pc = not d.shutdown_pc
 
@@ -1813,7 +1813,7 @@ class Controller:
 
     def set_on_completion_command(self, uid, command):
         d = self.get_d(uid=uid)
-        if d.status == config.Status.completed:
+        if d.status == Status.completed:
             return
         d.on_completion_command = command
 
