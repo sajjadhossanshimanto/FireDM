@@ -494,9 +494,10 @@ class DownloadItem:
             except:
                 pass
 
-        elif 'file-name' in headers:
-            name = headers['file-name']
-        else:
+        if not name:
+            name = headers.get('file-name', '')
+        
+        if not name:
             clean_url = url.split('?')[0] if '?' in url else url
             name = clean_url.split('/')[-1].strip()
 
