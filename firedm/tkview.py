@@ -2955,7 +2955,8 @@ class MainWindow(IView):
         self.counter = 0  # a counter to give a unique number
         self.update_view_q = Queue()
 
-        run_thread(self.issue256_workaround)
+        if config.ibus_workaround:
+            run_thread(self.ibus_workaround)
 
         # root ----------------------------------------------------------------------------------------------------
         self.starter = time.time()
@@ -3025,7 +3026,7 @@ class MainWindow(IView):
         self.bind_keyboard('<Delete>', self.delete_selected, widgets=[self.d_tab])
         self.bind_keyboard('<Return>', self.open_selected_file, widgets=[self.d_tab])
 
-    def issue256_workaround(self):
+    def ibus_workaround(self):
         # issue 256: https://github.com/firedm/FireDM/issues/256
         # because of ibus bug, FireDM take longer time to load with every run as time goes on, same as 
         # any tkinter application.
@@ -3406,6 +3407,10 @@ class MainWindow(IView):
 
         CheckOption(tab, 'use server timestamp as a "last modified" property for downloaded file',
                     key='use_server_timestamp').pack(anchor='w')
+
+        if config.operating_system == 'Linux':
+            CheckOption(tab, 'Enable ibus workaround, to fix slow application startup.',
+                        key='ibus_workaround').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')
@@ -4049,7 +4054,11 @@ class MainWindow(IView):
                 # self.root.after(1000 + i * 5, lambda k=item: self.create_ditem(**k, focus=False))
                 self.create_ditem(**item, focus=False)
             self.root.update_idletasks()
-            log('Gui Loading time:', round(time.time() - self.starter, 2), 'seconds')
+            gui_loading_time = round(time.time() - self.starter, 2)
+            ibus_hint = ''
+            if config.operating_system == 'Linux' and not config.ibus_workaround and gui_loading_time > 10:
+                ibus_hint = ' - Slow startup!!!, try to enable "ibus workaround" in settings'
+            log('Gui Loading time:', gui_loading_time, 'seconds', ibus_hint)
 
         # update playlist menu
         elif command == 'playlist_menu':
