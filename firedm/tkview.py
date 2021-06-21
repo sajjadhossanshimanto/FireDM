@@ -2955,8 +2955,14 @@ class MainWindow(IView):
         self.counter = 0  # a counter to give a unique number
         self.update_view_q = Queue()
 
+        # ibus workaround
+        self.should_restart_ibus = False
+
         if config.ibus_workaround:
-            run_thread(self.ibus_workaround)
+            # don't run it in a separate thread otherwise tkinter might start making widgets in
+            # same time thread start killing ibus-x11, which result in 
+            # X Error of failed request:  BadWindow (invalid Window parameter)
+            self.ibus_workaround()
 
         # root ----------------------------------------------------------------------------------------------------
         self.starter = time.time()
@@ -3045,12 +3051,12 @@ class MainWindow(IView):
                 try:
                     os.kill(pid, signal.SIGKILL)
                     log('stopped ibus-x11 temporarily to fix issue at https://github.com/firedm/FireDM/issues/256 and https://github.com/ibus/ibus/issues/2324')
-                    time.sleep(10)  # wait some time for Gui to fully load
-                    self.start_ibus()
+                    self.should_restart_ibus = True
+                    time.sleep(0.1)  # a small delay to fix gui not starting sometimes.
                 except Exception as e:
                     print(e)
 
-    def start_ibus(self):
+    def restart_ibus(self):
         # will use default ibus parameter as in Pop!_OS 20.10 - GNOME 3.38.3: ibus-daemon --panel disable --xim
         # also will add -d to run as a daemon, and -r to replace all and start ibus-x11 again
         cmd = ['ibus-daemon', '--panel', 'disable', '--xim', '-d', '-r']
@@ -4059,6 +4065,10 @@ class MainWindow(IView):
             if config.operating_system == 'Linux' and not config.ibus_workaround and gui_loading_time > 10:
                 ibus_hint = ' - Slow startup!!!, try to enable "ibus workaround" in settings'
             log('Gui Loading time:', gui_loading_time, 'seconds', ibus_hint)
+
+            # restart ibus
+            if self.should_restart_ibus:
+                self.root.after(1000, self.restart_ibus)
 
         # update playlist menu
         elif command == 'playlist_menu':
