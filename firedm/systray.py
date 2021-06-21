@@ -31,7 +31,8 @@ class SysTray:
         self.active = False
 
     def show_main_window(self, *args):
-        self.main_window.unhide()
+        # unhide and bring on top
+        self.main_window.focus()
 
     def minimize_to_systray(self, *args):
         self.main_window.hide()
