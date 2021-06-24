@@ -1680,7 +1680,7 @@ class DItem(tk.Frame):
         self.thumbnail_label = tk.Label(self, bg='white', image=self.blank_img, text='', font='any 20 bold', fg='black',
                                         justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=2,
                                         compound='center', width=self.thumbnail_width, height=self.thumbnail_height)
-        self.thumbnail_label.grid(row=0, column=0, rowspan=3, padx=(0, 5), sticky='ns')
+        self.thumbnail_label.grid(row=0, column=0, rowspan=4, padx=(0, 5), sticky='ns')
 
         # name text
         self.name_lbl = AutoWrappingLabel(self, bg=self.bg, fg=self.fg, anchor='w')
@@ -1692,12 +1692,31 @@ class DItem(tk.Frame):
         btns_frame = tk.Frame(self, bg=self.bg)
         btns_frame.grid(row=2, column=1, sticky='w')
 
+        self.vbar = tk.DoubleVar()
+        self.abar = tk.DoubleVar()
+        self.mbar = tk.DoubleVar()
+
         # for non-completed items
         if self.status != config.Status.completed:
             #  progressbar
             self.bar = atk.RadialProgressbar(parent=self, size=(80, 80), fg=PBAR_FG, text_fg=PBAR_TXT,
                                              font_size_ratio=0.16)
-            self.bar.grid(row=0, column=2, rowspan=3, padx=10, pady=5)
+            self.bar.grid(row=0, column=2, rowspan=4, padx=10, pady=5)
+
+            # processing bars
+            self.bar_fr = tk.Frame(self, bg=self.bg)
+            s = ttk.Style()
+            self.bottom_bars_style = 'bottombars.Horizontal.TProgressbar'
+            s.configure(self.bottom_bars_style, thickness=5, background=PBAR_FG, troughcolor=PBAR_BG,
+                        troughrelief=tk.FLAT, pbarrelief=tk.FLAT)
+
+            for lbl, var in zip(('Video File: ', '    Audio File: ', '    Output File: '), (self.vbar, self.abar, self.mbar)):
+                tk.Label(self.bar_fr, text=lbl, bg=self.bg, fg=self.fg).pack(side='left')
+                ttk.Progressbar(self.bar_fr, orient=tk.HORIZONTAL, style=self.bottom_bars_style,
+                                variable=var).pack(side='left', expand=True, fill='x')
+
+            self.bar_fr.grid(row=3, column=1, columnspan=1, sticky='ew', padx=0)
+            self.bar_fr.grid_remove()
 
             # create buttons
             self.play_button = Button(btns_frame, image=imgs['play_icon'])
@@ -1716,7 +1735,7 @@ class DItem(tk.Frame):
         self.blinker.pack(side='left', padx=5, pady=5)
 
         # separator
-        ttk.Separator(self, orient='horizontal').grid(row=3, column=0, columnspan=3, sticky='ew', padx=0)
+        ttk.Separator(self, orient='horizontal').grid(row=4, column=0, columnspan=3, sticky='ew', padx=0)
 
     def __repr__(self):
         return f'DItem({self.uid})'
@@ -1733,11 +1752,18 @@ class DItem(tk.Frame):
         highlight_fg = SEL_FG if flag else self.fg
         self.config(highlightbackground=highlight_bg, background=highlight_bg)
 
+        s = ttk.Style()
+
         def change_background(w):
             for child in w.winfo_children():
                 try:
+
                     if child is not self.thumbnail_label and child.winfo_class() not in ('TSeparator', 'Menu'):
                         atk.configure_widget(child, background=highlight_bg, foreground=highlight_fg)
+                    
+                    # correction for bottom bars
+                    if child.winfo_class() == 'TProgressbar':
+                        s.configure(self.bottom_bars_style, background=PBAR_FG, troughcolor=PBAR_BG)
                 except:
                     pass
 
@@ -1813,7 +1839,7 @@ class DItem(tk.Frame):
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
-               on_completion_command=None, **kwargs):
+               on_completion_command=None, video_progress=None, audio_progress=None, merge_progress=None, **kwargs):
         """update widgets value"""
         # print(locals())
         try:
@@ -1889,6 +1915,8 @@ class DItem(tk.Frame):
 
             if type:
                 self.media_type = type
+                if type == 'video' and self.status != config.Status.completed:
+                    self.bar_fr.grid()
 
             if isinstance(subtype_list, list):
                 self.media_subtype = ' '.join(subtype_list)
@@ -1897,6 +1925,16 @@ class DItem(tk.Frame):
                 self.on_completion_command = '[-CMD-]' if on_completion_command else ''
             if shutdown_pc is not None:
                 self.shutdown_pc = '[-Shutdown Pc when finish-]' if shutdown_pc else ''
+
+            # bottom progress bars
+            if video_progress:
+                self.vbar.set(video_progress)
+
+            if audio_progress:
+                self.abar.set(audio_progress)
+
+            if merge_progress:
+                self.mbar.set(merge_progress)
 
             self.display_info()
 

@@ -141,6 +141,11 @@ class DownloadItem:
         self.is_audio = False
         self.audio_quality = None
 
+        # media files progress 
+        self.video_progress = 0
+        self.audio_progress = 0
+        self.merge_progress = 0
+
         # postprocessing callback is a string represent any function name need to be called after done downloading
         # this function must be available or imported in brain.py namespace
         self.callback = ''
@@ -678,3 +683,33 @@ class DownloadItem:
 
             # update self.downloaded
             self.downloaded = downloaded
+
+            # update media files progress
+            self.update_media_files_progress()
+
+    def update_media_files_progress(self):
+        """get the percentage of media files completion, e.g. temp video file, audio file, and final target file
+
+        """
+
+        def _get_progress(fp, full_size):
+            try:
+                current_size = os.path.getsize(fp)
+            except:
+                current_size = 0
+
+            if current_size == 0 or full_size == 0:
+                progress = 0
+            else:
+                progress = round(current_size * 100 / full_size, 2)
+
+                if progress > 100:
+                    progress = 100
+
+            return progress
+
+        
+        self.video_progress = _get_progress(self.temp_file, self.size)
+        self.audio_progress = _get_progress(self.audio_file, self.audio_size)
+        self.merge_progress = _get_progress(self.target_file, self.total_size)
+

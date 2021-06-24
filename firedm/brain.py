@@ -9,6 +9,7 @@
 import os
 import time
 from threading import Thread
+from queue import Queue
 import concurrent.futures
 
 from .video import merge_video_audio, pre_process_hls, post_process_hls, \
@@ -67,11 +68,19 @@ def brain(d=None):
     # load progress info
     d.load_progress_info()
 
+    # create some queues to send quit flag to threads
+    fpr_q = Queue()
+    tm_q = Queue()
+    fm_q = Queue()
+
+    # run files processing reporter in a separate thread
+    Thread(target=fpr, daemon=True, args=(d, fpr_q)).start()
+
     # run file manager in a separate thread
-    Thread(target=file_manager, daemon=True, args=(d, keep_segments)).start()
+    Thread(target=file_manager, daemon=True, args=(d, fm_q, keep_segments)).start()
 
     # run thread manager in a separate thread
-    Thread(target=thread_manager, daemon=True, args=(d,)).start()
+    Thread(target=thread_manager, daemon=True, args=(d, tm_q)).start()
 
     while True:
         time.sleep(0.1)  # a sleep time to make the program responsive
@@ -91,6 +100,8 @@ def brain(d=None):
 
     # report quitting
     log(f'brain {d.uid}: quitting', log_level=2)
+    for q in (fpr_q, tm_q, fm_q):
+        q.put('quit')
 
     if d.status == Status.completed:
         if config.checksum:
@@ -109,7 +120,7 @@ def brain(d=None):
     log('=' * 106, '\n')
 
 
-def file_manager(d, keep_segments=True):
+def file_manager(d, q, keep_segments=True):
     """write downloaded segments to a single file, and report download completed"""
 
     # create temp folder if it doesn't exist
@@ -286,10 +297,13 @@ def file_manager(d, keep_segments=True):
             # print('---------file manager done merging segments---------')
             break
 
-        # change status
-        if d.status != Status.downloading:
-            # print('--------------file manager cancelled-----------------')
-            break
+        # change status or get quit signal from brain
+        try:
+            if d.status != Status.downloading or q.get_nowait() == 'quit':
+                # print('--------------file manager cancelled-----------------')
+                break
+        except:
+            pass
 
     # save progress info for future resuming
     if os.path.isdir(d.temp_folder):
@@ -299,7 +313,7 @@ def file_manager(d, keep_segments=True):
     log(f'file_manager {d.uid}: quitting', log_level=2)
 
 
-def thread_manager(d):
+def thread_manager(d, q):
     """create multiple worker threads to download file segments"""
 
     #   soft start, connections will be gradually increase over time to reach max. number
@@ -508,13 +522,37 @@ def thread_manager(d):
                 for seg in job_list:
                     seg.locked = False
 
-        # monitor status change ----------------------------------------------------------------------------------------
-        if d.status != Status.downloading:
-            # shutdown thread pool executor
-            executor.shutdown(wait=False)
-            break
+        # monitor status change or get quit signal from brain ----------------------------------------------------------
+        try:
+            if d.status != Status.downloading or q.get_nowait() == 'quit':
+                # shutdown thread pool executor
+                executor.shutdown(wait=False)
+                break
+        except:
+            pass
 
     # update d param
     d.live_connections = 0
     d.remaining_parts = num_live_threads + len(job_list) + config.jobs_q.qsize()
     log(f'thread_manager {d.uid}: quitting', log_level=2)
+
+
+def fpr(d, q):
+    """file processing progress reporter
+
+    Args:
+        d: DownloadItem object
+    """
+
+    while True:
+
+        d.update_media_files_progress()
+    
+
+        try:
+            if d.status not in config.Status.active_states or q.get_nowait() == 'quit':
+                break
+        except:
+            pass
+
+        time.sleep(1)
