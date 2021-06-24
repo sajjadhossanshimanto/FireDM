@@ -203,7 +203,9 @@ class Controller:
                 except:
                     pass
 
-                d = refreshed_d
+                # update old object
+                d.__dict__.update(refreshed_d.__dict__)
+                d.register_callback(self.observer)
 
         return d
 
@@ -1021,14 +1023,8 @@ class Controller:
                         # update view
                         self._report_d(d)
 
-                        # get new refreshed object
-                        d = self.auto_refresh_url(d)
-
-                        # register observer
-                        d.register_callback(self.observer)
-
-                        # update download map
-                        self.d_map[d.uid] = d
+                        # refresh url
+                        self.auto_refresh_url(d)
 
                 # update view
                 self._report_d(d)
