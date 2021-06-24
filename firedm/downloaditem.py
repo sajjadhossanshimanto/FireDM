@@ -710,6 +710,11 @@ class DownloadItem:
 
         
         self.video_progress = _get_progress(self.temp_file, self.size)
-        self.audio_progress = _get_progress(self.audio_file, self.audio_size)
+
+        if 'normal' in self.subtype_list:
+            self.audio_progress = self.video_progress
+        else:
+            self.audio_progress = _get_progress(self.audio_file, self.audio_size)
+            
         self.merge_progress = _get_progress(self.target_file, self.total_size)
 

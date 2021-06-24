@@ -1710,7 +1710,7 @@ class DItem(tk.Frame):
             s.configure(self.bottom_bars_style, thickness=5, background=PBAR_FG, troughcolor=PBAR_BG,
                         troughrelief=tk.FLAT, pbarrelief=tk.FLAT)
 
-            for lbl, var in zip(('Video File: ', '    Audio File: ', '    Output File: '), (self.vbar, self.abar, self.mbar)):
+            for lbl, var in zip(('Video: ', '    Audio: ', '    Output File: '), (self.vbar, self.abar, self.mbar)):
                 tk.Label(self.bar_fr, text=lbl, bg=self.bg, fg=self.fg).pack(side='left')
                 ttk.Progressbar(self.bar_fr, orient=tk.HORIZONTAL, style=self.bottom_bars_style,
                                 variable=var).pack(side='left', expand=True, fill='x')
