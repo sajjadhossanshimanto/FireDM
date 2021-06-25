@@ -1260,76 +1260,44 @@ class MediaListBox(tk.Frame):
 
 
 class FileDialog():
+    """use alternative file chooser to replace tkinter ugly file chooser on linux
+    
+    available options: 
+        Zenity: command line tool, based on gtk
+        kdialog: command line tool for kde file chooser
+        gtk: use Gtk.FileChooserDialog directly thru python, "will not use", since sometimes it will raise
+             error: Gdk-Message: Fatal IO error 0 (Success) on X server :1, and application will crash
+    """
     def __init__(self, foldersonly=False):
-        self.use = 'TK'  #, 'GTK', or 'WIN'
+        self.use = 'TK'  #, 'zenity', or 'kdialog'
         self.foldersonly = foldersonly
         self.title = 'FireDM - ' 
         self.title += 'Select a folder' if self.foldersonly else 'Select a file'
         if config.operating_system == 'Linux':
-            try:
-                import gi
-
-                gi.require_version("Gtk", "3.0")
-                from gi.repository import Gtk 
-                self.GTK = Gtk
-
-                self.use = 'GTK'
-            except:
-                # looking for zenity
-                error, zenity_path = run_command('which zenity', verbose=False)
-                if zenity_path:
-                    self.use = 'zenity'
-                else:
-                    # looking for kdialog
-                    error, kdialog_path = run_command('which kdialog', verbose=False)
-                    if kdialog_path:
-                        self.use = 'kdialog'
-
-        elif config.operating_system == 'Windows':
-            self.use = 'WIN'
+            # looking for zenity
+            error, zenity_path = run_command('which zenity', verbose=False)
+            if zenity_path:
+                self.use = 'zenity'
+            else:
+                # looking for kdialog
+                error, kdialog_path = run_command('which kdialog', verbose=False)
+                if kdialog_path:
+                    self.use = 'kdialog'
 
     def run(self, initialdir=''):
         initialdir = initialdir or config.download_folder
-        if self.use == 'GTK':
-            try:
-                Gtk = self.GTK
-                w = Gtk.Window()
-
-                dialog = Gtk.FileChooserDialog(
-                    title=self.title,
-                    parent=w,
-                    action=Gtk.FileChooserAction.SELECT_FOLDER if self.foldersonly else Gtk.FileChooserAction.OPEN,
-                )
-                dialog.add_buttons(
-                    Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, "Select", Gtk.ResponseType.OK
-                )
-                if isinstance(initialdir, str):
-                    dialog.set_current_folder(initialdir)
-                selected_path = None
-
-                response = dialog.run()
-                if response == Gtk.ResponseType.OK:
-                    selected_path = dialog.get_filename()
-                    
-                dialog.destroy()
-
-                while Gtk.events_pending ():
-                  Gtk.main_iteration ()
-
-                return selected_path
-            except:
-                pass
-
-        elif self.use == 'zenity':
+        
+        if self.use == 'zenity':
             cmd = 'zenity --file-selection'
             if self.foldersonly:
                 cmd += ' --directory'
             if isinstance(initialdir, str):
                 cmd += f' --filename="{initialdir}"'
-            retcode, selected_path = run_command(cmd, ignore_stderr=True)
-            # zenity will return either 0, 1 or 5, depending on whether the user pressed OK, Cancel or timeout has been reached
+            retcode, path = run_command(cmd, ignore_stderr=True)
+            # zenity will return either 0, 1 or 5, depending on whether the user pressed OK, 
+            # Cancel or timeout has been reached
             if retcode in (0, 1, 5):
-                return selected_path
+                selected_path = path
 
         elif self.use == 'kdialog':
             cmd = 'kdialog'
@@ -1341,18 +1309,12 @@ class FileDialog():
             if isinstance(initialdir, str):
                 cmd += f' "{initialdir}"'
 
-            retcode, selected_path = run_command(cmd, ignore_stderr=True)
+            retcode, path = run_command(cmd, ignore_stderr=True)
             # kdialog will return either 0, 1 depending on whether the user pressed OK, Cancel
             if retcode in (0, 1):
-                return selected_path
-        
-        elif self.use == 'WIN':
-            try:
-                raise "not implemented yet"
-            except:
-                pass
-
-        selected_path = self.run_default(initialdir=initialdir)
+                selected_path = path
+        else:
+            selected_path = self.run_default(initialdir=initialdir)
 
         return selected_path
 
