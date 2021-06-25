@@ -1095,7 +1095,7 @@ def get_range_list(file_size):
     if file_size == 0:
         return [None]
     elif file_size < config.segment_size * 100 / 5:
-        return [0, file_size - 1]
+        return [[0, file_size - 1]]
 
     range_list = [] 
 
