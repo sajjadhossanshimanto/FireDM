@@ -73,8 +73,9 @@ def brain(d=None):
     tm_q = Queue()
     fm_q = Queue()
 
-    # run files processing reporter in a separate thread
-    Thread(target=fpr, daemon=True, args=(d, fpr_q)).start()
+    if d.type == config.MediaType.video:
+        # run files processing reporter in a separate thread
+        Thread(target=fpr, daemon=True, args=(d, fpr_q)).start()
 
     # run file manager in a separate thread
     Thread(target=file_manager, daemon=True, args=(d, fm_q, keep_segments)).start()
@@ -242,6 +243,9 @@ def file_manager(d, q, keep_segments=True):
                     # delete temp files
                     d.delete_tempfiles()
                 else:
+                    # report video progress before renaming temp video file
+                    d.update_media_files_progress()
+                    
                     # rename temp file
                     success = rename_file(d.temp_file, d.target_file)
                     if success:
