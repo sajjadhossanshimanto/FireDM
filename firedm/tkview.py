@@ -4174,10 +4174,11 @@ class MainWindow(IView):
 
         # save themes
         self.save_user_themes()
-        print('Gui terminated')
 
         # quit systray
         self.systray.shutdown()
+
+        print('Gui terminated')
 
     def reset(self):
         self.pl_menu.reset()
@@ -4278,8 +4279,6 @@ class MainWindow(IView):
 
         # get download items
         self.root.after(1000, self.controller.get_d_list)
-
-        self.run()
 
     def post_startup(self):
         """it will be called after gui displayed"""
