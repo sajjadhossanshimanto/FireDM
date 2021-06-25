@@ -1083,10 +1083,10 @@ def calc_md5_sha256(fp=None, buffer=None):
 
 def get_range_list(file_size):
     """
-    return a list of ranges depend on config.segment_size and config.max_connections
+    return a list of ranges to improve watch while downloading feature
     
     Args:
-        file_size: file size
+        file_size: file size in bytes
 
     Return:
         list of ranges i.e. [[0, 100], [101, 2000], ... ]
@@ -1094,19 +1094,23 @@ def get_range_list(file_size):
 
     if file_size == 0:
         return [None]
+    elif file_size < config.segment_size * 100 / 5:
+        return [0, file_size - 1]
 
-    range_list = []  # size_splitter(self.size, self.segment_size)
-    max_seg_nums = file_size // config.segment_size or 1
-    seg_nums = min(max_seg_nums, config.max_connections)
-    seg_size = file_size // seg_nums
+    range_list = [] 
+
+    sizes = []
+    # make first segments smaller to finish quickly and be ready for watch while 
+    # downloading other segments
+    for i in (5, 10, 15, 20):  # 5%, 10%, etc..
+        sizes.append(i * file_size // 100)
+    remaining = file_size - sum(sizes)  # almost 50% remaining
+    sizes.append(remaining)
 
     start = 0
-    end = 0
-    for i in range(seg_nums):
-        start = 0 if i == 0 else start + seg_size
-        end = start + seg_size - 1 if i < seg_nums - 1 else file_size - 1
-
-        range_list.append([start, end])
+    for s in sizes:
+        range_list.append([start, start + s - 1])
+        start += s
 
     return range_list
 
