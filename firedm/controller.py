@@ -32,6 +32,12 @@ from .video import get_ytdl_options
 from .model import ObservableDownloadItem, ObservableVideo
 
 
+def threaded(func):
+    def wraper(*args, **kwargs):
+        Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+
+    return wraper
+
 def set_option(**kwargs):
     """set global setting option(s) in config.py"""
     try:
@@ -209,6 +215,31 @@ class Controller:
 
         return d
 
+    def url_to_playlist(url):
+        d = ObservableDownloadItem()
+        d.update(url)
+
+        # searching for videos
+        if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
+            playlist = self._create_video_playlist(url)
+
+        if not playlist:
+            playlist = [d]
+
+        return playlist
+
+    def autodownload(url, **kwargs):
+        """download file automatically without user intervention
+        for video files it should download best quality, for video playlist, it will download first video
+        """
+
+        playlist = url_to_playlist(url)
+        d = playlist[0]
+        update_object(d, kwargs)
+
+        # download item
+        self._download(d, silent=True)
+
     def _process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
 
@@ -230,7 +261,6 @@ class Controller:
 
         # searching for videos
         if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
-            print('playlist here')
             playlist = self._create_video_playlist(url)
 
             if playlist:
@@ -764,13 +794,16 @@ class Controller:
             (bool): True on success, False on failure
         """
 
+        showpopup = not silent
+
         if not (d or d.url):
-            log('Nothing to download', start='', showpopup=True)
+            log('Nothing to download', start='', showpopup=showpopup)
             return False
         elif not d.type or d.type == 'text/html':
-            response = self.get_user_response(popup_id=1)
-            if response == 'Ok':
-                d.accept_html = True
+            if not silent:
+                response = self.get_user_response(popup_id=1)
+                if response == 'Ok':
+                    d.accept_html = True
             else:
                 return False
 
@@ -782,19 +815,20 @@ class Controller:
         unsupported = ['f4m', 'ism']
         match = [item for item in unsupported if item in d.subtype_list]
         if match:
-            log(f'unsupported protocol: \n"{match[0]}" stream type is not supported yet', start='', showpopup=True)
+            log(f'unsupported protocol: \n"{match[0]}" stream type is not supported yet', start='', showpopup=showpopup)
             return False
 
         # check for ffmpeg availability
         if d.type in (MediaType.video, MediaType.audio, MediaType.key):
             if not check_ffmpeg():
-                if config.operating_system == 'Windows':
+
+                if not silent and config.operating_system == 'Windows':
                     res = self.get_user_response(popup_id=2)
                     if res == 'Download':
                         # download ffmpeg from github
                         self._download_ffmpeg() 
                 else:
-                    log('FFMPEG is missing', start='', showpopup=True)
+                    log('FFMPEG is missing', start='', showpopup=showpopup)
 
                 return False
 
@@ -814,24 +848,24 @@ class Controller:
             # update download item
             d.folder = folder
         except FileNotFoundError:
-            log(f'destination folder {folder} does not exist', start='', showpopup=True)
+            log(f'destination folder {folder} does not exist', start='', showpopup=showpopup)
             if config.TEST_MODE:
                 raise
             return False
         except (PermissionError, OSError):
-            log(f"you don't have enough permission for destination folder {folder}", start='', showpopup=True)
+            log(f"you don't have enough permission for destination folder {folder}", start='', showpopup=showpopup)
             if config.TEST_MODE:
                 raise
             return False
         except Exception as e:
-            log(f'problem in destination folder {repr(e)}', start='', showpopup=True)
+            log(f'problem in destination folder {repr(e)}', start='', showpopup=showpopup)
             if config.TEST_MODE:
                 raise e
             return False
 
         # validate file name
         if d.name == '':
-            log("File name can't be empty!!", start='', showpopup=True)
+            log("File name can't be empty!!", start='', showpopup=showpopup)
             return False
 
         # search current list for previous item with same name, folder ---------------------------
@@ -876,7 +910,7 @@ class Controller:
         # check if file with the same name exist in destination
         if os.path.isfile(d.target_file):
             # auto rename option
-            if config.auto_rename:
+            if config.auto_rename or silent:
                 d = self.rename(d)
                 log('File with the same name exist in download folder, generate new name:', d.name)
                 self._download(d)
@@ -898,7 +932,7 @@ class Controller:
         # ------------------------------------------------------------------
 
         # warning message for non-resumable downloads
-        if not d.resumable:
+        if not d.resumable and not silent:
             res = self.get_user_response(popup_id=5)
             if res != 'Yes':
                 return False
@@ -941,7 +975,7 @@ class Controller:
                 print('download simulator cancelled for:', d.uid, d.name)
                 break
 
-    def download(self, uid=None, **kwargs):
+    def download(self, uid=None, download_later=False, **kwargs):
         """download an item
 
         Args:
@@ -956,24 +990,27 @@ class Controller:
             d = self.d_map.get(uid, None)
             silent = True
 
+        showpopup = not silent
+
         if d is None:
-            log('Nothing to download', showpopup=True)
+            log('Nothing to download', showpopup=showpopup)
             return
 
         update_object(d, kwargs)
 
-        run_thread(self._download, d, silent)
-        # Thread(target=self._download, args=(d, silent)).start()
+        run_thread(self._download, d, silent, download_later)
 
         return True
 
-    def _download(self, d, silent=False):
+    def _download(self, d, silent=False, download_later=False):
         """start downloading an item
 
         Args:
             d (ObservableDownloadItem): download item
             silent (bool): if True, hide all a warning dialogues and select default
         """
+
+        showpopup = not silent
 
         try:
             pre_checks = self._pre_download_checks(d, silent=silent)
@@ -988,43 +1025,45 @@ class Controller:
                 # add to download map
                 self.d_map[d.uid] = d
 
-                # if max concurrent downloads exceeded, this download job will be added to pending queue
-                active_downloads = len(
-                    [d for d in self.d_map.values() if d.status in Status.active_states])
-                if active_downloads >= config.max_concurrent_downloads:
-                    d.status = Status.pending
-                    self.pending_downloads_q.put(d)
-                    return
+                if not download_later:
 
-                # retry multiple times to download and auto refresh expired url
-                for n in range(config.refresh_url_retries + 1):
-                    # start brain in a separate thread
-                    if config.SIMULATOR:
-                        t = Thread(target=self.download_simulator, daemon=True, args=(d,))
-                    else:
-                        t = Thread(target=brain, daemon=False, args=(d,))
-                    t.start()
+                    # if max concurrent downloads exceeded, this download job will be added to pending queue
+                    active_downloads = len(
+                        [d for d in self.d_map.values() if d.status in Status.active_states])
+                    if active_downloads >= config.max_concurrent_downloads:
+                        d.status = Status.pending
+                        self.pending_downloads_q.put(d)
+                        return
 
-                    # wait thread to end
-                    t.join()
+                    # retry multiple times to download and auto refresh expired url
+                    for n in range(config.refresh_url_retries + 1):
+                        # start brain in a separate thread
+                        if config.SIMULATOR:
+                            t = Thread(target=self.download_simulator, daemon=True, args=(d,))
+                        else:
+                            t = Thread(target=brain, daemon=False, args=(d,))
+                        t.start()
 
-                    if d.status != Status.error:
-                        break
+                        # wait thread to end
+                        t.join()
 
-                    elif n >= config.refresh_url_retries:
-                        log('controller: too many connection errors', 'maybe network problem or expired link',
-                            start='', sep='\n', showpopup=True)
-                    else:  # try auto refreshing url
+                        if d.status != Status.error:
+                            break
 
-                        # reset errors and change status
-                        d.status = Status.refreshing_url
-                        d.errors = 0
+                        elif n >= config.refresh_url_retries:
+                            log('controller: too many connection errors', 'maybe network problem or expired link',
+                                start='', sep='\n', showpopup=showpopup)
+                        else:  # try auto refreshing url
 
-                        # update view
-                        self._report_d(d)
+                            # reset errors and change status
+                            d.status = Status.refreshing_url
+                            d.errors = 0
 
-                        # refresh url
-                        self.auto_refresh_url(d)
+                            # update view
+                            self._report_d(d)
+
+                            # refresh url
+                            self.auto_refresh_url(d)
 
                 # update view
                 self._report_d(d)
@@ -1102,18 +1141,18 @@ class Controller:
             d (ObservableDownloadItem): download item
         """
 
-        if config.download_thumbnail:
-            self._download_thumbnail(d)
-
-        if config.use_server_timestamp:
-            self._write_timestamp(d)
-
         # on completion actions
         if d.status == Status.completed:
+            if config.download_thumbnail:
+                self._download_thumbnail(d)
+
+            if config.use_server_timestamp:
+                self._write_timestamp(d)
+
             if d.on_completion_command:
                 err, output = run_command(d.on_completion_command)
                 if err:
-                    log(f'error executing command: {d.on_completion_command} \n{output}', showpopup=True)
+                    log(f'error executing command: {d.on_completion_command} \n{output}')
 
             if d.shutdown_pc:
                 d.shutdown_pc = False

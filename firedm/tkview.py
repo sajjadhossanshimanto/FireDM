@@ -3264,7 +3264,6 @@ class MainWindow(IView):
 
         # retry button -------------------------------------------------------------------------------------------------
         self.retry_btn = Button(home_tab, image=imgs['refresh_icon'], command=lambda: self.refresh_url(self.url), tooltip='Retry')
-        # self.retry_btn.image = retry_img
         self.retry_btn.grid(row=0, column=4, padx=(0, 5), pady=(40, 5))
 
         # thumbnail ----------------------------------------------------------------------------------------------------
@@ -3285,7 +3284,6 @@ class MainWindow(IView):
         # playlist download, sub buttons -------------------------------------------------------------------------------
         pl_sub_frame = tk.Frame(home_tab, background=MAIN_BG)
 
-        # Button(pl_sub_frame, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').pack(pady=0, padx=5)
         Button(pl_sub_frame, image=imgs['subtitle_icon'], command=self.show_subtitles_window, tooltip='Download Subtitle').pack(pady=20, padx=5)
         Button(pl_sub_frame, image=imgs['about_icon'], command=self.show_about_notes, tooltip='About').pack(pady=0, padx=5)
 
@@ -3299,8 +3297,23 @@ class MainWindow(IView):
         home_tab.bind('<1>', lambda event: self.root.focus(), add='+')
 
         # download button ----------------------------------------------------------------------------------------------
-        Button(home_tab, text='Download', command=self.download_btn_callback,
-               font='any 12').grid(row=2, column=3, padx=1, pady=5, sticky='es')
+        db_fr = tk.Frame(home_tab, width=60, background=MAIN_BG)
+        db_fr.grid(row=2, column=3, padx=1, pady=5, sticky='e')
+ 
+        Button(db_fr, text='Download', command=self.download_btn_callback, font='any 12').pack(side='left')
+        # download Later button ----------------------------------------------------------------------------------------------
+        later_btn = Button(db_fr, text='▼', font='any 12', width=1) 
+        later_btn.pack(side='left', fill='y', pady=1)
+
+        def later_btn_handler(option):
+            if option == 'Download Later':
+                self.download_later_btn_callback()
+            else:
+                self.download_btn_callback()
+
+        atk.RightClickMenu(later_btn, ['Download now', 'Download Later'], callback=later_btn_handler,
+                           bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG, bind_left_click=True, bind_right_click=False)
+
 
         # spacer to keep the column with a fixed size for zoomed button images to look better on mouse hover
         tk.Frame(home_tab, width=60, background=MAIN_BG).grid(row=2, column=4, padx=5, pady=10)
@@ -3978,6 +3991,9 @@ class MainWindow(IView):
 
         # download
         self.download(name=self.file_properties.name, folder=self.file_properties.folder)
+
+    def download_later_btn_callback(self):
+        self.download(name=self.file_properties.name, folder=self.file_properties.folder, download_later=True)
 
     def download(self, uid=None, **kwargs):
         """Send command to controller to download an item
