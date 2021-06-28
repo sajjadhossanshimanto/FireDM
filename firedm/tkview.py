@@ -3908,8 +3908,9 @@ class MainWindow(IView):
         for uid in deleted:
             self.controller.delete(uid)
 
-        # # solve canvas doesn't auto resize itself
-        # self.d_tab.scrolltotop()
+        # solve canvas doesn't auto resize itself
+        self.d_tab.scrolltotop()
+
         if config.autoscroll_download_tab:
             # enable autoscroll
             self.root.update_idletasks()
@@ -4128,7 +4129,7 @@ class MainWindow(IView):
             
             if not ditem:
                 self.select_tab('Downloads')
-                
+
             self.create_ditem(**kwargs)
 
         # update current item
