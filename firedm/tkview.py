@@ -3758,7 +3758,6 @@ class MainWindow(IView):
 
         Args:
             uid (str): download item's uid
-            focus (bool): select d_tab and scroll to show ditem after creation
             kwargs: key/values to update a download item
         """
         status = kwargs.get('status')
@@ -4125,8 +4124,12 @@ class MainWindow(IView):
             if ditem and ditem.status == config.Status.completed:
                 ditem.destroy()
                 self.d_items.pop(uid)
-            self.create_ditem(**kwargs, focus=True)
-            self.select_tab('Downloads')
+                ditem = None
+            
+            if not ditem:
+                self.select_tab('Downloads')
+                
+            self.create_ditem(**kwargs)
 
         # update current item
         elif command == 'update':
