@@ -14,6 +14,7 @@ import re
 import time
 import pycurl
 import tkinter as tk
+from tkinter import font as tkfont
 import awesometkinter as atk
 from tkinter import ttk, filedialog, colorchooser
 from awesometkinter.version import __version__ as atk_version
@@ -42,6 +43,7 @@ from .systray import SysTray
 from .about import about_notes
 
 config.atk_version = atk_version
+gui_font = None
 
 # theme colors as global constants, you must set their values before creating widgets
 # use MainWindow.apply_theme() to set all values
@@ -1393,8 +1395,9 @@ class FileProperties(ttk.Frame):
         self.foldervar.set(path)
 
     def create_widgets(self):
+
         def label(text='', textvariable=None, r=1, c=0, rs=1, cs=1, sticky='we'):
-            return AutoWrappingLabel(self, text=text, textvariable=textvariable, bg=self.bg, fg=self.fg, anchor='w'). \
+            return tk.Label(self, text=text, textvariable=textvariable, bg=self.bg, fg=self.fg, anchor='w'). \
                 grid(row=r, column=c, rowspan=rs, columnspan=cs, sticky=sticky)
 
         def separator(r):
@@ -2968,8 +2971,17 @@ class MainWindow(IView):
         self.starter = time.time()
         self.root = tk.Tk()
 
-        # # default font
-        # self.root.option_add("*Font", "helvetica")
+        # get default font by creating a dummy label widget
+        lbl = tk.Label(self.root, text='hello world')
+
+        global gui_font
+        gui_font = tkfont.Font(font=lbl['font'])
+
+        # load user font settings
+        try:
+            gui_font.config(**config.gui_font)
+        except Exception as e:
+            log('loading user font error: e', log_level=3)
 
         # assign window size
         try:
@@ -3226,6 +3238,8 @@ class MainWindow(IView):
         ff = ExpandCollapse(self.main_frame, self.side_frame, MAIN_BG, MAIN_FG)
         ff.grid(row=1, column=1, sticky='ewns')
 
+        self.set_font(self.root)
+
     def create_home_tab(self):
         bg = MAIN_BG
 
@@ -3356,7 +3370,7 @@ class MainWindow(IView):
         self.stat_lbl.pack(fill='x', padx=(5, 0), pady=2, ipadx=5)
 
         # Scrollable
-        self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
+        self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False, vbar_width=20,
                                          autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
 
         self.d_tab.pack(expand=True, fill='both')
@@ -3398,6 +3412,29 @@ class MainWindow(IView):
         Button(themes_frame, text='Delete', command=self.del_theme).pack(side='right', padx=5)
         Button(themes_frame, text='New', command=self.new_theme).pack(side='right', padx=5)
         Button(themes_frame, text='Edit', command=self.edit_theme).pack(side='right', padx=5)
+
+        # font -----------------------------
+        font_frame = tk.Frame(tab, bg=bg)
+        font_frame.pack(anchor='w', expand=True, fill='x')
+
+        tk.Label(font_frame, bg=bg, fg=fg, text='Select Font:  ').pack(side='left')
+
+        font_families = sorted(tkfont.families())
+        # font_properties = gui_font.actual() # {'family': 'DejaVu Sans', 'size': 10, 'weight': 'normal', 'slant': 'roman', 'underline': 0, 'overstrike': 0}
+        
+        fonts_menu = Combobox(font_frame, values=font_families, selection=gui_font['family'])
+        fonts_menu.pack(side='left', ipadx=5, padx=5)
+
+        font_size_var = tk.IntVar(value=gui_font['size'])
+
+        def update_font():
+            gui_font.config(family=fonts_menu.selection, size=font_size_var.get())
+            set_option(gui_font=gui_font.actual())
+
+        tk.Entry(font_frame, bg=BTN_BG, fg=BTN_FG, textvariable=font_size_var, width=4, 
+            justify='center').pack(side='left', padx=5, ipady=2)
+
+        Button(font_frame, text='Apply', command=update_font).pack(side='left', padx=5)
 
         CheckOption(tab, 'Enable systray icon "requires application restart"', key='enable_systray').pack(anchor='w')
         CheckOption(tab, 'Minimize to systray when closing application window', key='minimize_to_systray').pack(anchor='w')
@@ -3750,6 +3787,14 @@ class MainWindow(IView):
         """save current window size in config.window_size"""
         config.window_size = (self.root.winfo_width(), self.root.winfo_height())
 
+    def set_font(self, widget):
+        # apply custom font to a widget and all its children
+        for w in widget.winfo_children():
+            atk.configure_widget(w, font=gui_font)
+
+            if w.winfo_children():
+                self.set_font(w)
+
     # endregion
 
     # region DItem
@@ -3815,6 +3860,9 @@ class MainWindow(IView):
         d_item.bind('<Button-3>', lambda event, uid=uid: self.on_item_rightclick(uid), add='+')
         d_item.bind('<Control-1>', lambda event: d_item.toggle())
         d_item.bind('<Shift-1>', lambda event, uid=uid: self.on_shift_click(uid))
+
+        # font
+        self.set_font(d_item)
 
         d_item.show()
 
