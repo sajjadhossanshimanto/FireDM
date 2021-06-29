@@ -3387,7 +3387,7 @@ class MainWindow(IView):
         bg = MAIN_BG
         fg = MAIN_FG
 
-        tab = atk.ScrollableFrame(self.main_frame, bg=bg, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
+        tab = atk.ScrollableFrame(self.main_frame, bg=bg, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG, hscroll=False)
 
         def heading(text):
             tk.Label(tab, text=' ' + text, bg=HDG_BG, fg=HDG_FG, anchor='w',
