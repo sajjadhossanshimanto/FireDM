@@ -3240,6 +3240,9 @@ class MainWindow(IView):
 
         self.set_font(self.root)
 
+        # set scrollbar width
+        self.set_scrollbar_width(config.scrollbar_width)
+
     def create_home_tab(self):
         bg = MAIN_BG
 
@@ -3435,6 +3438,10 @@ class MainWindow(IView):
             justify='center').pack(side='left', padx=5, ipady=2)
 
         Button(font_frame, text='Apply', command=update_font).pack(side='left', padx=5)
+
+        # scrollbar width ---------------------------
+        LabeledEntryOption(tab, 'Scrollbar width (1 ~ 50): ', entry_key='scrollbar_width', get_text_validator=lambda x: int(x) if 0 < int(x) < 51 else 20,
+                           callback=lambda: self.set_scrollbar_width(config.scrollbar_width), width=4, justify='center').pack(anchor='w')
 
         CheckOption(tab, 'Enable systray icon "requires application restart"', key='enable_systray').pack(anchor='w')
         CheckOption(tab, 'Minimize to systray when closing application window', key='minimize_to_systray').pack(anchor='w')
@@ -3789,11 +3796,31 @@ class MainWindow(IView):
 
     def set_font(self, widget):
         # apply custom font to a widget and all its children
-        for w in widget.winfo_children():
+        allwidgets = [widget] + self.get_all_children(widget)
+        for w in allwidgets:
             atk.configure_widget(w, font=gui_font)
 
-            if w.winfo_children():
-                self.set_font(w)
+    def set_scrollbar_width(self, width):
+        allwidgets = self.get_all_children(self.root)
+        scrollbars = [w for w in allwidgets if w.winfo_class() == 'TScrollbar']
+        for sb in scrollbars:
+            atk.configure_widget(sb, width=width)
+
+    def get_all_children(self, widget):
+        """get all child objects under tkinter widget"""
+        children = []
+
+        def get_children(parent):
+            for w in parent.winfo_children():
+                children.append(w)
+
+                if w.winfo_children():
+                    get_children(w)
+
+        get_children(widget)
+
+        return children
+
 
     # endregion
 

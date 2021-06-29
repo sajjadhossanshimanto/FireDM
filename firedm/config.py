@@ -23,7 +23,7 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'checksum',
                  'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
-                 'autoscroll_download_tab', 'enable_captcha_workaround', 'gui_font',
+                 'autoscroll_download_tab', 'enable_captcha_workaround', 'gui_font', 'scrollbar_width',
                  'verify_ssl_cert', 'custom_user_agent', 'recent_folders', 'write_timestamp',
                  'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top', 'disable_log_popups', 'ibus_workaround']
 
@@ -104,6 +104,7 @@ recent_folders = []
 # General --------------------------------------------------------------------------------------------------------------
 current_theme = DEFAULT_THEME
 gui_font = {}
+scrollbar_width = 25
 monitor_clipboard = True
 show_download_window = True
 auto_close_download_window = True
