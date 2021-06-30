@@ -3400,7 +3400,12 @@ class MainWindow(IView):
 
         self.themes_menu = Combobox(themes_frame, values=themes_names, selection=config.current_theme)
         self.themes_menu.pack(side='left', ipadx=5)
-        Button(themes_frame, text='Apply', command=self.apply_theme).pack(side='left', padx=5)
+
+        def apply_theme():
+            theme_name = self.themes_menu.get()
+            if theme_name != config.current_theme:
+                self.apply_theme(theme_name)
+        Button(themes_frame, text='Apply', command=apply_theme).pack(side='left', padx=5)
 
         Button(themes_frame, text='Delete', command=self.del_theme).pack(side='right', padx=5)
         Button(themes_frame, text='New', command=self.new_theme).pack(side='right', padx=5)
