@@ -104,7 +104,12 @@ recent_folders = []
 # General --------------------------------------------------------------------------------------------------------------
 current_theme = DEFAULT_THEME
 gui_font = {}
-scrollbar_width = 25
+gui_font_size_default = 10
+gui_font_size_range = range(6, 26)
+
+scrollbar_width_default = 20
+scrollbar_width = scrollbar_width_default
+scrollbar_width_range = range(1, 51)
 monitor_clipboard = True
 show_download_window = True
 auto_close_download_window = True

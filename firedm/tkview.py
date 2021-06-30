@@ -2971,17 +2971,7 @@ class MainWindow(IView):
         self.starter = time.time()
         self.root = tk.Tk()
 
-        # get default font by creating a dummy label widget
-        lbl = tk.Label(self.root, text='hello world')
-
-        global gui_font
-        gui_font = tkfont.Font(font=lbl['font'])
-
-        # load user font settings
-        try:
-            gui_font.config(**config.gui_font)
-        except Exception as e:
-            log('loading user font error: e', log_level=3)
+        self.initialize_font()
 
         # assign window size
         try:
@@ -3238,7 +3228,7 @@ class MainWindow(IView):
         ff = ExpandCollapse(self.main_frame, self.side_frame, MAIN_BG, MAIN_FG)
         ff.grid(row=1, column=1, sticky='ewns')
 
-        self.set_font(self.root)
+        self.assign_font_for(self.root)
 
         # set scrollbar width
         self.set_scrollbar_width(config.scrollbar_width)
@@ -3417,32 +3407,43 @@ class MainWindow(IView):
         Button(themes_frame, text='Edit', command=self.edit_theme).pack(side='right', padx=5)
 
         # font -----------------------------
-        font_frame = tk.Frame(tab, bg=bg)
-        font_frame.pack(anchor='w', expand=True, fill='x')
+        font_size_var = tk.IntVar(value=gui_font['size'])
 
-        tk.Label(font_frame, bg=bg, fg=fg, text='Select Font:  ').pack(side='left')
+        def update_font():
+            font_size = font_size_var.get()
+            gui_font.config(family=fonts_menu.selection, size=font_size)
+            set_option(gui_font=gui_font.actual())
 
         font_families = sorted(tkfont.families())
         # font_properties = gui_font.actual() # {'family': 'DejaVu Sans', 'size': 10, 'weight': 'normal', 'slant': 'roman', 'underline': 0, 'overstrike': 0}
         
-        fonts_menu = Combobox(font_frame, values=font_families, selection=gui_font['family'])
+        font_frame = tk.Frame(tab, bg=bg)
+        font_frame.pack(anchor='w', expand=True, fill='x')
+
+        tk.Label(font_frame, bg=bg, fg=fg, text='Font:  ').pack(side='left')
+
+        fonts_menu = Combobox(font_frame, values=font_families, selection=gui_font['family'], callback=update_font)
         fonts_menu.pack(side='left', ipadx=5, padx=5)
 
-        font_size_var = tk.IntVar(value=gui_font['size'])
-
-        def update_font():
-            gui_font.config(family=fonts_menu.selection, size=font_size_var.get())
-            set_option(gui_font=gui_font.actual())
-
-        tk.Entry(font_frame, bg=BTN_BG, fg=BTN_FG, textvariable=font_size_var, width=4, 
-            justify='center').pack(side='left', padx=5, ipady=2)
-
-        Button(font_frame, text='Apply', command=update_font).pack(side='left', padx=5)
+        tk.Label(font_frame, bg=bg, fg=fg, text='Font size:').pack(side='left', padx=(10, 5))
+        tk.Spinbox(font_frame, from_= 6, to = 25, state='readonly', textvariable=font_size_var, justify='center',
+                   command=update_font, readonlybackground=MAIN_BG, fg=MAIN_FG, buttonbackground=SF_BG,
+                   width=4).pack(side='left', padx=5, ipady=2) 
 
         # scrollbar width ---------------------------
-        LabeledEntryOption(tab, 'Scrollbar width (1 ~ 50): ', entry_key='scrollbar_width', get_text_validator=lambda x: int(x) if 0 < int(x) < 51 else 20,
-                           callback=lambda: self.set_scrollbar_width(config.scrollbar_width), width=4, justify='center').pack(anchor='w')
+        sb_frame = tk.Frame(tab, bg=bg)
+        sb_frame.pack(anchor='w', expand=True, fill='x')
 
+        sbw = config.scrollbar_width
+        sbw = sbw if 0 < sbw < 51 else 25
+
+        sbw_var = tk.IntVar(value=sbw)
+
+        tk.Label(sb_frame, bg=bg, fg=fg, text='Scrollbar width (1 ~ 50): ').pack(side='left')
+        tk.Spinbox(sb_frame, from_= 1, to = 50, state='readonly', textvariable=sbw_var, justify='center',
+                   command=lambda: self.set_scrollbar_width(sbw_var.get()), readonlybackground=MAIN_BG, fg=MAIN_FG, buttonbackground=SF_BG,
+                   width=4).pack(side='left', padx=5, ipady=2) 
+ 
         CheckOption(tab, 'Enable systray icon "requires application restart"', key='enable_systray').pack(anchor='w')
         CheckOption(tab, 'Minimize to systray when closing application window', key='minimize_to_systray').pack(anchor='w')
         CheckOption(tab, 'Monitor clipboard for copied urls', key='monitor_clipboard').pack(anchor='w')
@@ -3794,17 +3795,39 @@ class MainWindow(IView):
         """save current window size in config.window_size"""
         config.window_size = (self.root.winfo_width(), self.root.winfo_height())
 
-    def set_font(self, widget):
+    def initialize_font(self):
+        # get default font by creating a dummy label widget
+        lbl = tk.Label(self.root, text='hello world')
+
+        global gui_font
+        gui_font = tkfont.Font(font=lbl['font'])
+
+        # load user font settings
+        try:
+            if config.gui_font['size'] not in config.gui_font_size_range:
+                config.gui_font['size'] = config.gui_font_size_default
+                
+            gui_font.config(**config.gui_font)
+        except Exception as e:
+            log('loading user font error: e', log_level=3)
+
+    def assign_font_for(self, widget):
+
         # apply custom font to a widget and all its children
         allwidgets = [widget] + self.get_all_children(widget)
         for w in allwidgets:
             atk.configure_widget(w, font=gui_font)
 
     def set_scrollbar_width(self, width):
+        if width not in config.scrollbar_width_range:
+            width = config.scrollbar_width_default
+            
         allwidgets = self.get_all_children(self.root)
         scrollbars = [w for w in allwidgets if w.winfo_class() == 'TScrollbar']
         for sb in scrollbars:
             atk.configure_widget(sb, width=width)
+
+        set_option(scrollbar_width=width)
 
     def get_all_children(self, widget):
         """get all child objects under tkinter widget"""
@@ -3889,7 +3912,7 @@ class MainWindow(IView):
         d_item.bind('<Shift-1>', lambda event, uid=uid: self.on_shift_click(uid))
 
         # font
-        self.set_font(d_item)
+        self.assign_font_for(d_item)
 
         d_item.show()
 
