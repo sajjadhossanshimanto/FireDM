@@ -3363,7 +3363,7 @@ class MainWindow(IView):
         self.stat_lbl.pack(fill='x', padx=(5, 0), pady=2, ipadx=5)
 
         # Scrollable
-        self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False, vbar_width=20,
+        self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
                                          autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
 
         self.d_tab.pack(expand=True, fill='both')
