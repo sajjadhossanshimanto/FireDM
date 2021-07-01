@@ -36,8 +36,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: install pip
-      run: |
-        apt install python3-pip
+        run: |
+          apt install python3-pip
 
       - name: create windows binary
         run: |
