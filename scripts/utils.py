@@ -40,37 +40,37 @@ def download(url, fp=None, return_data=True, overwrite=False):
 
     print('download:', url)
     response = urllib.request.urlopen(url)
-    chunk_size = 1024 * 100  # 100 kb
+    chunk_size = 1024 * 1024 * 5  # 5 MB
     size = response.getheader('content-length')
 
     if size:
         size = int(size)
-        chunk_size = max(size // 100, chunk_size)
+        chunk_size = max(size // 10 + (1 if size % 10 else 0), chunk_size)
     data = b''
-    # done = 0
+    done = 0
 
     while True:
-        # start = time.time()
+        start = time.time()
         chunk = response.read(chunk_size)
         if chunk:
             data += chunk
 
-            # done += len(chunk)
-           
-            # elapsed_time = time.time() - start
+            done += len(chunk)
 
-            # if elapsed_time:
-            #     speed = format_size(round(len(chunk) / elapsed_time, 1), tail='/s')
-            # else:
-            #     speed = ''
-            # percent = done * 100 // size
-            # bar_length = percent//10
-            # progress_bar = f'[{"="*bar_length}{" "*(10-bar_length)}]'
-            # progress = f'{progress_bar} {format_size(done)} of {format_size(size)} - {speed}' \
-            #            f' - {percent}%' if size else ''
-            # print(f'\r{progress}            ', end='')
+            elapsed_time = time.time() - start
+
+            if elapsed_time:
+                speed = format_size(round(len(chunk) / elapsed_time, 1), tail='/s')
+            else:
+                speed = ''
+            percent = done * 100 // size if size else 0
+            bar_length = percent//10
+            progress_bar = f'[{"="*bar_length}{" "*(10-bar_length)}]'
+            progress = f'{progress_bar} {format_size(done)} of {format_size(size)} - {speed}' \
+                       f' - {percent}%' if percent else ''
+            print(f'\r{progress}            ', end='')
         else:
-            print('')
+            print()
             break
 
     if fp:

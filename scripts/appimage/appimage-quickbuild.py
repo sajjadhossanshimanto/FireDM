@@ -33,7 +33,6 @@ project_folder = os.path.dirname(os.path.dirname(current_folder))
 
 sys.path.insert(0,  project_folder)  # for imports to work
 from scripts.utils import download, get_pkg_version
-from scripts.updatepkg import update_pkg
 
 
 # get application version ----------------------------------------------------------------------------------------------
@@ -82,12 +81,14 @@ lib_folder = f'{AppDir}/usr/lib/python3.6/site-packages'
 print('update packages')
 
 # update firedm pkg
-firedm_src = os.path.join(project_folder, 'firedm')
-update_pkg('firedm', lib_folder, src_folder=firedm_src, compile=False)
+src_folder = os.path.join(project_folder, 'firedm')
+target_folder = os.path.join(lib_folder, 'firedm')
+shutil.copytree(src_folder, target_folder,  dirs_exist_ok=True)
 
 # update other packages
-for pkg_name in ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi', 'python_bidi', 'distro']:
-    update_pkg(pkg_name,  lib_folder, compile=False)
+pkgs = ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi', 'python_bidi', 'distro']
+cmd = f'{sys.executable} -m pip install {" ".join(pkgs)} --upgrade --no-compile   --no-deps --target "{lib_folder}" '
+subprocess.run(cmd, shell=True)
 
 # copy icon ------------------------------------------------------------------------------------------------------------
 print('copy application icon')

@@ -54,8 +54,16 @@ with open(version_fp) as f:
 # get required packages
 with open(requirements_fp) as f:
     packages = [line.strip().split(' ')[0] for line in f.readlines() if line.strip()] + ['firedm']
-    packages.remove('Pillow')
-    print(packages)
+
+# clean names
+packages = [pkg.replace(';', '') for pkg in packages]
+
+# filter some packages
+for pkg in ['distro', 'Pillow']:
+	if pkg in packages: 
+		packages.remove(pkg)
+   
+print(packages)
 
 includes = []
 include_files = []
