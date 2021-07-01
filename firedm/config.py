@@ -180,7 +180,7 @@ on_completion_command = ''
 
 # debugging ------------------------------------------------------------------------------------------------------------
 keep_temp = False  # keep temp files / folders after done downloading for debugging
-checksum = True  # calculate checksums for completed files MD5 and SHA256
+checksum = False  # calculate checksums for completed files MD5 and SHA256
 use_thread_pool_executor = False
 max_seg_retries = 10  # maximum retries for a segment until reporting downloaded, this is for segment with unknown size
 
