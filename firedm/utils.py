@@ -69,13 +69,6 @@ def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,
         log(f'plyer notification: {e}')
 
 
-def handle_exceptions(error):
-    if config.TEST_MODE:
-        raise error
-    else:
-        log(error)
-
-
 def set_curl_options(c, http_headers=None):
     """take pycurl object as an argument and set basic options
 
@@ -362,32 +355,6 @@ def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **k
         print(e)
 
 
-def echo_stdout(func):
-    """Copy stdout / stderr and send it to gui"""
-
-    def echo(text):
-        try:
-            config.log_q.put(('log', text))
-            return func(text)
-        except:
-            return func(text)
-
-    return echo
-
-
-def echo_stderr(func):
-    """Copy stdout / stderr and send it to gui"""
-
-    def echo(text):
-        try:
-            config.log_q.put(('log', text))
-            return func(text)
-        except:
-            return func(text)
-
-    return echo
-
-
 def validate_file_name(f_name):
     # filter for tkinter safe character range
     f_name = ''.join([c for c in f_name if ord(c) in range(65536)])
@@ -405,31 +372,6 @@ def validate_file_name(f_name):
         else:
             char_count += 1
     return safe_string
-
-
-def size_splitter(size, part_size):
-    """Receive file size and return a list of size ranges"""
-    result = []
-
-    if size == 0:
-        result.append('0-0')
-        return result
-
-    # decide num of parts
-    span = part_size if part_size <= size else size
-    # print(f'span={span}, part size = {part_size}')
-    parts = max(size // span, 1)  # will be one part if size < span
-
-    x = 0
-    size = size - 1  # when we start counting from zero the last byte number should be size - 1
-    for i in range(parts):
-        y = x + span - 1
-        if size - y < span:  # last remaining bytes
-            y = size
-        result.append(f'{x}-{y}')
-        x = y + 1
-
-    return result
 
 
 def delete_folder(folder, verbose=False):
@@ -470,16 +412,6 @@ def rename_file(oldname=None, newname=None, verbose=False):
         if verbose:
             log('rename_file()> ', e)
         return False
-
-
-def get_seg_size(seg):
-    # calculate segment size from segment name i.e. 200-1000  gives 801 byte
-    try:
-        a, b = int(seg.split('-')[0]), int(seg.split('-')[1])
-        size = b - a + 1 if b > 0 else 0
-        return size
-    except:
-        return 0
 
 
 def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblocking=False, ignore_stderr=False):
@@ -585,23 +517,6 @@ def update_object(obj, new_values):
     return obj
 
 
-def truncate(string, length):
-    """truncate a string to specified length by adding ... in the middle of the string"""
-    sep = '...'
-    if length < len(sep) + 2:
-        string = string[:length]
-    elif len(string) > length:
-        part = (length - len(sep)) // 2
-        remainder = (length - len(sep)) % 2
-        string = string[:part + remainder] + sep + string[-part:]
-    # print(len(string), string)
-    return string
-
-
-def sort_dictionary(dictionary, descending=True):
-    return {k: v for k, v in sorted(dictionary.items(), key=lambda item: item[0], reverse=descending)}
-
-
 def translate_server_code(code):
     """Lookup server code and return a readable code description"""
     server_codes = {
@@ -686,17 +601,6 @@ def translate_server_code(code):
     return server_codes.get(code, ' ')[0]
 
 
-def validate_url(url):
-    # below pattern is not tested as a starter it doesn't recognize www. urls
-    # improvement required
-    pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-    match = re.match(pattern, url)
-    if match:
-        return True
-    else:
-        return False
-
-
 def open_file(file, silent=False):
     try:
         if config.operating_system == 'Windows':
@@ -763,26 +667,6 @@ def open_folder(path):
             raise e
 
 
-def compare_versions(x, y):  # todo: use version_value instead
-    """it will compare 2 version numbers and return the higher value
-    example compare_versions('2020.10.6', '2020.3.7') will return '2020.10.6'
-    return None if 2 versions are equal
-    """
-    try:
-        a = [int(x) for x in x.split('.')[:3]]
-        b = [int(x) for x in y.split('.')[:3]]
-
-        for i in range(3):
-            if a[i] > b[i]:
-                return x
-            elif a[i] < b[i]:
-                return y
-    except:
-        pass
-
-    return None
-
-
 def load_json(file=None):
     try:
         with open(file, 'r') as f:
@@ -801,35 +685,6 @@ def save_json(file=None, data=None):
         log('save_json() > error: ', e)
 
 
-def log_recorder():
-    """write log to disk in real-time"""
-    q = config.log_recorder_q
-    buffer = ''
-    file = os.path.join(config.sett_folder, 'log.txt')
-
-    # clear previous file
-    with open(file, 'w') as f:
-        f.write(buffer)
-
-    while True:
-        time.sleep(0.1)
-        if config.terminate:
-            break
-
-        # read log messages from queue
-        for _ in range(q.qsize()):
-            buffer += q.get()
-
-        # write buffer to file
-        if buffer:
-            try:
-                with open(file, 'a', encoding="utf-8", errors="ignore") as f:
-                    f.write(buffer)
-                    buffer = ''  # reset buffer
-            except Exception as e:
-                print('log_recorder()> error:', e)
-
-
 def natural_sort(my_list):
     """ Sort the given list in the way that humans expect.
     source: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/	"""
@@ -838,6 +693,7 @@ def natural_sort(my_list):
     return sorted(my_list, key=alphanum_key)
 
 
+# todo: no need a separate function for downloading thumbnail, use download() instead
 def get_thumbnail(url):
     """download video thumbnail
     Args:
@@ -855,6 +711,7 @@ def get_thumbnail(url):
         log('downloading Thumbnail failed', log_level=2)
 
 
+# todo: should move it to video.py file
 def download_thumbnail(url, fp):
     """download thumbnail
 
@@ -919,32 +776,6 @@ def parse_bytes(bytestr):
         return int(round(number * multiplier))
     except:
         return 0
-
-
-def version_value(text):
-    """
-    convert date based version number into date object for comparision purpose
-    
-    Args:
-        text: version with dot separated digits i.e. "2020.4.27"
-
-    Return:
-        datetime.date
-    """
-
-    try:
-        # calculate how many days as a value
-        year, month, day = [int(x) for x in text.split('.')]
-        # return year * 366 + month * 30.5 + day
-        return datetime.date(year, month, day)
-    except:
-        return 0
-
-
-def reset_queue(q):
-    """clear all contents of queue by dummy reading contents"""
-    for _ in range(q.qsize()):
-        _ = q.get()
 
 
 def is_pkg_exist(pkg):
@@ -1169,12 +1000,6 @@ def generate_unique_name(*args, prefix='', suffix=''):
     return prefix + name + suffix
 
 
-def open_log_file():
-    """open log file located in settings folder"""
-    file = os.path.join(config.sett_folder, 'log.txt')
-    open_file(file)
-
-
 def open_webpage(url):
     """open webpage in default browser
     Args:
@@ -1186,15 +1011,12 @@ def open_webpage(url):
         log('utils.open_webpage()> error:', e)
 
 
-
 __all__ = [
-    'notify', 'handle_exceptions', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name',
-    'size_splitter', 'delete_folder', 'get_seg_size', 'run_command', 'print_object', 'update_object', 'truncate',
-    'sort_dictionary', 'compare_versions', 'translate_server_code', 'validate_url', 'open_file', 'delete_file',
-    'rename_file', 'load_json', 'save_json', 'echo_stdout', 'echo_stderr', 'log_recorder', 'natural_sort', 'is_pkg_exist',
-    'parse_bytes', 'set_curl_options', 'version_value', 'reset_queue', 'open_folder', 'auto_rename', 'calc_md5',
-    'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image', 'run_thread',
-    'generate_unique_name', 'open_log_file', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
+    'notify', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name', 'delete_folder',
+    'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
+    'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
+    'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
+    'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
     'derender_text',
 
 ]
