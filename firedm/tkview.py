@@ -3433,7 +3433,7 @@ class MainWindow(IView):
         tk.Label(font_frame, bg=bg, fg=fg, text='Font size:').pack(side='left', padx=(10, 5))
         tk.Spinbox(font_frame, from_= 6, to = 25, state='readonly', textvariable=font_size_var, justify='center',
                    command=update_font, readonlybackground=MAIN_BG, fg=MAIN_FG, buttonbackground=SF_BG,
-                   width=4).pack(side='left', padx=5, ipady=2) 
+                   width=4, repeatinterval=0).pack(side='left', padx=5, ipady=2)
 
         # scrollbar width ---------------------------
         sb_frame = tk.Frame(tab, bg=bg)
