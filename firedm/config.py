@@ -79,7 +79,8 @@ except:
     pass
 
 # release type
-isappimage = False  # AppImage release
+isappimage = False  # will be set to True by AppImage run script
+appimage_update_folder = None  # will be set by AppImage run script
 
 # application exit flag
 terminate = False  # for main window and downloads

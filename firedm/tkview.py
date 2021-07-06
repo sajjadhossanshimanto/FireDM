@@ -260,7 +260,7 @@ def create_imgs():
     sizes = {'playlist_icon': 25}
 
     for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'dropdown_icon', 'folder_icon',
-              'play_icon', 'pause_icon', 'delete_icon'):
+              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon'):
         v = iconsbase64.__dict__[k]
 
         if k == 'dropdown_icon':
@@ -3275,14 +3275,14 @@ class MainWindow(IView):
 
         # thumbnail ----------------------------------------------------------------------------------------------------
         self.thumbnail = Thumbnail(parent=home_tab)
-        self.thumbnail.grid(row=1, column=3, columnspan=1, rowspan=1, padx=5, pady=10, sticky='e')
+        self.thumbnail.grid(row=1, column=3, rowspan=1, padx=5, pady=10, sticky='e')
 
         # video menus --------------------------------------------------------------------------------------------------
         self.pl_menu = MediaListBox(home_tab, bg, 'Playlist:')
-        self.pl_menu.grid(row=1, column=0, columnspan=1, rowspan=1, pady=10, padx=5, sticky='nsew')
+        self.pl_menu.grid(row=1, column=0, rowspan=1, pady=10, padx=5, sticky='nsew')
         Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').place(relx=1, rely=0, x=-40, y=5)
         self.stream_menu = MediaListBox(home_tab, bg, 'Stream Quality:')
-        self.stream_menu.grid(row=1, column=1, columnspan=1, rowspan=1, padx=15, pady=10, sticky='nsew')
+        self.stream_menu.grid(row=1, column=1, rowspan=1, padx=15, pady=10, sticky='nsew')
 
         # bind menu selection
         self.pl_menu.listbox.bind('<<ListboxSelect>>', self.video_select_callback)
@@ -3686,7 +3686,7 @@ class MainWindow(IView):
         update_frame = tk.Frame(tab, bg=bg)
         update_frame.pack(anchor='n', fill='both', expand=True, pady=(20, 0))
 
-        update_frame.columnconfigure(2, weight=1)
+        update_frame.columnconfigure(4, weight=1)
 
         def lbl(var):
             return tk.Label(update_frame, bg=bg, fg=fg, textvariable=var, padx=5)
@@ -3694,36 +3694,42 @@ class MainWindow(IView):
         CheckEntryOption(update_frame, 'Check for update every: ', entry_key='update_frequency', width=4,
                          justify='center',
                          check_key='check_for_update', get_text_validator=lambda x: int(x) if int(x) > 0 else 7) \
-            .grid(row=0, column=0, columnspan=2, sticky='w')
+            .grid(row=0, column=1, sticky='w')
         tk.Label(update_frame, bg=bg, fg=fg, text='days', padx=5).grid(row=0, column=2, sticky='w')
 
         # FireDM update
         self.firedm_update_note = tk.StringVar()
         self.firedm_update_note.set(f'FireDM version: {config.APP_VERSION}')
-        lbl(self.firedm_update_note).grid(row=1, column=1, columnspan=2, sticky='w', pady=20)
-        Button(update_frame, image=imgs['refresh_icon'], text='  Manually Check for update!', compound='left',
-               command=self.check_for_update).grid(row=1, column=3, sticky='w', padx=(20, 5))
+        lbl(self.firedm_update_note).grid(row=1, column=1, sticky='w', pady=20, padx=20)
 
         # youtube-dl and yt_dlp
         self.youtube_dl_update_note = tk.StringVar()
         self.youtube_dl_update_note.set(f'youtube-dl version: {config.youtube_dl_version}')
-        lbl(self.youtube_dl_update_note).grid(row=2, column=1, columnspan=2, sticky='w', pady=20)
+        lbl(self.youtube_dl_update_note).grid(row=2, column=1, sticky='w', pady=(0, 20), padx=20)
 
         self.yt_dlp_update_note = tk.StringVar()
         self.yt_dlp_update_note.set(f'yt_dlp version: {config.yt_dlp_version}')
-        lbl(self.yt_dlp_update_note).grid(row=3, column=1, columnspan=2, sticky='w')
+        lbl(self.yt_dlp_update_note).grid(row=3, column=1, sticky='w', pady=(0, 20), padx=20)
 
-        if config.FROZEN and config.operating_system == 'Windows':
-            Button(update_frame, text='Rollback update', command=lambda: self.rollback_pkg_update('youtube_dl'))\
-                .grid(row=2, column=3, sticky='w', pady=5, padx=(20, 5))
+        if config.FROZEN or config.isappimage:
+            for i, pkg in enumerate(('firedm', 'youtube_dl', 'yt_dlp')):
+                Button(update_frame, text='Rollback', command=lambda x=pkg: self.rollback_pkg_update(x),
+                       tooltip=f'restore previous {pkg} version',
+                       image=imgs['undo_icon']).grid(row=i + 1, column=3, sticky='w', pady=5)
 
-            Button(update_frame, text='Rollback update', command=lambda: self.rollback_pkg_update('yt_dlp'))\
-                .grid(row=3, column=3, sticky='w', pady=5, padx=(20, 5))
+        Button(update_frame, text='Check for updates', compound='left',
+               command=self.check_for_update).grid(row=3, column=4, padx=20)
 
         # progressbar while updating packages
         self.update_progressbar = atk.RadialProgressbar(parent=update_frame, size=100, fg=PBAR_FG, text_bg=bg,
                                                         text_fg=PBAR_TXT)
-        self.update_progressbar.grid(row=1, column=4, rowspan=3, pady=5, padx=20, sticky='e')
+        self.update_progressbar.grid(row=1, column=4, rowspan=2, columnspan=3, pady=50, padx=20)
+
+        if config.isappimage:
+            appimage_note = f'Note: AppImage update folder located at: {config.appimage_update_folder} \n'\
+                            f'it can be safely deleted to use original AppImage packages'
+            AutoWrappingLabel(update_frame, bg=bg, fg=fg, anchor='w', text=appimage_note,
+                     justify='left').grid(row=4, column=1, columnspan=6, pady=50, sticky='ew', padx=20)
 
         return tab
 

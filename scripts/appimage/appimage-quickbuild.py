@@ -75,19 +75,20 @@ if not os.path.isdir(AppDir):
               'from https://github.com/firedm/FireDM/releases/latest')
         exit(1)
 
-lib_folder = f'{AppDir}/usr/lib/python3.6/site-packages'
+site_pkgs_folder = f'{AppDir}/usr/lib/python3.6/site-packages'
+
+# copy firedm ----------------------------------------------------------------------------------------------------------
+print('copy firedm')
+src_folder = os.path.join(project_folder, 'firedm')
+target_folder = os.path.join(AppDir, 'usr/src/firedm')
+shutil.copytree(src_folder, target_folder,  dirs_exist_ok=True)
 
 # update pkgs ----------------------------------------------------------------------------------------------------------
 print('update packages')
 
-# update firedm pkg
-src_folder = os.path.join(project_folder, 'firedm')
-target_folder = os.path.join(lib_folder, 'firedm')
-shutil.copytree(src_folder, target_folder,  dirs_exist_ok=True)
-
 # update other packages
 pkgs = ['youtube_dl', 'yt_dlp', 'awesometkinter', 'certifi', 'python_bidi', 'distro']
-cmd = f'{sys.executable} -m pip install {" ".join(pkgs)} --upgrade --no-compile   --no-deps --target "{lib_folder}" '
+cmd = f'{sys.executable} -m pip install {" ".join(pkgs)} --upgrade --no-compile   --no-deps --target "{site_pkgs_folder}" '
 subprocess.run(cmd, shell=True)
 
 # copy icon ------------------------------------------------------------------------------------------------------------
@@ -121,6 +122,12 @@ with open(desktop_fp1, 'w') as f1, open(desktop_fp2, 'w') as f2:
     f1.write(contents)
     f2.write(contents)
 
+# copy run.py ----------------------------------------------------------------------------------------------------------
+print('copy run.py')
+src = 'run.py'
+dst = f'{AppDir}/run.py'
+shutil.copyfile(src, dst)
+
 # edit .env file -------------------------------------------------------------------------------------------------------
 print('edit ".env" file')
 
@@ -133,16 +140,10 @@ for i, line in enumerate(data):
         data[i] = 'EXEC_PATH=$APPDIR/usr/bin/python3\n'
     elif line.startswith('EXEC_ARGS'):
         # Use '$@' to forward CLI parameters
-        data[i] = 'EXEC_ARGS=-m firedm $@\n'
+        data[i] = 'EXEC_ARGS=$APPDIR/run.py $@\n'
 
 with open(env_fp, 'w') as f:
     f.writelines(data)
-
-# batch config file ----------------------------------------------------------------------------------------------------
-print('edit "config" file')
-config_fp = f'{lib_folder}/firedm/config.py'
-with open(config_fp, 'a') as f:
-    f.write('\nisappimage = True\n')
 
 # Start FireDM with "--imports-only" flag to build pyc files for new packages  -----------------------------------------
 print('starting FireDM')

@@ -1269,11 +1269,11 @@ class Controller:
 
         def fetch_pypi(pkg):
             pkg_info = info[pkg]
-            pkg_info['latest_version'], _ = update.get_pkg_latest_version(pkg, fetch_url=False)
+            pkg_info['latest_version'], pkg_info['url'] = update.get_pkg_latest_version(pkg, fetch_url=False)
             log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
-        pkgs = ('firedm',) if config.isappimage else info.keys()
+        pkgs = info.keys()
         for pkg in pkgs:
             if not info[pkg]['current_version']:
                 log(f'{pkg} still loading, try again')
@@ -1328,14 +1328,11 @@ class Controller:
 
             res = self.get_user_response(msg, options)
             if res == options[0]:
-                if config.isappimage:
-                    # open webpage only
-                    open_webpage('https://github.com/firedm/FireDM/releases/latest')
-                else:
                     # start updating modules
                     done_pkgs = {}
                     for pkg in new_pkgs:
-                        latest_version, url = update.get_pkg_latest_version(pkg, fetch_url=True)
+                        pkg_info = info[pkg]
+                        latest_version, url = pkg_info['latest_version'], pkg_info['url']
 
                         log('Installing', pkg, latest_version)
                         try:

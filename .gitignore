@@ -25,6 +25,7 @@
 !scripts/appimage/
 !scripts/appimage/appimage-fullbuild.sh
 !scripts/appimage/appimage-quickbuild.py
+!scripts/appimage/run.py
 !icons/
 !icons/48x48.png
 !icons/48_32_16.ico
