@@ -3665,8 +3665,6 @@ class MainWindow(IView):
         level_menu.pack(side='left', padx=5)
 
         Button(btn_frame, text='Clear', command=self.log_text.clear).pack(side='right', padx=5)
-        # Button(btn_frame, text='Folder', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
-        # Button(btn_frame, text='Log File', command=open_log_file).pack(side='right', padx=5)
         Button(btn_frame, text='copy Log', command=copy_log).pack(side='right', padx=5)
 
         btn_frame.pack(pady=5, expand=True, fill='x')

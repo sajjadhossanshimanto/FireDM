@@ -26,7 +26,7 @@ import webbrowser
 from packaging.version import parse as parse_version
 
 from . import config
-from .utils import log, download, run_command, delete_folder, version_value, delete_file
+from .utils import log, download, run_command, delete_folder, delete_file
 
 
 def open_update_link():

@@ -14,7 +14,7 @@ import shutil
 from . import config
 from . import downloaditem
 from . import model
-from .utils import log, handle_exceptions, update_object
+from .utils import log, update_object
 
 
 def get_global_sett_folder():
@@ -155,7 +155,7 @@ def save_d_map(d_map):
 
         log('downloads items list saved in:', downloads_fp)
     except Exception as e:
-        handle_exceptions(e)
+        log('save_d_map()> ', e)
 
 
 def load_setting():
@@ -169,7 +169,7 @@ def load_setting():
     except FileNotFoundError:
         log('setting.cfg not found')
     except Exception as e:
-        handle_exceptions(e)
+        log('load_setting()> ', e)
     finally:
         if not isinstance(settings, dict):
             settings = {}

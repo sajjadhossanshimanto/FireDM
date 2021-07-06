@@ -189,7 +189,6 @@ max_seg_retries = 10  # maximum retries for a segment until reporting downloaded
 log_entry = ''  # one log line
 max_log_size = 1024 * 1024 * 5  # 5 MB
 log_level = DEFAULT_LOG_LEVEL  # standard=1, verbose=2, debug=3
-log_recorder_q = Queue()
 
 # log callbacks that will be executed when calling log func in utils
 # callback and popup should accept 3 positional args e.g. log_callback(start, text, end)
