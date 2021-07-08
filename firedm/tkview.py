@@ -1601,6 +1601,53 @@ class Thumbnail(tk.Frame):
             self.current_img = img
             self.label['image'] = img
 
+class Segmentbar(tk.Canvas):
+    def __init__(self, master):
+        self.master = master
+        self.bars = {}
+        self.height = 10
+        self.width = 100
+        super().__init__(self.master, bg=PBAR_BG, width=self.width, height=self.height, bd=0, highlightthickness=0)
+        self.bind('<Configure>', self.redraw)
+        print('*'*50, self.config())
+
+    def set_segment(self, tag_id, end):
+        x0, y0, x1, y1 = self.coords(tag_id)
+        x1 = end
+        self.coords(tag_id, x0, y0, x1, y1)
+
+    def update_bar(self, info):
+        """expecting a tuple or a list with the following structure
+        (range-start, length, total-file-size)"""
+        start, length, size = info
+
+        end = start + length
+
+        scale = size / self.width
+        start = start // scale
+        end = round(end / scale, 0)
+
+        tag_id = self.bars.get(start, None)
+        if tag_id:
+            self.set_segment(tag_id, end)
+        else:
+            tag_id = self.create_rectangle(start, 0, end, self.height, fill=PBAR_FG, width=0)
+            self.bars[start] = tag_id
+
+        self.update_idletasks()
+
+    def redraw(self, *args):
+        # in case of window get resized by user
+        scale = self.winfo_width() / self.width
+        self.width = self.winfo_width()
+        for tag_id in self.bars.values():
+            x0, y0, x1, y1 = self.coords(tag_id)
+            x0 *= scale
+            x1 *= scale
+            self.coords(tag_id, x0, y0, x1, y1)
+
+        self.update_idletasks()
+
 
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
@@ -1672,16 +1719,20 @@ class DItem(tk.Frame):
             self.bar_fr = tk.Frame(self, bg=self.bg)
             s = ttk.Style()
             self.bottom_bars_style = 'bottombars.Horizontal.TProgressbar'
-            s.configure(self.bottom_bars_style, thickness=5, background=PBAR_FG, troughcolor=PBAR_BG,
+            s.configure(self.bottom_bars_style, thickness=1, background=PBAR_FG, troughcolor=PBAR_BG,
                         troughrelief=tk.FLAT, pbarrelief=tk.FLAT)
 
             for lbl, var in zip(('Video: ', '    Audio: ', '    Output File: '), (self.vbar, self.abar, self.mbar)):
                 tk.Label(self.bar_fr, text=lbl, bg=self.bg, fg=self.fg).pack(side='left')
-                ttk.Progressbar(self.bar_fr, orient=tk.HORIZONTAL, style=self.bottom_bars_style,
+                ttk.Progressbar(self.bar_fr, orient=tk.HORIZONTAL, style=self.bottom_bars_style, length=20,
                                 variable=var).pack(side='left', expand=True, fill='x')
 
             self.bar_fr.grid(row=3, column=1, columnspan=1, sticky='ew', padx=0)
             self.bar_fr.grid_remove()
+
+            # segments progressbar
+            self.segment_bar = Segmentbar(self)
+            self.segment_bar.grid(row=4, column=0, columnspan=3, sticky='ew', padx=0)
 
             # create buttons
             self.play_button = Button(btns_frame, image=imgs['play_icon'])
@@ -1700,7 +1751,7 @@ class DItem(tk.Frame):
         self.blinker.pack(side='left', padx=5, pady=5)
 
         # separator
-        ttk.Separator(self, orient='horizontal').grid(row=4, column=0, columnspan=3, sticky='ew', padx=0)
+        ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=0)
 
     def __repr__(self):
         return f'DItem({self.uid})'
@@ -1723,11 +1774,11 @@ class DItem(tk.Frame):
             for child in w.winfo_children():
                 try:
 
-                    if child is not self.thumbnail_label and child.winfo_class() not in ('TSeparator', 'Menu'):
+                    if child is not self.thumbnail_label and child.winfo_class() not in ('TSeparator', 'Menu', 'Canvas'):
                         atk.configure_widget(child, background=highlight_bg, foreground=highlight_fg)
                     
                     # correction for bottom bars
-                    if child.winfo_class() == 'TProgressbar':
+                    if child.winfo_class() in ('TProgressbar', ):
                         s.configure(self.bottom_bars_style, background=PBAR_FG, troughcolor=PBAR_BG)
                 except:
                     pass
@@ -1804,7 +1855,8 @@ class DItem(tk.Frame):
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
-               on_completion_command=None, video_progress=None, audio_progress=None, merge_progress=None, **kwargs):
+               on_completion_command=None, video_progress=None, audio_progress=None, merge_progress=None,
+               segments_progress=None, **kwargs):
         """update widgets value"""
         # print(locals())
         try:
@@ -1900,6 +1952,11 @@ class DItem(tk.Frame):
 
             if merge_progress:
                 self.mbar.set(merge_progress)
+
+            if segments_progress:
+                print(segments_progress)
+                for seg_info in segments_progress:
+                    self.segment_bar.update_bar(seg_info)
 
             self.display_info()
 
@@ -3879,6 +3936,9 @@ class MainWindow(IView):
             excludes += [d_item.play_button]
 
         d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
+
+        # d_item.delete_button['command'] = Zoo(self.root).show
+
 
         # bind double click to play a file
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)

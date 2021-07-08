@@ -227,6 +227,8 @@ class DownloadItem:
         # custom command to run in terminal after completing download
         self.on_completion_command = ''
 
+        segments_progress = []
+
         # properties names that will be saved on disk
         self.saved_properties = ['_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
                                  'resumable', 'selected_quality', '_segment_size', '_downloaded', '_status',
@@ -707,7 +709,6 @@ class DownloadItem:
                     progress = 100
 
             return progress
-
         
         self.video_progress = _get_progress(self.temp_file, self.size)
 
@@ -716,5 +717,36 @@ class DownloadItem:
         else:
             self.audio_progress = _get_progress(self.audio_file, self.audio_size)
             
-        self.merge_progress = _get_progress(self.target_file, self.total_size)
+        self.merge_progress = 100 if self.status == config.Status.completed else _get_progress(self.target_file, self.total_size)
+
+    def update_segments_progress(self, activeonly=False):
+        """set self.segments_progress with a list of 3-tuples (starting range, length, total file size)"""
+        try:
+            if 'hls' in self.subtype_list:
+                # one hls file might contains more than 5000 segment with unknown sizes
+                # will use segments numbers instead of size and segment number as a starting point
+
+                n = len(self.segments)
+
+                if activeonly:
+                    # report each segment only once, will make a temp variable to hold reported segments numbers
+                    reportednums = self.__dict__.setdefault('_something_xyz_123', [])
+                    self.segments_progress = [(self.segments.index(seg), 1, n) for seg in self.segments
+                                              if seg.downloaded and self.segments.index(seg) not in reportednums]
+                    reportednums.extend([item[0] for item in self.segments_progress])
+                else:
+                    # report all
+                    self.segments_progress = [(self.segments.index(seg), 1, n) for seg in self.segments if seg.downloaded]
+            else:
+                if activeonly:
+                    # report active blocks only
+                    done_ranges = [(seg.range[0], seg.current_size) for seg in self.segments if seg.locked]
+                else:
+                    # report all blocks
+                    done_ranges = [(seg.range[0], seg.current_size) for seg in self.segments]
+
+                self.segments_progress = [(*item, self.total_size) for item in done_ranges if item[1]]
+        except Exception as e:
+            if config.TEST_MODE:
+                log('update_segments_progress()>', e)
 

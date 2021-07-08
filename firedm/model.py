@@ -29,7 +29,8 @@ class Observable:
         self.watch_list = ['uid', 'name', 'rendered_name', 'progress', 'speed', 'time_left', 'downloaded', 'size',
                            'total_size', 'status', 'busy', 'thumbnail', 'type', 'subtype_list', 'resumable', 'title',
                            'extension', 'errors', 'sched', 'remaining_parts', 'live_connections', 'total_parts',
-                           'shutdown_pc', 'on_completion_command', 'video_progress', 'audio_progress', 'merge_progress']
+                           'shutdown_pc', 'on_completion_command', 'video_progress', 'audio_progress', 'merge_progress',
+                           'segments_progress']
 
         # list of callbacks to be executed on properties change
         self.observer_callbacks = observer_callbacks or []

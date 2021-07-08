@@ -70,12 +70,15 @@ def brain(d=None):
 
     # create some queues to send quit flag to threads
     fpr_q = Queue()
+    spr_q = Queue()
     tm_q = Queue()
     fm_q = Queue()
 
     if d.type == config.MediaType.video:
         # run files processing reporter in a separate thread
         Thread(target=fpr, daemon=True, args=(d, fpr_q)).start()
+
+    Thread(target=spr, daemon=True, args=(d, spr_q)).start()
 
     # run file manager in a separate thread
     Thread(target=file_manager, daemon=True, args=(d, fm_q, keep_segments)).start()
@@ -101,7 +104,7 @@ def brain(d=None):
 
     # report quitting
     log(f'brain {d.uid}: quitting', log_level=2)
-    for q in (fpr_q, tm_q, fm_q):
+    for q in (spr_q, fpr_q, tm_q, fm_q):
         q.put('quit')
 
     if d.status == Status.completed:
@@ -132,6 +135,9 @@ def file_manager(d, q, keep_segments=True):
     temp_files = set([seg.tempfile for seg in d.segments])
     for file in temp_files:
         open(file, 'ab').close()
+
+    # report all blocks
+    d.update_segments_progress()
 
     while True:
         time.sleep(0.1)
@@ -297,6 +303,8 @@ def file_manager(d, q, keep_segments=True):
                     delete_file(metadata_filename)
 
             # at this point all done successfully
+            # report all blocks
+            d.update_segments_progress()
             d.status = Status.completed
             # print('---------file manager done merging segments---------')
             break
@@ -329,6 +337,8 @@ def thread_manager(d, q):
     all_workers = [Worker(tag=i, d=d) for i in range(config.max_connections)]
     free_workers = set([w for w in all_workers])
     threads_to_workers = dict()
+
+    # todo: delete ThreadPoolExecutor, individual threads working fine
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.max_connections)
     num_live_threads = 0
 
@@ -454,13 +464,15 @@ def thread_manager(d, q):
                 elif time.time() - segmentation_timer >= 1:
                     segmentation_timer = time.time()
 
-                    # calculate minimum segment size based on speed, e.g. for 3 MB/s speed, min seg. size will be 300Kb
-                    min_seg_size = max(config.segment_size, 0.1 * d.speed)
+                    # calculate minimum segment size based on speed, e.g. for 3 MB/s speed, and 2 live threads,
+                    # min seg. size will be 1.5 MB
+                    worker_speed = d.speed // num_live_threads
+                    min_seg_size = max(config.segment_size, worker_speed)
 
                     remaining_segs = [seg for seg in d.segments if seg.range is not None
                                       and seg.remaining > min_seg_size * 2]
-                    remaining_segs = sorted(remaining_segs, key=lambda seg: seg.remaining)
-                    # log('x'*20, 'check remaining')
+                    remaining_segs.reverse()
+
 
                     if remaining_segs:
                         current_seg = remaining_segs.pop()
@@ -551,12 +563,32 @@ def fpr(d, q):
     while True:
 
         d.update_media_files_progress()
-    
 
         try:
             if d.status not in config.Status.active_states or q.get_nowait() == 'quit':
                 break
         except:
             pass
+
+        time.sleep(1)
+
+
+def spr(d, q):
+    """segments progress reporter
+
+    Args:
+        d: DownloadItem object
+    """
+
+    while True:
+
+        try:
+            if d.status not in config.Status.active_states or q.get_nowait() == 'quit':
+                break
+        except:
+            pass
+
+        # report active blocks only
+        d.update_segments_progress(activeonly=True)
 
         time.sleep(1)
