@@ -1609,7 +1609,6 @@ class Segmentbar(tk.Canvas):
         self.width = 100
         super().__init__(self.master, bg=PBAR_BG, width=self.width, height=self.height, bd=0, highlightthickness=0)
         self.bind('<Configure>', self.redraw)
-        print('*'*50, self.config())
 
     def set_segment(self, tag_id, end):
         x0, y0, x1, y1 = self.coords(tag_id)
@@ -1954,7 +1953,6 @@ class DItem(tk.Frame):
                 self.mbar.set(merge_progress)
 
             if segments_progress:
-                print(segments_progress)
                 for seg_info in segments_progress:
                     self.segment_bar.update_bar(seg_info)
 

@@ -113,6 +113,7 @@ class DownloadItem:
         self.eff_url = ''
 
         self.size = 0
+        self._video_size = 0
         self._total_size = 0
         self.resumable = False
 
@@ -255,6 +256,14 @@ class DownloadItem:
         # should recalculate total size again with every completed segment, most of the time segment size won't be
         # available until actually downloaded this segment, "check worker.report_completed()"
         self.total_size = self.calculate_total_size()
+
+    @property
+    def video_size(self):
+        return self._video_size or self.size
+
+    @video_size.setter
+    def video_size(self, value):
+        self._video_size = value
 
     @property
     def total_size(self):
@@ -440,16 +449,39 @@ class DownloadItem:
         # print('self.selected_subtitles:', self.selected_subtitles)
 
     def calculate_total_size(self):
+        # this is heavy and should be used carefully, calculate size by getting every segment's size
+        def guess_size(seglist):
+            known_sizes = [seg.size for seg in seglist if seg.size]
+            unknown_sizes_num = len(seglist) - len(known_sizes)
+            tsize = sum(known_sizes)
+
+            # guess remaining segments' sizes
+            if known_sizes and unknown_sizes_num:
+                avg_seg_size = sum(known_sizes) // len(known_sizes)
+                tsize += avg_seg_size * unknown_sizes_num
+            return tsize
+
         total_size = 0
 
-        # this is heavy and should be used carefully, calculate size by getting every segment's size
         if self.segments:
-            sizes = [seg.size for seg in self.segments if seg.size]
-            total_size = sum(sizes)
-            # if there is some items not yet downloaded and have zero size will make estimated calculations
-            if sizes and [seg for seg in self.segments if seg.downloaded is False and not seg.size]:
-                avg_seg_size = sum(sizes) // len(sizes)
-                total_size = avg_seg_size * len(self.segments)  # estimated
+
+            # get video segments
+            video_segs = [seg for seg in self.segments if seg.media_type == MediaType.video]
+
+            # get audio segments
+            audio_segs = [seg for seg in self.segments if seg.media_type == MediaType.audio]
+
+            # get other segments if any
+            other_segs = [seg for seg in self.segments if seg not in (*video_segs, *audio_segs)]
+
+            # calculate sizes
+            video_size = guess_size(video_segs)
+            audio_size = guess_size(audio_segs)
+            othres_size = guess_size(other_segs)
+
+            self.video_size = video_size
+            self.audio_size = audio_size
+            total_size = video_size + audio_size + othres_size
 
             self.total_parts = len(self.segments)
 
@@ -694,6 +726,12 @@ class DownloadItem:
 
         """
 
+        if self.status == config.Status.completed:
+            self.video_progress = 100
+            self.audio_progress = 100
+            self.merge_progress = 100
+            return
+
         def _get_progress(fp, full_size):
             try:
                 current_size = os.path.getsize(fp)
@@ -709,15 +747,15 @@ class DownloadItem:
                     progress = 100
 
             return progress
-        
-        self.video_progress = _get_progress(self.temp_file, self.size)
+
+        self.video_progress = _get_progress(self.temp_file, self.video_size)
 
         if 'normal' in self.subtype_list:
             self.audio_progress = self.video_progress
         else:
             self.audio_progress = _get_progress(self.audio_file, self.audio_size)
             
-        self.merge_progress = 100 if self.status == config.Status.completed else _get_progress(self.target_file, self.total_size)
+        self.merge_progress = _get_progress(self.target_file, self.total_size)
 
     def update_segments_progress(self, activeonly=False):
         """set self.segments_progress with a list of 3-tuples (starting range, length, total file size)"""

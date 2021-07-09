@@ -466,7 +466,7 @@ def thread_manager(d, q):
 
                     # calculate minimum segment size based on speed, e.g. for 3 MB/s speed, and 2 live threads,
                     # min seg. size will be 1.5 MB
-                    worker_speed = d.speed // num_live_threads
+                    worker_speed = d.speed // num_live_threads if num_live_threads else 0
                     min_seg_size = max(config.segment_size, worker_speed)
 
                     remaining_segs = [seg for seg in d.segments if seg.range is not None

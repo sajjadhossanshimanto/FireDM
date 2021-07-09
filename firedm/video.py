@@ -1150,6 +1150,7 @@ class MediaPlaylist:
 
                 next_line = lines[i + 1]
                 seg = Segment()
+                seg.media_type = self.stream_type
                 seg.url = next_line if not next_line.startswith('#') else None
                 seg.duration = self.seg_duration
                 seg.key = copy.copy(self.current_key)
