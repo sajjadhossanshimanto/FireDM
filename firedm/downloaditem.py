@@ -31,7 +31,9 @@ class Segment:
         self.num = num
         self._range = range  # a list of start and end bytes
         self.size = size
+        # todo: change bool (downloaded, and completed) to (isdownloaded, and iscompleted), and down_bytes to downloaded
         self.downloaded = False
+        self._down_bytes = 0
         self.completed = False  # done downloading and merging into tempfile
         self.tempfile = tempfile
         self.headers = {}
@@ -54,6 +56,14 @@ class Segment:
         except:
             size = 0
         return size
+
+    @property
+    def down_bytes(self):
+        return self._down_bytes if self._down_bytes > 0 else self.current_size
+
+    @down_bytes.setter
+    def down_bytes(self, value):
+        self._down_bytes = value
 
     @property
     def remaining(self):
@@ -228,7 +238,8 @@ class DownloadItem:
         # custom command to run in terminal after completing download
         self.on_completion_command = ''
 
-        segments_progress = []
+        self.segments_progress = []
+        self.segments_progress_bool = []
 
         # properties names that will be saved on disk
         self.saved_properties = ['_name', 'folder', 'url', 'eff_url', 'playlist_url', 'playlist_title', 'size',
@@ -428,6 +439,14 @@ class DownloadItem:
         self._segment_size = value if value <= self.size else self.size
         # print('segment size = ', self._segment_size)
 
+    @property
+    def video_segments(self):
+        return [seg for seg in self.segments if seg.media_type == MediaType.video]
+
+    @property
+    def audio_segments(self):
+        return [seg for seg in self.segments if seg.media_type == MediaType.audio]
+
     def select_subs(self, subs_names=None):
         """
         search subtitles names and build a dict of name:url for all selected subs
@@ -605,7 +624,7 @@ class DownloadItem:
 
             _segments = [
                 Segment(name=os.path.join(self.temp_folder, str(i)), num=i, range=x,
-                        url=self.eff_url, tempfile=self.temp_file, media_type=MediaType.general)
+                        url=self.eff_url, tempfile=self.temp_file, media_type=self.type)
                 for i, x in enumerate(range_list)]
 
         # get an audio stream to be merged with dash video
@@ -758,33 +777,36 @@ class DownloadItem:
         self.merge_progress = _get_progress(self.target_file, self.total_size)
 
     def update_segments_progress(self, activeonly=False):
-        """set self.segments_progress with a list of 3-tuples (starting range, length, total file size)"""
+        """set self.segments_progress, e.g [total size, [(starting range, length, total file size), ...]]"""
+        if self.status == config.Status.completed:
+            self.segments_progress = [100, [(0, 100)]]
+            return
+
+        spb = self.segments_progress_bool
+        c = (lambda seg: seg not in spb) if activeonly else (lambda seg: True)
+        total_size = self.total_size
+
         try:
             if 'hls' in self.subtype_list:
-                # one hls file might contains more than 5000 segment with unknown sizes
-                # will use segments numbers instead of size and segment number as a starting point
+                # one hls file might contain more than 5000 segment with unknown sizes
+                # will use segments numbers as a starting point and segment size = 1
 
-                n = len(self.segments)
+                total_size = len(self.segments)
+                sp = [(self.segments.index(seg), 1) for seg in self.segments if seg.downloaded and c(seg)]
 
-                if activeonly:
-                    # report each segment only once, will make a temp variable to hold reported segments numbers
-                    reportednums = self.__dict__.setdefault('_something_xyz_123', [])
-                    self.segments_progress = [(self.segments.index(seg), 1, n) for seg in self.segments
-                                              if seg.downloaded and self.segments.index(seg) not in reportednums]
-                    reportednums.extend([item[0] for item in self.segments_progress])
-                else:
-                    # report all
-                    self.segments_progress = [(self.segments.index(seg), 1, n) for seg in self.segments if seg.downloaded]
+            elif self.type == MediaType.video:
+
+                vid = [(seg.range[0], seg.down_bytes) for seg in self.video_segments if c(seg)]
+                aud = [(seg.range[0] + self.video_size - 1, seg.down_bytes) for seg in self.audio_segments if c(seg)]
+
+                sp = vid + aud
             else:
-                if activeonly:
-                    # report active blocks only
-                    done_ranges = [(seg.range[0], seg.current_size) for seg in self.segments if seg.locked]
-                else:
-                    # report all blocks
-                    done_ranges = [(seg.range[0], seg.current_size) for seg in self.segments]
+                sp = [(seg.range[0], seg.down_bytes) for seg in self.segments if c(seg)]
 
-                self.segments_progress = [(*item, self.total_size) for item in done_ranges if item[1]]
+            sp = [item for item in sp if item[1]]
+            spb.extend([seg for seg in self.segments if seg.downloaded])
+            self.segments_progress = [total_size, sp]
+
         except Exception as e:
             if config.TEST_MODE:
                 log('update_segments_progress()>', e)
-

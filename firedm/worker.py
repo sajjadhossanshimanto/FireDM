@@ -94,7 +94,7 @@ class Worker:
     def check_previous_download(self):
         def overwrite():
             # reset start size and remove value from d.downloaded
-            self.d.downloaded -= self.seg.current_size
+            self.report_download(-self.seg.current_size)
             self.mode = 'wb'
             log('Seg', self.seg.basename, 'overwrite the previous part-downloaded segment', ' - worker', self.tag,
                 log_level=3)
@@ -125,7 +125,7 @@ class Worker:
                 size_format(self.seg.size), ' - worker', self.tag, log_level=3)
 
             self.seg.downloaded = True
-            self.d.downloaded -= self.seg.current_size - self.seg.size
+            self.report_download(- (self.seg.current_size - self.seg.size))
 
             # truncate file
             with open(self.seg.name, 'rb+') as f:
@@ -259,6 +259,7 @@ class Worker:
         """report downloaded to DownloadItem"""
         if isinstance(value, (int, float)):
             self.d.downloaded += value
+            self.seg.down_bytes += value
 
     def run(self):
         try:
@@ -335,6 +336,8 @@ class Worker:
     def write(self, data):
         """write to file"""
 
+        quit_flag = False
+
         content_type = self.headers.get('content-type')
         if content_type and 'text/html' in content_type:
             # some video encryption keys has content-type 'text/html'
@@ -353,6 +356,13 @@ class Worker:
                 pass
                 # log('worker:', e)
 
+        # check if we getting over sized
+        if self.seg.size > 0:
+            oversize = self.seg.current_size + len(data) - self.seg.size
+            if oversize > 0:
+                data = data[:-oversize]
+                quit_flag = True
+
         # write to file
         self.file.write(data)
 
@@ -364,15 +374,7 @@ class Worker:
             self.report_download(self.buffer)
             self.buffer = 0
 
-        # check if we getting over sized
-        if self.seg.current_size > self.seg.size > 0:
-            oversize = self.seg.current_size - self.seg.size
-            log('Seg', self.seg.basename, 'oversized:', size_format(oversize),
-                'current segment size:', self.seg.current_size, ' - worker', self.tag, log_level=3)
-
-            # re-adjust value of total downloaded data
-            self.report_download(-oversize)
-            # self.d.downloaded -= oversize
+        if quit_flag:
             return -1  # abort
 
 

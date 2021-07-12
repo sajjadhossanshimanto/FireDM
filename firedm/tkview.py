@@ -284,6 +284,7 @@ popup_icon_img = None
 
 busy_callbacks = []
 
+
 def ignore_calls_when_busy(callback):
     """decorator to prevent multiple execution of same function/method
     e.g. when press a button multiple times it will prevent multiple callback execution
@@ -1261,7 +1262,7 @@ class MediaListBox(tk.Frame):
         self.title_var.set(title)
 
 
-class FileDialog():
+class FileDialog:
     """use alternative file chooser to replace tkinter ugly file chooser on linux
     
     available options: 
@@ -1601,6 +1602,7 @@ class Thumbnail(tk.Frame):
             self.current_img = img
             self.label['image'] = img
 
+
 class Segmentbar(tk.Canvas):
     def __init__(self, master):
         self.master = master
@@ -1610,25 +1612,37 @@ class Segmentbar(tk.Canvas):
         super().__init__(self.master, bg=PBAR_BG, width=self.width, height=self.height, bd=0, highlightthickness=0)
         self.bind('<Configure>', self.redraw)
 
-    def set_segment(self, tag_id, end):
-        x0, y0, x1, y1 = self.coords(tag_id)
-        x1 = end
-        self.coords(tag_id, x0, y0, x1, y1)
+    def ubdate_bars(self, segments_progress):
+        # segments_progress, e.g [total size, [(starting range, length, total file size), ...]]
+        size = segments_progress[0]
+
+        # scale values
+        scale = size / self.width
+        scaled_values = set()  # use set to filter repeated values
+        for item in segments_progress[1]:
+            start, length = item
+            start = start // scale  # ignore fraction, e.g. 3.7 ====> 3.0
+            length = length // scale + (1 if length % scale else 0)  # ceiling, eg: 3.2 ====> 4.0
+            end = start + length
+
+            start = int(start)
+            end = int(end)
+
+            scaled_values.add((start, end))
+
+        for item in scaled_values:
+            self.update_bar(item)
 
     def update_bar(self, info):
         """expecting a tuple or a list with the following structure
         (range-start, length, total-file-size)"""
-        start, length, size = info
-
-        end = start + length
-
-        scale = size / self.width
-        start = start // scale
-        end = round(end / scale, 0)
+        start, end = info
 
         tag_id = self.bars.get(start, None)
         if tag_id:
-            self.set_segment(tag_id, end)
+            x0, y0, x1, y1 = self.coords(tag_id)
+            x1 = end
+            self.coords(tag_id, x0, y0, x1, y1)
         else:
             tag_id = self.create_rectangle(start, 0, end, self.height, fill=PBAR_FG, width=0)
             self.bars[start] = tag_id
@@ -1672,7 +1686,6 @@ class DItem(tk.Frame):
         self.errors = ''
         self.media_type = ''
         self.media_subtype = ''
-        self.progress = 0
         self.shutdown_pc = ''
         self.on_completion_command = ''
         self.on_toggle_callback = on_toggle_callback
@@ -1839,18 +1852,6 @@ class DItem(tk.Frame):
         # a led like blinking button, to react with data flow
         self.toggle_blinker()
 
-        if self.status == config.Status.completed:
-            try:
-                self.play_button.pack_forget()
-                self.bar.grid_forget()
-            except:
-                pass
-        else:
-            try:
-                self.bar.set(self.progress)
-            except:
-                pass
-
     def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
@@ -1877,7 +1878,10 @@ class DItem(tk.Frame):
                 self.eta = f'- ETA: {time_format(time_left)}' if time_left > 0 else ''
 
             if progress is not None:
-                self.progress = progress
+                try:
+                    self.bar.set(progress)
+                except:
+                    pass
 
             if extension:
                 ext = extension.replace('.', '').upper()
@@ -1909,6 +1913,13 @@ class DItem(tk.Frame):
                 if status == config.Status.completed:
                     self.errors = ''
                     self.completed_parts = ''
+                    try:
+                        self.play_button.pack_forget()
+                        self.bar.grid_forget()
+                        self.bar_fr.grid_forget()
+                        self.segment_bar.grid_forget()
+                    except:
+                        pass
 
                 if status != config.Status.scheduled:
                     self.sched = ''
@@ -1953,8 +1964,7 @@ class DItem(tk.Frame):
                 self.mbar.set(merge_progress)
 
             if segments_progress:
-                for seg_info in segments_progress:
-                    self.segment_bar.update_bar(seg_info)
+                self.segment_bar.ubdate_bars(segments_progress)
 
             self.display_info()
 
