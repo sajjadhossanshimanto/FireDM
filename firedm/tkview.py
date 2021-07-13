@@ -3925,7 +3925,6 @@ class MainWindow(IView):
 
         return children
 
-
     # endregion
 
     # region DItem
@@ -3952,9 +3951,6 @@ class MainWindow(IView):
 
         d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
 
-        # d_item.delete_button['command'] = Zoo(self.root).show
-
-
         # bind double click to play a file
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
 
@@ -3974,10 +3970,16 @@ class MainWindow(IView):
                            'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
                            }
 
-        entries = list(right_click_map.keys())
-        # add separators
-        for i in (-7, -3, -1):
-            entries.insert(i, '---')
+        entries = []
+
+        for i, item in enumerate(right_click_map.keys()):
+            # filter options for completed items
+            if not(status == config.Status.completed and i in (2, 6, 7, 9, 10, 11)):
+                entries.append(item)
+
+            # add separators
+            if i in (5, 9, 11) and entries[-1] != '---':
+                entries.append('---')
 
         atk.RightClickMenu(d_item, entries,
                            callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
