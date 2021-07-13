@@ -1727,6 +1727,12 @@ class DItem(tk.Frame):
                                              font_size_ratio=0.16)
             self.bar.grid(row=0, column=2, rowspan=4, padx=10, pady=5)
 
+            # blinker, it will blink with received data flow
+            self.blinker = tk.Label(self.bar, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
+                                    height=12)
+            self.blinker.on = False
+            self.blinker.place(relx=0.5, rely=0.8, anchor="center")
+
             # processing bars
             self.bar_fr = tk.Frame(self, bg=self.bg)
             s = ttk.Style()
@@ -1757,10 +1763,9 @@ class DItem(tk.Frame):
         self.info_lbl2 = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
         self.info_lbl2.pack(side='left', padx=(0, 10), pady=5)
 
-        # blinker button, it will blink with received data flow
-        self.blinker = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12, height=12)
-        self.blinker.on = False
-        self.blinker.pack(side='left', padx=5, pady=5)
+        # status icon
+        self.status_icon = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12, height=12)
+        self.status_icon.pack(side='left', padx=5, pady=5)
 
         # separator
         ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=0)
@@ -1914,6 +1919,7 @@ class DItem(tk.Frame):
                     self.errors = ''
                     self.completed_parts = ''
                     try:
+                        self.status_icon.config(image=imgs['done_icon'])
                         self.play_button.pack_forget()
                         self.bar.grid_forget()
                         self.bar_fr.grid_forget()
@@ -1921,7 +1927,11 @@ class DItem(tk.Frame):
                     except:
                         pass
 
-                if status != config.Status.scheduled:
+                elif status in (config.Status.pending, config.Status.scheduled):
+                    self.status_icon.config(image=imgs['hourglass_icon'])
+
+                else:
+                    self.status_icon.config(image=self.blank_img)
                     self.sched = ''
 
                 # toggle play/pause icons
@@ -1976,22 +1986,19 @@ class DItem(tk.Frame):
     def toggle_blinker(self):
         """an activity blinker "like a blinking led" """
         status = self.status
-        if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
-                                              config.Status.refreshing_url):
-            # on blinker
-            self.blinker.config(image=imgs['blinker_icon'])
-            self.blinker.on = True
+        try:
+            if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
+                                                  config.Status.refreshing_url):
+                # on blinker
+                self.blinker.config(image=imgs['blinker_icon'])
+                self.blinker.on = True
 
-        elif status == config.Status.completed:
-            self.blinker.config(image=imgs['done_icon'])
-
-        elif status in (config.Status.pending, config.Status.scheduled):
-            self.blinker.config(image=imgs['hourglass_icon'])
-
-        else:
-            # off blinker
-            self.blinker.config(image=self.blank_img)
-            self.blinker.on = False
+            else:
+                # off blinker
+                self.blinker.config(image=self.blank_img)
+                self.blinker.on = False
+        except:
+            pass
 
 
 class Checkbutton(tk.Checkbutton):
