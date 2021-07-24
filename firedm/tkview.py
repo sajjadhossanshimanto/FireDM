@@ -1612,6 +1612,9 @@ class DItem(tk.Frame):
         if callable(self.on_toggle_callback):
             self.on_toggle_callback()
 
+        # set focus, required for any "keyboard binding" to work
+        self.focus_set()
+
     def toggle(self):
         """toggle item selection"""
         self.select(flag=not self.selected)
@@ -2999,10 +3002,6 @@ class MainWindow(IView):
         # the associated callback
         self.post_processors = {}
 
-        # set global binds
-        self.bind_keyboard('<Delete>', self.delete_selected, widgets=[self.d_tab])
-        self.bind_keyboard('<Return>', self.open_selected_file, widgets=[self.d_tab])
-
     def ibus_workaround(self):
         # issue 256: https://github.com/firedm/FireDM/issues/256
         # because of ibus bug, FireDM take longer time to load with every run as time goes on, same as 
@@ -3839,6 +3838,10 @@ class MainWindow(IView):
         # bind double click to play a file
         d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
 
+        # bind delete and enter keys
+        d_item.bind('<Delete>', lambda e: self.delete_selected(), add='+')
+        d_item.bind('<Return>', lambda e: self.open_selected_file(), add='+')
+
         # right click menu
         right_click_map = {'Open File  (Enter)': lambda uid: self.controller.play_file(uid=uid),
                            'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
@@ -4229,19 +4232,6 @@ class MainWindow(IView):
     # endregion
 
     # region general
-    def bind_keyboard(self, seq, callback, add='+', widgets=None):
-        """bind keyboard keys, it should be bind to root to work correctly
-        widgets: list of widgets that must be visible to execute the callback
-        """
-
-        def custom_callback(*args):
-            if widgets:
-                if any([widget.winfo_viewable() for widget in widgets]):
-                    callback()
-            else:
-                callback()
-
-        self.root.bind(seq, custom_callback, add=add)
 
     def run(self):
         """run application"""
