@@ -785,30 +785,24 @@ def is_pkg_exist(pkg):
         return False
 
 
-def auto_rename(file_name, parent_folder):
+def auto_rename(file_name, forbidden_names):
     """
     rename file to avoid clash with existing file name
 
     Args:
-        file_name: file name without path
-        parent_folder: path to parent folder, used to verify name doesn't exist
+        file_name(str): file name without path
+        forbidden_names(list, tuple): filenames not allowed to use, e.g. existing files names in same folder, etc...
 
     Return:
-        new name without path
+        new name or None
     """
 
     name, ext = os.path.splitext(file_name)
 
-    file_list = os.listdir(parent_folder)
-
-    new_name = file_name
-
     for i in range(2, 1000000):
         new_name = f'{name}_{i}{ext}'
-        if new_name not in file_list:
-            break
-
-    return new_name
+        if new_name not in forbidden_names:
+            return new_name
 
 
 def calc_md5(fp=None, buffer=None):

@@ -891,70 +891,80 @@ class Controller:
             return False
 
         # validate file name
-        if d.name == '':
+        if not d.name:
             log("File name can't be empty!!", start='', showpopup=showpopup)
             return False
 
+        # check if file with the same name exist in destination --------------------------------------------------------
+        action = None
+        if os.path.isfile(d.target_file):
+
+            # auto rename option
+            if config.auto_rename or silent:
+                action = 'Rename'
+            else:
+                #  show dialogue
+                action = self.get_user_response(popup_id=4)
+
+                if action not in ('Overwrite', 'Rename'):
+                    log('Download cancelled by user')
+                    return False
+
+            if action == 'Rename':
+                self.rename(d)
+                log('File with the same name exist in download folder, generate new name:', d.name)
+            elif action == 'Overwrite':
+                delete_file(d.target_file)
+
         # search current list for previous item with same name, folder ---------------------------
         if d.uid in self.d_map:
-
             log('download item', d.uid, 'already in list, check resume availability')
 
             # get download item from the list
             d_from_list = self.d_map[d.uid]
 
-            # default
-            response = 'Resume'
+            if action == 'Overwrite':  # already set from previous check
+                pass
 
-            if not silent:
+            # if item already completed with same url lets overwrite
+            elif d_from_list.webpage_url == d.webpage_url and d_from_list.status == Status.completed:
+                action = 'Overwrite'
+
+            elif silent:  # same url, size, and video quality to resume, else rename
+                if d.webpage_url == d_from_list.webpage_url:
+                    action = 'Resume'
+                else:
+                    action = 'Rename'
+            else:
                 #  show dialogue
-                response = self.get_user_response(popup_id=3)
+                action = self.get_user_response(popup_id=3)
 
-            if response not in ('Resume', 'Overwrite'):
-                log('Download cancelled by user')
-                d.status = Status.cancelled
-                return False
+                if action not in ('Resume', 'Rename', 'Overwrite'):
+                    log('Download cancelled by user')
+                    d.status = Status.cancelled
+                    return False
 
-            elif response == 'Resume':
+            if action == 'Resume':
                 log('check resuming?')
 
                 # to resume, size must match, otherwise it will just overwrite
                 if d.size == d_from_list.size and d.selected_quality == d_from_list.selected_quality:
                     log('resume is possible')
-
                     d.downloaded = d_from_list.downloaded
                 else:
-                    log('file:', d.name, 'has different properties and will be downloaded from the beginning')
-                    d.delete_tempfiles(force_delete=True)
+                    log('resume is not possible')
+                    action = 'Overwrite'
 
-            elif response == 'Overwrite':
+            if action == 'Overwrite':
                 log('overwrite')
                 d.delete_tempfiles(force_delete=True)
 
+            if action == 'Rename':
+                log('Rename File')
+                self.rename(d)
+
         else:  # new file
             log('fresh file download')
-
-        # check if file with the same name exist in destination
-        if os.path.isfile(d.target_file):
-            # auto rename option
-            if config.auto_rename or silent:
-                d = self.rename(d)
-                log('File with the same name exist in download folder, generate new name:', d.name)
-                self._download(d)
-                return False
-            else:
-                #  show dialogue
-                response = self.get_user_response(popup_id=4)
-                    
-                if response == 'Overwrite':
-                    delete_file(d.target_file)
-                elif response == 'Rename':
-                    d = self.rename(d)
-                    self._download(d)
-                    return False
-                else:
-                    log('Download cancelled by user')
-                    return False
 
         # ------------------------------------------------------------------
 
@@ -969,10 +979,10 @@ class Controller:
 
     def rename(self, d):
         """
-        rename download item and return a copy of it
+        rename download item
         """
-        d = copy(d)
-        d.name = auto_rename(d.name, d.folder)
+        forbidden_names = os.listdir(d.folder) + [d.name for d in self.d_map.values()]
+        d.name = auto_rename(d.name, forbidden_names)
         d.calculate_uid()
         
         return d

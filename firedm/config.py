@@ -267,7 +267,7 @@ popups = {
     3: {'tag': 'overwrite d_list', 
         'description': 'Show "Item already exist in download list warning".',
         'body': 'Item with the same name already exist in download list', 
-        'options': ['Resume', 'Overwrite', 'Cancel'],
+        'options': ['Resume', 'Rename', 'Overwrite', 'Cancel'],
         'default': 'Resume',
         'show': True
         },
