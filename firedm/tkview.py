@@ -260,7 +260,7 @@ def create_imgs():
     sizes = {'playlist_icon': 25}
 
     for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'dropdown_icon', 'folder_icon',
-              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon'):
+              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon', 'bat_icon'):
         v = iconsbase64.__dict__[k]
 
         if k == 'dropdown_icon':
@@ -2891,6 +2891,101 @@ class AudioWindow(tk.Toplevel):
         self.close()
 
 
+class BatchWindow(tk.Toplevel):
+    """window for batch downloading multiple files"""
+
+    def __init__(self, main):
+        """initialize
+
+        Args:
+            main: main window ref
+        """
+        self.main = main
+        self.controller = main.controller
+        self.parent = main.root
+
+        # initialize super
+        tk.Toplevel.__init__(self, self.parent)
+
+        # bind window close
+        self.protocol("WM_DELETE_WINDOW", self.close)
+
+        width = int(self.parent.winfo_width() * 0.5)
+        height = int(self.parent.winfo_height() * 0.5)
+        center_window(self, width=width, height=height, reference=self.parent)
+
+        self.title('Batch Download')
+        self.config(bg=SF_BG)
+
+        self.create_widgets()
+
+    def create_widgets(self):
+        main_frame = tk.Frame(self, bg=MAIN_BG)
+        tk.Label(main_frame, text='Enter Links below:', bg=MAIN_BG, fg=MAIN_FG).pack(anchor='w', padx=5, pady=5)
+        self.urls_text = atk.ScrolledText(main_frame, height=4, width=10, sbar_bg=SBAR_BG, sbar_fg=SBAR_FG, bg=MAIN_BG,
+                                          fg=MAIN_FG, insertbackground=MAIN_FG)
+        self.urls_text.pack(expand=True, fill='both')
+
+        # have to refer to real text widget inside "ScrolledText" Frame, should correct this in awesometkinter and
+        # make "ScrolledText" inherit from "Text" widget not a Frame.
+        atk.RightClickMenu(self.urls_text.text, ['Cut', 'Copy', 'Paste'],
+                           callback=lambda selected: self.urls_text.text.event_generate(f'<<{selected}>>'),
+                           bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
+        main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
+
+        options_frame = tk.Frame(main_frame, bg=MAIN_BG)
+        options_frame.pack(anchor='w', pady=5, fill='x')
+        tk.Label(options_frame, text='video quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', anchor='w', padx=5, pady=5)
+        self.video_quality = Combobox(options_frame, values=['Best', '1080p', '720p', '480p', '360p', 'Lowest'],
+                                      selection='Best', width=8)
+        self.video_quality.pack(side='left')
+        self.prefere_mp4 = tk.BooleanVar(value=False)
+
+        tk.Checkbutton(options_frame, text='prefere mp4 format', bg=MAIN_BG, fg=MAIN_FG, anchor='w', relief='flat',
+                        activebackground=MAIN_BG, highlightthickness=0, activeforeground=MAIN_FG, selectcolor=MAIN_BG,
+                        variable=self.prefere_mp4, onvalue=True, offvalue=False).pack(side='right', anchor='e', padx=10)
+        ttk.Separator(main_frame).pack(fill='x')
+
+        bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
+        Button(bottom_frame, text='Cancel', command=self.close).pack(side='right', padx=5)
+        Button(bottom_frame, text='Download Later', command=lambda: self.download(download_later=True)).pack(side='right', padx=5)
+        Button(bottom_frame, text='Download', command=self.download).pack(side='right', padx=5)
+        bottom_frame.pack(side='bottom', fill='x', pady=5)
+
+        self.set = self.urls_text.set
+        self.append = self.urls_text.append
+        self.clear = self.urls_text.clear
+
+    def close(self):
+        self.destroy()
+        self.main.batch_window = None
+
+    def download(self, download_later=False):
+        urls = self.parse_urls()
+        video_quality = self.video_quality.selection
+        if video_quality.endswith('p'):
+            video_quality = int(video_quality[:-1])
+        else:
+            video_quality = video_quality.lower()
+
+        self.controller.batch_download(urls, video_quality=video_quality, download_later=download_later)
+        self.close()
+
+    def add_url(self, url):
+        self.append( '\n' + url)
+
+    def get(self):
+        return self.urls_text.get("1.0", tk.END)
+
+    def parse_urls(self):
+        urls = []
+        for line in self.get().splitlines():
+            line = line.strip()
+            if line and not line.startswith('#') and line not in urls:
+                urls.append(line)
+        return urls
+
+
 class DatePicker(tk.Toplevel):
     """Date picker window"""
 
@@ -3023,6 +3118,7 @@ class MainWindow(IView):
 
         self.pl_window = None  # playlist download window
         self.subtitles_window = None  # subtitles download window
+        self.batch_window = None  # batch download window
 
         # queues for executing methods on gui from a thread
         self.command_q = Queue()
@@ -3040,7 +3136,6 @@ class MainWindow(IView):
             self.ibus_workaround()
 
         # root ----------------------------------------------------------------------------------------------------
-        self.starter = time.time()
         self.root = tk.Tk()
 
         self.initialize_font()
@@ -3249,6 +3344,7 @@ class MainWindow(IView):
 
     # region widgets
     def create_main_widgets(self):
+        self.gui_timer = time.time()
 
         # create main frame ---------------------------------------------------------------------------------------
         self.main_frame = tk.Frame(self.root, width=self.width, height=self.height, background=MAIN_BG)
@@ -3319,26 +3415,12 @@ class MainWindow(IView):
         self.url_var = tk.StringVar()
         self.url_var.trace_add('write', self.url_entry_callback)
 
-        self.url_entry = tk.Entry(home_tab, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR,
+        self.url_entry = tk.Entry(home_tab, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR, insertbackground=MAIN_FG,
                                   highlightbackground=ENTRY_BD_COLOR, fg=MAIN_FG, textvariable=self.url_var)
         self.url_entry.grid(row=0, column=0, columnspan=4, padx=5, pady=(45, 5), sticky='ew', ipady=8, ipadx=5)
 
-        def url_rcm_handler(option):
-            if option == 'Copy selection':
-                try:
-                    self.copy(self.url_entry.selection_get())
-                except:
-                    pass
-            elif option == 'Paste':
-                try:
-                    self.url_entry.delete("sel.first", "sel.last")
-                except:
-                    pass
-                self.url_entry.insert(tk.INSERT, self.paste())
-            elif option == 'Clear field':
-                self.url_var.set('')
-
-        atk.RightClickMenu(self.url_entry, ['Paste', 'Clear field', 'Copy selection'], callback=url_rcm_handler,
+        atk.RightClickMenu(self.url_entry, ['Cut', 'Copy', 'Paste'],
+                           callback=lambda selected: self.url_entry.event_generate(f'<<{selected}>>'),
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
 
         # retry button -------------------------------------------------------------------------------------------------
@@ -3363,6 +3445,7 @@ class MainWindow(IView):
         # playlist download, sub buttons -------------------------------------------------------------------------------
         pl_sub_frame = tk.Frame(home_tab, background=MAIN_BG)
 
+        Button(pl_sub_frame, image=imgs['bat_icon'], command=self.show_batch_window, tooltip='Batch download').pack(pady=0, padx=5)
         Button(pl_sub_frame, image=imgs['subtitle_icon'], command=self.show_subtitles_window, tooltip='Download Subtitle').pack(pady=20, padx=5)
         Button(pl_sub_frame, image=imgs['about_icon'], command=self.show_about_notes, tooltip='About').pack(pady=0, padx=5)
 
@@ -3380,7 +3463,7 @@ class MainWindow(IView):
         db_fr.grid(row=2, column=3, padx=1, pady=5, sticky='e')
  
         Button(db_fr, text='Download', command=self.download_btn_callback, font='any 12').pack(side='left')
-        # download Later button ----------------------------------------------------------------------------------------------
+        # download Later button ----------------------------------------------------------------------------------------
         later_btn = Button(db_fr, text='▼', font='any 12', width=1) 
         later_btn.pack(side='left', fill='y', pady=1)
 
@@ -4260,7 +4343,7 @@ class MainWindow(IView):
                 # self.root.after(1000 + i * 5, lambda k=item: self.create_ditem(**k, focus=False))
                 self.create_ditem(**item, focus=False)
             self.root.update_idletasks()
-            gui_loading_time = round(time.time() - self.starter, 2)
+            gui_loading_time = round(time.time() - self.gui_timer, 2)
             ibus_hint = ''
             if config.operating_system == 'Linux' and not config.ibus_workaround and gui_loading_time > 10:
                 ibus_hint = ' - Slow startup!!!, try to enable "ibus workaround" in settings'
@@ -4558,12 +4641,15 @@ class MainWindow(IView):
                 for item in selected_items:
                     self.controller.schedule_start(uid=item.uid, target_date=dp.selected_date)
 
+    @ignore_calls_when_busy
     def show_about_notes(self):
         res = self.popup(about_notes, buttons=['Home', 'Help!', 'Close'], title='About FireDM')
         if res == 'Help!':
             open_webpage('https://github.com/firedm/FireDM/blob/master/docs/user_guide.md')
         elif res == 'Home':
             open_webpage('https://github.com/firedm/FireDM')
+
+        free_callback(self.show_about_notes)
 
     @ignore_calls_when_busy
     def check_for_update(self):
@@ -4613,7 +4699,7 @@ class MainWindow(IView):
             self.controller.select_playlist_video(idx)
 
     def show_subtitles_window(self):
-        if self.subtitles_window :
+        if self.subtitles_window:
             self.msgbox('Subtitles window already opened')
             return
 
@@ -4622,6 +4708,13 @@ class MainWindow(IView):
             self.subtitles_window = SubtitleWindow(self, subs)
         else:
             self.msgbox('No Subtitles available')
+
+    def show_batch_window(self):
+        if self.batch_window:
+            self.msgbox('batch window already opened')
+            return
+
+        self.batch_window = BatchWindow(self)
 
     def show_pl_window(self):
         if self.pl_window:
@@ -4668,12 +4761,17 @@ class MainWindow(IView):
         """update url entry contents when new url copied to clipboard"""
 
         url = self.paste().strip()
-        self.url_var.set(url)
 
-        # select home tab
-        self.select_tab('Home')
+        # reroute urls to batch window if opened
+        if self.batch_window:
+            self.batch_window.add_url(url)
+        else:
+            self.url_var.set(url)
 
-        self.focus()
+            # select home tab
+            self.select_tab('Home')
+
+            self.focus()
 
         return "break"
 

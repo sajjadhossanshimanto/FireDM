@@ -38,6 +38,7 @@ def threaded(func):
 
     return wraper
 
+
 def set_option(**kwargs):
     """set global setting option(s) in config.py"""
     try:
@@ -215,30 +216,50 @@ class Controller:
 
         return d
 
-    def url_to_playlist(url):
+    def url_to_playlist(self, url, ytdloptions=None):
         d = ObservableDownloadItem()
         d.update(url)
 
         # searching for videos
         if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
-            playlist = self._create_video_playlist(url)
+            playlist = self._create_video_playlist(url, ytdloptions=ytdloptions)
 
         if not playlist:
             playlist = [d]
 
         return playlist
 
-    def autodownload(url, **kwargs):
+    @threaded
+    def autodownload(self, url, **kwargs):
         """download file automatically without user intervention
         for video files it should download best quality, for video playlist, it will download first video
         """
 
-        playlist = url_to_playlist(url)
+        # noplaylist: fetch only the video, if the URL refers to a video and a playlist
+        playlist = self.url_to_playlist(url, ytdloptions={'noplaylist': True})
         d = playlist[0]
         update_object(d, kwargs)
 
+        if d.type == MediaType.video and not d.all_streams:
+            self._process_video(d)
+
+        # set video quality
+        video_quality = kwargs.get('video_quality', None)
+
+        if video_quality and d.type == MediaType.video:
+            d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
+            # print(d.name, d.selected_quality)
+
         # download item
-        self._download(d, silent=True)
+        self._download(d, silent=True, download_later=kwargs.get('download_later', False))
+
+    @threaded
+    def batch_download(self, urls, **kwargs):
+        log('Batch downloading the following urls:', '\n'.join(urls))
+        log('Batch download options:', kwargs)
+
+        for url in urls:
+            self.autodownload(url, **kwargs)
 
     def _process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
@@ -461,7 +482,7 @@ class Controller:
         finally:
             vid.busy = False
 
-    def _create_video_playlist(self, url):
+    def _create_video_playlist(self, url, ytdloptions=None):
         """Process url and build video object(s) and return a video playlist"""
         log('start create video playlist')
         playlist = []
@@ -507,7 +528,13 @@ class Controller:
         video.ytdl.extractor.common.InfoExtractor._download_webpage = download_webpage_decorator(
                 video.ytdl.extractor.common.InfoExtractor._download_webpage)
 
-        self.ydl = video.ytdl.YoutubeDL(get_ytdl_options())
+        # get global youtube_dl options
+        options = get_ytdl_options()
+
+        if ytdloptions:
+            options.update(ytdloptions)
+
+        self.ydl = video.ytdl.YoutubeDL(options)
 
         # reset abort flag
         config.ytdl_abort = False

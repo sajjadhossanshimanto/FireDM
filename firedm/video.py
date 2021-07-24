@@ -237,15 +237,20 @@ class Video(DownloadItem):
         self.names_map = names_map  # {'mp4_videos': [], 'other_videos': [], 'audio_streams': [], 'extra_streams': []}
         self.audio_streams = audio_streams
         self.video_streams = video_streams
+        self.mp4_videos = mp4_videos
 
-    def select_stream(self, index=None, name=None, raw_name=None, update=True):  
+    def select_stream(self, index=None, name=None, raw_name=None, video_quality=None, prefere_mp4=True, update=True):
         """
-        search for a stream in self.stream_menu_map
-        :param index: index number from stream menu
-        :param name: stream name
-        :param raw_name: stream raw name
-        :param update: if True it will update selected stream
-        :return: stream
+        select video stream
+        Args:
+            index(int): index number from stream menu
+            name(str): stream name
+            raw_name(str): stream raw name
+            video_quality(int or str): video quality, e.g. 1080, or best, or lowest
+            prefere_mp4(bool): select mp4 format if available
+            update(bool): if True it will update selected stream
+        Return:
+            stream
         """
         stream = None
         try:
@@ -257,6 +262,23 @@ class Video(DownloadItem):
 
             elif raw_name:
                 stream = [stream for stream in self.all_streams if raw_name == stream.raw_name][0]
+
+            elif video_quality:
+                if prefere_mp4 and self.mp4_videos:
+                    streams = self.mp4_videos
+                else:
+                    streams = self.video_streams
+
+                if video_quality == 'best':
+                    stream = streams[0]
+                elif video_quality == 'lowest':
+                    stream = streams[-1]
+                else:
+                    qualities = [s.quality for s in streams]
+                    # get nearest quality value
+                    x = list(map(lambda item: abs(video_quality - item), qualities))
+                    stream = streams[x.index(min(x))]
+
         except:
             stream = None
 
