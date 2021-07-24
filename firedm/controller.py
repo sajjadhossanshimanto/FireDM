@@ -260,6 +260,7 @@ class Controller:
 
         for url in urls:
             self.autodownload(url, **kwargs)
+            time.sleep(0.5)
 
     def _process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
@@ -793,7 +794,7 @@ class Controller:
             if active_downloads < config.max_concurrent_downloads:
                 d = self.pending_downloads_q.get()
                 if d.status == Status.pending:
-                    run_thread(self._download, d, silent=True)
+                    self._download(d, silent=True)
 
             time.sleep(3)
 
@@ -1035,10 +1036,11 @@ class Controller:
 
         update_object(d, kwargs)
 
-        run_thread(self._download, d, silent, download_later)
+        self._download(d, silent, download_later)
 
         return True
 
+    @threaded
     def _download(self, d, silent=False, download_later=False):
         """start downloading an item
 
@@ -1223,7 +1225,7 @@ class Controller:
         d.update(url)
         d.name = 'ffmpeg.exe'
 
-        run_thread(self._download, d, silent=True)
+        self._download(d, silent=True)
 
     def download_playlist(self, vsmap, subtitles=None):
         """download playlist
@@ -1249,7 +1251,7 @@ class Controller:
             if config.use_playlist_numbers:
                 d.name = f'{vid_idx + 1}- {d.name}'
 
-            run_thread(self._download, d, silent=True)
+            self._download(d, silent=True)
             time.sleep(0.5)
 
             if subtitles:
