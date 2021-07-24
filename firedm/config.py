@@ -32,7 +32,7 @@ APP_NAME = 'FireDM'
 APP_VERSION = __version__
 APP_TITLE = f'{APP_NAME} version {APP_VERSION} .. an open source download manager'
 DEFAULT_DOWNLOAD_FOLDER = os.path.join(os.path.expanduser("~"), 'Downloads')
-DEFAULT_THEME = 'dark'
+DEFAULT_THEME = 'Dark'
 DEFAULT_CONNECTIONS = 10
 
 # minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.

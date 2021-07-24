@@ -41,209 +41,10 @@ from . import iconsbase64
 from .iconsbase64 import *
 from .systray import SysTray
 from .about import about_notes
+from .themes import *
 
 config.atk_version = atk_version
 gui_font = None
-
-# theme colors as global constants, you must set their values before creating widgets
-# use MainWindow.apply_theme() to set all values
-
-# main colors
-MAIN_BG = None
-MAIN_FG = None
-
-# side frame colors
-SF_BG = None
-SF_BTN_BG = None
-SF_FG = None
-SF_CHKMARK = None
-
-THUMBNAIL_BG = None  # color of thumbnail frame in Home
-THUMBNAIL_FG = None  # color of base thumbnail photo
-THUMBNAIL_BD = None  # thumbnail border color
-
-# progressbar
-PBAR_BG = None
-PBAR_FG = None
-PBAR_TXT = None
-
-ENTRY_BD_COLOR = None
-
-BTN_BG = None
-BTN_FG = None
-BTN_HBG = None  # highlight background
-BTN_ABG = None  # active background
-BTN_AFG = None
-
-HDG_BG = None   # heading e.g. "Network:" heading in Settings tab
-HDG_FG = None
-
-# scrollbar
-SBAR_BG = None
-SBAR_FG = None
-
-# right click menu
-RCM_BG = None
-RCM_FG = None
-RCM_ABG = None
-RCM_AFG = None
-
-# titlebar
-TITLE_BAR_BG = None
-TITLE_BAR_FG = None
-
-# selection color for DItem
-SEL_BG = None
-SEL_FG = None
-
-# key:(reference key, description), reference key will be used to get the color value in case of missing key, but in
-# case of some font keys, reference key is refering to background color which will be used to calculate font color
-# if reference key is None, this means it can't be calculated if missing
-theme_map = dict(
-    # main colors
-    MAIN_BG=(None, 'Main background'),
-    MAIN_FG=('MAIN_BG', 'Main text color'),
-
-    # side frame colors
-    SF_BG=(None, 'Side frame background'),
-    SF_BTN_BG=(None, 'Side frame button color'),
-    SF_FG=('SF_BG', 'Side frame text color'),
-    SF_CHKMARK=('SF_BTN_BG', 'Side Frame check mark color'),
-
-    # Thumbnails
-    THUMBNAIL_BG=('SF_BG', 'Thumbnail background'),
-    THUMBNAIL_FG=('MAIN_FG', 'Default Thumbnail image color'),
-    THUMBNAIL_BD=('MAIN_FG', 'Thumbnail border width'),
-
-    # progressbar
-    PBAR_BG=(None, 'Progressbar inactive ring color'),
-    PBAR_FG=('MAIN_FG', 'Progressbar active ring color'),
-    PBAR_TXT=('MAIN_BG', 'Progressbar text color'),
-
-    # Entry
-    ENTRY_BD_COLOR=('SF_BG', 'Entry widget border color'),
-
-    # Button
-    BTN_BG=('SF_BTN_BG', 'Button background'),
-    BTN_FG=('BTN_BG', 'Button text color'),
-    BTN_HBG=('SF_BG', 'Button highlight background'),
-    BTN_ABG=('SF_BG', 'Button active background'),
-    BTN_AFG=('BTN_ABG', 'Button active text color'),
-
-    # Heading e.g. "Network:" heading in Settings tab
-    HDG_BG=('SF_BTN_BG', 'Heading title background'),
-    HDG_FG=('HDG_BG', 'Heading title text color'),
-
-    # scrollbar
-    SBAR_BG=('MAIN_BG', 'Scrollbar background'),
-    SBAR_FG=('MAIN_FG', 'scrollbar active color'),
-
-    # right click menu
-    RCM_BG=('MAIN_BG', 'Right click menu background'),
-    RCM_FG=('RCM_BG', 'Right click menu text color'),
-    RCM_ABG=('BTN_BG', 'Right click menu active background'),
-    RCM_AFG=('RCM_ABG', 'Right click menu active text color'),
-
-    # Window titlebar
-    TITLE_BAR_BG=('BTN_BG', 'Window custom titlebar background'),
-    TITLE_BAR_FG=('BTN_FG', 'Window custom titlebar text color'),
-
-    # Download item (DItem)
-    SEL_BG=('SF_BG', 'Download item selection background'),
-    SEL_FG=('SF_FG', 'Download item selection foreground')
-    )
-
-
-# fonts keys in theme map
-theme_fonts_keys = ('MAIN_FG', 'SF_FG', 'BTN_FG', 'BTN_AFG', 'PBAR_TXT', 'HDG_FG', 'RCM_FG', 'RCM_AFG')
-
-
-builtin_themes = {
-    'light': {
-        'MAIN_BG': 'white',
-        'MAIN_FG': 'black',
-
-        'SF_BG': '#ffad00',  # sf for side frame
-        'SF_FG': 'black',
-        'SF_BTN_BG': '#006cff',
-        'SF_CHKMARK': '#006cff',  # side frame's check mark
-
-        'THUMBNAIL_BG': '#ffad00',  # color of thumbnail frame in Home
-        'THUMBNAIL_FG': '#006cff',  # color of base thumbnail photo
-        'THUMBNAIL_BD': '#006cff',  # thumbnail border color
-
-        'PBAR_BG': 'grey',  # progressbar
-        'PBAR_FG': '#006cff',
-        'PBAR_TXT': 'black',
-
-        'ENTRY_BD_COLOR': '#ffad00',
-
-        'BTN_BG': '#006cff',
-        'BTN_FG': 'white',
-        'BTN_HBG': '#ffad00',  # highlight background
-        'BTN_ABG': '#ffad00',  # active background
-        'BTN_AFG': 'white',  # active foreground
-
-        'HDG_BG': '#006cff',   # heading e.g. Network: heading in Settings tab
-        'HDG_FG': 'white',
-
-        'SBAR_BG': '#ffad00',  # scrollbar
-        'SBAR_FG': '#006cff',
-
-        # right click menu
-        'RCM_BG': 'white',
-        'RCM_FG': 'black',
-        'RCM_ABG': '#006cff',
-        'RCM_AFG': 'white',
-
-        # title bar
-        'TITLE_BAR_BG': '#006cff',
-        'TITLE_BAR_FG': 'white',
-
-        # selection color for DItem
-        'SEL_BG': 'blue',
-        'SEL_FG': 'white'
-
-    },
-    'dark': {"MAIN_BG": "#1c1c21", "MAIN_FG": "white", "SF_BG": "#000300", "SF_FG": "white", "SF_BTN_BG": "#d9dc4b",
-             "SF_CHKMARK": "#d9dc4b", "THUMBNAIL_BG": "#000300", "THUMBNAIL_FG": "#d9dc4b", "PBAR_BG": "#26262b",
-             "PBAR_FG": "#d9dc4b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#000300", "BTN_BG": "#d9dc4b",
-             "BTN_FG": "black", "BTN_HBG": "#000300", "BTN_ABG": "#000300", "BTN_AFG": "white", "HDG_BG": "#d9dc4b",
-             "HDG_FG": "black", "THUMBNAIL_BD": "#d9dc4b", "SBAR_BG": "#1c1c21", "SBAR_FG": "white",
-             "RCM_BG": "#1c1c21", "RCM_FG": "white", "RCM_ABG": "#d9dc4b", "RCM_AFG": "black",
-             "TITLE_BAR_BG": "#d9dc4b", "TITLE_BAR_FG": "black"}
-}
-
-
-def calculate_missing_theme_keys(theme):
-    """calculate missing key colors
-    Args:
-        theme (dict): theme dictionary
-    """
-
-    # make sure we have main keys
-    main_keys = ('MAIN_BG', 'SF_BG', 'SF_BTN_BG')
-    default_theme = builtin_themes[config.DEFAULT_THEME]
-    for key in main_keys:
-        theme.setdefault(key, default_theme[key])
-
-    # progressbar
-    theme.setdefault('PBAR_BG', atk.calc_contrast_color(theme['MAIN_BG'], 10))
-
-    for key in theme_fonts_keys:
-        bg_key = theme_map[key][0]
-        bg = theme.get(bg_key, default_theme[bg_key])
-        theme.setdefault(key, atk.calc_font_color(bg))
-
-    for key, v in theme_map.items():
-        fallback_key = v[0]
-        if fallback_key is not None:
-            theme.setdefault(key, theme.get(fallback_key, default_theme[fallback_key]))
-
-
-# calculate missing keys for builtin themes
-for t in builtin_themes.values():
-    calculate_missing_theme_keys(t)
 
 
 # hold all user defined themes, user themes with the same names will override same builtin_themes
@@ -459,6 +260,7 @@ class ThemeEditor(tk.Toplevel):
         self.advanced_btn = tk.Button(bottom_frame, text='Advanced', command=self.toggle_advanced_options, bg=BTN_BG, fg=BTN_FG)
         self.advanced_btn.pack(side='left', anchor='e', padx=5, pady=5)
         tk.Button(bottom_frame, text='apply', command=self.apply, bg=BTN_BG, fg=BTN_FG).pack(side='left', anchor='e', padx=5, pady=5)
+        tk.Button(bottom_frame, text='cancel', command=self.destroy, bg=BTN_BG, fg=BTN_FG).pack(side='left', anchor='e', padx=5, pady=5)
 
         # scroll with mousewheel
         atk.scroll_with_mousewheel(basic_frame, target=self.top_frame, apply_to_children=True)
@@ -3553,7 +3355,7 @@ class MainWindow(IView):
         # sorted themes names
         themes_names = natural_sort(list(builtin_themes.keys()) + list(user_themes.keys()))
 
-        self.themes_menu = Combobox(themes_frame, values=themes_names, selection=config.current_theme)
+        self.themes_menu = Combobox(themes_frame, values=themes_names, selection=config.current_theme, width=35)
         self.themes_menu.pack(side='left', ipadx=5)
 
         def apply_theme():
@@ -3814,7 +3616,7 @@ class MainWindow(IView):
             self.msgbox('Log text copied to clipboard')
 
         btn_frame = tk.Frame(tab, bg=MAIN_BG)
-        tk.Label(btn_frame, text='Log Level:', bg=MAIN_BG, fg=BTN_BG, font='any 10 bold').pack(side='left')
+        tk.Label(btn_frame, text='Log Level:', bg=MAIN_BG, fg=MAIN_FG, font='any 10 bold').pack(side='left')
         level_menu = Combobox(btn_frame, values=(1, 2, 3), selection=config.log_level, width=5)
         level_menu.callback = lambda: set_option(log_level=int(level_menu.selection))
         level_menu.pack(side='left', padx=5)
