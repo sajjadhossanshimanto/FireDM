@@ -32,7 +32,7 @@ AppDir = os.path.join(build_folder, 'AppDir')
 project_folder = os.path.dirname(os.path.dirname(current_folder))
 
 sys.path.insert(0,  project_folder)  # for imports to work
-from scripts.utils import download, get_pkg_version
+from scripts.utils import download, get_pkg_version, delete_folder
 
 
 # get application version ----------------------------------------------------------------------------------------------
@@ -76,6 +76,11 @@ if not os.path.isdir(AppDir):
         exit(1)
 
 site_pkgs_folder = f'{AppDir}/usr/lib/python3.6/site-packages'
+
+# delete firedm in site packages ---------------------------------------------------------------------------------------
+print('delete old firedm files in sitepackages')
+target_folder = os.path.join(site_pkgs_folder, 'firedm')
+delete_folder(target_folder, verbose=True)
 
 # copy firedm ----------------------------------------------------------------------------------------------------------
 print('copy firedm')
