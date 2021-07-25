@@ -1308,7 +1308,7 @@ class Controller:
 
         def fetch_pypi(pkg):
             pkg_info = info[pkg]
-            pkg_info['latest_version'], pkg_info['url'] = update.get_pkg_latest_version(pkg, fetch_url=False)
+            pkg_info['latest_version'], pkg_info['url'] = update.get_pkg_latest_version(pkg, fetch_url=True)
             log('done checking:', pkg, 'current:', pkg_info['current_version'], 'latest:', pkg_info['latest_version'])
 
         threads = []
