@@ -1,4 +1,16 @@
-#!/usr/bin/env python3
+"""
+    FireDM
+
+    multi-connections internet download manager, based on "LibCurl", and "youtube_dl".
+
+    :copyright: (c) 2019-2021 by Mahmoud Elshahat.
+    :license: GNU LGPLv3, see LICENSE for more details.
+
+    File description:
+        This is the main script in AppImage release, responsible for sourcing firedm and other packages from 2 locations
+        and load the newer version of each package.
+        should be copied to AppDir
+"""
 
 import os
 from packaging.version import parse
@@ -67,7 +79,7 @@ def get_pkg_version(pkg_path):
     return version
 
 
-site_pkgs =  os.path.join(AppDir, 'usr/lib/python3.6/site-packages')
+site_pkgs = os.path.join(AppDir, 'usr/lib/python3.6/site-packages')
 appimage_update_folder = os.path.join(sett_folder, 'appimage-update-folder')
 firedm_src = os.path.join(AppDir, 'usr/src')
 
@@ -84,7 +96,6 @@ for d in os.listdir(appimage_update_folder):
         pkg_full_path = os.path.join(appimage_update_folder, d, folders[0])
         pkgs.append(pkg_full_path)
 
-# print(pkgs)
 
 # ignore old packages
 for pkg in pkgs[:]:
