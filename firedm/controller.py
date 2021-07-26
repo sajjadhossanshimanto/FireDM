@@ -928,11 +928,11 @@ class Controller:
                 pass
 
             # if item already completed with same url lets overwrite
-            elif d_from_list.webpage_url == d.webpage_url and d_from_list.status == Status.completed:
+            elif d_from_list.url == d.url and d_from_list.status == Status.completed:
                 action = 'Overwrite'
 
             elif silent:  # same url, size, and video quality to resume, else rename
-                if d.webpage_url == d_from_list.webpage_url:
+                if d.url == d_from_list.url:
                     action = 'Resume'
                 else:
                     action = 'Rename'
