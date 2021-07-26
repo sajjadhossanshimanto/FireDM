@@ -1,3 +1,6 @@
+2021.7.26:
+- [hot fix for 2021.7.25 release] fix webpage_url error when resuming download item.
+
 2021.7.25:
 - add "batch downloading" feature, issues #263, and #219
 - add "update feature" for AppImage release
