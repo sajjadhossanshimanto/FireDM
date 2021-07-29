@@ -3874,6 +3874,12 @@ class MainWindow(IView):
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
         self.d_items[uid] = d_item
+
+        # get segment progress
+        if status in config.Status.active_states:
+            kwargs['segments_progress'] = self.controller.get_segments_progress(uid=uid)
+
+        # update d_item info
         d_item.update(**kwargs)
 
         # bind mousewheel

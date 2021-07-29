@@ -1519,6 +1519,15 @@ class Controller:
 
         return d.url
 
+    def get_segments_progress(self, uid=None, video_idx=None):
+        # get download item
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return None
+
+        return d.update_segments_progress(activeonly=False)
+
     def get_direct_url(self, uid=None, video_idx=None):
         # get download item
         d = self.get_d(uid, video_idx)

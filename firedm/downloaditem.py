@@ -779,34 +779,37 @@ class DownloadItem:
     def update_segments_progress(self, activeonly=False):
         """set self.segments_progress, e.g [total size, [(starting range, length, total file size), ...]]"""
         if self.status == config.Status.completed:
-            self.segments_progress = [100, [(0, 100)]]
-            return
+            segments_progress = [100, [(0, 100)]]
 
-        spb = self.segments_progress_bool
-        c = (lambda seg: seg not in spb) if activeonly else (lambda seg: True)
-        total_size = self.total_size
+        else:
+            spb = self.segments_progress_bool
+            c = (lambda seg: seg not in spb) if activeonly else (lambda seg: True)  # condition
+            total_size = self.total_size
 
-        try:
-            if 'hls' in self.subtype_list:
-                # one hls file might contain more than 5000 segment with unknown sizes
-                # will use segments numbers as a starting point and segment size = 1
+            try:
+                if 'hls' in self.subtype_list:
+                    # one hls file might contain more than 5000 segment with unknown sizes
+                    # will use segments numbers as a starting point and segment size = 1
 
-                total_size = len(self.segments)
-                sp = [(self.segments.index(seg), 1) for seg in self.segments if seg.downloaded and c(seg)]
+                    total_size = len(self.segments)
+                    sp = [(self.segments.index(seg), 1) for seg in self.segments if seg.downloaded and c(seg)]
 
-            elif self.type == MediaType.video:
+                elif self.type == MediaType.video:
 
-                vid = [(seg.range[0], seg.down_bytes) for seg in self.video_segments if c(seg)]
-                aud = [(seg.range[0] + self.video_size - 1, seg.down_bytes) for seg in self.audio_segments if c(seg)]
+                    vid = [(seg.range[0], seg.down_bytes) for seg in self.video_segments if c(seg)]
+                    aud = [(seg.range[0] + self.video_size - 1, seg.down_bytes) for seg in self.audio_segments if c(seg)]
 
-                sp = vid + aud
-            else:
-                sp = [(seg.range[0], seg.down_bytes) for seg in self.segments if c(seg)]
+                    sp = vid + aud
+                else:
+                    sp = [(seg.range[0], seg.down_bytes) for seg in self.segments if c(seg)]
 
-            sp = [item for item in sp if item[1]]
-            spb.extend([seg for seg in self.segments if seg.downloaded])
-            self.segments_progress = [total_size, sp]
+                sp = [item for item in sp if item[1]]
+                spb.extend([seg for seg in self.segments if seg.downloaded])
+                segments_progress = [total_size, sp]
 
-        except Exception as e:
-            if config.TEST_MODE:
-                log('update_segments_progress()>', e)
+            except Exception as e:
+                if config.TEST_MODE:
+                    log('update_segments_progress()>', e)
+
+        self.segments_progress = segments_progress
+        return segments_progress
