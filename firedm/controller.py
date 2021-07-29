@@ -230,39 +230,7 @@ class Controller:
         return playlist
 
     @threaded
-    def autodownload(self, url, **kwargs):
-        """download file automatically without user intervention
-        for video files it should download best quality, for video playlist, it will download first video
-        """
-
-        # noplaylist: fetch only the video, if the URL refers to a video and a playlist
-        playlist = self.url_to_playlist(url, ytdloptions={'noplaylist': True})
-        d = playlist[0]
-        update_object(d, kwargs)
-
-        if d.type == MediaType.video and not d.all_streams:
-            self._process_video(d)
-
-        # set video quality
-        video_quality = kwargs.get('video_quality', None)
-
-        if video_quality and d.type == MediaType.video:
-            d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
-            # print(d.name, d.selected_quality)
-
-        # download item
-        self._download(d, silent=True, download_later=kwargs.get('download_later', False))
-
-    @threaded
-    def batch_download(self, urls, **kwargs):
-        log('Batch downloading the following urls:', '\n'.join(urls))
-        log('Batch download options:', kwargs)
-
-        for url in urls:
-            self.autodownload(url, **kwargs)
-            time.sleep(0.5)
-
-    def _process_url(self, url):
+    def process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
 
         when a "view" call this method it should expect a playlist menu (list of names) to be passed to its update
@@ -274,7 +242,12 @@ class Controller:
             playlist_menu=[] if no video playlist
 
         """
+        if not url:
+            return
+
         self.url = url
+        self.reset()
+
         playlist = []
         is_video_playlist = False
 
@@ -307,28 +280,6 @@ class Controller:
 
         return playlist
 
-    def process_url(self, url):
-        """take url and return a a list of ObservableDownloadItem objects
-
-        when a "view" call this method it should expect a playlist menu (list of names) to be passed to its update
-        method,
-
-        Examples:
-            playlist_menu=['1- Nasa mission to Mars', '2- how to train your dragon', ...]
-            or
-            playlist_menu=[] if no video playlist
-
-        """
-        self.url = url
-        self.reset()
-
-        if url:
-            try:
-                run_thread(self._process_url, url)
-            except Exception as e:
-                log("process_url:", e)
-                if config.TEST_MODE:
-                    raise e
     # endregion
 
     # region update view
@@ -701,7 +652,8 @@ class Controller:
         self.stream_menu = info.get('stream_menu')
         self._update_view(**info)
 
-    def _select_playlist_video(self, idx, active=True):
+    @threaded
+    def select_playlist_video(self, idx, active=True):
         """
         select video from playlist menu and update stream menu
         idx: index in playlist menu
@@ -738,17 +690,6 @@ class Controller:
         self._update_stream_menu(command='stream_menu', stream_menu=vid.stream_menu, video_idx=idx,
                                  stream_idx=vid.stream_menu_map.index(vid.selected_stream))
         self._report_d(self.d, active=active)
-
-    def select_playlist_video(self, idx, active=True):
-        """
-        select video from playlist menu and update stream menu
-        idx: index in playlist menu
-
-        to see expected notifications to "view" and example:
-            *read _select_playlist_video() doc string
-        """
-
-        run_thread(self._select_playlist_video, idx, active=active)
 
     def select_stream(self, idx, active=True):
         """select stream for current selected video in playlist menu
@@ -1227,16 +1168,41 @@ class Controller:
 
         self._download(d, silent=True)
 
-    def download_playlist(self, vsmap, subtitles=None):
-        """download playlist
-        Args:
-            vsmap (dict): key=video idx, value=stream idx
-            subtitles (dict): key=language, value=selected extension
+    @threaded
+    def autodownload(self, url, **kwargs):
+        """download file automatically without user intervention
+        for video files it should download best quality, for video playlist, it will download first video
         """
 
-        run_thread(self._download_playlist, vsmap, subtitles)
+        # noplaylist: fetch only the video, if the URL refers to a video and a playlist
+        playlist = self.url_to_playlist(url, ytdloptions={'noplaylist': True})
+        d = playlist[0]
+        update_object(d, kwargs)
 
-    def _download_playlist(self, vsmap, subtitles=None):
+        if d.type == MediaType.video and not d.all_streams:
+            self._process_video(d)
+
+        # set video quality
+        video_quality = kwargs.get('video_quality', None)
+
+        if video_quality and d.type == MediaType.video:
+            d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
+            # print(d.name, d.selected_quality)
+
+        # download item
+        self._download(d, silent=True, download_later=kwargs.get('download_later', False))
+
+    @threaded
+    def batch_download(self, urls, **kwargs):
+        log('Batch downloading the following urls:', '\n'.join(urls))
+        log('Batch download options:', kwargs)
+
+        for url in urls:
+            self.autodownload(url, **kwargs)
+            time.sleep(0.5)
+
+    @threaded
+    def download_playlist(self, vsmap, subtitles=None):
         """download playlist
           Args:
               vsmap (dict): key=video idx, value=stream idx
@@ -1257,47 +1223,11 @@ class Controller:
             if subtitles:
                 self.download_subtitles(subtitles, d=d)
 
-    def _download_subtitle(self, lang_name, url, extension, d):
-        """download one subtitle file"""
-        try:
-            file_name = f'{os.path.splitext(d.target_file)[0]}_{lang_name}.{extension}'
-
-            # create download item object for subtitle
-            sub_d = ObservableDownloadItem()
-            sub_d.name = os.path.basename(file_name)
-            sub_d.folder = os.path.dirname(file_name)
-            sub_d.url = d.url
-            sub_d.eff_url = url
-            sub_d.type = 'subtitle'
-            sub_d.http_headers = d.http_headers
-
-            # if d type is hls video will download file to check if it's an m3u8 or not
-            if 'hls' in d.subtype_list:
-                log('downloading subtitle', file_name)
-                buffer = download(url, http_headers=d.http_headers)
-
-                if buffer:
-                    # convert to string
-                    buffer = buffer.getvalue().decode()
-
-                    # check if downloaded file is an m3u8 file
-                    if '#EXT' in repr(buffer):
-                        sub_d.subtype_list.append('hls')
-
-            self._download(sub_d)
-
-        except Exception as e:
-            log('download_subtitle() error', e)
-
     # endregion
 
     # region Application update
-
+    @threaded
     def check_for_update(self, signal_id=None):
-        """check for newer version of FireDM, youtube-dl, and yt_dlp"""
-        run_thread(self._check_for_update, signal_id)
-
-    def _check_for_update(self, signal_id=None):
         """check for newer version of FireDM, youtube-dl, and yt_dlp"""
 
         info = {'firedm': {'current_version': config.APP_VERSION, 'latest_version': None},
@@ -1400,13 +1330,10 @@ class Controller:
         today = date.today()
         config.last_update_check = (today.year, today.month, today.day)
 
+    @threaded
     def auto_check_for_update(self):
-        if not config.disable_update_feature:
-            run_thread(self._auto_check_for_update)
-
-    def _auto_check_for_update(self):
         """auto check for firedm update"""
-        if config.check_for_update:
+        if config.check_for_update and not config.disable_update_feature:
             today = date.today()
             try:
                 last_check = date(*config.last_update_check)
@@ -1418,7 +1345,7 @@ class Controller:
                 res = self.get_user_response(f'Check for FireDM update?\nLast check was {delta.days} days ago',
                                              options=['Ok', 'Cancel'])
                 if res == 'Ok':
-                    self._check_for_update()
+                    self.check_for_update()
 
     def rollback_pkg_update(self, pkg):
         try:
@@ -1481,6 +1408,38 @@ class Controller:
                     run_thread(self._download_subtitle, lang, url, ext, d)
             else:
                 log('subtitle:', lang, 'Not available for:', d.name)
+
+    def _download_subtitle(self, lang_name, url, extension, d):
+        """download one subtitle file"""
+        try:
+            file_name = f'{os.path.splitext(d.target_file)[0]}_{lang_name}.{extension}'
+
+            # create download item object for subtitle
+            sub_d = ObservableDownloadItem()
+            sub_d.name = os.path.basename(file_name)
+            sub_d.folder = os.path.dirname(file_name)
+            sub_d.url = d.url
+            sub_d.eff_url = url
+            sub_d.type = 'subtitle'
+            sub_d.http_headers = d.http_headers
+
+            # if d type is hls video will download file to check if it's an m3u8 or not
+            if 'hls' in d.subtype_list:
+                log('downloading subtitle', file_name)
+                buffer = download(url, http_headers=d.http_headers)
+
+                if buffer:
+                    # convert to string
+                    buffer = buffer.getvalue().decode()
+
+                    # check if downloaded file is an m3u8 file
+                    if '#EXT' in repr(buffer):
+                        sub_d.subtype_list.append('hls')
+
+            self._download(sub_d)
+
+        except Exception as e:
+            log('download_subtitle() error', e)
     # endregion
 
     # region file/folder operations
@@ -1523,6 +1482,7 @@ class Controller:
 
         open_folder(d.folder)
 
+    @threaded
     def delete(self, uid):
         """delete download item from the list
         Args:
@@ -1534,16 +1494,15 @@ class Controller:
         d.status = Status.cancelled
 
         # delete files
-        run_thread(d.delete_tempfiles())
+        d.delete_tempfiles()
     # endregion
 
     # region get info
+    @threaded
     def get_d_list(self):
         """update previous download list in view"""
         log('controller.get_d_list()> sending d_list')
-        run_thread(self._get_d_list)
 
-    def _get_d_list(self):
         buff = {'command': 'd_list', 'd_list': []}
         for d in self.d_map.values():
             properties = d.watch_list
@@ -1719,7 +1678,7 @@ class Controller:
     # region cmd view
     def interactive_download(self, url, **kwargs):
         """intended to be used with command line view and offer step by step choices to download an item"""
-        playlist = self._process_url(url)
+        playlist = self.process_url(url)
 
         d = playlist[0]
 
@@ -1932,7 +1891,7 @@ class Controller:
     def reset(self):
         """reset controller and cancel ongoing operation"""
         # stop youyube-dl
-        config.ytdl_abort = True
+        config.ytdl_abort = True  # todo: check impact of this flag on playlist and batch download operation
         self.d = None
         self.playlist = []
 
