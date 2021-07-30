@@ -1612,6 +1612,8 @@ class DItem(tk.Frame):
         if callable(self.on_toggle_callback):
             self.on_toggle_callback()
 
+        self.update_idletasks()
+
         # set focus, required for any "keyboard binding" to work
         self.focus_set()
 
