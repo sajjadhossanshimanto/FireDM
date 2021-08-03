@@ -778,6 +778,8 @@ class DownloadItem:
 
     def update_segments_progress(self, activeonly=False):
         """set self.segments_progress, e.g [total size, [(starting range, length, total file size), ...]]"""
+        segments_progress = None
+
         if self.status == config.Status.completed:
             segments_progress = [100, [(0, 100)]]
 
