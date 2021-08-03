@@ -25,7 +25,8 @@ settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', '
                  'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
                  'autoscroll_download_tab', 'enable_captcha_workaround', 'gui_font', 'scrollbar_width',
                  'verify_ssl_cert', 'custom_user_agent', 'recent_folders', 'write_timestamp',
-                 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top', 'disable_log_popups', 'ibus_workaround']
+                 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top', 'disable_log_popups',
+                 'ibus_workaround', 'on_download_notification']
 
 # CONSTANTS
 APP_NAME = 'FireDM'
@@ -130,6 +131,9 @@ ibus_workaround = False
 # gui window size
 DEFAULT_WINDOW_SIZE = (780, 433)  # width, height in pixels
 window_size = DEFAULT_WINDOW_SIZE
+
+# show notify message when done downloading
+on_download_notification = True
 
 
 # video / audio --------------------------------------------------------------------------------------------------------

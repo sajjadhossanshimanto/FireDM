@@ -2748,7 +2748,7 @@ class BatchWindow(tk.Toplevel):
         self.video_quality.pack(side='left')
         self.prefere_mp4 = tk.BooleanVar(value=False)
 
-        tk.Checkbutton(options_frame, text='prefere mp4 format', bg=MAIN_BG, fg=MAIN_FG, anchor='w', relief='flat',
+        tk.Checkbutton(options_frame, text='prefer mp4 format', bg=MAIN_BG, fg=MAIN_FG, anchor='w', relief='flat',
                         activebackground=MAIN_BG, highlightthickness=0, activeforeground=MAIN_FG, selectcolor=MAIN_BG,
                         variable=self.prefere_mp4, onvalue=True, offvalue=False).pack(side='right', anchor='e', padx=10)
         ttk.Separator(main_frame).pack(fill='x')
@@ -3438,6 +3438,9 @@ class MainWindow(IView):
         if config.operating_system == 'Linux':
             CheckOption(tab, 'Enable ibus workaround, to fix slow application startup.',
                         key='ibus_workaround').pack(anchor='w')
+
+        CheckOption(tab, 'Show notification when finish downloading a file',
+                    key='on_download_notification').pack(anchor='w')
 
         sett_folder_frame = tk.Frame(tab, bg=bg)
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')

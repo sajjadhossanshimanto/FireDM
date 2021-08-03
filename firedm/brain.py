@@ -40,7 +40,7 @@ def brain(d=None):
     d.downloaded = 0
 
     log('\n')
-    log('=' * 106)
+    log('=' * 100)
     log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder}')
     log(f'url: "{d.url}" \n')
 
@@ -89,17 +89,8 @@ def brain(d=None):
     while True:
         time.sleep(0.1)  # a sleep time to make the program responsive
 
-        if d.status == Status.completed:
-            # os notification popup
-            notification = f"File: {d.name} \nsaved at: {d.folder}"
-            notify(notification, title=f'{APP_NAME} - Download completed')
-            log(f'File: "{d.name}", completed.')
-            break
-        elif d.status == Status.cancelled:
-            log(f'brain {d.uid}: Cancelled download')
-            break
-        elif d.status == Status.error:
-            log(f'brain {d.uid}: download error')
+        if d.status not in Status.active_states:
+            log(f'File: "{d.name}", {d.status}.')
             break
 
     # report quitting
@@ -115,13 +106,18 @@ def brain(d=None):
             log(f'MD5: {md5} - for {d.name}')
             log(f'SHA256: {sha256} - for {d.name}')
 
+        if config.on_download_notification:
+            # os notification popup
+            notification = f"File: {d.name} \nsaved at: {d.folder}"
+            notify(notification, title=f'{APP_NAME} - Download completed')
+
         # uncomment to debug segments ranges
         # segments = sorted([seg for seg in d.segments], key=lambda seg: seg.range[0])
         # print('d.size:', d.size)
         # for seg in segments:
         #     print(seg.basename, seg.range, seg.range[1] - seg.range[0], seg.size, seg.remaining)
 
-    log('=' * 106, '\n')
+    log('=' * 100, '\n')
 
 
 def file_manager(d, q, keep_segments=True):
