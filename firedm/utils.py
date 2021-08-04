@@ -43,6 +43,13 @@ if config.operating_system == 'Linux':
         print('Bidi support error:', e)
 
 
+def threaded(func):
+    def wraper(*args, **kwargs):
+        Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+
+    return wraper
+
+
 def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,  app_name=config.APP_TITLE):
     """
     show os notification at systray area
@@ -1011,6 +1018,6 @@ __all__ = [
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text',
+    'derender_text', 'threaded'
 
 ]

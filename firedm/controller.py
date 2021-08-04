@@ -32,13 +32,6 @@ from .video import get_ytdl_options
 from .model import ObservableDownloadItem, ObservableVideo
 
 
-def threaded(func):
-    def wraper(*args, **kwargs):
-        Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
-
-    return wraper
-
-
 def set_option(**kwargs):
     """set global setting option(s) in config.py"""
     try:
@@ -1498,6 +1491,14 @@ class Controller:
     # endregion
 
     # region get info
+    def get_property(self, property_name, uid=None, video_idx=None):
+        d = self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        return getattr(d, property_name, None)
+
     @threaded
     def get_d_list(self):
         """update previous download list in view"""
@@ -1510,15 +1511,6 @@ class Controller:
             buff['d_list'].append(info)
         self.view.update_view(**buff)
 
-    def get_webpage_url(self, uid=None, video_idx=None):
-        # get download item
-        d = self.get_d(uid, video_idx)
-
-        if not d:
-            return
-
-        return d.url
-
     def get_segments_progress(self, uid=None, video_idx=None):
         # get download item
         d = self.get_d(uid, video_idx)
@@ -1527,24 +1519,6 @@ class Controller:
             return None
 
         return d.update_segments_progress(activeonly=False)
-
-    def get_direct_url(self, uid=None, video_idx=None):
-        # get download item
-        d = self.get_d(uid, video_idx)
-
-        if not d:
-            return
-
-        return d.eff_url
-
-    def get_playlist_url(self, uid=None, video_idx=None):
-        # get download item
-        d = self.get_d(uid, video_idx)
-
-        if not d:
-            return
-
-        return d.playlist_url
 
     def get_properties(self, uid=None, video_idx=None):
         # get download item

@@ -2257,10 +2257,8 @@ class PlaylistWindow(tk.Toplevel):
         item.bar.stop()
     # endregion
 
+    @threaded
     def toggle_all(self):
-        run_thread(self._toggle_all)
-
-    def _toggle_all(self):
         """select / unselct all video items in playlist"""
 
         if self.select_all_var.get():
@@ -3851,9 +3849,9 @@ class MainWindow(IView):
         right_click_map = {'Open File  (Enter)': lambda uid: self.controller.play_file(uid=uid),
                            'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
                            'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
-                           'copy webpage url': lambda uid: self.copy(self.controller.get_webpage_url(uid=uid)),
-                           'copy direct url': lambda uid: self.copy(self.controller.get_direct_url(uid=uid)),
-                           'copy playlist url': lambda uid: self.copy(self.controller.get_playlist_url(uid=uid)),
+                           'copy webpage url': lambda uid: self.copy(self.controller.get_property('url', uid=uid)),
+                           'copy direct url': lambda uid: self.copy(self.controller.get_property('eff_url', uid=uid)),
+                           'copy playlist url': lambda uid: self.copy(self.controller.get_property('playlist_url', uid=uid)),
                            'Resume': lambda uid: self.resume_selected(),
                            'Pause': lambda uid: self.stop_selected(),
                            'Delete  (Del)': lambda uid: self.delete_selected(),
