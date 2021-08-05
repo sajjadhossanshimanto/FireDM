@@ -4236,7 +4236,7 @@ class MainWindow(IView):
         # update current item
         elif command == 'update':
             # update active item
-            if active and self.pl_menu.select() == video_idx:
+            if active and (self.pl_menu.select() == video_idx or not self.pl_menu.get()):
                 self.file_properties.update(**kwargs)
 
                 # thumbnail
