@@ -132,8 +132,6 @@ class Controller:
         self.playlist = []
         self._playlist_menu = []
         self._stream_menu = []
-        # self._d = None  # active download item which has self.url
-        self.d = None  # active download item which has self.url
 
         # create view
         self.view = view_class(controller=self)
@@ -263,13 +261,12 @@ class Controller:
             if is_video_playlist:
                 log('controller> playlist ready')
                 self._update_playlist_menu([str(i + 1) + '- ' + video.rendered_name for i, video in enumerate(self.playlist)])
-                # self.select_playlist_video(0) # view should call this method
             else:
                 self._update_playlist_menu([])
 
             if self.playlist:
-                self.d = playlist[0]
-                self._report_d(self.d, active=True)
+                d = playlist[0]
+                self.report_d(d, active=True)
 
         return playlist
 
@@ -339,7 +336,8 @@ class Controller:
             if config.TEST_MODE:
                 raise e
 
-    def _report_d(self, d, **kwargs):
+    @threaded
+    def report_d(self, d=None, uid=None, video_idx=None, **kwargs):
         """notify view of all properties of a download item
 
         Args:
@@ -347,10 +345,14 @@ class Controller:
             kwargs: key, values to be included
         """
 
+        d = d or self.get_d(uid, video_idx)
+        if not d:
+            return
+
         properties = d.watch_list
 
         info = {k: getattr(d, k, None) for k in properties}
-        info.update(**kwargs)
+        info.update(**kwargs, video_idx=self.playlist.index(d))
 
         self._update_view(**info)
 
@@ -639,59 +641,34 @@ class Controller:
         self.playlist_menu = pl_menu
         self._update_view(command='playlist_menu', playlist_menu=pl_menu)
 
-    def _update_stream_menu(self, **info):
+    @threaded
+    def get_stream_menu(self, d=None, uid=None, video_idx=None):
         """update stream menu and send notification to view
         """
-        self.stream_menu = info.get('stream_menu')
-        self._update_view(**info)
-
-    @threaded
-    def select_playlist_video(self, idx, active=True):
-        """
-        select video from playlist menu and update stream menu
-        idx: index in playlist menu
-
-        expected notifications to "view":
-        dict containing  (idx, stream_menu list, selected_stream_idx),
-        and info of current selected video in playlist menu
-
-        view should expect something like below:
-        example:
-            {'command': 'stream_menu',
-
-            'stream_menu':
-            ['Video streams:                     ',
-            '    mp4 - 1080 - 29.9 MB - id:137 - 30 fps',
-            '    mp4 - 720 - 18.3 MB - id:22 - 30 fps',
-            'Audio streams:                 ',
-            '    aac - 128 - 4.6 MB - id:140',
-            '    webm - 50 - 1.9 MB - id:249', '',
-            'Extra streams:                 ',
-            '    mp4 - 720 - 13.7 MB - id:136 - 30 fps'],
-
-            'video_idx': 0,
-            'selected_stream_idx': 1}
-
-        """
-
-        self.d = vid = self.playlist[idx]
+        vid = d or self.get_d(uid, video_idx)
 
         # process video
         if not vid.processed:
             self._process_video(vid)
 
-        self._update_stream_menu(command='stream_menu', stream_menu=vid.stream_menu, video_idx=idx,
-                                 stream_idx=vid.stream_menu_map.index(vid.selected_stream))
-        self._report_d(self.d, active=active)
+        self._update_view(command='stream_menu', stream_menu=vid.stream_menu, video_idx=video_idx,
+                          stream_idx=vid.stream_menu_map.index(vid.selected_stream))
 
-    def select_stream(self, idx, active=True):
-        """select stream for current selected video in playlist menu
-        idx: index in stream menu
+    def select_stream(self, stream_idx, uid=None, video_idx=None, d=None, report=True, active=True):
+        """select stream for a video in playlist menu
+        stream_idx: index in stream menu
         expected notifications: info of current selected video in playlist menu
         """
 
-        self.d.select_stream(index=idx)
-        self._report_d(self.d, active=active)
+        d = d or self.get_d(uid, video_idx)
+
+        if not d:
+            return
+
+        d.select_stream(index=stream_idx)
+
+        if report:
+            self.report_d(d, active=active, stream_idx=stream_idx)
 
     def select_audio(self, audio_idx, uid=None, video_idx=None):
         """select audio from audio menu
@@ -728,7 +705,7 @@ class Controller:
             if active_downloads < config.max_concurrent_downloads:
                 d = self.pending_downloads_q.get()
                 if d.status == Status.pending:
-                    self._download(d, silent=True)
+                    self.download(d, silent=True)
 
             time.sleep(3)
 
@@ -741,7 +718,7 @@ class Controller:
                 current_datetime = datetime.now()
                 for d in sched_downloads:
                     if d.sched and datetime.fromisoformat(d.sched) <= current_datetime:
-                        self._download(d, silent=True)
+                        self.download(d, silent=True)
 
             time.sleep(60)
 
@@ -947,50 +924,31 @@ class Controller:
                 print('download simulator cancelled for:', d.uid, d.name)
                 break
 
-    def download(self, uid=None, download_later=False, **kwargs):
-        """download an item
-
-        Args:
-            uid (str): unique identifier property for a download item in self.d_map, if none, self.d will be downloaded
-            kwargs: key/value for any legit attributes in DownloadItem
-        """
-
-        if uid is None:
-            d = copy(self.d)
-            silent = False
-        else:
-            d = self.d_map.get(uid, None)
-            silent = True
-
-        showpopup = not silent
-
-        if d is None:
-            log('Nothing to download', showpopup=showpopup)
-            return
-
-        update_object(d, kwargs)
-
-        self._download(d, silent, download_later)
-
-        return True
-
     @threaded
-    def _download(self, d, silent=False, download_later=False):
+    def download(self, d=None, uid=None, video_idx=None, silent=False, download_later=False, **kwargs):
         """start downloading an item
 
         Args:
             d (ObservableDownloadItem): download item
             silent (bool): if True, hide all a warning dialogues and select default
+            kwargs: key/value for any legit attributes in DownloadItem
         """
 
         showpopup = not silent
+
+        d = d or self.get_d(uid, video_idx)
+        if not d:
+            log('Nothing to download', showpopup=showpopup)
+            return
+
+        update_object(d, kwargs)
 
         try:
             pre_checks = self._pre_download_checks(d, silent=silent)
 
             if pre_checks:
                 # update view
-                self._report_d(d, command='new')
+                self.report_d(d, command='new')
 
                 # register observer
                 d.register_callback(self.observer)
@@ -1033,13 +991,13 @@ class Controller:
                             d.errors = 0
 
                             # update view
-                            self._report_d(d)
+                            self.report_d(d)
 
                             # refresh url
                             self.auto_refresh_url(d)
 
                 # update view
-                self._report_d(d)
+                self.report_d(d)
 
                 # actions to be done after completing download
                 self._post_download(d)
@@ -1159,7 +1117,7 @@ class Controller:
         d.update(url)
         d.name = 'ffmpeg.exe'
 
-        self._download(d, silent=True)
+        self.download(d, silent=True)
 
     @threaded
     def autodownload(self, url, **kwargs):
@@ -1180,10 +1138,9 @@ class Controller:
 
         if video_quality and d.type == MediaType.video:
             d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
-            # print(d.name, d.selected_quality)
 
         # download item
-        self._download(d, silent=True, download_later=kwargs.get('download_later', False))
+        self.download(d, silent=True, download_later=kwargs.get('download_later', False))
 
     @threaded
     def batch_download(self, urls, **kwargs):
@@ -1210,7 +1167,7 @@ class Controller:
             if config.use_playlist_numbers:
                 d.name = f'{vid_idx + 1}- {d.name}'
 
-            self._download(d, silent=True)
+            self.download(d, silent=True)
             time.sleep(0.5)
 
             if subtitles:
@@ -1429,7 +1386,7 @@ class Controller:
                     if '#EXT' in repr(buffer):
                         sub_d.subtype_list.append('hls')
 
-            self._download(sub_d)
+            self.download(sub_d)
 
         except Exception as e:
             log('download_subtitle() error', e)
@@ -1593,15 +1550,18 @@ class Controller:
             video_idx (int): index of a video download item in self.playlist
 
         Returns:
-            (DownloadItem): if uid and video_idx omitted it will return self.d
+            (DownloadItem): if uid and video_idx omitted it will return the first object in self.playlist
         """
 
-        if uid is not None:
-            d = self.d_map.get(uid)
-        elif video_idx is not None:
-            d = self.playlist[video_idx]
-        else:
-            d = self.d
+        try:
+            if uid:
+                d = self.d_map.get(uid)
+            elif video_idx:
+                d = self.playlist[video_idx]
+            else:
+                d = self.playlist[0]
+        except:
+            d = None
 
         return d
 
@@ -1732,8 +1692,8 @@ class Controller:
             return
 
         # download
-        self._download(d)
-        self._report_d(d)
+        self.download(d)
+        self.report_d(d)
 
         self._save_settings()
         config.shutdown = True
@@ -1875,7 +1835,6 @@ class Controller:
         """reset controller and cancel ongoing operation"""
         # stop youyube-dl
         config.ytdl_abort = True  # todo: check impact of this flag on playlist and batch download operation
-        self.d = None
         self.playlist = []
 
     # endregion

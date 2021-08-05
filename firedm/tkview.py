@@ -2020,6 +2020,7 @@ class PlaylistWindow(tk.Toplevel):
                                  has 4000 videos, we will show 40 page each page has 100 video
         """
         self.main = main
+        self.controller = main.controller
         self.parent = main.root
         self.playlist = playlist or []
         self.playlist_count = len(playlist)
@@ -2095,7 +2096,7 @@ class PlaylistWindow(tk.Toplevel):
 
         self.master_combo = Combobox(f3, [], width=40, callback=self.master_combo_callback)
         self.master_combo.pack(side='right', padx=5, pady=5)
-        tk.Label(f3, text='Preferred quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=(20, 5), pady=5)
+        tk.Label(f3, text='Quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=(20, 5), pady=5)
 
         # create items widgets
         for idx, name in zip(range(self.items_per_page), self.playlist):
@@ -2108,6 +2109,9 @@ class PlaylistWindow(tk.Toplevel):
 
         Button(bottom_frame, text='Cancel', command=self.close).pack(side='right', padx=5)
         Button(bottom_frame, text='Download', command=self.download).pack(side='right')
+
+        self.total_size = tk.StringVar(value='Total Size: ')
+        tk.Label(bottom_frame, textvariable=self.total_size, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
 
         main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
 
@@ -2127,10 +2131,13 @@ class PlaylistWindow(tk.Toplevel):
         item.columnconfigure(1, weight=1)
         item.idx = idx  # index in self.items
         item.selected = tk.BooleanVar()
+        item.stream_menu_var = tk.StringVar()
+        item.stream_menu_var.trace_add('write', lambda *args, idx=item.idx: self.stream_select_callback(idx))
+
+        item.selected.trace_add('write', lambda *args, idx=item.idx: self.video_select_callback(idx))
 
         # checkbutton
-        item.checkbutton = Checkbutton(item, text=name, variable=item.selected, width=60,
-                                       command=lambda: self.video_select_callback(item.idx))
+        item.checkbutton = Checkbutton(item, text=name, variable=item.selected, width=60)
 
         # progressbar
         custom_style = 'custom_playlist_bar.Horizontal.TProgressbar'
@@ -2138,7 +2145,7 @@ class PlaylistWindow(tk.Toplevel):
         item.bar = ttk.Progressbar(item, orient='horizontal', mode='indeterminate', style=custom_style)
 
         # stream menu
-        item.combobox = Combobox(item, [], width=40, callback=lambda: self.stream_select_callback(item.idx))
+        item.combobox = Combobox(item, [], width=40, textvariable=item.stream_menu_var)
 
         item.checkbutton.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
 
@@ -2294,7 +2301,7 @@ class PlaylistWindow(tk.Toplevel):
         # sort items
         self.selected_videos = {k: self.selected_videos[k] for k in sorted(self.selected_videos.keys())}
         # print(self.selected_videos)
-        self.main.controller.download_playlist(self.selected_videos, subtitles=self.selected_subs)
+        self.controller.download_playlist(self.selected_videos, subtitles=self.selected_subs)
 
         self.close()
 
@@ -2321,11 +2328,10 @@ class PlaylistWindow(tk.Toplevel):
         combobox.config(values=stream_menu)
         combobox.current(stream_idx)
 
-        self.stream_select_callback(item_idx)
         self.stream_menus[video_idx] = stream_menu
 
         # get subtitles
-        sub = self.main.controller.get_subtitles(video_idx=video_idx)
+        sub = self.controller.get_subtitles(video_idx=video_idx)
         if sub:
             self.update_subtitles(sub)
 
@@ -2465,32 +2471,42 @@ class PlaylistWindow(tk.Toplevel):
         """ask controller to send stream menu when selecting a video"""
         item = self.items[item_idx]
         video_idx = self.get_video_idx(item_idx)
+        stream_idx = item.combobox.current()
 
         if item.selected.get():
             item.combobox.grid(row=0, column=1, padx=5, sticky='ew')
             self.start_progressbar(item_idx)
-            self.main.controller.select_playlist_video(video_idx, active=False)
-
+            self.controller.get_stream_menu(video_idx=video_idx)
             self.videos_counter.set(self.videos_counter.get() + 1)
+            self.selected_videos[video_idx] = stream_idx
         else:
             self.videos_counter.set(self.videos_counter.get() - 1)
             item.combobox.grid_remove()
             self.stop_progressbar(item_idx)
+            self.selected_videos.pop(video_idx)
 
         self.update_subs_label()
-
-        self.stream_select_callback(item_idx)
 
     def stream_select_callback(self, item_idx):
         item = self.items[item_idx]
         video_idx = self.get_video_idx(item_idx)
 
         stream_idx = item.combobox.current()
+        self.controller.select_stream(stream_idx, video_idx=video_idx)
 
-        if item.selected.get():
-            self.selected_videos[video_idx] = stream_idx
-        elif video_idx in self.selected_videos:
-            self.selected_videos.pop(video_idx)
+        self.update_total_size()
+
+    def update_total_size(self):
+        def get_size(video_idx):
+            size = self.controller.get_property('total_size', video_idx=video_idx)
+            try:
+                size = int(size)
+            except:
+                size = 0
+            return size
+
+        total_size = sum([get_size(video_idx) for video_idx in self.selected_videos])
+        self.total_size.set(f'Total Size: {size_format(total_size)}')
 
 
 class SubtitleWindow(tk.Toplevel):
@@ -4146,6 +4162,8 @@ class MainWindow(IView):
         command = kwargs.get('command')
         uid = kwargs.get('uid')
         active = kwargs.get('active', None)
+        video_idx = kwargs.get('video_idx', None)
+        stream_idx = kwargs.get('stream_idx', None)
 
         if 'status' in kwargs:
             self.root.after(100, self.update_stat_lbl)
@@ -4180,21 +4198,20 @@ class MainWindow(IView):
                 self.pl_menu.select(0)
 
                 self.stream_menu.start_progressbar()
-                self.controller.select_playlist_video(0)
+                self.controller.get_stream_menu(video_idx=0)
             else:
                 self.pl_menu.reset()
 
         # update stream menu
         elif command == 'stream_menu':
-            video_idx = kwargs['video_idx']
             stream_menu = kwargs['stream_menu']
-            stream_idx = kwargs['stream_idx']
 
             # make sure this data belong to selected item in playlist
             if self.pl_menu.select() == video_idx:
                 self.stream_menu.hide_progressbar()
                 self.stream_menu.set(stream_menu)
                 self.stream_menu.select(stream_idx)
+                self.controller.report_d(video_idx=video_idx, active=True)
 
             # pass to playlist download window
             if self.pl_window:
@@ -4216,13 +4233,16 @@ class MainWindow(IView):
         # update current item
         elif command == 'update':
             # update active item
-            if active:
+            if active and self.pl_menu.select() == video_idx:
                 self.file_properties.update(**kwargs)
 
                 # thumbnail
                 img_base64 = kwargs.get('thumbnail', None)
                 if img_base64:
                     self.thumbnail.show(b64=img_base64)
+
+                if stream_idx is not None:
+                    self.stream_menu.select(stream_idx)
 
             # update item in d_tab
             elif uid in self.d_items:
@@ -4486,9 +4506,10 @@ class MainWindow(IView):
 
     # region video
     def stream_select_callback(self, *args, idx=None):
-        idx = idx or self.stream_menu.select()
-        if idx is not None:
-            self.controller.select_stream(idx)
+        video_idx = self.pl_menu.select()
+        stream_idx = idx or self.stream_menu.select()
+        if stream_idx is not None:
+            self.controller.select_stream(stream_idx, video_idx=video_idx)
 
     def video_select_callback(self, *args, idx=None):
         idx = idx or self.pl_menu.select()
@@ -4497,7 +4518,7 @@ class MainWindow(IView):
             self.stream_menu.reset()
             self.stream_menu.start_progressbar()
             self.thumbnail.reset()
-            self.controller.select_playlist_video(idx)
+            self.controller.get_stream_menu(video_idx=idx)
 
     def show_subtitles_window(self):
         if self.subtitles_window:
