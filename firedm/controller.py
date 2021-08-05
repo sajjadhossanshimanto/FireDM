@@ -1156,13 +1156,13 @@ class Controller:
             time.sleep(0.5)
 
     @threaded
-    def download_playlist(self, vsmap, subtitles=None, **kwargs):
+    def download_playlist(self, selected_videos, subtitles=None, **kwargs):
         """download playlist
           Args:
-              vsmap (dict): key=video idx, value=stream idx
+              selected_videos (iterable): indexes of selected videos in self.playlist
               subtitles (dict): key=language, value=selected extension
         """
-        for vid_idx in vsmap.keys():
+        for vid_idx in selected_videos:
             d = copy(self.playlist[vid_idx])
             d.folder = config.download_folder
 

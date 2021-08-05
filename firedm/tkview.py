@@ -2299,12 +2299,8 @@ class PlaylistWindow(tk.Toplevel):
         self.main.pl_window = None
 
     def download(self, **kwargs):
-
-        # sort items
-        self.selected_videos = {k: self.selected_videos[k] for k in sorted(self.selected_videos.keys())}
-        # print(self.selected_videos)
-        self.controller.download_playlist(self.selected_videos, subtitles=self.selected_subs, **kwargs)
-
+        selected_videos = sorted(self.selected_videos.keys())
+        self.controller.download_playlist(selected_videos, subtitles=self.selected_subs, **kwargs)
         self.close()
 
     def update_view(self, video_idx=None, stream_menu=None, stream_idx=None):
