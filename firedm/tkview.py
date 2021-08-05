@@ -4122,7 +4122,7 @@ class MainWindow(IView):
             uid (str): download item's unique identifier
         """
 
-        self.download(uid)
+        self.download(uid, silent=True)
 
     def resume_all(self):
         for uid, item in self.d_items.items():
