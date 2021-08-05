@@ -4099,7 +4099,11 @@ class MainWindow(IView):
             uid (str): download item's unique identifier, if omitted active item will be downloaded
             kwargs: key/value for any legit attributes in DownloadItem
         """
-        self.controller.download(uid, **kwargs)
+
+        if uid is None:
+            kwargs['video_idx'] = self.pl_menu.select()
+
+        self.controller.download(uid=uid, **kwargs)
 
     def toggle_download(self, uid):
         item = self.d_items[uid]
