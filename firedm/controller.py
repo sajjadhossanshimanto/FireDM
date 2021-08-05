@@ -352,7 +352,11 @@ class Controller:
         properties = d.watch_list
 
         info = {k: getattr(d, k, None) for k in properties}
-        info.update(**kwargs, video_idx=self.playlist.index(d))
+
+        if d in self.playlist:
+            info.update(video_idx=self.playlist.index(d))
+
+        info.update(**kwargs)
 
         self._update_view(**info)
 
@@ -1152,22 +1156,21 @@ class Controller:
             time.sleep(0.5)
 
     @threaded
-    def download_playlist(self, vsmap, subtitles=None):
+    def download_playlist(self, vsmap, subtitles=None, **kwargs):
         """download playlist
           Args:
               vsmap (dict): key=video idx, value=stream idx
               subtitles (dict): key=language, value=selected extension
         """
-        for vid_idx, s_idx in vsmap.items():
+        for vid_idx in vsmap.keys():
             d = copy(self.playlist[vid_idx])
-            d.select_stream(index=s_idx)
             d.folder = config.download_folder
 
             # add number to name
             if config.use_playlist_numbers:
                 d.name = f'{vid_idx + 1}- {d.name}'
 
-            self.download(d, silent=True)
+            self.download(d, silent=True, **kwargs)
             time.sleep(0.5)
 
             if subtitles:

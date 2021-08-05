@@ -2108,7 +2108,9 @@ class PlaylistWindow(tk.Toplevel):
             atk.scroll_with_mousewheel(item, target=videos_frame, apply_to_children=True)
 
         Button(bottom_frame, text='Cancel', command=self.close).pack(side='right', padx=5)
-        Button(bottom_frame, text='Download', command=self.download).pack(side='right')
+        Button(bottom_frame, text='Download Later',
+               command=lambda: self.download(download_later=True)).pack(side='right', padx=5)
+        Button(bottom_frame, text='Download', command=self.download).pack(side='right', padx=5)
 
         self.total_size = tk.StringVar(value='Total Size: ')
         tk.Label(bottom_frame, textvariable=self.total_size, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
@@ -2296,12 +2298,12 @@ class PlaylistWindow(tk.Toplevel):
         self.destroy()
         self.main.pl_window = None
 
-    def download(self):
+    def download(self, **kwargs):
 
         # sort items
         self.selected_videos = {k: self.selected_videos[k] for k in sorted(self.selected_videos.keys())}
         # print(self.selected_videos)
-        self.controller.download_playlist(self.selected_videos, subtitles=self.selected_subs)
+        self.controller.download_playlist(self.selected_videos, subtitles=self.selected_subs, **kwargs)
 
         self.close()
 
@@ -2492,6 +2494,7 @@ class PlaylistWindow(tk.Toplevel):
         video_idx = self.get_video_idx(item_idx)
 
         stream_idx = item.combobox.current()
+        self.selected_videos.update({video_idx: stream_idx})
         self.controller.select_stream(stream_idx, video_idx=video_idx)
 
         self.update_total_size()
