@@ -393,10 +393,12 @@ class Controller:
         info: youtube-dl info dict
         """
         try:
+            # reset abort flag
+            config.ytdl_abort = False
+
             # handle types: url and url transparent
             _type = info.get('_type', 'video')
             if _type in ('url', 'url_transparent'):
-
                 info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
 
             # process info
@@ -444,6 +446,7 @@ class Controller:
             while not video.ytdl:
                 time.sleep(1)  # wait until module gets imported
 
+        # todo: remove this (captcha workaround) junk and add offline webpage option
         # override _download_webpage in Youtube-dl for captcha workaround -- experimental
         def download_webpage_decorator(func):
             # return data
@@ -614,6 +617,9 @@ class Controller:
 
             try:
                 vid.busy = False
+
+                # reset abort flag
+                config.ytdl_abort = False
 
                 # process info
                 processed_info = self.ydl.process_ie_result(vid.vid_info, download=False)
@@ -1837,7 +1843,7 @@ class Controller:
     def reset(self):
         """reset controller and cancel ongoing operation"""
         # stop youyube-dl
-        config.ytdl_abort = True  # todo: check impact of this flag on playlist and batch download operation
+        config.ytdl_abort = True
         self.playlist = []
 
     # endregion
