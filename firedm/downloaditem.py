@@ -789,19 +789,23 @@ class DownloadItem:
             total_size = self.total_size
 
             try:
-                if 'hls' in self.subtype_list:
+                # handle hls or fragmented videos
+                if any([x in self.subtype_list for x in ('hls', 'fragmented')]):
                     # one hls file might contain more than 5000 segment with unknown sizes
                     # will use segments numbers as a starting point and segment size = 1
 
                     total_size = len(self.segments)
                     sp = [(self.segments.index(seg), 1) for seg in self.segments if seg.downloaded and c(seg)]
 
+                # handle other video types
                 elif self.type == MediaType.video:
 
                     vid = [(seg.range[0], seg.down_bytes) for seg in self.video_segments if c(seg)]
                     aud = [(seg.range[0] + self.video_size - 1, seg.down_bytes) for seg in self.audio_segments if c(seg)]
 
                     sp = vid + aud
+
+                # handle non video items
                 else:
                     sp = [(seg.range[0], seg.down_bytes) for seg in self.segments if c(seg)]
 
