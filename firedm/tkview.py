@@ -2015,9 +2015,9 @@ class PlaylistWindow(tk.Toplevel):
         Args:
             main: main window class
             playlist (iterable): video names only in a playlist, e.g. ('1- cats in the wild', '2- car racing', ...)
-                                 in case we have a huge playlist
-                                 e.g. https://www.youtube.com/watch?v=BZyjT5TkWw4&list=PL2aBZuCeDwlT56jTrxQ3FExn-dtchIwsZ
-                                 has 4000 videos, we will show 40 page each page has 100 video
+                in case we have a huge playlist
+                e.g. https://www.youtube.com/watch?v=BZyjT5TkWw4&list=PL2aBZuCeDwlT56jTrxQ3FExn-dtchIwsZ
+                has 4000 videos, we will show 40 page each page has 100 video
         """
         self.main = main
         self.controller = main.controller
@@ -2027,7 +2027,7 @@ class PlaylistWindow(tk.Toplevel):
         self.items = []
         self.max_videos_per_page = 100
         self.total_pages = self.playlist_count // self.max_videos_per_page + 1 if self.playlist_count % self.max_videos_per_page else 0
-        self.current_page = 0
+        self._current_page = 0
         self.items_per_page = min(self.playlist_count, self.max_videos_per_page)
 
         self.selected_videos = {}  # video_idx vs stream_idx
@@ -2035,7 +2035,7 @@ class PlaylistWindow(tk.Toplevel):
         self.subtitles = {}
         self.selected_subs = {}
 
-        self.videos_counter = tk.IntVar()
+        self.selected_videos_num = tk.IntVar()
 
         self.master_strem_menu = []
         self.master_combo = None
@@ -2060,6 +2060,22 @@ class PlaylistWindow(tk.Toplevel):
 
         self.create_widgets()
 
+    @property
+    def curr_page(self):
+        return self._current_page
+
+    @curr_page.setter
+    def curr_page(self, newvalue):
+        # validate, pages start from zero, e.g. if total pages = 10, start=0, end=9
+        if 0 <= newvalue < self.total_pages:
+            self._current_page = newvalue
+
+            # update items
+            self.update_items()
+
+            # update displayed page num
+            self.displayed_page_num.set(f'{self.curr_page + 1} of {self.total_pages}')
+
     def create_widgets(self):
         main_frame = tk.Frame(self, bg=MAIN_BG)
         top_frame = tk.Frame(main_frame, bg=MAIN_BG)
@@ -2067,16 +2083,15 @@ class PlaylistWindow(tk.Toplevel):
         videos_frame.columnconfigure(0, weight=1)
         bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
 
-        self.page_count_var = tk.StringVar()
-        self.update_page_count()
+        self.displayed_page_num = tk.StringVar(value=f'1 of {self.total_pages}')
 
         f1 = tk.Frame(top_frame, bg=MAIN_BG)
         f1.pack(fill='x', expand=True, anchor='w')
         tk.Label(f1, text=f'Total videos: {self.playlist_count}, Selected:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
-        tk.Label(f1, textvariable=self.videos_counter, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=2, pady=5)
+        tk.Label(f1, textvariable=self.selected_videos_num, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=2, pady=5)
 
         Button(f1, text='Next', command=self.next_page).pack(side='right', padx=5, pady=5)
-        tk.Label(f1, textvariable=self.page_count_var, bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
+        tk.Label(f1, textvariable=self.displayed_page_num, bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
         Button(f1, text='Prev.', command=self.prev_page).pack(side='right', padx=5, pady=5)
 
         f2 = tk.Frame(top_frame, bg=MAIN_BG)
@@ -2099,8 +2114,8 @@ class PlaylistWindow(tk.Toplevel):
         tk.Label(f3, text='Quality:', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=(20, 5), pady=5)
 
         # create items widgets
-        for idx, name in zip(range(self.items_per_page), self.playlist):
-            item = self.create_item(videos_frame, idx, name)
+        for num, name in zip(range(self.items_per_page), self.playlist):
+            item = self.create_item(videos_frame, num, name)
 
             self.items.append(item)
             item.grid(padx=5, pady=5, sticky='ew')
@@ -2112,7 +2127,7 @@ class PlaylistWindow(tk.Toplevel):
                command=lambda: self.download(download_later=True)).pack(side='right', padx=5)
         Button(bottom_frame, text='Download', command=self.download).pack(side='right', padx=5)
 
-        self.total_size = tk.StringVar(value='Total Size: ')
+        self.total_size = tk.StringVar()
         tk.Label(bottom_frame, textvariable=self.total_size, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
 
         main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
@@ -2123,20 +2138,20 @@ class PlaylistWindow(tk.Toplevel):
         ttk.Separator(main_frame).pack(side='top', fill='x', expand=True)
         videos_frame.pack(side='bottom', expand=True, fill='both')
 
-    # region item
-    def create_item(self, parent, idx, name):
+    def create_item(self, parent, num, name):
         """Create an item,
         every item has video name label, stream quality combobox, and a progressbar
         """
         item = tk.Frame(parent, bg=MAIN_BG)
         item.columnconfigure(0, weight=1)
         item.columnconfigure(1, weight=1)
-        item.idx = idx  # index in self.items
+        item.num = num  # index in self.items
+        item.video_idx = num  # video index will change with page change
         item.selected = tk.BooleanVar()
         item.stream_menu_var = tk.StringVar()
-        item.stream_menu_var.trace_add('write', lambda *args, idx=item.idx: self.stream_select_callback(idx))
+        item.stream_menu_var.trace_add('write', lambda *args, idx=item.num: self.stream_select_callback(idx))
 
-        item.selected.trace_add('write', lambda *args, idx=item.idx: self.video_select_callback(idx))
+        item.selected.trace_add('write', lambda *args, idx=item.num: self.video_select_callback(idx))
 
         # checkbutton
         item.checkbutton = Checkbutton(item, text=name, variable=item.selected, width=60)
@@ -2151,65 +2166,42 @@ class PlaylistWindow(tk.Toplevel):
 
         item.checkbutton.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
 
+        def startpb():
+            item.bar.grid(row=1, column=1, padx=5, sticky='ew')
+            item.bar.start(10)
+
+        def stoppb():
+            item.bar.grid_remove()
+            item.bar.stop()
+
+        item.start_progressbar = startpb
+        item.stop_progressbar = stoppb
+
         return item
 
-    def get_item(self, video_idx):
-        """get item widget from self.items
-
-        Return:
-            (tk widget or None)
-        """
-
-        item_idx = self.get_item_idx(video_idx)
-        item = self.items.get(item_idx, None)
-
-        return item
-
-    def get_item_idx(self, video_idx):
-        """calculate item index based on video index
-        e.g. if video_idx = 301 and we have 100 item per page, this video will be number 1 in 3rd page (counting from 0)
-
-        Return:
-            (int or None): item index or None if video is not in current page
-        """
-
-        # check target page of video item
-        target_page = (video_idx // self.items_per_page)
-        if target_page != self.current_page:
-            return None
-
-        item_idx = video_idx - (target_page * self.items_per_page)
-
-        return item_idx
-
-    def get_video_idx(self, item_idx):
-        """calculate video index from item index based on current page
-        e.g. if item_idx = 1 and current page is 3 (counting from 0), and we have 100 item per page, then video_idx= 301
-
-        Return:
-            (int): video index in playlist
-        """
-
-        video_idx = (self.current_page * self.items_per_page) + item_idx
-
-        return video_idx
-
-    def refresh_items(self, start_idx):
+    def update_items(self):
         # update widgets
-        video_idx = start_idx
-        for item, name in zip(self.items, self.playlist[start_idx:]):
-            item.checkbutton['text'] = name
-            selected = video_idx in self.selected_videos
-            item.selected.set(selected)
+        start_idx = self.curr_page * self.items_per_page
 
-            stream_menu = self.stream_menus.get(video_idx, [])
-            stream_idx = self.selected_videos.get(video_idx, 1)
+        # hide all items
+        for item in self.items:
+            item.grid_remove()
+
+        for item, name in zip(self.items, self.playlist[start_idx:]):
+            item.video_idx = start_idx + item.num
+            item.checkbutton['text'] = name
+
+            stream_menu = self.stream_menus.get(item.video_idx, [])
+            stream_idx = self.selected_videos.get(item.video_idx, 1)
             item.combobox.config(values=stream_menu)
 
             if stream_menu:
                 item.combobox.current(stream_idx)
             else:
                 item.combobox.set('')
+
+            selected = item.video_idx in self.selected_videos
+            item.selected.set(selected)
 
             if selected:
                 item.combobox.grid()
@@ -2220,79 +2212,30 @@ class PlaylistWindow(tk.Toplevel):
 
             item.grid()
 
-            video_idx += 1
-
-    def hide_all_items(self):
-        for item in self.items:
-            item.grid_remove()
-    # endregion
-
-    # region page
     def next_page(self):
-        if self.current_page + 1 < self.total_pages:
-            self.current_page += 1
-            start_idx = self.current_page * self.items_per_page
-            self.update_page_count()
-
-            self.hide_all_items()
-
-            self.refresh_items(start_idx)
+        self.curr_page += 1
 
     def prev_page(self):
-        if self.current_page > 0:
-            self.current_page -= 1
-            start_idx = self.current_page * self.items_per_page
-            self.update_page_count()
-
-            self.hide_all_items()
-
-            self.refresh_items(start_idx)
-
-    def update_page_count(self):
-        """update page number e.g. 'Page: 1 of 40'
-        """
-        self.page_count_var.set(f'{self.current_page + 1} of {self.total_pages}')
-    # endregion
-
-    # region progressbar
-    def start_progressbar(self, item_idx):
-        item = self.items[item_idx]
-        item.bar.grid(row=1, column=1, padx=5, sticky='ew')
-        item.bar.start(10)
-
-    def stop_progressbar(self, item_idx):
-        item = self.items[item_idx]
-        item.bar.grid_remove()
-        item.bar.stop()
-    # endregion
+        self.curr_page -= 1
 
     @threaded
     def toggle_all(self):
         """select / unselct all video items in playlist"""
 
-        if self.select_all_var.get():
-            for idx, item in enumerate(self.items):
-                # quit if playlist window closed, or uncheck button
-                if self.main.pl_window is None or not self.select_all_var.get():
-                    break
+        for item in self.items:
+            item.selected.set(self.select_all_var.get())
 
-                if item.selected.get():
-                    continue
+            # quit if playlist window closed
+            if self.main.pl_window is None:
+                break
 
-                item.checkbutton.invoke()
-
-                # add some time delay to process a video item and load stream menu before process next video
-                menu = self.stream_menus.get(idx, [])
+            # add some time delay to process a video item and load stream menu before process next video
+            if self.select_all_var.get():
+                menu = self.stream_menus.get(item.num, [])
                 # if video process failed, stream menu will contain only the headers (5 items) and no streams
                 # e.g. ['Video streams:', '', 'Audio streams:', '', 'Extra streams:']
                 if len(menu) <= 5:
-                    time.sleep(0.5)
-        else:
-            for item in self.items:
-                if not item.selected.get():
-                    continue
-
-                item.checkbutton.invoke()
+                    time.sleep(1)
 
     def close(self):
         self.destroy()
@@ -2318,10 +2261,15 @@ class PlaylistWindow(tk.Toplevel):
             'Extra streams:                 ', '    mp4 - 360 - 5.1 MB - id:134 - 25 fps']
 
         """
-        item_idx = self.get_item_idx(video_idx)
-        self.stop_progressbar(item_idx)
 
-        item = self.items[item_idx]
+        # get item
+        match = [item for item in self.items if item.video_idx == video_idx]
+        if not match:
+            return
+
+        item = match[0]
+        item.stop_progressbar()
+
         combobox = item.combobox
         combobox.config(values=stream_menu)
         combobox.current(stream_idx)
@@ -2337,46 +2285,30 @@ class PlaylistWindow(tk.Toplevel):
         self.update_master_menu(stream_menu)
 
         # follow master menu selection
-        self.follow_master_selection(item_idx, stream_menu)
+        self.follow_master_selection(item, stream_menu)
 
     # region master stream menu
     def master_combo_callback(self):
         self.master_selection = self.master_combo.selection
 
-        # update widgets
-        for item_idx, item in enumerate(self.items):
-            if item.selected.get():
-                self.follow_master_selection(item_idx)
+        # update selected items only
+        for item in [x for x in self.items if x.selected.get()]:
+            self.follow_master_selection(item)
 
-        # update selected streams
-        for vid_idx in self.selected_videos:
-            menu = self.stream_menus.get(vid_idx, [])
-
-            for s_idx, s_name in enumerate(menu):
-                if s_name.startswith(self.master_selection):
-                    self.selected_videos[vid_idx] = s_idx
-                    break
-
-    def follow_master_selection(self, item_idx, stream_menu=None):
+    def follow_master_selection(self, item, stream_menu=None):
         """update all selected stream menus to match master menu selection"""
-        video_idx = self.get_video_idx(item_idx)
-        stream_menu = stream_menu or self.stream_menus.get(video_idx, None)
-        item = self.items[item_idx]
+        stream_menu = stream_menu or self.stream_menus.get(item.video_idx, None)
 
         if not stream_menu:
             return
-
-        combobox = item.combobox
 
         if self.master_selection:
             try:
                 # update widget combo boxes
                 for s_idx, s_name in enumerate(stream_menu):
                     if s_name.startswith(self.master_selection):
-                        combobox.current(s_idx)
-                        self.selected_videos[video_idx] = s_idx
+                        item.combobox.current(s_idx)
                         break
-
             except Exception as e:
                 log('follow master selection error:', e)
 
@@ -2394,7 +2326,7 @@ class PlaylistWindow(tk.Toplevel):
                 Extra Streams:
                     mp4 - 480 - 10 MB - ...
 
-        we should build master menu to contain video and audio streams only and every stream will be extension and
+        we should build master menu to contain video and audio streams only and every stream will have extension and
         quality only, e.g. mp4 - 1080
 
         """
@@ -2440,6 +2372,7 @@ class PlaylistWindow(tk.Toplevel):
         # set selection
         if not self.master_selection and len(self.master_strem_menu) >= 2:
             self.master_combo.current(1)
+            self.master_selection = self.master_combo.selection
     # endregion
 
     # region subtitles
@@ -2457,7 +2390,7 @@ class PlaylistWindow(tk.Toplevel):
                                         enable_select_button=True, block=True, selected_subs=self.selected_subs)
             self.selected_subs = sub_window.selected_subs
         else:
-            self.main.msgbox('No Subtitles available for selected videos or no videos selected!')
+            self.main.msgbox('No Subtitles available for selected videos!')
 
         self.update_subs_label()
 
@@ -2465,33 +2398,33 @@ class PlaylistWindow(tk.Toplevel):
         self.subtitles_label['text'] = f'Total subtitles: {len(self.subtitles)}, Selected: {len(self.selected_subs)}'
     # endregion
 
-    def video_select_callback(self, item_idx):
+    def video_select_callback(self, item_num):
         """ask controller to send stream menu when selecting a video"""
-        item = self.items[item_idx]
-        video_idx = self.get_video_idx(item_idx)
+        item = self.items[item_num]
         stream_idx = item.combobox.current()
 
         if item.selected.get():
             item.combobox.grid(row=0, column=1, padx=5, sticky='ew')
-            self.start_progressbar(item_idx)
-            self.controller.get_stream_menu(video_idx=video_idx)
-            self.videos_counter.set(self.videos_counter.get() + 1)
-            self.selected_videos[video_idx] = stream_idx
+            item.start_progressbar()
+            self.controller.get_stream_menu(video_idx=item.video_idx)
+            self.selected_videos[item.video_idx] = stream_idx
         else:
-            self.videos_counter.set(self.videos_counter.get() - 1)
             item.combobox.grid_remove()
-            self.stop_progressbar(item_idx)
-            self.selected_videos.pop(video_idx)
+            item.stop_progressbar()
+            if item in self.selected_videos:
+                self.selected_videos.pop(item.video_idx)
+
+        self.selected_videos_num.set(len(self.selected_videos))
 
         self.update_subs_label()
 
-    def stream_select_callback(self, item_idx):
-        item = self.items[item_idx]
-        video_idx = self.get_video_idx(item_idx)
+    def stream_select_callback(self, item_num):
+        item = self.items[item_num]
 
         stream_idx = item.combobox.current()
-        self.selected_videos.update({video_idx: stream_idx})
-        self.controller.select_stream(stream_idx, video_idx=video_idx)
+        if item.video_idx in self.selected_videos:
+            self.selected_videos[item.video_idx] = stream_idx
+        self.controller.select_stream(stream_idx, video_idx=item.video_idx)
 
         self.update_total_size()
 
@@ -2505,20 +2438,21 @@ class PlaylistWindow(tk.Toplevel):
             return size
 
         total_size = sum([get_size(video_idx) for video_idx in self.selected_videos])
-        self.total_size.set(f'Total Size: {size_format(total_size)}')
+        self.total_size.set(f'Total Size ≈ {size_format(total_size)}')
 
 
 class SubtitleWindow(tk.Toplevel):
     """Download subtitles window"""
 
-    def __init__(self, main, subtitles, enable_download_button=True, enable_select_button=False, block=False, selected_subs=None):
+    def __init__(self, main, subtitles, enable_download_button=True, enable_select_button=False, block=False,
+                 selected_subs=None):
         """initialize
 
         Args:
             main: main window class
             subtitles (dict): subtitles, key=language, value=list of extensions, e.g. {en: ['srt', 'vtt'], ar: [...]}
-            download_button (bool): show download button
-            select_button (bool): show select button
+            enable_download_button (bool): show download button
+            enable_select_button (bool): show select button
             block (bool): block until closed
             selected_subs (dict): key=language, value=selected extension
         """
