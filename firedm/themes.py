@@ -31,7 +31,7 @@ BTN_HBG = None  # highlight background
 BTN_ABG = None  # active background
 BTN_AFG = None
 
-HDG_BG = None   # heading e.g. "Network:" heading in Settings tab
+HDG_BG = None  # heading e.g. "Network:" heading in Settings tab
 HDG_FG = None
 
 # scrollbar
@@ -52,60 +52,50 @@ TITLE_BAR_FG = None
 SEL_BG = None
 SEL_FG = None
 
-
 builtin_themes = {
     'Dark': {
         "MAIN_BG": "#1c1c21", "MAIN_FG": "white", "SF_BG": "#000300", "SF_FG": "white", "SF_BTN_BG": "#d9dc4b",
         "SF_CHKMARK": "#d9dc4b", "THUMBNAIL_BG": "#000300", "THUMBNAIL_FG": "#d9dc4b", "PBAR_BG": "#26262b",
-        "PBAR_FG": "#d9dc4b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#000300", "BTN_BG": "#d9dc4b",
-        "BTN_FG": "black", "BTN_HBG": "#000300", "BTN_ABG": "#000300", "BTN_AFG": "white", "HDG_BG": "#d9dc4b",
-        "HDG_FG": "black", "THUMBNAIL_BD": "#d9dc4b", "SBAR_BG": "#1c1c21", "SBAR_FG": "white",
-        "RCM_BG": "#1c1c21", "RCM_FG": "white", "RCM_ABG": "#d9dc4b", "RCM_AFG": "black",
-        "TITLE_BAR_BG": "#d9dc4b", "TITLE_BAR_FG": "black"},
+        "PBAR_FG": "#d9dc4b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#000300", "BTN_BG": "#d9dc4b", "BTN_FG": "black",
+        "BTN_HBG": "#000300", "BTN_ABG": "#000300", "BTN_AFG": "white", "HDG_BG": "#d9dc4b", "HDG_FG": "black",
+        "THUMBNAIL_BD": "#d9dc4b", "SBAR_BG": "#1c1c21", "SBAR_FG": "white", "RCM_BG": "#1c1c21", "RCM_FG": "white",
+        "RCM_ABG": "#d9dc4b", "RCM_AFG": "black", "TITLE_BAR_BG": "#d9dc4b", "TITLE_BAR_FG": "black"},
 
     "Gainsboro-SandyBrown-Teal": {
-        "MAIN_BG": "#DDDDDD", "SF_BG": "#F5A962", "SF_BTN_BG": "#3C8DAD",
-        "PBAR_FG": "#125D98", "MAIN_FG": "black", "SF_FG": "#125D98", "SF_CHKMARK": "#125D98",
-        "THUMBNAIL_BG": "#F5A962", "THUMBNAIL_FG": "#125D98", "THUMBNAIL_BD": "black",
-        "PBAR_BG": "#d3d3d3", "PBAR_TXT": "#125D98", "ENTRY_BD_COLOR": "#F5A962",
-        "BTN_BG": "#3C8DAD", "BTN_FG": "#DDDDDD", "BTN_HBG": "#F5A962", "BTN_ABG": "#F5A962",
-        "BTN_AFG": "white", "HDG_BG": "#3C8DAD", "HDG_FG": "#DDDDDD", "SBAR_BG": "#DDDDDD",
-        "SBAR_FG": "#125D98", "RCM_BG": "#DDDDDD", "RCM_FG": "#125D98", "RCM_ABG": "#3C8DAD",
-        "RCM_AFG": "#DDDDDD", "TITLE_BAR_BG": "#3C8DAD", "TITLE_BAR_FG": "#125D98",
-        "SEL_BG": "#F5A962", "SEL_FG": "black"},
+        "MAIN_BG": "#DDDDDD", "SF_BG": "#F5A962", "SF_BTN_BG": "#3C8DAD", "PBAR_FG": "#125D98", "MAIN_FG": "black",
+        "SF_FG": "#125D98", "SF_CHKMARK": "#125D98", "THUMBNAIL_BG": "#F5A962", "THUMBNAIL_FG": "#125D98",
+        "THUMBNAIL_BD": "black", "PBAR_BG": "#d3d3d3", "PBAR_TXT": "#125D98", "ENTRY_BD_COLOR": "#F5A962",
+        "BTN_BG": "#3C8DAD", "BTN_FG": "#DDDDDD", "BTN_HBG": "#F5A962", "BTN_ABG": "#F5A962", "BTN_AFG": "white",
+        "HDG_BG": "#3C8DAD", "HDG_FG": "#DDDDDD", "SBAR_BG": "#DDDDDD", "SBAR_FG": "#125D98", "RCM_BG": "#DDDDDD",
+        "RCM_FG": "#125D98", "RCM_ABG": "#3C8DAD", "RCM_AFG": "#DDDDDD", "TITLE_BAR_BG": "#3C8DAD",
+        "TITLE_BAR_FG": "#125D98", "SEL_BG": "#F5A962", "SEL_FG": "black"},
 
     "Black_Grey_Shade-of-Pink": {
-        "MAIN_BG": "#444444", "SF_BG": "#171717", "SF_BTN_BG": "#EDEDED", "PBAR_FG": "#DA0037",
-        "MAIN_FG": "#EDEDED", "SF_FG": "#EDEDED", "SF_CHKMARK": "#DA0037",
-        "THUMBNAIL_BG": "#171717", "THUMBNAIL_FG": "#DA0037", "THUMBNAIL_BD": "white",
-        "PBAR_BG": "#4e4e4e", "PBAR_TXT": "#DA0037", "ENTRY_BD_COLOR": "#171717",
-        "BTN_BG": "#EDEDED", "BTN_FG": "black", "BTN_HBG": "#171717", "BTN_ABG": "#171717",
-        "BTN_AFG": "#DA0037", "HDG_BG": "#EDEDED", "HDG_FG": "black", "SBAR_BG": "#171717",
-        "SBAR_FG": "#DA0037", "RCM_BG": "#444444", "RCM_FG": "#EDEDED", "RCM_ABG": "#EDEDED",
-        "RCM_AFG": "#DA0037", "TITLE_BAR_BG": "#EDEDED", "TITLE_BAR_FG": "black",
-        "SEL_BG": "#171717", "SEL_FG": "#EDEDED"},
+        "MAIN_BG": "#444444", "SF_BG": "#171717", "SF_BTN_BG": "#EDEDED", "PBAR_FG": "#DA0037", "MAIN_FG": "#EDEDED",
+        "SF_FG": "#EDEDED", "SF_CHKMARK": "#DA0037", "THUMBNAIL_BG": "#171717", "THUMBNAIL_FG": "#DA0037",
+        "THUMBNAIL_BD": "white", "PBAR_BG": "#4e4e4e", "PBAR_TXT": "#DA0037", "ENTRY_BD_COLOR": "#171717",
+        "BTN_BG": "#EDEDED", "BTN_FG": "black", "BTN_HBG": "#171717", "BTN_ABG": "#171717", "BTN_AFG": "#DA0037",
+        "HDG_BG": "#EDEDED", "HDG_FG": "black", "SBAR_BG": "#171717", "SBAR_FG": "#DA0037", "RCM_BG": "#444444",
+        "RCM_FG": "#EDEDED", "RCM_ABG": "#EDEDED", "RCM_AFG": "#DA0037", "TITLE_BAR_BG": "#EDEDED",
+        "TITLE_BAR_FG": "black", "SEL_BG": "#171717", "SEL_FG": "#EDEDED"},
 
     "Green-Brown": {
-        "MAIN_BG": "#3A6351", "SF_BG": "#F2EDD7", "SF_BTN_BG": "#A0937D", "PBAR_FG": "#5F939A",
-        "MAIN_FG": "white", "SF_FG": "black", "SF_CHKMARK": "#A0937D", "THUMBNAIL_BG": "#F2EDD7",
-        "THUMBNAIL_FG": "white", "THUMBNAIL_BD": "white", "PBAR_BG": "#446d5b", "PBAR_TXT": "white",
-        "ENTRY_BD_COLOR": "#F2EDD7", "BTN_BG": "#A0937D", "BTN_FG": "black", "BTN_HBG": "#F2EDD7",
-        "BTN_ABG": "#446d5b", "BTN_AFG": "white", "HDG_BG": "#A0937D", "HDG_FG": "black",
-        "SBAR_BG": "#3A6351", "SBAR_FG": "white", "RCM_BG": "#3A6351", "RCM_FG": "white",
-        "RCM_ABG": "#A0937D", "RCM_AFG": "black", "TITLE_BAR_BG": "#A0937D", "TITLE_BAR_FG": "black",
+        "MAIN_BG": "#3A6351", "SF_BG": "#F2EDD7", "SF_BTN_BG": "#A0937D", "PBAR_FG": "#5F939A", "MAIN_FG": "white",
+        "SF_FG": "black", "SF_CHKMARK": "#A0937D", "THUMBNAIL_BG": "#F2EDD7", "THUMBNAIL_FG": "white",
+        "THUMBNAIL_BD": "white", "PBAR_BG": "#446d5b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#F2EDD7",
+        "BTN_BG": "#A0937D", "BTN_FG": "black", "BTN_HBG": "#F2EDD7", "BTN_ABG": "#446d5b", "BTN_AFG": "white",
+        "HDG_BG": "#A0937D", "HDG_FG": "black", "SBAR_BG": "#3A6351", "SBAR_FG": "white", "RCM_BG": "#3A6351",
+        "RCM_FG": "white", "RCM_ABG": "#A0937D", "RCM_AFG": "black", "TITLE_BAR_BG": "#A0937D", "TITLE_BAR_FG": "black",
         "SEL_BG": "#F2EDD7", "SEL_FG": "black"},
 
     "Yellow-Foil-covered Sneakers": {
-        "MAIN_BG": "#333652", "SF_BG": "#90adc6", "SF_BTN_BG": "#fad02c",
-        "PBAR_FG": "#e9eaec", "MAIN_FG": "#e9eaec", "SF_FG": "black",
-        "SF_CHKMARK": "#e9eaec", "THUMBNAIL_BG": "#90adc6", "THUMBNAIL_FG": "white",
-        "THUMBNAIL_BD": "white", "PBAR_BG": "#3d405c", "PBAR_TXT": "white",
-        "ENTRY_BD_COLOR": "#90adc6", "BTN_BG": "#fad02c", "BTN_FG": "black",
-        "BTN_HBG": "#e9eaec", "BTN_ABG": "#90adc6", "BTN_AFG": "white",
-        "HDG_BG": "#fad02c", "HDG_FG": "black", "SBAR_BG": "#333652", "SBAR_FG": "#90adc6",
-        "RCM_BG": "#333652", "RCM_FG": "#e9eaec", "RCM_ABG": "#fad02c", "RCM_AFG": "black",
-        "TITLE_BAR_BG": "#fad02c", "TITLE_BAR_FG": "black", "SEL_BG": "#90adc6",
-        "SEL_FG": "black"},
+        "MAIN_BG": "#333652", "SF_BG": "#90adc6", "SF_BTN_BG": "#fad02c", "PBAR_FG": "#e9eaec", "MAIN_FG": "#e9eaec",
+        "SF_FG": "black", "SF_CHKMARK": "#e9eaec", "THUMBNAIL_BG": "#90adc6", "THUMBNAIL_FG": "white",
+        "THUMBNAIL_BD": "white", "PBAR_BG": "#3d405c", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#90adc6",
+        "BTN_BG": "#fad02c", "BTN_FG": "black", "BTN_HBG": "#e9eaec", "BTN_ABG": "#90adc6", "BTN_AFG": "white",
+        "HDG_BG": "#fad02c", "HDG_FG": "black", "SBAR_BG": "#333652", "SBAR_FG": "#90adc6", "RCM_BG": "#333652",
+        "RCM_FG": "#e9eaec", "RCM_ABG": "#fad02c", "RCM_AFG": "black", "TITLE_BAR_BG": "#fad02c",
+        "TITLE_BAR_FG": "black", "SEL_BG": "#90adc6", "SEL_FG": "black"},
 
     "Red_Black": {
         "SF_BTN_BG": "#960000", "PBAR_FG": "#e09f3e", "MAIN_FG": "white", "SF_FG": "white",
@@ -115,14 +105,30 @@ builtin_themes = {
         "TITLE_BAR_BG": "#960000", "TITLE_BAR_FG": "black", "SEL_FG": "white"},
 
     "Orange_Black": {
-        "SF_BTN_BG": "#e09f3e", "PBAR_FG": "#FFFFFF", "MAIN_FG": "white", "SF_FG": "white",
-        "SF_CHKMARK": "white", "THUMBNAIL_FG": "white", "THUMBNAIL_BD": "white", "PBAR_BG": "#0a0a0a",
-        "PBAR_TXT": "white", "BTN_BG": "#e09f3e", "BTN_FG": "black", "BTN_AFG": "white",
-        "HDG_BG": "#e09f3e", "HDG_FG": "black", "SBAR_FG": "#e09f3e", "RCM_FG": "white",
-        "RCM_ABG": "#e09f3e", "RCM_AFG": "black", "TITLE_BAR_BG": "#e09f3e", "TITLE_BAR_FG": "black",
-        "SEL_FG": "white"}
-}
+        "SF_BTN_BG": "#e09f3e", "PBAR_FG": "#FFFFFF", "MAIN_FG": "white", "SF_FG": "white", "SF_CHKMARK": "white",
+        "THUMBNAIL_FG": "white", "THUMBNAIL_BD": "white", "PBAR_BG": "#0a0a0a", "PBAR_TXT": "white",
+        "BTN_BG": "#e09f3e", "BTN_FG": "black", "BTN_AFG": "white", "HDG_BG": "#e09f3e", "HDG_FG": "black",
+        "SBAR_FG": "#e09f3e", "RCM_FG": "white", "RCM_ABG": "#e09f3e", "RCM_AFG": "black", "TITLE_BAR_BG": "#e09f3e",
+        "TITLE_BAR_FG": "black", "SEL_FG": "white"},
 
+    "White_BlueCryola": {
+        "MAIN_BG": "white", "SF_BG": "white", "SF_BTN_BG": "#2d82b7", "PBAR_FG": "black", "MAIN_FG": "black",
+        "SF_FG": "black", "SF_CHKMARK": "black", "THUMBNAIL_BG": "white", "THUMBNAIL_FG": "black",
+        "THUMBNAIL_BD": "black", "PBAR_BG": "#f5f5f5", "PBAR_TXT": "black", "ENTRY_BD_COLOR": "white",
+        "BTN_BG": "#2d82b7", "BTN_FG": "white", "BTN_HBG": "black", "BTN_ABG": "white", "BTN_AFG": "#2d82b7",
+        "HDG_BG": "#2d82b7", "HDG_FG": "white", "SBAR_BG": "white", "SBAR_FG": "#2d82b7", "RCM_BG": "white",
+        "RCM_FG": "black", "RCM_ABG": "#2d82b7", "RCM_AFG": "white", "TITLE_BAR_BG": "#2d82b7", "TITLE_BAR_FG": "white",
+        "SEL_BG": "#58a7d6", "SEL_FG": "white"},
+
+    "White & Black": {
+        "MAIN_BG": "white", "SF_BG": "white", "SF_BTN_BG": "black", "PBAR_FG": "black", "MAIN_FG": "black",
+        "SF_FG": "black", "SF_CHKMARK": "black", "THUMBNAIL_BG": "white", "THUMBNAIL_FG": "black",
+        "THUMBNAIL_BD": "black", "PBAR_BG": "white", "PBAR_TXT": "black", "ENTRY_BD_COLOR": "black", "BTN_BG": "black",
+        "BTN_FG": "white", "BTN_HBG": "white", "BTN_ABG": "white", "BTN_AFG": "black", "HDG_BG": "black",
+        "HDG_FG": "white", "SBAR_BG": "white", "SBAR_FG": "black", "RCM_BG": "white", "RCM_FG": "black",
+        "RCM_ABG": "black", "RCM_AFG": "white", "TITLE_BAR_BG": "black", "TITLE_BAR_FG": "white", "SEL_BG": "#d8d8d8",
+        "SEL_FG": "black"},
+}
 
 # key:(reference key, description), reference key will be used to get the color value in case of missing key, but in
 # case of some font keys, reference key is refering to background color which will be used to calculate font color
@@ -179,8 +185,7 @@ theme_map = dict(
     # Download item (DItem)
     SEL_BG=('SF_BG', 'Download item selection background'),
     SEL_FG=('SF_FG', 'Download item selection foreground')
-    )
-
+)
 
 # fonts keys in theme map
 theme_fonts_keys = ('MAIN_FG', 'SF_FG', 'BTN_FG', 'BTN_AFG', 'PBAR_TXT', 'HDG_FG', 'RCM_FG', 'RCM_AFG')
