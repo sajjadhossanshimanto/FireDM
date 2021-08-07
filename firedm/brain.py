@@ -358,9 +358,6 @@ def thread_manager(d, q):
     # speed limit
     sl_timer = time.time()
 
-    # for compatibility reasons will reset segment size
-    config.segment_size = config.DEFAULT_SEGMENT_SIZE
-
     def clear_error_q():
         # clear error queue
         for _ in range(config.error_q.qsize()):
@@ -446,7 +443,7 @@ def thread_manager(d, q):
                     # calculate minimum segment size based on speed, e.g. for 3 MB/s speed, and 2 live threads,
                     # min seg. size will be 1.5 MB
                     worker_speed = d.speed // num_live_threads if num_live_threads else 0
-                    min_seg_size = max(config.segment_size, worker_speed)
+                    min_seg_size = max(config.SEGMENT_SIZE, worker_speed)
 
                     remaining_segs = [seg for seg in d.segments if seg.range is not None
                                       and seg.remaining > min_seg_size * 2]

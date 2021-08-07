@@ -17,7 +17,7 @@ from .version import __version__
 
 # settings parameters to be saved on disk
 settings_keys = [
-    'current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window', 'segment_size',
+    'current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window',
     'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections', 'update_frequency',
     'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy', 'log_level', 'download_folder',
     'manually_select_dash_audio', 'use_referer', 'referer_url', 'close_action', 'process_playlist', 'keep_temp',
@@ -36,7 +36,8 @@ DEFAULT_THEME = 'Dark'
 DEFAULT_CONNECTIONS = 10
 
 # minimum segment size which can be split in 2 halves in auto-segmentation process, refer to brain.py>thread_manager.
-DEFAULT_SEGMENT_SIZE = 102400  # 100 KB
+SEGMENT_SIZE = 102400  # 100 KB
+
 DEFAULT_CONCURRENT_CONNECTIONS = 3
 APP_URL = 'https://github.com/firedm/FireDM'
 LATEST_RELEASE_URL = 'https://github.com/firedm/FireDM/releases/latest'
@@ -114,7 +115,6 @@ scrollbar_width_range = range(1, 51)
 monitor_clipboard = True
 show_download_window = True
 auto_close_download_window = True
-segment_size = DEFAULT_SEGMENT_SIZE  # in bytes
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 autoscroll_download_tab = False
 ditem_show_top = True
@@ -196,10 +196,6 @@ log_level = DEFAULT_LOG_LEVEL  # standard=1, verbose=2, debug=3
 log_callbacks = []
 log_popup_callback = None
 # -------------------------------------------------------------------------------------
-
-# downloads  TODO: to be deleted
-active_downloads = set()  # indexes for active downloading items
-d_list = []
 
 # queues
 error_q = Queue()  # used by workers to report server refuse connection errors

@@ -131,7 +131,7 @@ class DownloadItem:
         self.type = ''  # general, video, audio
         self.subtype_list = []  # it might contains one or more eg "hls, dash, fragmented, normal"
 
-        self._segment_size = config.segment_size
+        self._segment_size = config.SEGMENT_SIZE
 
         self.live_connections = 0
         self._downloaded = 0
