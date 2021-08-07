@@ -334,8 +334,6 @@ def thread_manager(d, q):
     free_workers = set([w for w in all_workers])
     threads_to_workers = dict()
 
-    # todo: delete ThreadPoolExecutor, individual threads working fine
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.max_connections)
     num_live_threads = 0
 
     # job_list
@@ -363,22 +361,10 @@ def thread_manager(d, q):
     # for compatibility reasons will reset segment size
     config.segment_size = config.DEFAULT_SEGMENT_SIZE
 
-    log('Thread Manager()> concurrency method:', 
-        'ThreadPoolExecutor' if config.use_thread_pool_executor else 'Individual Threads', 
-        log_level=2)
-
     def clear_error_q():
         # clear error queue
         for _ in range(config.error_q.qsize()):
             errors_descriptions.add(config.error_q.get())
-
-    def on_completion_callback(future):
-        """add worker to free workers once thread is completed, it will be called by future.add_done_callback()"""
-        try:
-            free_worker = threads_to_workers.pop(future)
-            free_workers.add(free_worker)
-        except:
-            pass
 
     while True:
         time.sleep(0.001)  # a sleep time to while loop to make the app responsive
@@ -402,9 +388,6 @@ def thread_manager(d, q):
                 worker = Worker(tag=index, d=d)
                 all_workers.append(worker)
                 free_workers.add(worker)
-
-            # redefine executor
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=config.max_connections)
 
         # allowable connections
         allowable_connections = min(config.max_connections, limited_connections)
@@ -503,20 +486,15 @@ def thread_manager(d, q):
 
                     ready = worker.reuse(seg=seg, speed_limit=worker_sl, minimum_speed=minimum_speed, timeout=timeout)
                     if ready:
-                        if config.use_thread_pool_executor:
-                            thread = executor.submit(worker.run)
-                            thread.add_done_callback(on_completion_callback)
-                        else:
-                            thread = Thread(target=worker.run, daemon=True)
-                            thread.start()
+                        thread = Thread(target=worker.run, daemon=True)
+                        thread.start()
                         threads_to_workers[thread] = worker
 
         # check thread completion
-        if not config.use_thread_pool_executor:
-            for thread in list(threads_to_workers.keys()):
-                if not thread.is_alive():
-                    worker = threads_to_workers.pop(thread)
-                    free_workers.add(worker)
+        for thread in list(threads_to_workers.keys()):
+            if not thread.is_alive():
+                worker = threads_to_workers.pop(thread)
+                free_workers.add(worker)
 
         # update d param -----------------------------------------------------------------------------------------------
         num_live_threads = len(all_workers) - len(free_workers)
@@ -537,8 +515,6 @@ def thread_manager(d, q):
         # monitor status change or get quit signal from brain ----------------------------------------------------------
         try:
             if d.status != Status.downloading or q.get_nowait() == 'quit':
-                # shutdown thread pool executor
-                executor.shutdown(wait=False)
                 break
         except:
             pass

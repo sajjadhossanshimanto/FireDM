@@ -16,17 +16,16 @@ import platform
 from .version import __version__
 
 # settings parameters to be saved on disk
-settings_keys = ['current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window',
-                 'segment_size', 'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections',
-                 'update_frequency', 'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy',
-                 'log_level', 'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url',
-                 'close_action', 'process_playlist', 'keep_temp', 'auto_rename', 'checksum',
-                 'use_proxy_dns', 'use_thread_pool_executor', 'write_metadata', 'check_for_update',
-                 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor',
-                 'autoscroll_download_tab', 'enable_captcha_workaround', 'gui_font', 'scrollbar_width',
-                 'verify_ssl_cert', 'custom_user_agent', 'recent_folders', 'write_timestamp',
-                 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top', 'disable_log_popups',
-                 'ibus_workaround', 'on_download_notification']
+settings_keys = [
+    'current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window', 'segment_size',
+    'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections', 'update_frequency',
+    'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy', 'log_level', 'download_folder',
+    'manually_select_dash_audio', 'use_referer', 'referer_url', 'close_action', 'process_playlist', 'keep_temp',
+    'auto_rename', 'checksum', 'use_proxy_dns', 'write_metadata', 'check_for_update', 'minimize_to_systray',
+    'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor', 'autoscroll_download_tab',
+    'enable_captcha_workaround', 'gui_font', 'scrollbar_width', 'verify_ssl_cert', 'custom_user_agent',
+    'recent_folders', 'write_timestamp', 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top',
+    'disable_log_popups', 'ibus_workaround', 'on_download_notification']
 
 # CONSTANTS
 APP_NAME = 'FireDM'
@@ -135,7 +134,6 @@ window_size = DEFAULT_WINDOW_SIZE
 # show notify message when done downloading
 on_download_notification = True
 
-
 # video / audio --------------------------------------------------------------------------------------------------------
 # youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.set_interrupt_switch()
 ytdl_abort = False
@@ -186,7 +184,6 @@ on_completion_command = ''
 # debugging ------------------------------------------------------------------------------------------------------------
 keep_temp = False  # keep temp files / folders after done downloading for debugging
 checksum = False  # calculate checksums for completed files MD5 and SHA256
-use_thread_pool_executor = False
 max_seg_retries = 10  # maximum retries for a segment until reporting downloaded, this is for segment with unknown size
 
 # logging --------------------------------------------------------------------------------------------------------------
@@ -215,7 +212,6 @@ disable_update_feature = False
 check_for_update = not disable_update_feature
 update_frequency = 7  # days
 last_update_check = None  # date format (year, month, day)
-
 
 # store hashes for installed update patches in update_record.info file at current folder xx NOT IMPLEMENTED xx
 update_record_path = os.path.join(current_directory, 'update_record.info')
@@ -252,41 +248,41 @@ class MediaType:
 disable_log_popups = False
 
 popups = {
-    1: {'tag': 'html contents', 
+    1: {'tag': 'html contents',
         'description': 'Show "Contents might be an html web page warning".',
-        'body': 'Contents might be a web page / html, Download anyway?', 
+        'body': 'Contents might be a web page / html, Download anyway?',
         'options': ['Ok', 'Cancel'],
         'default': 'Ok',
         'show': True
         },
 
-    2: {'tag': 'ffmpeg', 
+    2: {'tag': 'ffmpeg',
         'description': 'Prompt to download "FFMPEG" if not found on windows os.',
-        'body': 'FFMPEG is missing!', 
+        'body': 'FFMPEG is missing!',
         'options': ['Download', 'Cancel'],
         'default': 'Download',
         'show': True
         },
 
-    3: {'tag': 'overwrite d_list', 
+    3: {'tag': 'overwrite d_list',
         'description': 'Show "Item already exist in download list warning".',
-        'body': 'Item with the same name already exist in download list', 
+        'body': 'Item with the same name already exist in download list',
         'options': ['Resume', 'Rename', 'Overwrite', 'Cancel'],
         'default': 'Resume',
         'show': True
         },
 
-    4: {'tag': 'overwrite file', 
+    4: {'tag': 'overwrite file',
         'description': 'Ask what to do if same file already exist on disk.',
-        'body': 'File with the same name already exist on disk', 
+        'body': 'File with the same name already exist on disk',
         'options': ['Overwrite', 'Rename', 'Cancel'],
         'default': 'Rename',
         'show': True
         },
 
-    5: {'tag': 'non-resumable', 
+    5: {'tag': 'non-resumable',
         'description': 'Show "Non-resumable downloads warning".',
-        'body':  ("Warning! \n"
+        'body': ("Warning! \n"
                  "This remote server doesn't support chunk downloading, \n"
                  "if for any reason download stops resume won't be available and this file will be downloaded  \n"
                  "from the beginning, \n"
@@ -296,7 +292,7 @@ popups = {
         'show': True
         },
 
-    6: {'tag': 'ssl-warning', 
+    6: {'tag': 'ssl-warning',
         'description': 'Show warning when Disabling SSL verification.',
         'body': ('WARNING: disabling verification of SSL certificate allows bad guys to man-in-the-middle the '
                  'communication without you know it and makes the communication insecure. '
@@ -308,7 +304,7 @@ popups = {
         'show': True
         },
 
-    7: {'tag': 'delete-item', 
+    7: {'tag': 'delete-item',
         'description': 'Confirm when deleting an item from download list.',
         'body': 'Remove item(s) from the list?\nAre you sure',
         'options': ['Yes', 'Cancel'],
@@ -317,17 +313,18 @@ popups = {
         },
 }
 
-
 for k in popups.keys():
     var_name = f'popup_{k}'
     globals()[var_name] = True
     settings_keys.append(var_name)
+
 
 def get_popup(k):
     item = popups[k]
     var_name = f'popup_{k}'
     item['show'] = globals()[var_name]
     return item
+
 
 def enable_popup(k, value):
     item = popups[k]

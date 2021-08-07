@@ -3536,7 +3536,6 @@ class MainWindow(IView):
         heading('Debugging:')
         CheckOption(tab, 'keep temp files / folders after done downloading for debugging.', key='keep_temp').pack(anchor='w')
         CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"', key='TEST_MODE').pack(anchor='w')
-        CheckOption(tab, 'Use ThreadPoolExecutor instead of individual threads', key='use_thread_pool_executor').pack(anchor='w')
         CheckOption(tab, 'Use Download Simulator', key='SIMULATOR').pack(anchor='w')
 
         separator()
