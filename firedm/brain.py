@@ -40,7 +40,7 @@ def brain(d=None):
     d.downloaded = 0
 
     log('\n')
-    log('=' * 100)
+    log('-' * 50)
     log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder}')
     log(f'url: "{d.url}" \n')
 
@@ -117,7 +117,7 @@ def brain(d=None):
         # for seg in segments:
         #     print(seg.basename, seg.range, seg.range[1] - seg.range[0], seg.size, seg.remaining)
 
-    log('=' * 100, '\n')
+    log('-' * 50, '\n')
 
 
 def file_manager(d, q, keep_segments=True):

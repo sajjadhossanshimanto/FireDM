@@ -49,11 +49,11 @@ class CmdView(IView):
                 prefix = ''
                 suffix = ''
             else:
-                bar_length = 40  # default bar length
+                bar_length = 30  # default bar length
                 prefix = 'Progress:'
                 suffix = f" - speed: {size_format(speed, tail='/s')}" if speed else ''
             
-            self.print_progress_bar(progress, prefix=prefix, suffix=suffix, length=bar_length)
+            self.print_progress_bar(progress, prefix=prefix, suffix=suffix, length=bar_length, fill='=')
 
     def get_user_response(self, msg, options, **kwargs):
         """a mimic for a popup window in terminal, to get user response, 
@@ -116,7 +116,7 @@ class CmdView(IView):
         
         # create message string
         msg = '\n'.join(output_lines)
-        msg = '\n' + '*' * box_width + '\n' + msg + '\n' +  '*' * box_width
+        msg = '\n' + '*' * box_width + '\n' + msg + '\n' + '*' * box_width
         msg += '\n Select Option Number: '
 
 
@@ -144,7 +144,7 @@ class CmdView(IView):
         return size
     
     @staticmethod
-    def print_progress_bar(value, prefix=' Progress:', suffix='', length=40, fill='█'):
+    def print_progress_bar(value, prefix=' Progress:', suffix='', length=30, fill='█'):
         """print progress bar to screen, value is number between 0 and 100"""
         try:
             value = int(value)
@@ -154,8 +154,8 @@ class CmdView(IView):
 
             filled_length = int(value * scale)
 
-            bar = fill * filled_length + '-' * (length - filled_length)
-            print(f'\r{prefix} {bar} {percent}{ suffix}', end = '')
+            bar = fill * filled_length + ' ' * (length - filled_length)
+            print(f'\r{prefix} [{bar}] {percent}{ suffix}', end='')
             if value >= 100:
                 print()  # print empty line
         except:
