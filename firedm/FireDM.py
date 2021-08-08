@@ -31,6 +31,7 @@ from . import config
 from .controller import Controller, set_option
 from .tkview import MainWindow
 from .cmdview import CmdView
+from .utils import parse_urls
 
 
 def main():
@@ -52,6 +53,12 @@ def main():
     parser.add_argument('-f', '--download-folder', default=config.download_folder, type=str, metavar='<path>',
                         help=f'destination download folder/dir (default: {config.download_folder})')
 
+    parser.add_argument('--name', type=str,
+                        help='file name with extension, don not use full path, also be careful with video extension, '
+                             'ffmpeg will try to convert video depend on its extension, '
+                             'also if name is given during batch download, all files will have same '
+                             'name with different number at the end')
+
     parser.add_argument('--nogui', action='store_true', help='use command line only, no graphical user interface')
     parser.add_argument('-i', '--interactive', action='store_true', help=f'interactive command line, will be ignored if '
                                                                          f'"--nogui" flag not used')
@@ -69,6 +76,11 @@ def main():
                              "'lowest', and default value is best")
     parser.add_argument('--prefere-mp4', action='store_true', help='select mp4 streams if available, otherwise '
                                                                    'select any format')
+
+    parser.add_argument('--urls-file', type=str, metavar='<path>',
+                        help='path to text file containing multiple urls to be downloaded, note: file should have '
+                             'every url in a separate line, empty lines and lines start with "#" will be ignored \n'
+                             'this flag works only with "--nogui" flag, and does not work with "--interactive" flag')
 
     args = parser.parse_args()
 
@@ -106,6 +118,8 @@ def main():
         exit(0)
 
     custom_settings = vars(args)
+    if args.download_folder:
+        custom_settings['folder'] = args.download_folder
 
     if args.nogui:
         url = args.url
@@ -114,7 +128,16 @@ def main():
         if args.interactive:
             controller.interactive_download(url)
         else:
-            controller.autodownload(**custom_settings, threadding=False)
+            if args.urls_file:
+                with open(args.urls_file) as f:
+                    text = f.read()
+                urls = parse_urls(text)
+                url = custom_settings.pop('url')
+                if url:
+                    urls += url
+                controller.batch_download(urls, **custom_settings, threadding=False)
+            else:
+                controller.autodownload(**custom_settings, threadding=False)
         config.shutdown = True
     else:
         c = Controller(view_class=MainWindow, custom_settings=custom_settings)

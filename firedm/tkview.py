@@ -2715,7 +2715,7 @@ class BatchWindow(tk.Toplevel):
         self.main.batch_window = None
 
     def download(self, download_later=False):
-        urls = self.parse_urls()
+        urls = parse_urls(self.get())
         video_quality = self.video_quality.selection
 
         self.controller.batch_download(urls, video_quality=video_quality, download_later=download_later)
@@ -2726,14 +2726,6 @@ class BatchWindow(tk.Toplevel):
 
     def get(self):
         return self.urls_text.get("1.0", tk.END)
-
-    def parse_urls(self):
-        urls = []
-        for line in self.get().splitlines():
-            line = line.strip()
-            if line and not line.startswith('#') and line not in urls:
-                urls.append(line)
-        return urls
 
 
 class DatePicker(tk.Toplevel):

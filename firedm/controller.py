@@ -211,6 +211,8 @@ class Controller:
         d = ObservableDownloadItem()
         d.update(url)
 
+        playlist = None
+
         # searching for videos
         if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
             playlist = self._create_video_playlist(url, ytdloptions=ytdloptions)
@@ -1159,7 +1161,7 @@ class Controller:
 
     @threaded
     def batch_download(self, urls, **kwargs):
-        log('Batch downloading the following urls:', '\n'.join(urls))
+        log('Batch downloading the following urls:\n', '\n'.join(urls))
         log('Batch download options:', kwargs)
 
         for url in urls:

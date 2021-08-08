@@ -1018,12 +1018,22 @@ def open_webpage(url):
         log('utils.open_webpage()> error:', e)
 
 
+def parse_urls(text):
+    """parse urls in a text, every url in a separate line, empty lines and lines start with # will be ignored"""
+    urls = []
+    for line in text.splitlines():
+        line = line.strip()
+        if line and not line.startswith('#') and line not in urls:
+            urls.append(line)
+    return urls
+
+
 __all__ = [
     'notify', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded'
+    'derender_text', 'threaded', 'parse_urls'
 
 ]
