@@ -165,8 +165,8 @@ def get_headers(url, verbose=False, http_headers=None):
     curl_headers = {}
 
     def header_callback(header_line):
-        # quit if main window terminated
-        if config.terminate:
+        # quit flag
+        if config.shutdown:
             return
 
         header_line = header_line.decode('iso-8859-1')

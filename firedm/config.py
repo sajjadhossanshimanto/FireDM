@@ -6,7 +6,6 @@
     :copyright: (c) 2019-2021 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
-# todo: clean unused items
 
 from queue import Queue
 import os
@@ -84,8 +83,7 @@ isappimage = False  # will be set to True by AppImage run script
 appimage_update_folder = None  # will be set by AppImage run script
 
 # application exit flag
-terminate = False  # for main window and downloads
-shutdown = False  # complete shutdown flag
+shutdown = False
 
 # folders --------------------------------------------------------------------------------------------------------------
 if hasattr(sys, 'frozen'):  # like if application frozen by cx_freeze
@@ -113,8 +111,6 @@ scrollbar_width_default = 10
 scrollbar_width = scrollbar_width_default
 scrollbar_width_range = range(1, 51)
 monitor_clipboard = True
-show_download_window = True
-auto_close_download_window = True
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 autoscroll_download_tab = False
 ditem_show_top = True
@@ -141,8 +137,6 @@ video_extractors_list = ['youtube_dl', 'yt_dlp']
 active_video_extractor = 'youtube_dl'
 show_thumbnail = True  # auto preview video thumbnail at main tab
 download_thumbnail = False
-process_playlist = False  # fetch videos info only if selected, since big playlist consume time/resources.
-big_playlist_length = 50  # minimum number of videos in big playlist, it will ignore "process_playlist"
 manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
 write_metadata = True  # write metadata to video file
 enable_captcha_workaround = False
@@ -208,9 +202,6 @@ disable_update_feature = False
 check_for_update = not disable_update_feature
 update_frequency = 7  # days
 last_update_check = None  # date format (year, month, day)
-
-# store hashes for installed update patches in update_record.info file at current folder xx NOT IMPLEMENTED xx
-update_record_path = os.path.join(current_directory, 'update_record.info')
 # -----------------------------------------------------------------------------------------------------
 
 
