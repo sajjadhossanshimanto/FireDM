@@ -49,17 +49,34 @@ def main():
                         example: "www.linktomyfile" to avoid shell capturing special characters
                         which might be found in the url e.g. "&" """)
 
-    parser.add_argument('-f', '--folder', default=config.download_folder, type=str, metavar='<path>',
+    parser.add_argument('-f', '--download-folder', default=config.download_folder, type=str, metavar='<path>',
                         help=f'destination download folder/dir (default: {config.download_folder})')
 
-    parser.add_argument('--nogui', action='store_true', help=f'interactive command line')
-    # parser.add_argument('-i', '--interactive', action='store_true', help=f'interactive command line')
-    parser.add_argument('--ignore-settings', action='store_true', help=f'ignore loading or savng settings')
+    parser.add_argument('--nogui', action='store_true', help='use command line only, no graphical user interface')
+    parser.add_argument('-i', '--interactive', action='store_true', help=f'interactive command line, will be ignored if '
+                                                                         f'"--nogui" flag not used')
+    parser.add_argument('--ignore-settings', action='store_true', help='ignore load or save settings')
     # parser.add_argument('--test-run', action='store_true', help=f'start and exit automatically')
     parser.add_argument('--imports-only', action='store_true',
-                        help=f'import all packages and exit, if you need to build pyc files')
+                        help='import all packages and exit, useful when building AppImage or exe releases, since it '
+                             'will build pyc files and make application start faster')
+    parser.add_argument('--show-settings', action='store_true',
+                        help='show current application settings and their current values, Note: you can use any of '
+                             'these settings names as a command line argument to change its value')
+
+    parser.add_argument('--video-quality', default='best', type=str,
+                        help="select video quality, available choices are: 'best', '1080p', '720p', '480p', '360p', "
+                             "'lowest', and default value is best")
+    parser.add_argument('--prefere-mp4', action='store_true', help='select mp4 streams if available, otherwise '
+                                                                   'select any format')
 
     args = parser.parse_args()
+
+    if args.show_settings:
+        for key in config.settings_keys:
+            print(key, '=', config.__dict__.get(key, 'not used'))
+        sys.exit()
+
     print('Arguments:', vars(args))
 
     if args.imports_only:
@@ -92,10 +109,13 @@ def main():
 
     if args.nogui:
         url = args.url
-        folder = args.folder
         custom_settings.update(log_level=1)
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
-        controller.interactive_download(url, folder=folder)
+        if args.interactive:
+            controller.interactive_download(url)
+        else:
+            controller.autodownload(**custom_settings, threadding=False)
+        config.shutdown = True
     else:
         c = Controller(view_class=MainWindow, custom_settings=custom_settings)
         c.run()

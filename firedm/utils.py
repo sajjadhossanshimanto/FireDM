@@ -44,8 +44,14 @@ if config.operating_system == 'Linux':
 
 
 def threaded(func):
+    """a decorator to run any function / method in a thread
+    you can pass threadding=False option when calling the decorated function if you need to disable threadding"""
     def wraper(*args, **kwargs):
-        Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+        threadding = kwargs.get('threadding', True)
+        if threadding:
+            Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+        else:
+            func(*args, **kwargs)
 
     return wraper
 

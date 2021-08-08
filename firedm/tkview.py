@@ -2717,10 +2717,6 @@ class BatchWindow(tk.Toplevel):
     def download(self, download_later=False):
         urls = self.parse_urls()
         video_quality = self.video_quality.selection
-        if video_quality.endswith('p'):
-            video_quality = int(video_quality[:-1])
-        else:
-            video_quality = video_quality.lower()
 
         self.controller.batch_download(urls, video_quality=video_quality, download_later=download_later)
         self.close()

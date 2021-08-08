@@ -264,8 +264,14 @@ class Video(DownloadItem):
                 stream = [stream for stream in self.all_streams if raw_name == stream.raw_name][0]
 
             elif video_quality:
+                # validate
+                if video_quality.endswith('p'):  # e.g. 360p
+                    video_quality = int(video_quality[:-1])
+                else:
+                    video_quality = video_quality.lower()
+
                 if prefere_mp4 and self.mp4_videos:
-                    streams = self.mp4_videos
+                    streams = self.mp4_videos or self.video_streams
                 else:
                     streams = self.video_streams
 

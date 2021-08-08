@@ -16,14 +16,14 @@ from .version import __version__
 
 # settings parameters to be saved on disk
 settings_keys = [
-    'current_theme', 'monitor_clipboard', 'show_download_window', 'auto_close_download_window',
+    'current_theme', 'monitor_clipboard',
     'show_thumbnail', 'speed_limit', 'max_concurrent_downloads', 'max_connections', 'update_frequency',
     'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy', 'log_level', 'download_folder',
-    'manually_select_dash_audio', 'use_referer', 'referer_url', 'close_action', 'process_playlist', 'keep_temp',
+    'manually_select_dash_audio', 'use_referer', 'referer_url', 'keep_temp',
     'auto_rename', 'checksum', 'use_proxy_dns', 'write_metadata', 'check_for_update', 'minimize_to_systray',
     'enable_systray', 'window_size', 'download_thumbnail', 'active_video_extractor', 'autoscroll_download_tab',
     'enable_captcha_workaround', 'gui_font', 'scrollbar_width', 'verify_ssl_cert', 'custom_user_agent',
-    'recent_folders', 'write_timestamp', 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top',
+    'recent_folders', 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top',
     'disable_log_popups', 'ibus_workaround', 'on_download_notification']
 
 # CONSTANTS

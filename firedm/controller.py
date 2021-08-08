@@ -936,7 +936,8 @@ class Controller:
 
     @threaded
     def download(self, d=None, uid=None, video_idx=None, silent=False, download_later=False, **kwargs):
-        """start downloading an item
+        """start downloading an item, it will run in a separate thread automatically unless you pass
+        threadding=False option
 
         Args:
             d (ObservableDownloadItem): download item
@@ -951,7 +952,7 @@ class Controller:
             log('Nothing to download', showpopup=showpopup)
             return
 
-        # make a copy of d
+        # make a copy of d to prevent changes in self.playlist items
         d = copy(d)
 
         update_object(d, kwargs)
@@ -1150,10 +1151,11 @@ class Controller:
         video_quality = kwargs.get('video_quality', None)
 
         if video_quality and d.type == MediaType.video:
+            print('video_quality=', video_quality)
             d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
 
         # download item
-        self.download(d, silent=True, download_later=kwargs.get('download_later', False))
+        self.download(d, silent=True, **kwargs)
 
     @threaded
     def batch_download(self, urls, **kwargs):
@@ -1630,10 +1632,9 @@ class Controller:
         d.sched = None
     # endregion
 
-    # region cmd view
     def interactive_download(self, url, **kwargs):
         """intended to be used with command line view and offer step by step choices to download an item"""
-        playlist = self.process_url(url)
+        playlist = self.url_to_playlist(url)
 
         d = playlist[0]
 
@@ -1704,12 +1705,8 @@ class Controller:
             return
 
         # download
-        self.download(d)
-        self.report_d(d)
-
-        self._save_settings()
-        config.shutdown = True
-    # endregion
+        self.download(d, threadding=False)
+        self.report_d(d, threadding=False)
 
     # region on completion command / shutdown
     def _on_completion_watchdog(self):
