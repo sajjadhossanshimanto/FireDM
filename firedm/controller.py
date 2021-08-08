@@ -951,6 +951,9 @@ class Controller:
             log('Nothing to download', showpopup=showpopup)
             return
 
+        # make a copy of d
+        d = copy(d)
+
         update_object(d, kwargs)
 
         try:
@@ -1169,12 +1172,12 @@ class Controller:
               subtitles (dict): key=language, value=selected extension
         """
         for vid_idx in selected_videos:
-            d = copy(self.playlist[vid_idx])
-            d.folder = config.download_folder
+            d = self.playlist[vid_idx]
+            kwargs['folder'] = config.download_folder
 
             # add number to name
             if config.use_playlist_numbers:
-                d.name = f'{vid_idx + 1}- {d.name}'
+                kwargs['name'] = f'{vid_idx + 1}- {d.name}'
 
             self.download(d, silent=True, **kwargs)
             time.sleep(0.5)
