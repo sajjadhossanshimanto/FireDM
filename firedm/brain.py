@@ -336,11 +336,28 @@ def thread_manager(d, q):
 
     num_live_threads = 0
 
+    log('*-*-'*30)
+
+    def sort_segs(segs):
+        # sort segments based on their range in reverse to use .pop()
+        sort = lambda _segs: sorted(_segs, key=lambda seg: seg.range[0], reverse=True)
+
+        try:
+            video_segs = [seg for seg in segs if seg.media_type == config.MediaType.video]
+            other_segs = [seg for seg in segs if seg not in video_segs]
+
+            # put video at the end of the list to get processed first
+            sorted_segs = sort(other_segs) + sort(video_segs)
+            # log('sorted seg:', [f'{seg.media_type}-{seg.range}' for seg in sorted_segs])
+        except Exception as e:
+            sorted_segs = segs
+            log('sort_segs error:', e)
+
+        return sorted_segs
+
     # job_list
     job_list = [seg for seg in d.segments if not seg.downloaded]
-
-    # reverse job_list to process segments in proper order use pop()
-    job_list.reverse()
+    job_list = sort_segs(job_list)
 
     d.remaining_parts = len(job_list)
 
@@ -370,7 +387,9 @@ def thread_manager(d, q):
         if config.jobs_q.qsize() > 0:
             # rebuild job_list
             job_list = [seg for seg in d.segments if not seg.downloaded and not seg.locked]
-            job_list.reverse()
+
+            # sort segments based on its ranges smaller ranges at the end
+            job_list = sort_segs(job_list)
 
             # empty queue
             for _ in range(config.jobs_q.qsize()):
@@ -441,17 +460,18 @@ def thread_manager(d, q):
                     segmentation_timer = time.time()
 
                     # calculate minimum segment size based on speed, e.g. for 3 MB/s speed, and 2 live threads,
-                    # min seg. size will be 1.5 MB
+                    # worker speed = 1.5 MB/sec, min seg size will be 1.5 x 6 = 9 MB
                     worker_speed = d.speed // num_live_threads if num_live_threads else 0
-                    min_seg_size = max(config.SEGMENT_SIZE, worker_speed)
+                    min_seg_size = max(config.SEGMENT_SIZE, worker_speed * 6)
 
-                    remaining_segs = [seg for seg in d.segments if seg.range is not None
+                    filtered_segs = [seg for seg in d.segments if seg.range is not None
                                       and seg.remaining > min_seg_size * 2]
-                    remaining_segs.reverse()
 
+                    # sort segments based on its ranges smaller ranges at the end
+                    filtered_segs = sort_segs(filtered_segs)
 
-                    if remaining_segs:
-                        current_seg = remaining_segs.pop()
+                    if filtered_segs:
+                        current_seg = filtered_segs.pop()
 
                         # range boundaries
                         start = current_seg.range[0]
