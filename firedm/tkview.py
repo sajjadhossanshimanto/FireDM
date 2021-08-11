@@ -1780,7 +1780,7 @@ class DItem(tk.Frame):
             if merge_progress:
                 self.mbar.set(merge_progress)
 
-            if segments_progress:
+            if segments_progress and hasattr(self, 'segment_bar'):
                 self.segment_bar.ubdate_bars(segments_progress)
 
             self.display_info()
@@ -3815,8 +3815,7 @@ class MainWindow(IView):
         self.d_items[uid] = d_item
 
         # get segment progress
-        if status in config.Status.active_states:
-            kwargs['segments_progress'] = self.controller.get_segments_progress(uid=uid)
+        kwargs['segments_progress'] = self.controller.get_segments_progress(uid=uid)
 
         # update d_item info
         d_item.update(**kwargs)
