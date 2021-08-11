@@ -15,6 +15,7 @@
 import os
 import sys
 import argparse
+import re
 
 # This code should stay on top to handle relative imports in case of direct call of FireDM.py
 if __package__ is None:
@@ -32,6 +33,7 @@ from .controller import Controller, set_option
 from .tkview import MainWindow
 from .cmdview import CmdView
 from .utils import parse_urls
+from .setting import get_user_settings
 
 
 def main():
@@ -39,13 +41,23 @@ def main():
     engine, it downloads general files and videos from youtube and tons of other streaming websites . Developed 
     in Python, based on "LibCurl", and "youtube_dl". """
 
+    user_settings = get_user_settings()
+
+    def iterable(txt):
+        # process iterable in arguments, e.g. tuple or list,
+        # example --window-size=(600,300)
+        return re.findall(r'\d+', txt)
+
+    def int_iterable(txt):
+        return map(int, iterable(txt))
+
     parser = argparse.ArgumentParser(
         prog='FireDM',
         description=description,
         epilog='copyright: (c) 2019-2021 by Mahmoud Elshahat. license: GNU LGPLv3, see LICENSE file for more details.',
-        usage='firedm url options \n'
-              '       firedm https://somesite.com/somevideo --download-folder="/home/test" --name="somevideo.mp4" '
-              '--video-quality=720p --max-connections=8\n')
+        usage='------------------------------------------------------------------------------------------------------\n'
+              '       firedm url options \n'
+              '       firedm https://somesite.com/somevideo --nogui --max-connections=8 \n')
 
     parser.add_argument('url', type=str, nargs='?',
                         help="""url / link of the file you want to download, 
@@ -63,9 +75,9 @@ def main():
                              'name with different number at the end')
 
     parser.add_argument('--nogui', action='store_true', help='use command line only, no graphical user interface')
-    parser.add_argument('--interactive', action='store_true', help=f'interactive command line, will be ignored if '
-                                                                         f'"--nogui" flag not used')
-    parser.add_argument('--ignore-settings', action='store_true', help='ignore load or save settings')
+    parser.add_argument('--interactive', action='store_true', help='interactive command line, will be ignored if '
+                                                                   '"--nogui" flag not used')
+    parser.add_argument('--ignore-settings', action='store_true', help='ignore load or save user settings')
     # parser.add_argument('--test-run', action='store_true', help=f'start and exit automatically')
     parser.add_argument('--imports-only', action='store_true',
                         help='import all packages and exit, useful when building AppImage or exe releases, since it '
@@ -82,7 +94,7 @@ def main():
     parser.add_argument('--urls-file', type=argparse.FileType('r', encoding='UTF-8'),
                         help='path to text file containing multiple urls to be downloaded, note: file should have '
                              'every url in a separate line, empty lines and lines start with "#" will be ignored \n'
-                             'this flag works only with "--nogui" flag, and does not work with "--interactive" flag')
+                             'this flag works only with "--nogui" flag')
 
     # add config file arguments
     config_options = {
@@ -120,7 +132,8 @@ def main():
         "--minimize-to-systray": {"type": bool, "help": "minimize application to systray when clicking close button",
                                   'gui': True},
         "--enable-systray": {"type": bool, "help": "enable systray", 'gui': True},
-        "--window-size": {"type": tuple, "help": "window size, example (600, 400)", 'gui': True},
+        "--window-size": {"type": int_iterable, "help": "window size, example: --window-size=600,400 no space allowed",
+                          'gui': True},
         "--autoscroll-download-tab": {"type": bool, "help": "autoscroll download tab", 'gui': True},
         "--enable-captcha-workaround": {"type": bool, "help": "enable captcha workaround", 'gui': True},
         "--scrollbar-width": {"type": int, "help": f"scrollbar width", 'gui': True},
@@ -135,8 +148,13 @@ def main():
 
     for option in config_options:
         parameters = config_options[option]
-        default = getattr(config, option[2:].replace("-", "_"), 'not used')
-        parameters['help'] += f', current value = {default}'
+        key = option[2:].replace("-", "_")
+        default_value = getattr(config, key, None)
+        from_sett_file = user_settings.get(key)
+
+        default = from_sett_file or default_value
+
+        parameters['help'] += f', current value={default}'
         parameters.update(default=default)
         _type = parameters['type']
         if _type == bool:
@@ -152,11 +170,6 @@ def main():
 
     args = parser.parse_args()
     custom_settings = vars(args)
-
-    if args.show_settings:
-        for key in config.settings_keys:
-            print(key, '=', getattr(config, key, 'not used'))
-        sys.exit(0)
 
     print('Arguments:', vars(args))
 
@@ -195,22 +208,31 @@ def main():
     if args.download_folder:
         custom_settings['folder'] = args.download_folder
 
+    if args.show_settings:
+        for key, value in custom_settings.items():
+            print(f'{key}: {value}')
+        sys.exit(0)
+
     if args.nogui:
-        url = args.url
         custom_settings.update(log_level=1)
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
-        if args.interactive:
-            controller.interactive_download(url)
+
+        urls = []
+        url = custom_settings.pop('url')
+        if url:
+            urls.append(url)
+
+        if args.urls_file:
+            text = args.urls_file.read()
+            urls += parse_urls(text)
+
+        if not urls:
+            print('No url(s) to download')
+
+        elif args.interactive:
+            for url in urls:
+                controller.interactive_download(url)
         else:
-            urls = []
-            url = custom_settings.pop('url')
-            if url:
-                urls.append(url)
-
-            if args.urls_file:
-                text = args.urls_file.read()
-                urls += parse_urls(text)
-
             controller.batch_download(urls, **custom_settings, threadding=False)
 
         config.shutdown = True

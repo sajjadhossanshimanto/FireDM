@@ -158,10 +158,10 @@ def save_d_map(d_map):
         log('save_d_map()> ', e)
 
 
-def load_setting():
+def get_user_settings():
     settings = {}
     try:
-        log('Load Application setting from', config.sett_folder)
+        # log('Load user setting from', config.sett_folder)
         file = os.path.join(config.sett_folder, 'setting.cfg')
         with open(file, 'r') as f:
             settings = json.load(f)
@@ -174,8 +174,16 @@ def load_setting():
         if not isinstance(settings, dict):
             settings = {}
 
-        # update config module
-        config.__dict__.update(settings)
+        return settings
+
+
+def load_setting():
+
+    log('Load Application setting from', config.sett_folder)
+    settings = get_user_settings()
+
+    # update config module
+    config.__dict__.update(settings)
 
 
 def save_setting():
