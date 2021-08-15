@@ -65,9 +65,6 @@ def main():
                         example: "www.linktomyfile" to avoid shell capturing special characters
                         which might be found in the url e.g. "&" """)
 
-    parser.add_argument('--download-folder', default=config.download_folder, type=str, metavar='<path>',
-                        help=f'destination download folder/dir (default: {config.download_folder})')
-
     parser.add_argument('--name', type=str,
                         help='file name with extension, don not use full path, also be careful with video extension, '
                              'ffmpeg will try to convert video depend on its extension, '
@@ -99,6 +96,7 @@ def main():
     # add config file arguments
     config_options = {
 
+        "--download-folder": {"type": str, "help": "download folder full path"},
         "--speed-limit": {"type": int, "help": "download speed limit, in bytes, zero means no limit"},
         "--max-concurrent-downloads": {"type": int, "help": "max concurrent downloads"},
         "--max-connections": {"type": int, "help": "max connections per item download"},
@@ -171,7 +169,12 @@ def main():
     args = parser.parse_args()
     custom_settings = vars(args)
 
-    print('Arguments:', vars(args))
+    if args.show_settings:
+        for key, value in custom_settings.items():
+            print(f'{key}: {value}')
+        sys.exit(0)
+
+    print('Arguments:', custom_settings)
 
     if args.imports_only:
         import importlib, time
@@ -207,11 +210,6 @@ def main():
 
     if args.download_folder:
         custom_settings['folder'] = args.download_folder
-
-    if args.show_settings:
-        for key, value in custom_settings.items():
-            print(f'{key}: {value}')
-        sys.exit(0)
 
     if args.nogui:
         custom_settings.update(log_level=1)
