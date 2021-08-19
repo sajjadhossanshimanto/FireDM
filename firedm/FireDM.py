@@ -37,9 +37,10 @@ from .setting import get_user_settings
 
 
 def main():
-    description = """FireDM is a python open source (Internet Download Manager) with multi-connections, high speed 
-    engine, it downloads general files and videos from youtube and tons of other streaming websites . Developed 
-    in Python, based on "LibCurl", and "youtube_dl". """
+    description = """FireDM is an open source Download Manager with multi-connections, high speed 
+    engine, it can download general files and video files from youtube and tons of other streaming websites. 
+    Developed in Python, based on "LibCurl", "youtube_dl", and "Tkinter". 
+    Source: https://github.com/firedm/FireDM """
 
     user_settings = get_user_settings()
 
@@ -54,8 +55,9 @@ def main():
     parser = argparse.ArgumentParser(
         prog='FireDM',
         description=description,
-        epilog='copyright: (c) 2019-2021 by Mahmoud Elshahat. license: GNU LGPLv3, see LICENSE file for more details.',
-        usage='------------------------------------------------------------------------------------------------------\n'
+        epilog='copyright: (c) 2019-2021 by Mahmoud Elshahat. license: GNU LGPLv3, see LICENSE file for more details. '
+               'Isuues: https://github.com/firedm/FireDM/issues',
+        usage='\n'
               '       firedm url options \n'
               '       firedm https://somesite.com/somevideo --nogui --max-connections=8 \n')
 
@@ -65,11 +67,11 @@ def main():
                         example: "www.linktomyfile" to avoid shell capturing special characters
                         which might be found in the url e.g. "&" """)
 
-    parser.add_argument('--name', type=str,
-                        help='file name with extension, don not use full path, also be careful with video extension, '
-                             'ffmpeg will try to convert video depend on its extension, '
-                             'also if name is given during batch download, all files will have same '
-                             'name with different number at the end')
+    parser.add_argument('-o', '--output', type=str, metavar='<file>',
+                        help='target file name with extension, if omitted remote file name will be used, '
+                             'if file path included, "--download-folder" flag will be ignored \n'
+                             'Note: be careful with video extension, since ffmpeg will try to convert video '
+                             'depend on its extension, ')
 
     parser.add_argument('--nogui', action='store_true', help='use command line only, no graphical user interface')
     parser.add_argument('--interactive', action='store_true', help='interactive command line, will be ignored if '
@@ -82,21 +84,27 @@ def main():
     parser.add_argument('--show-settings', action='store_true',
                         help='show current application settings and their current values and exit')
 
-    parser.add_argument('--video-quality', default='best', type=str,
-                        help="select video quality, available choices are: 'best', '1080p', '720p', '480p', '360p', "
-                             "'lowest', default value = best")
+    parser.add_argument('--video-quality', default='best', type=str, metavar='QUALITY',
+                        help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
+                             "and 'lowest'), default value = best")
     parser.add_argument('--prefere-mp4', action='store_true', help='select mp4 streams if available, otherwise '
-                                                                   'select any format')
+                                                                   'select any available format')
 
-    parser.add_argument('--urls-file', type=argparse.FileType('r', encoding='UTF-8'),
+    parser.add_argument('-b', '--batch-file', type=argparse.FileType('r', encoding='UTF-8'), metavar='<file>',
                         help='path to text file containing multiple urls to be downloaded, note: file should have '
                              'every url in a separate line, empty lines and lines start with "#" will be ignored \n'
                              'this flag works only with "--nogui" flag')
 
+    parser.add_argument('-u', '--username', default='best', type=str,
+                        help="Login with this account ID")
+
+    parser.add_argument('-p', '--password', default='best', type=str, metavar='*****',
+                        help="Login password")
+
     # add config file arguments
     config_options = {
 
-        "--download-folder": {"type": str, "help": "download folder full path"},
+        "--download-folder": {"type": str, "help": "download folder full path", 'metavar': '<folder>'},
         "--speed-limit": {"type": int, "help": "download speed limit, in bytes, zero means no limit"},
         "--max-concurrent-downloads": {"type": int, "help": "max concurrent downloads"},
         "--max-connections": {"type": int, "help": "max connections per item download"},
@@ -142,7 +150,7 @@ def main():
                                        'gui': True},
     }
 
-    gui_group = parser.add_argument_group(title='Gui specific options ------------------------------------------------')
+    gui_group = parser.add_argument_group(title='Gui specific options:')
 
     for option in config_options:
         parameters = config_options[option]
@@ -208,9 +216,22 @@ def main():
     if args.referer_url:
         custom_settings['use_referer'] = True
 
+    if args.username or args.password:
+        custom_settings['use_web_auth'] = True
+
     if args.download_folder:
         custom_settings['folder'] = args.download_folder
 
+    if args.output:
+        folder = os.path.dirname(args.output)
+        if folder:
+            custom_settings['folder'] = os.path.realpath(folder)
+
+        name = os.path.basename(args.output)
+        if name:
+            custom_settings['name'] = name
+
+    # ------------------------------------------------------------------------------------------------------------------
     if args.nogui:
         custom_settings.update(log_level=1)
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
@@ -220,8 +241,8 @@ def main():
         if url:
             urls.append(url)
 
-        if args.urls_file:
-            text = args.urls_file.read()
+        if args.batch_file:
+            text = args.batch_file.read()
             urls += parse_urls(text)
 
         if not urls:
