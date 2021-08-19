@@ -2718,7 +2718,8 @@ class BatchWindow(tk.Toplevel):
         urls = parse_urls(self.get())
         video_quality = self.video_quality.selection
 
-        self.controller.batch_download(urls, video_quality=video_quality, download_later=download_later)
+        self.controller.batch_download(urls, video_quality=video_quality, download_later=download_later,
+                                       folder=config.download_folder)
         self.close()
 
     def add_url(self, url):
