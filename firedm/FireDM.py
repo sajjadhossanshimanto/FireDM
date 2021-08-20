@@ -95,11 +95,9 @@ def main():
                              'every url in a separate line, empty lines and lines start with "#" will be ignored \n'
                              'this flag works only with "--nogui" flag')
 
-    parser.add_argument('-u', '--username', default='best', type=str,
-                        help="Login with this account ID")
+    parser.add_argument('-u', '--username', type=str, help="Login with this account ID")
 
-    parser.add_argument('-p', '--password', default='best', type=str, metavar='*****',
-                        help="Login password")
+    parser.add_argument('-p', '--password', type=str, metavar='*****', help="Login password")
 
     # add config file arguments
     config_options = {
