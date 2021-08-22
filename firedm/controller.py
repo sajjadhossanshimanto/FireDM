@@ -124,9 +124,10 @@ class Controller:
         self.d_map = {}
 
         self.pending_downloads_q = Queue()
+        self.ignore_dlist = custom_settings.get('ignore_dlist', False)
 
         # load application settings
-        self._load_settings(**custom_settings)
+        self._load_settings()
 
         self.url = ''
         self.playlist = []
@@ -366,9 +367,9 @@ class Controller:
 
     # region settings
     def _load_settings(self, **kwargs):
-        if not kwargs.get('ignore_settings'):
+        if not self.ignore_dlist:
             # load stored setting from disk
-            setting.load_setting()
+            # setting.load_setting()
 
             # load d_map
             self.d_map = setting.load_d_map()
@@ -377,13 +378,13 @@ class Controller:
             for d in self.d_map.values():
                 d.register_callback(self.observer)
 
-        # update config module with custom settings
-        config.__dict__.update(**kwargs)
+        # # update config module with custom settings
+        # config.__dict__.update(**kwargs)
 
     def _save_settings(self):
-        if not config.ignore_settings:
+        if not self.ignore_dlist:
             # Save setting to disk
-            setting.save_setting()
+            # setting.save_setting()
 
             # save d_map
             setting.save_d_map(self.d_map)
@@ -1162,7 +1163,7 @@ class Controller:
     @threaded
     def batch_download(self, urls, **kwargs):
         log('Batch downloading the following urls:\n', '\n'.join(urls))
-        log('Batch download options:', kwargs)
+        # print('Batch download options:', kwargs)
 
         for url in urls:
             self.autodownload(url, **kwargs)

@@ -28,12 +28,13 @@ if __package__ is None:
 
 
 # local modules
-from . import config
+from . import config, setting
 from .controller import Controller, set_option
 from .tkview import MainWindow
 from .cmdview import CmdView
-from .utils import parse_urls
+from .utils import parse_urls, parse_bytes
 from .setting import get_user_settings
+from .version import __version__
 
 
 def main():
@@ -42,24 +43,44 @@ def main():
     Developed in Python, based on "LibCurl", "youtube_dl", and "Tkinter". 
     Source: https://github.com/firedm/FireDM """
 
-    user_settings = get_user_settings()
+    if '--ignore-config' not in sys.argv:
+        user_settings = get_user_settings()
+    else:
+        user_settings = {}
+
+    def get_default(varname):
+        user_value = user_settings.get(varname)
+        default_value = getattr(config, varname, None)
+        return user_value or default_value
 
     def iterable(txt):
         # process iterable in arguments, e.g. tuple or list,
-        # example --window-size=(600,300)
+        # example --window=(600,300)
         return re.findall(r'\d+', txt)
 
     def int_iterable(txt):
         return map(int, iterable(txt))
 
+    def speed(txt):
+        return parse_bytes(txt)
+
+    # Since this application is based on youtube-dl as a video extractor
+    # it is recommended to use arguments names same to youtube-dl, refer to:
+    # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/options.py
+
     parser = argparse.ArgumentParser(
-        prog='FireDM',
+        prog='firedm',
         description=description,
-        epilog='copyright: (c) 2019-2021 by Mahmoud Elshahat. license: GNU LGPLv3, see LICENSE file for more details. '
+        epilog='copyright: (c) 2019-2021 FireDM. license: GNU LGPLv3, see LICENSE file for more details. '
+               'Author: Mahmoud Elshahat, '
                'Isuues: https://github.com/firedm/FireDM/issues',
         usage='\n'
-              '       firedm url options \n'
-              '       firedm https://somesite.com/somevideo --nogui --max-connections=8 \n')
+              '       %(prog)s [OPTIONS] URL \n'
+              '       example: %(prog)s "https://somesite.com/somevideo" --connections=8 \n'
+              '       Note: to run %(prog)s in GUI(Graphical User Interface) mode, use "--gui" option along with other '
+              '       arguments, or start %(prog)s without any arguments.',
+        add_help=False
+    )
 
     parser.add_argument('url', type=str, nargs='?',
                         help="""url / link of the file you want to download, 
@@ -67,120 +88,211 @@ def main():
                         example: "www.linktomyfile" to avoid shell capturing special characters
                         which might be found in the url e.g. "&" """)
 
-    parser.add_argument('-o', '--output', type=str, metavar='<file>',
-                        help='target file name with extension, if omitted remote file name will be used, '
-                             'if file path included, "--download-folder" flag will be ignored \n'
-                             'Note: be careful with video extension, since ffmpeg will try to convert video '
-                             'depend on its extension, ')
+    # ------------------------------------------------------------------------------------General options---------------
+    general = parser.add_argument_group(title='General options:')
+    general.add_argument(
+        '-h', '--help',
+        action='help',
+        help='show this help message and exit')
+    general.add_argument(
+        '-v', '--version',
+        action='version', version='%(prog)s ' + __version__,
+        help='Print program version and exit')
+    general.add_argument(
+        '--config',
+        action='store_true',
+        help='show current application settings and their current values and exit')
+    general.add_argument(
+        '--ignore-config', dest='ignore_config',
+        action='store_true',
+        help='Do not load settings from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
+    general.add_argument(
+        '--ignore-dlist', dest='ignore_dlist',
+        action='store_true',
+        help='Do not load "download items list" from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
+    general.add_argument(
+        '-g', '--gui', action='store_true', help='use graphical user interface, same effect if you try running '
+                                                 '%(prog)s without any parameters')
+    general.add_argument(
+        '--interactive', action='store_true', help='interactive command line')
+    general.add_argument(
+        '--imports-only', action='store_true',
+        help='import all packages and exit, useful when building AppImage or exe releases, since it '
+             'will build pyc files and make application start faster')
+    general.add_argument(
+        '--persistent',
+        action='store_true', default=False,
+        help='save current options in global configuration file.')
 
-    parser.add_argument('--nogui', action='store_true', help='use command line only, no graphical user interface')
-    parser.add_argument('--interactive', action='store_true', help='interactive command line, will be ignored if '
-                                                                   '"--nogui" flag not used')
-    parser.add_argument('--ignore-settings', action='store_true', help='ignore load or save user settings')
-    # parser.add_argument('--test-run', action='store_true', help=f'start and exit automatically')
-    parser.add_argument('--imports-only', action='store_true',
-                        help='import all packages and exit, useful when building AppImage or exe releases, since it '
-                             'will build pyc files and make application start faster')
-    parser.add_argument('--show-settings', action='store_true',
-                        help='show current application settings and their current values and exit')
+    # ----------------------------------------------------------------------------------------Filesystem options--------
+    filesystem = parser.add_argument_group(title='Filesystem options:')
+    filesystem.add_argument(
+        '-o', '--output',
+        type=str, metavar='<PATH>',
+        help='target file name, if omitted remote file name will be used, '
+             'if file path included, "--download-folder" flag will be ignored, \n'
+             'be careful with video extension, since ffmpeg will try to convert video '
+             'based on filename extension')
+    filesystem.add_argument(
+        '-b', '--batch-file',
+        type=argparse.FileType('r', encoding='UTF-8'), metavar='<PATH>',
+        help='path to text file containing multiple urls to be downloaded, note: file should have '
+             'every url in a separate line, empty lines and lines start with "#" will be ignored.')
+    filesystem.add_argument(
+        '-d', '--download_folder', dest='download_folder',
+        type=str, metavar='<PATH>', default=get_default("download_folder"),
+        help=f'download folder full path, default=%(default)s')
+    filesystem.add_argument(
+        '--auto-rename',
+        action='store_true', default=get_default("auto_rename"),
+        help='auto rename file if same name already exist on disk, default=%(default)s')
+    filesystem.add_argument(
+        '--checksum',
+        action='store_true', default=get_default("checksum"),
+        help='calculate checksums for completed files MD5 and SHA256, default=%(default)s')
+    filesystem.add_argument(
+        '-A', '--auto-number',
+        action='store_true', dest='use_playlist_numbers', default=get_default("use_playlist_numbers"),
+        help='Auto number playlist filenames, default=%(default)s')
 
-    parser.add_argument('--video-quality', default='best', type=str, metavar='QUALITY',
-                        help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
-                             "and 'lowest'), default value = best")
-    parser.add_argument('--prefere-mp4', action='store_true', help='select mp4 streams if available, otherwise '
-                                                                   'select any available format')
+    # ---------------------------------------------------------------------------------------Network Options------------
+    network = parser.add_argument_group(title='Network Options')
+    network.add_argument(
+        '--proxy', dest='proxy',
+        metavar='URL', default=get_default("proxy"),
+        help='Use the specified HTTP/HTTPS/SOCKS proxy. To enable '
+             'SOCKS proxy, specify a proper scheme. For example '
+             'socks5://127.0.0.1:1080/. Pass in an empty string (--proxy "") '
+             'for direct connection, default=%(default)s')
+    network.add_argument(
+        '--use-proxy-dns',
+        action='store_true', default=get_default("use_proxy_dns"),
+        help='use proxy dns, default=%(default)s')
 
-    parser.add_argument('-b', '--batch-file', type=argparse.FileType('r', encoding='UTF-8'), metavar='<file>',
-                        help='path to text file containing multiple urls to be downloaded, note: file should have '
-                             'every url in a separate line, empty lines and lines start with "#" will be ignored \n'
-                             'this flag works only with "--nogui" flag')
+    # ---------------------------------------------------------------------------------------Authentication Options-----
+    authentication = parser.add_argument_group(title='Authentication Options')
+    authentication.add_argument(
+        '-u', '--username',
+        dest='username', metavar='USERNAME',
+        help='Login with this account ID')
+    authentication.add_argument(
+        '-p', '--password',
+        dest='password', metavar='PASSWORD',
+        help='Account password.')
 
-    parser.add_argument('-u', '--username', type=str, help="Login with this account ID")
+    # --------------------------------------------------------------------------------------Video Options---------------
+    vid = parser.add_argument_group(title='Video Options')
+    vid.add_argument(
+        '--extractor', dest='active_video_extractor',
+        type=str, metavar='EXTRACTOR', default=get_default("active_video_extractor"),
+        help="select video extractor, available choices are: ('youtube_dl', and 'ytdlp'), default=%(default)s")
+    vid.add_argument(
+        '--video-quality', dest='video_quality',
+        type=str, metavar='QUALITY', default=get_default("video_quality"),
+        help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
+             "and 'lowest'), default=%(default)s")
+    vid.add_argument(
+        '--prefere-mp4',
+        action='store_true', default=get_default("prefere_mp4"),
+        help='prefere mp4 streams if available, default=%(default)s')
 
-    parser.add_argument('-p', '--password', type=str, metavar='*****', help="Login password")
+    # --------------------------------------------------------------------------------------Workarounds-----------------
+    workarounds = parser.add_argument_group(title='Workarounds')
+    workarounds.add_argument(
+        '--ibus-workaround',
+        action='store_true',
+        help='ibus workaround, to fix slow gui startup')
+    workarounds.add_argument(
+        '--no-check-certificate', dest='verify_ssl_cert',
+        action='store_false',
+        help='Suppress HTTPS certificate validation')
+    workarounds.add_argument(
+        '--user-agent',
+        metavar='UA', dest='custom_user_agent',
+        help='Specify a custom user agent')
+    workarounds.add_argument(
+        '--referer', dest='referer_url',
+        metavar='URL', default=None,
+        help='Specify a custom referer, use if the video access is restricted to one domain',
+    )
 
-    # add config file arguments
-    config_options = {
+    # --------------------------------------------------------------------------------------Post-processing Options-----
+    postproc = parser.add_argument_group(title='Post-processing Options')
+    postproc.add_argument(
+        '--add-metadata', dest='write_metadata',
+        action='store_true', default=get_default("write_metadata"),
+        help='Write metadata to the video file, default=%(default)s')
+    postproc.add_argument(
+        '--exec',
+        metavar='CMD', dest='exec_cmd',
+        help='Execute a command on the file after downloading and post-processing')
+    postproc.add_argument(
+        '--write-thumbnail', dest='download_thumbnail',
+        action='store_true', default=get_default("download_thumbnail"),
+        help='Write thumbnail image to disk after downloading video file, default=%(default)s')
 
-        "--download-folder": {"type": str, "help": "download folder full path", 'metavar': '<folder>'},
-        "--speed-limit": {"type": int, "help": "download speed limit, in bytes, zero means no limit"},
-        "--max-concurrent-downloads": {"type": int, "help": "max concurrent downloads"},
-        "--max-connections": {"type": int, "help": "max connections per item download"},
-        "--check-for-update": {"type": bool, "help": "check for application update"},
-        "--update-frequency": {"type": int, "help": "check for application update frequency in days"},
-        "--proxy": {"type": str, "help": "proxy, format should be as follows "
-                                         "[proxy type://server name or address:port] \n"
-                                         "example socks5://127.0.0.1:8080 \n"
-                                         "supported proxy types:  http, https, socks4, and socks5"},
-        "--use-proxy-dns": {"type": bool, "help": "use proxy dns"},
-        "--log-level": {"type": int, "help": "log verbosity level in GUI mode, 1 to 3"},
-        "--referer-url": {"type": str, "help": "referer website url"},
-        "--keep-temp": {"type": bool, "help": "keep temp files for debugging"},
-        "--auto-rename": {"type": bool, "help": "auto rename filename if same file already exist on disk"},
-        "--checksum": {"type": bool, "help": "calculate checksums for completed files MD5 and SHA256"},
-        "--write-metadata": {"type": bool, "help": "write metadata to downloaded file"},
-        "--download-thumbnail": {"type": bool, "help": "download video thumbnail after downloading video file"},
-        "--active-video-extractor": {"type": str, "help": "active video extractor, available options "
-                                                          "'youtube_dl', and 'yt_dlp'"},
-        "--verify-ssl-cert": {"type": bool, "help": "verify ssl cert"},
-        "--custom-user-agent": {"type": str, "help": "custom user agent"},
-        "--use-playlist-numbers": {"type": bool, "help": "use playlist numbers in names, "
-                                                         "when downloading a playlist videos"},
-        "--refresh-url-retries": {"type": int, "help": "number of retries to refresh url for expired links"},
+    # -------------------------------------------------------------------------------------Application Update Options---
+    appupdate = parser.add_argument_group(title='Application Update Options')
+    appupdate.add_argument(
+        '-U', '--update',
+        action='store_true', dest='update_self',
+        help='Update this Application and video libraries to latest version.')
 
-        # gui options --------------------------------------------------------------------------------------------------
-        "--current-theme": {"type": str, "help": "theme name, e.g. 'Dark'", 'gui': True},
-        "--monitor-clipboard": {"type": bool, "help": "monitor clipboard, and process any copied url", 'gui': True},
-        "--manually-select-dash-audio": {"type": bool, "help": "manually select dash audio for every video download, "
-                                                               "works in GUI mode", 'gui': True},
-        "--minimize-to-systray": {"type": bool, "help": "minimize application to systray when clicking close button",
-                                  'gui': True},
-        "--enable-systray": {"type": bool, "help": "enable systray", 'gui': True},
-        "--window-size": {"type": int_iterable, "help": "window size, example: --window-size=600,400 no space allowed",
-                          'gui': True},
-        "--autoscroll-download-tab": {"type": bool, "help": "autoscroll download tab", 'gui': True},
-        "--enable-captcha-workaround": {"type": bool, "help": "enable captcha workaround", 'gui': True},
-        "--scrollbar-width": {"type": int, "help": f"scrollbar width", 'gui': True},
-        "--ditem-show-top": {"type": bool, "help": "add new download items on top", 'gui': True},
-        "--disable-log-popups": {"type": bool, "help": "disable popups", 'gui': True},
-        "--ibus-workaround": {"type": bool, "help": "ibus workaround, in case you get slow gui startup", 'gui': True},
-        "--on-download-notification": {"type": bool, "help": "show notification when an item download gets completed",
-                                       'gui': True},
-    }
+    # -------------------------------------------------------------------------------------Downloader Options-----------
+    downloader = parser.add_argument_group(title='Downloader Options')
+    downloader.add_argument(
+        '-R', '--retries', dest='refresh_url_retries',
+        type=int, metavar='RETRIES', default=get_default("refresh_url_retries"),
+        help='Number of retries to download a file, default=%(default)s.')
+    downloader.add_argument(
+        '-l', '--speed-limit', dest='speed_limit',
+        type=speed, metavar='LIMIT', default=get_default("speed_limit"),
+        help='download speed limit, in bytes per second (e.g. 100K or 5M), zero means no limit, default=%(default)s.')
+    downloader.add_argument(
+        '--concurrent', dest='max_concurrent_downloads',
+        type=int, metavar='NUMBER', default=get_default("max_concurrent_downloads"),
+        help='max concurrent downloads, default=%(default)s.')
+    downloader.add_argument(
+        '--connections', dest='max_connections',
+        type=int, metavar='NUMBER', default=get_default("max_connections"),
+        help='max download connections per item, default=%(default)s.')
 
-    gui_group = parser.add_argument_group(title='Gui specific options:')
+    # -------------------------------------------------------------------------------------Debugging options------------
+    debug = parser.add_argument_group(title='Debugging Options')
+    debug.add_argument(
+        '-V', '--verbose', dest='log_level',
+        type=int, metavar='NUMBER', default=get_default("log_level"),
+        help='Log verbosity level in GUI mode, 1 to 3, default=%(default)s.')
+    debug.add_argument(
+        '--keep-temp',
+        action='store_true', default=get_default("keep_temp"),
+        help='keep temp files for debugging, default=%(default)s.')
 
-    for option in config_options:
-        parameters = config_options[option]
-        key = option[2:].replace("-", "_")
-        default_value = getattr(config, key, None)
-        from_sett_file = user_settings.get(key)
-
-        default = from_sett_file or default_value
-
-        parameters['help'] += f', current value={default}'
-        parameters.update(default=default)
-        _type = parameters['type']
-        if _type == bool:
-            parameters.pop('type')
-            parameters.update(action='store_true')
-
-        gui_option = parameters.get('gui')
-        if gui_option:
-            parameters.pop('gui')
-            gui_group.add_argument(option, **parameters)
-        else:
-            parser.add_argument(option, **parameters)
+    # -------------------------------------------------------------------------------------GUI options------------------
+    gui = parser.add_argument_group(title='GUI Options')
+    gui.add_argument(
+        '--theme', dest='current_theme',
+        type=str, metavar='THEME', default=get_default("current_theme"),
+        help='theme name, e.g. "Dark", default=%(default)s.')
+    gui.add_argument(
+        '--monitor-clipboard', dest='monitor_clipboard',
+        action='store_true', default=get_default("monitor_clipboard"),
+        help='monitor clipboard, and process any copied url, default=%(default)s.')
+    gui.add_argument(
+        '--window', dest='window_size',
+        type=int_iterable, metavar='(WIDTH,HIGHT)', default=get_default("window_size"),
+        help='window size, example: --window=(600,400) no space allowed, default=%(default)s.')
+    # ------------------------------------------------------------------------------------------------------------------
 
     args = parser.parse_args()
     custom_settings = vars(args)
 
-    if args.show_settings:
+    if args.config:
         for key, value in custom_settings.items():
             print(f'{key}: {value}')
         sys.exit(0)
 
-    print('Arguments:', custom_settings)
+    # print('Arguments:', custom_settings)
 
     if args.imports_only:
         import importlib, time
@@ -208,9 +320,6 @@ def main():
         print(f'Done, importing modules, total time: {round(total_time, 2)} sec ...')
         sys.exit(0)
 
-    if args.proxy:
-        custom_settings['enable_proxy'] = True
-
     if args.referer_url:
         custom_settings['use_referer'] = True
 
@@ -229,9 +338,13 @@ def main():
         if name:
             custom_settings['name'] = name
 
+    # update config module with custom settings
+    config.__dict__.update(custom_settings)
+
     # ------------------------------------------------------------------------------------------------------------------
-    if args.nogui:
-        custom_settings.update(log_level=1)
+    # if running application without arguments will start the gui, otherwise will run application in cmdline
+    if len(sys.argv) > 1 and not args.gui:
+        config.log_level = 1
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
 
         urls = []
@@ -253,9 +366,14 @@ def main():
             controller.batch_download(urls, **custom_settings, threadding=False)
 
         config.shutdown = True
+
+        if args.persistent:
+            setting.save_setting()
     else:
+        # GUI
         c = Controller(view_class=MainWindow, custom_settings=custom_settings)
         c.run()
+        setting.save_setting()
 
 
 if __name__ == '__main__':
