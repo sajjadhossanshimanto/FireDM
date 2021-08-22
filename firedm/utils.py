@@ -693,7 +693,7 @@ def load_json(file=None):
 def save_json(file=None, data=None):
     try:
         with open(file, 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
     except Exception as e:
         log('save_json() > error: ', e)
 

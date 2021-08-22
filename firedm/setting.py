@@ -192,8 +192,8 @@ def save_setting():
     try:
         file = os.path.join(config.sett_folder, 'setting.cfg')
         with open(file, 'w') as f:
-            json.dump(settings, f)
-            log('setting saved in:', file)
+            json.dump(settings, f, indent=4)
+            log('settings saved in:', file)
     except Exception as e:
         log('save_setting() > error', e)
 
