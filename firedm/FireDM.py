@@ -359,11 +359,14 @@ def main():
         if guimode or args.persistent:
             setting.save_setting()
         controller.quit()
+        import time
+        time.sleep(1)  # give time to other threads to quit
 
     def signal_handler(signum, frame):
         print('\n\nuser interrupt operation, cleanup ...')
         signal.signal(signum, signal.SIG_IGN)  # ignore additional signals
         cleanup()
+        print('\n\ndone cleanup ...')
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)

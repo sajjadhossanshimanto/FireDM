@@ -1130,7 +1130,8 @@ class Controller:
 
     @threaded
     def batch_download(self, urls, **kwargs):
-        log('Batch downloading the following urls:\n', '\n'.join(urls))
+        urls_ = "\n".join(urls)
+        log(f'Batch downloading the following urls:\n {urls_}')
         # print('Batch download options:', kwargs)
 
         for url in urls:

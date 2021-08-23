@@ -572,7 +572,7 @@ def load_extractor_engines(reload=False):
 
         # calculate loading time
         load_time = time.time() - start
-        log(f'youtube_dl version: {config.youtube_dl_version}, load_time= {int(load_time)} seconds')
+        log(f'youtube_dl version: {config.youtube_dl_version}, load_time= {int(load_time)} seconds', log_level=2)
 
         # get a random user agent and update headers
         if not config.custom_user_agent:
@@ -600,7 +600,7 @@ def load_extractor_engines(reload=False):
 
         # calculate loading time
         load_time = time.time() - start
-        log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds')
+        log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds', log_level=2)
 
         # set interrupt / kill switch
         set_interrupt_switch(yt_dlp)
@@ -619,7 +619,7 @@ def set_default_extractor(extractor=None):
 
     global ytdl
     ytdl = youtube_dl if extractor == 'youtube_dl' else yt_dlp
-    log('set default extractor engine to:', extractor, ytdl)
+    log('set default extractor engine to:', extractor, ytdl, log_level=2)
 
 
 def set_interrupt_switch(extractor):

@@ -444,7 +444,7 @@ def rename_file(oldname=None, newname=None, verbose=False):
         return False
     try:
         os.rename(oldname, newname)
-        log('done renaming file:', oldname, '... to:', newname, start='\n')
+        log('done renaming file:', oldname, '... to:', newname, start='\n', log_level=3)
         return True
     except Exception as e:
         if verbose:

@@ -159,7 +159,7 @@ class CmdView(IView):
             filled_length = int(value * scale)
 
             bar = fill * filled_length + ' ' * (length - filled_length)
-            print(f'\r{prefix} [{bar}] {percent}{ suffix}', end='')
+            print(f'\r{prefix} [{bar}] {percent}{ suffix}', end=' '*10)
             if value >= 100:
                 print()  # print empty line
         except:

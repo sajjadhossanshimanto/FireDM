@@ -90,7 +90,7 @@ def brain(d=None):
         time.sleep(0.1)  # a sleep time to make the program responsive
 
         if d.status not in Status.active_states:
-            log(f'File: "{d.name}", {d.status}.')
+            log(f'File {d.status}.')
             break
 
     # report quitting
@@ -110,6 +110,8 @@ def brain(d=None):
             # os notification popup
             notification = f"File: {d.name} \nsaved at: {d.folder}"
             notify(notification, title=f'{APP_NAME} - Download completed')
+
+        log(f"File: {d.name}, saved at: {d.folder}")
 
         # uncomment to debug segments ranges
         # segments = sorted([seg for seg in d.segments], key=lambda seg: seg.range[0])
@@ -336,11 +338,10 @@ def thread_manager(d, q):
 
     num_live_threads = 0
 
-    log('*-*-'*30)
-
     def sort_segs(segs):
         # sort segments based on their range in reverse to use .pop()
-        sort = lambda _segs: sorted(_segs, key=lambda seg: seg.range[0], reverse=True)
+        def sort(_segs):
+            return sorted(_segs, key=lambda seg: seg.range[0], reverse=True)
 
         try:
             video_segs = [seg for seg in segs if seg.media_type == config.MediaType.video]
@@ -506,6 +507,9 @@ def thread_manager(d, q):
                         thread = Thread(target=worker.run, daemon=True)
                         thread.start()
                         threads_to_workers[thread] = worker
+
+                        # save progress info for future resuming
+                        d.save_progress_info()
 
         # check thread completion
         for thread in list(threads_to_workers.keys()):
