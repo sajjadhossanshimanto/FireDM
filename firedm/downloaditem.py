@@ -678,14 +678,22 @@ class DownloadItem:
             self.delete_tempfiles()
 
         # log('load_progress_info()> Loading progress info')
-        progress_info = None
+        progress_info = []
 
         # load progress info from temp folder if exist
-        file = os.path.join(self.temp_folder, 'progress_info.txt')
-        if os.path.isfile(file):
-            data = load_json(file)
+        progress_fp = os.path.join(self.temp_folder, 'progress_info.txt')
+        if os.path.isfile(progress_fp):
+            data = load_json(progress_fp)
             if isinstance(data, list):
                 progress_info = data
+
+        # delete any segment which is not in progress_info file
+        if os.path.isdir(self.temp_folder):
+            fps = [item.get('name', '') for item in progress_info] + [progress_fp]
+            for f_name in os.listdir(self.temp_folder):
+                fp = os.path.join(self.temp_folder, f_name)
+                if fp not in fps:
+                    delete_file(fp, verbose=True)
 
         # update segments from progress info
         if progress_info:
