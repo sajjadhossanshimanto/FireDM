@@ -1814,6 +1814,8 @@ class Controller:
         for d in self.d_map.values():
             self.stop_download(d.uid)
 
+        self.view.quit()
+
         self._save_settings()
 
     def reset(self):

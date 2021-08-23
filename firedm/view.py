@@ -21,6 +21,11 @@ class IView(ABC):
         pass
 
     @abstractmethod
+    def quit(self):
+        """quit view mainloop if any"""
+        pass
+
+    @abstractmethod
     def update_view(self, **kwargs):
         """update view, it will be called automatically by controller, when a model changes
         this method shouldn't block

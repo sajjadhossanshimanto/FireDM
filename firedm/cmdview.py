@@ -29,6 +29,10 @@ class CmdView(IView):
         """intended to be used in gui as a mainloop not in terminal views"""
         pass
 
+    def quit(self):
+        """intended to be used in gui as a mainloop not in terminal views"""
+        pass
+
     def update_view(self, **kwargs):
         """update view"""
     

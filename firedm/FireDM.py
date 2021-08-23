@@ -16,6 +16,7 @@ import os
 import sys
 import argparse
 import re
+import signal
 
 # This code should stay on top to handle relative imports in case of direct call of FireDM.py
 if __package__ is None:
@@ -32,8 +33,8 @@ from . import config, setting
 from .controller import Controller, set_option
 from .tkview import MainWindow
 from .cmdview import CmdView
-from .utils import parse_urls, parse_bytes
-from .setting import get_user_settings, load_setting
+from .utils import parse_urls, parse_bytes, size_format
+from .setting import load_setting
 from .version import __version__
 
 
@@ -249,8 +250,9 @@ def main():
         help='Number of retries to download a file, default=%(default)s.')
     downloader.add_argument(
         '-l', '--speed-limit', dest='speed_limit',
-        type=speed, metavar='LIMIT', default=get_default("speed_limit"),
-        help='download speed limit, in bytes per second (e.g. 100K or 5M), zero means no limit, default=%(default)s.')
+        type=speed, metavar='LIMIT', default=config.speed_limit,
+        help=f'download speed limit, in bytes per second (e.g. 100K or 5M), zero means no limit, '
+             f'current value={size_format(config.speed_limit)}/s.')
     downloader.add_argument(
         '--concurrent', dest='max_concurrent_downloads',
         type=int, metavar='NUMBER', default=get_default("max_concurrent_downloads"),
@@ -350,9 +352,29 @@ def main():
     # update config module with custom settings
     config.__dict__.update(custom_settings)
 
+    guimode = True if len(sys.argv) == 1 or args.gui else False
+    controller = None
+
+    def cleanup():
+        if guimode or args.persistent:
+            setting.save_setting()
+        controller.quit()
+
+    def signal_handler(signum, frame):
+        print('\n\nuser interrupt operation, cleanup ...')
+        signal.signal(signum, signal.SIG_IGN)  # ignore additional signals
+        cleanup()
+        sys.exit(0)
+
+    signal.signal(signal.SIGINT, signal_handler)
+
     # ------------------------------------------------------------------------------------------------------------------
     # if running application without arguments will start the gui, otherwise will run application in cmdline
-    if len(sys.argv) > 1 and not args.gui:
+    if guimode:
+        # GUI
+        controller = Controller(view_class=MainWindow, custom_settings=custom_settings)
+        controller.run()
+    else:
         config.log_level = 1
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
 
@@ -376,13 +398,7 @@ def main():
 
         config.shutdown = True
 
-        if args.persistent:
-            setting.save_setting()
-    else:
-        # GUI
-        controller = Controller(view_class=MainWindow, custom_settings=custom_settings)
-        controller.run()
-        setting.save_setting()
+    cleanup()
 
 
 if __name__ == '__main__':
