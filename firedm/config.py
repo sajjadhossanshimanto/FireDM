@@ -269,10 +269,8 @@ popups = {
 
     6: {'tag': 'ssl-warning',
         'description': 'Show warning when Disabling SSL verification.',
-        'body': ('WARNING: disabling verification of SSL certificate allows bad guys to man-in-the-middle the '
-                 'communication without you know it and makes the communication insecure. '
-                 'Just having encryption on a transfer is not enough as you cannot be sure that you are '
-                 'communicating with the correct end-point. \n'
+        'body': ('WARNING: disable SSL certificate verification could allows hackers to man-in-the-middle attack '
+                 'and makes the communication insecure. \n'
                  'Are you sure?'),
         'options': ['Yes', 'Cancel'],
         'default': 'Yes',
