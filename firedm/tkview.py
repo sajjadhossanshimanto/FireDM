@@ -3430,25 +3430,19 @@ class MainWindow(IView):
 
         # proxy
         proxy_frame = tk.Frame(tab, bg=bg)
-        CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='raw_proxy',
-                         callback=self.set_proxy).pack(side='left', expand=True, fill='x')
+        CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy'
+                         ).pack(side='left', expand=True, fill='x')
+        tip = ['proxy url should have a proper scheme', 'http, https, socks4, or socks5', '',
+               'e.g. "scheme://proxy_address:port"', '', 'or when using login usr/pass',
+               '"scheme://usr:pass@proxy_address:port"', '',
+               'examples:', 'socks5://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
 
-        self.proxy_type_var = tk.StringVar()
-        self.proxy_type_var.set(get_option('proxy_type', 'http'))
-
-        def proxy_type_option(text):
-            atk.button.Radiobutton(proxy_frame, text=text, value=text, variable=self.proxy_type_var, bg=bg,
-                                   fg=fg).pack(side='left', padx=2)
-
-        proxy_type_option('http')
-        proxy_type_option('https')
-        proxy_type_option('socks4')
-        proxy_type_option('socks5')
+        btn = Button(proxy_frame, text='tip!'); btn.pack(side='left', padx=5)
+        atk.RightClickMenu(btn, tip, bind_left_click=True, bg=RCM_BG, fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
 
         proxy_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
-        self.proxy_type_var.trace_add('write', self.set_proxy)
 
-        CheckOption(tab, 'use proxy DNS', key='use_proxy_dns', callback=self.set_proxy).pack(anchor='w')
+        CheckOption(tab, 'use proxy DNS', key='use_proxy_dns').pack(anchor='w')
 
         # login
         login_frame = tk.Frame(tab, bg=bg)
@@ -3650,34 +3644,6 @@ class MainWindow(IView):
             self.controller.set_on_completion_command(uid, command.strip())
         elif button == 'Disable':
             self.controller.set_on_completion_command(uid, '')
-
-    def set_proxy(self, *args):
-        enabled = config.enable_proxy
-        raw_proxy = config.raw_proxy
-        proxy_type = config.proxy_type = self.proxy_type_var.get()
-
-        if not enabled:
-            config.proxy = ''
-            return
-
-        # proxy dns
-        if config.use_proxy_dns:
-            if proxy_type == 'socks4':
-                proxy_type = 'socks4a'
-            elif proxy_type == 'socks5':
-                proxy_type = 'socks5h'
-
-        if raw_proxy:
-            raw_proxy = raw_proxy.split('://')[-1]
-            proxy = proxy_type + '://' + raw_proxy
-        else:
-            proxy = ''
-
-        config.proxy = proxy
-
-        # print('config.proxy = ', config.proxy)
-
-        return proxy
 
     def validate_speed_limit(self, sl):
         # if no units entered will assume it KB

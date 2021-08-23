@@ -1166,6 +1166,8 @@ class Controller:
         # print('Batch download options:', kwargs)
 
         for url in urls:
+            if config.shutdown:
+                break
             self.autodownload(url, **kwargs)
             time.sleep(0.5)
 
@@ -1833,6 +1835,9 @@ class Controller:
     def run(self):
         """run current "view" main loop"""
         self.view.run()
+        self.quit()
+
+    def quit(self):
         config.shutdown = True  # set global shutdown flag
         config.ytdl_abort = True
 

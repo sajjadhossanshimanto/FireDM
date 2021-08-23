@@ -33,7 +33,7 @@ from .controller import Controller, set_option
 from .tkview import MainWindow
 from .cmdview import CmdView
 from .utils import parse_urls, parse_bytes
-from .setting import get_user_settings
+from .setting import get_user_settings, load_setting
 from .version import __version__
 
 
@@ -43,15 +43,13 @@ def main():
     Developed in Python, based on "LibCurl", "youtube_dl", and "Tkinter". 
     Source: https://github.com/firedm/FireDM """
 
+    # read config file
     if '--ignore-config' not in sys.argv:
-        user_settings = get_user_settings()
-    else:
-        user_settings = {}
+        load_setting()
 
     def get_default(varname):
-        user_value = user_settings.get(varname)
         default_value = getattr(config, varname, None)
-        return user_value or default_value
+        return default_value
 
     def iterable(txt):
         # process iterable in arguments, e.g. tuple or list,
@@ -64,6 +62,7 @@ def main():
     def speed(txt):
         return parse_bytes(txt)
 
+    # region cmdline arguments
     # Since this application is based on youtube-dl as a video extractor
     # it is recommended to use arguments names same to youtube-dl, refer to:
     # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/options.py
@@ -109,14 +108,18 @@ def main():
     general.add_argument(
         '--ignore-dlist', dest='ignore_dlist',
         action='store_true',
-        help='Do not load "download items list" from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
+        help='Do not load "download list" from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
     general.add_argument(
-        '-g', '--gui', action='store_true', help='use graphical user interface, same effect if you try running '
-                                                 '%(prog)s without any parameters')
+        '-g', '--gui',
+        action='store_true',
+        help='use graphical user interface, same effect if you try running %(prog)s without any parameters')
     general.add_argument(
-        '--interactive', action='store_true', help='interactive command line')
+        '--interactive',
+        action='store_true',
+        help='interactive command line')
     general.add_argument(
-        '--imports-only', action='store_true',
+        '--imports-only',
+        action='store_true',
         help='import all packages and exit, useful when building AppImage or exe releases, since it '
              'will build pyc files and make application start faster')
     general.add_argument(
@@ -136,12 +139,12 @@ def main():
     filesystem.add_argument(
         '-b', '--batch-file',
         type=argparse.FileType('r', encoding='UTF-8'), metavar='<PATH>',
-        help='path to text file containing multiple urls to be downloaded, note: file should have '
+        help='path to text file containing multiple urls to be downloaded, file should have '
              'every url in a separate line, empty lines and lines start with "#" will be ignored.')
     filesystem.add_argument(
         '-d', '--download_folder', dest='download_folder',
         type=str, metavar='<PATH>', default=get_default("download_folder"),
-        help=f'download folder full path, default=%(default)s')
+        help=f'download folder path, default=%(default)s')
     filesystem.add_argument(
         '--auto-rename',
         action='store_true', default=get_default("auto_rename"),
@@ -160,10 +163,10 @@ def main():
     network.add_argument(
         '--proxy', dest='proxy',
         metavar='URL', default=get_default("proxy"),
-        help='Use the specified HTTP/HTTPS/SOCKS proxy. To enable '
-             'SOCKS proxy, specify a proper scheme. For example '
-             'socks5://127.0.0.1:1080/. Pass in an empty string (--proxy "") '
-             'for direct connection, default=%(default)s')
+        help='proxy url should have a proper scheme, http, https, socks4, or socks5, e.g. '
+             '"scheme://proxy_address:port", or when using login usr/pass: '
+             '"scheme://usr:pass@proxy_address:port", '
+             'examples: "socks5://127.0.0.1:8080",  "socks4://john:pazzz@127.0.0.1:1080", default="%(default)s"')
     network.add_argument(
         '--use-proxy-dns',
         action='store_true', default=get_default("use_proxy_dns"),
@@ -173,11 +176,11 @@ def main():
     authentication = parser.add_argument_group(title='Authentication Options')
     authentication.add_argument(
         '-u', '--username',
-        dest='username', metavar='USERNAME',
+        dest='username', metavar='USERNAME', default='',
         help='Login with this account ID')
     authentication.add_argument(
         '-p', '--password',
-        dest='password', metavar='PASSWORD',
+        dest='password', metavar='PASSWORD', default='',
         help='Account password.')
 
     # --------------------------------------------------------------------------------------Video Options---------------
@@ -234,8 +237,8 @@ def main():
     # -------------------------------------------------------------------------------------Application Update Options---
     appupdate = parser.add_argument_group(title='Application Update Options')
     appupdate.add_argument(
-        '-U', '--update',
-        action='store_true', dest='update_self',
+        '--update',
+        action='store_true', dest='update_self', default=False,
         help='Update this Application and video libraries to latest version.')
 
     # -------------------------------------------------------------------------------------Downloader Options-----------
@@ -283,6 +286,7 @@ def main():
         type=int_iterable, metavar='(WIDTH,HIGHT)', default=get_default("window_size"),
         help='window size, example: --window=(600,400) no space allowed, default=%(default)s.')
     # ------------------------------------------------------------------------------------------------------------------
+    # endregion
 
     args = parser.parse_args()
     custom_settings = vars(args)
@@ -326,15 +330,20 @@ def main():
     if args.username or args.password:
         custom_settings['use_web_auth'] = True
 
+    if args.proxy:
+        custom_settings['enable_proxy'] = True
+
     if args.download_folder:
-        custom_settings['folder'] = args.download_folder
+        folder = os.path.realpath(args.download_folder)
+        custom_settings['folder'] = args.download_folder = folder
 
     if args.output:
-        folder = os.path.dirname(args.output)
+        fp = os.path.realpath(args.output)
+        folder = os.path.dirname(fp)
         if folder:
-            custom_settings['folder'] = os.path.realpath(folder)
+            custom_settings['folder'] = folder
 
-        name = os.path.basename(args.output)
+        name = os.path.basename(fp)
         if name:
             custom_settings['name'] = name
 
@@ -371,10 +380,11 @@ def main():
             setting.save_setting()
     else:
         # GUI
-        c = Controller(view_class=MainWindow, custom_settings=custom_settings)
-        c.run()
+        controller = Controller(view_class=MainWindow, custom_settings=custom_settings)
+        controller.run()
         setting.save_setting()
 
 
 if __name__ == '__main__':
     main()
+

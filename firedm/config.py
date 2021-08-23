@@ -17,13 +17,12 @@ from .version import __version__
 # settings parameters to be saved on disk
 settings_keys = [
     'current_theme', 'monitor_clipboard', 'speed_limit', 'max_concurrent_downloads', 'max_connections',
-    'update_frequency', 'last_update_check', 'proxy', 'proxy_type', 'raw_proxy', 'enable_proxy', 'log_level',
-    'download_folder', 'manually_select_dash_audio', 'use_referer', 'referer_url', 'keep_temp', 'auto_rename',
-    'checksum', 'use_proxy_dns', 'write_metadata', 'check_for_update', 'minimize_to_systray', 'enable_systray',
-    'window_size', 'download_thumbnail', 'active_video_extractor', 'autoscroll_download_tab',
-    'enable_captcha_workaround', 'gui_font', 'scrollbar_width', 'verify_ssl_cert', 'custom_user_agent',
-    'recent_folders', 'use_playlist_numbers', 'refresh_url_retries', 'ditem_show_top', 'disable_log_popups',
-    'ibus_workaround', 'on_download_notification']
+    'update_frequency', 'last_update_check', 'proxy', 'enable_proxy', 'log_level', 'download_folder',
+    'manually_select_dash_audio', 'keep_temp', 'auto_rename', 'checksum', 'use_proxy_dns', 'write_metadata',
+    'check_for_update', 'minimize_to_systray', 'enable_systray', 'window_size', 'download_thumbnail',
+    'active_video_extractor', 'autoscroll_download_tab', 'enable_captcha_workaround', 'gui_font', 'scrollbar_width',
+    'verify_ssl_cert', 'custom_user_agent', 'recent_folders', 'use_playlist_numbers', 'refresh_url_retries',
+    'ditem_show_top', 'disable_log_popups', 'ibus_workaround', 'on_download_notification']
 
 # CONSTANTS
 APP_NAME = 'FireDM'
@@ -159,8 +158,6 @@ password = ''
 
 # proxy
 proxy = ''  # must be string example: 127.0.0.1:8080
-proxy_type = 'http'  # socks4, socks5
-raw_proxy = ''  # unprocessed from user input
 enable_proxy = False
 use_proxy_dns = False
 
@@ -203,6 +200,8 @@ disable_update_feature = False
 check_for_update = not disable_update_feature
 update_frequency = 7  # days
 last_update_check = None  # date format (year, month, day)
+
+
 # -----------------------------------------------------------------------------------------------------
 
 

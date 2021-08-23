@@ -16,7 +16,7 @@ import importlib
 from . import config
 from .downloaditem import DownloadItem, Segment
 from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file,
-                    run_thread)
+                    run_thread, validate_proxy_scheme)
 
 
 # todo: change docstring to google format and clean unused code
@@ -50,9 +50,9 @@ class Logger(object):
 def get_ytdl_options():
     ydl_opts = {'ignoreerrors': True, 'logger': Logger()}  # 'prefer_insecure': False, 'no_warnings': False,
     if config.proxy:
-        # not sure if youtube-dl will accept socks4a, and socks5h used by libcurl to use a proxy dns, to be safe will
-        # remove it and use normal proxy names
-        proxy = config.proxy.replace('socks4a', 'socks4')
+        proxy = validate_proxy_scheme(config.proxy, config.use_proxy_dns)
+        # youtube-dl accept socks4a, but not socks5h,
+        # https://github.com/ytdl-org/youtube-dl/blob/a8035827177d6b59aca03bd717acb6a9bdd75ada/youtube_dl/utils.py#L5404
         proxy = proxy.replace('socks5h', 'socks5')
         ydl_opts['proxy'] = proxy
 
