@@ -848,43 +848,11 @@ class Controller:
             # get download item from the list
             d_from_list = self.d_map[d.uid]
 
-            if action == 'Overwrite':  # already set from previous check
-                pass
-
-            # if item already completed with same url lets overwrite
-            elif d_from_list.url == d.url and d_from_list.status == Status.completed:
-                action = 'Overwrite'
-
-            elif silent:  # same url, size, and video quality to resume, else rename
-                if d.url == d_from_list.url:
-                    action = 'Resume'
-                else:
-                    action = 'Rename'
+            # if match ---> resume, else rename
+            if d.total_size == d_from_list.total_size:
+                log('resume is possible')
+                d.downloaded = d_from_list.downloaded
             else:
-                #  show dialogue
-                action = self.get_user_response(popup_id=3)
-
-                if action not in ('Resume', 'Rename', 'Overwrite'):
-                    log('Download cancelled by user')
-                    d.status = Status.cancelled
-                    return False
-
-            if action == 'Resume':
-                log('check resuming?')
-
-                # to resume, size must match, otherwise it will just overwrite
-                if d.size == d_from_list.size and d.selected_quality == d_from_list.selected_quality:
-                    log('resume is possible')
-                    d.downloaded = d_from_list.downloaded
-                else:
-                    log('resume is not possible')
-                    action = 'Overwrite'
-
-            if action == 'Overwrite':
-                log('overwrite')
-                d.delete_tempfiles(force_delete=True)
-
-            if action == 'Rename':
                 log('Rename File')
                 self.rename(d)
 

@@ -247,14 +247,6 @@ popups = {
         'show': True
         },
 
-    3: {'tag': 'overwrite d_list',
-        'description': 'Show "Item already exist in download list warning".',
-        'body': 'Item with the same name already exist in download list',
-        'options': ['Resume', 'Rename', 'Overwrite', 'Cancel'],
-        'default': 'Resume',
-        'show': True
-        },
-
     4: {'tag': 'overwrite file',
         'description': 'Ask what to do if same file already exist on disk.',
         'body': 'File with the same name already exist on disk',
@@ -304,12 +296,9 @@ for k in popups.keys():
 
 def get_popup(k):
     item = popups[k]
-    var_name = f'popup_{k}'
-    item['show'] = globals()[var_name]
+    item['show'] = globals()[f'popup_{k}']
     return item
 
 
 def enable_popup(k, value):
-    item = popups[k]
-    var_name = f'popup_{k}'
-    globals()[var_name] = value  # True or false
+    globals()[f'popup_{k}'] = value  # True or false
