@@ -1086,41 +1086,44 @@ def get_pkg_version(pkg):
         return ''
 
     version = ''
+
+    # read version.py file
     try:
-        # try to parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info
-        parent_folder = os.path.dirname(pkg_path)
-        pkg_name = os.path.basename(pkg_path)
-
-        # .dist-info folder, eg: FireDM-2021.2.9.dist-info
-        r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
-
-        # delete old dist-info folder if found
-        match = list(filter(r.match, os.listdir(parent_folder)))
-        if match:
-            name = match[0]
-            name = name.replace(pkg_name + '-', '')
-            name = name.replace('.dist-info', '')
-            version = name
+        version_module = {}
+        fp = os.path.join(pkg_path, 'version.py')
+        with open(fp) as f:
+            exec(f.read(), version_module)  # then we can use it as: version_module['__version__']
+            version = version_module['__version__']
     except:
         pass
 
     if not version:
-        try:
-            version_module = {}
-            fp = os.path.join(pkg_path, 'version.py')
-            with open(fp) as f:
-                exec(f.read(), version_module)  # then we can use it as: version_module['__version__']
-                version = version_module['__version__']
-        except:
-            pass
-
-    if not version:
+        # read version.pyc file
         try:
             fp = os.path.join(pkg_path, 'version.pyc')
             with open(fp, 'rb') as f:
                 text = f.read()
                 match = re.search(rb'\d+\.\d+\.\d+', text)
                 version = match.group().decode('utf-8')
+        except:
+            pass
+
+    if not version:
+        # parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info
+        try:
+            parent_folder = os.path.dirname(pkg_path)
+            pkg_name = os.path.basename(pkg_path)
+
+            # .dist-info folder, eg: FireDM-2021.2.9.dist-info
+            r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
+
+            # delete old dist-info folder if found
+            match = list(filter(r.match, os.listdir(parent_folder)))
+            if match:
+                name = match[0]
+                name = name.replace(pkg_name + '-', '')
+                name = name.replace('.dist-info', '')
+                version = name
         except:
             pass
 
