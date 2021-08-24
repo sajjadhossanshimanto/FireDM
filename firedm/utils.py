@@ -14,7 +14,7 @@ import os
 import io
 import webbrowser
 from threading import Thread
-
+from importlib.util import find_spec
 import pycurl
 import time
 import plyer
@@ -46,10 +46,9 @@ if config.operating_system == 'Linux':
 
 def threaded(func):
     """a decorator to run any function / method in a thread
-    you can pass threadding=False option when calling the decorated function if you need to disable threadding"""
-    def wraper(*args, **kwargs):
-        threadding = kwargs.get('threadding', True)
-        if threadding:
+    you can pass threaded=False option when calling the decorated function if you need to disable threadding"""
+    def wraper(*args, threaded=True, **kwargs):
+        if threaded:
             Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
         else:
             func(*args, **kwargs)
@@ -1053,12 +1052,87 @@ def parse_urls(text):
     return urls
 
 
+def get_pkg_path(pkg_name):
+    """get package installation path without importing"""
+    spec = find_spec(pkg_name)
+    if spec:
+        pkg_path = os.path.dirname(spec.origin)
+    else:
+        pkg_path = None
+    return pkg_path
+
+
+def get_pkg_version(pkg):
+    """parse version number for a package
+    using .dist-info folder
+    or as afallback it will search for a date based version number
+    can be used with FireDM, youtube-dl, and yt_dlp
+    version file can be normal string or compiled, .py or .pyc code
+
+    Args:
+        pkg(str): name or path of the package
+
+    Returns:
+        (str): version number or empty string
+    """
+
+    if os.path.isdir(pkg):
+        pkg_path = pkg
+    else:
+        pkg_name = os.path.basename(pkg)
+        pkg_path = get_pkg_path(pkg_name)
+
+    if not pkg_path:
+        return ''
+
+    version = ''
+    try:
+        # try to parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info
+        parent_folder = os.path.dirname(pkg_path)
+        pkg_name = os.path.basename(pkg_path)
+
+        # .dist-info folder, eg: FireDM-2021.2.9.dist-info
+        r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
+
+        # delete old dist-info folder if found
+        match = list(filter(r.match, os.listdir(parent_folder)))
+        if match:
+            name = match[0]
+            name = name.replace(pkg_name + '-', '')
+            name = name.replace('.dist-info', '')
+            version = name
+    except:
+        pass
+
+    if not version:
+        try:
+            version_module = {}
+            fp = os.path.join(pkg_path, 'version.py')
+            with open(fp) as f:
+                exec(f.read(), version_module)  # then we can use it as: version_module['__version__']
+                version = version_module['__version__']
+        except:
+            pass
+
+    if not version:
+        try:
+            fp = os.path.join(pkg_path, 'version.pyc')
+            with open(fp, 'rb') as f:
+                text = f.read()
+                match = re.search(rb'\d+\.\d+\.\d+', text)
+                version = match.group().decode('utf-8')
+        except:
+            pass
+
+    return version
+
+
 __all__ = [
     'notify', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded', 'parse_urls', 'validate_proxy_scheme'
+    'derender_text', 'threaded', 'parse_urls', 'validate_proxy_scheme', 'get_pkg_path', 'get_pkg_version'
 
 ]

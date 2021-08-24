@@ -30,7 +30,7 @@ if __package__ is None:
 
 # local modules
 from . import config, setting
-from .controller import Controller, set_option
+from .controller import Controller
 from .tkview import MainWindow
 from .cmdview import CmdView
 from .utils import parse_urls, parse_bytes, size_format
@@ -381,6 +381,10 @@ def main():
         config.log_level = 1
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
 
+        if args.update_self:
+            controller.check_for_update(wait=True, threaded=False)
+            sys.exit(0)
+
         urls = []
         url = custom_settings.pop('url')
         if url:
@@ -397,7 +401,7 @@ def main():
             for url in urls:
                 controller.interactive_download(url)
         else:
-            controller.batch_download(urls, **custom_settings, threadding=False)
+            controller.batch_download(urls, **custom_settings, threaded=False)
 
         config.shutdown = True
 

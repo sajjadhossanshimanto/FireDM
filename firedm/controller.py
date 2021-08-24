@@ -908,7 +908,7 @@ class Controller:
     @threaded
     def download(self, d=None, uid=None, video_idx=None, silent=False, download_later=False, **kwargs):
         """start downloading an item, it will run in a separate thread automatically unless you pass
-        threadding=False option
+        threaded=False option
 
         Args:
             d (ObservableDownloadItem): download item
@@ -1165,8 +1165,30 @@ class Controller:
 
     # region Application update
     @threaded
-    def check_for_update(self, signal_id=None):
-        """check for newer version of FireDM, youtube-dl, and yt_dlp"""
+    def check_for_update(self, signal_id=None, wait=False, timeout=30):
+        """check for newer version of FireDM, youtube-dl, and yt_dlp
+        Args:
+            signal_id(any): signal a view when this function done
+            wait(bool): wait for youtube-dl and ytdlp to load
+            timeout(int): timeout for above wait in seconds
+        """
+
+        # parse youtube-dl and yt_dlp versions manually (if importing still in progress)
+        if not config.youtube_dl_version:
+            config.youtube_dl_version = get_pkg_version('youtube_dl')
+
+        if not config.yt_dlp_version:
+            config.yt_dlp_version = get_pkg_version('yt_dlp')
+
+        if wait:
+            c = 1
+            while config.youtube_dl_version is None or config.yt_dlp_version is None:
+                log('\ryoutube-dl and ytdlp still loading, please wait', '.'*c, end='')
+                c += 1
+                if c > timeout:
+                    break
+                time.sleep(1)
+            log()
 
         info = {'firedm': {'current_version': config.APP_VERSION, 'latest_version': None},
                 'youtube_dl': {'current_version': config.youtube_dl_version, 'latest_version': None},
@@ -1679,8 +1701,8 @@ class Controller:
             return
 
         # download
-        self.download(d, threadding=False)
-        self.report_d(d, threadding=False)
+        self.download(d, threaded=False)
+        self.report_d(d, threaded=False)
 
     # region on completion command / shutdown
     def _on_completion_watchdog(self):
