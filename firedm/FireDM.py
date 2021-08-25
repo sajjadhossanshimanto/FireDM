@@ -215,8 +215,7 @@ def main():
     workarounds.add_argument(
         '--referer', dest='referer_url',
         metavar='URL', default=None,
-        help='Specify a custom referer, use if the video access is restricted to one domain',
-    )
+        help='Specify a custom referer, use if the video access is restricted to one domain')
 
     # --------------------------------------------------------------------------------------Post-processing Options-----
     postproc = parser.add_argument_group(title='Post-processing Options')
@@ -347,13 +346,12 @@ def main():
             folder = fp
         else:
             folder = os.path.dirname(fp)
-            
+            name = os.path.basename(fp)
+            if name:
+                custom_settings['name'] = name
+
         if folder:
             custom_settings['folder'] = folder
-
-        name = os.path.basename(fp)
-        if name:
-            custom_settings['name'] = name
 
     guimode = True if len(sys.argv) == 1 or args.gui else False
 
