@@ -3280,8 +3280,8 @@ class MainWindow(IView):
         def separator():
             ttk.Separator(tab).pack(fill='both', expand=True, pady=(5, 30))
 
-        # general ------------------------------------------------------------------------------------------------------
-        heading('General:')
+        # ----------------------------------------------------------------------------------------GUI options-----------
+        heading('GUI options:')
 
         # themes -------------------------
         themes_frame = tk.Frame(tab, bg=bg)
@@ -3314,7 +3314,8 @@ class MainWindow(IView):
             set_option(gui_font=gui_font.actual())
 
         font_families = sorted(tkfont.families())
-        # font_properties = gui_font.actual() # {'family': 'DejaVu Sans', 'size': 10, 'weight': 'normal', 'slant': 'roman', 'underline': 0, 'overstrike': 0}
+        # font_properties = gui_font.actual() # {'family': 'DejaVu Sans', 'size': 10, 'weight': 'normal',
+        #                                        'slant': 'roman', 'underline': 0, 'overstrike': 0}
         
         font_frame = tk.Frame(tab, bg=bg)
         font_frame.pack(anchor='w', expand=True, fill='x')
@@ -3325,7 +3326,7 @@ class MainWindow(IView):
         fonts_menu.pack(side='left', ipadx=5, padx=5)
 
         tk.Label(font_frame, bg=bg, fg=fg, text='Font size:').pack(side='left', padx=(10, 5))
-        tk.Spinbox(font_frame, from_= 6, to = 25, state='readonly', textvariable=font_size_var, justify='center',
+        tk.Spinbox(font_frame, from_=6, to=25, state='readonly', textvariable=font_size_var, justify='center',
                    command=update_font, readonlybackground=MAIN_BG, fg=MAIN_FG, buttonbackground=SF_BG,
                    width=4, repeatinterval=0).pack(side='left', padx=5, ipady=2)
 
@@ -3339,16 +3340,13 @@ class MainWindow(IView):
         sbw_var = tk.IntVar(value=sbw)
 
         tk.Label(sb_frame, bg=bg, fg=fg, text='Scrollbar width (1 ~ 50): ').pack(side='left')
-        tk.Spinbox(sb_frame, from_= 1, to = 50, state='readonly', textvariable=sbw_var, justify='center',
-                   command=lambda: self.set_scrollbar_width(sbw_var.get()), readonlybackground=MAIN_BG, fg=MAIN_FG, buttonbackground=SF_BG,
-                   width=4).pack(side='left', padx=5, ipady=2) 
+        tk.Spinbox(sb_frame, from_=1, to=50, state='readonly', textvariable=sbw_var, justify='center',
+                   command=lambda: self.set_scrollbar_width(sbw_var.get()), readonlybackground=MAIN_BG, fg=MAIN_FG,
+                   buttonbackground=SF_BG, width=4).pack(side='left', padx=5, ipady=2)
  
         CheckOption(tab, 'Enable systray icon "requires application restart"', key='enable_systray').pack(anchor='w')
-        CheckOption(tab, 'Minimize to systray when closing application window', key='minimize_to_systray').pack(anchor='w')
-        CheckOption(tab, 'Monitor clipboard for copied urls', key='monitor_clipboard').pack(anchor='w')
-        CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
-
-        CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
+        CheckOption(tab, 'Minimize to systray when closing application window',
+                    key='minimize_to_systray').pack(anchor='w')
 
         def autoscroll_callback():
             self.d_tab.autoscroll = config.autoscroll_download_tab
@@ -3368,13 +3366,24 @@ class MainWindow(IView):
                               key='ditem_show_top', callback=autotop_callback)
         autotop.pack(anchor='w')
 
-        CheckOption(tab, 'use server timestamp as a "last modified" property for downloaded file',
-                    key='use_server_timestamp').pack(anchor='w')
+        separator()
 
-        if config.operating_system == 'Linux':
-            CheckOption(tab, 'Enable ibus workaround, to fix slow application startup.',
-                        key='ibus_workaround').pack(anchor='w')
+        # ------------------------------------------------------------------------------------Popup messages------------
+        heading('Popup messages:')
 
+        for k, item in config.popups.items():
+            description = item['description']
+            var_name = f'popup_{k}'
+            CheckOption(tab, description, key=var_name).pack(anchor='w')
+
+        CheckOption(tab, 'Disable extra info popups, "same info will be available in the log tab"',
+                    key='disable_log_popups').pack(anchor='w')
+
+        separator()
+
+        # ------------------------------------------------------------------------------------General options-----------
+        heading('General options:')
+        CheckOption(tab, 'Monitor clipboard for copied urls', key='monitor_clipboard').pack(anchor='w')
         CheckOption(tab, 'Show notification when finish downloading a file',
                     key='on_download_notification').pack(anchor='w')
 
@@ -3382,20 +3391,52 @@ class MainWindow(IView):
         sett_folder_frame.pack(anchor='w', expand=True, fill='x')
         tk.Label(sett_folder_frame, text='Settings Folder:', bg=bg, fg=fg).pack(side='left')
         tk.Label(sett_folder_frame, text=config.sett_folder, bg=bg, fg=fg).pack(side='left')
-        Button(sett_folder_frame, text='Open', command=lambda: open_folder(config.sett_folder)).pack(side='right', padx=5)
+        Button(sett_folder_frame, text='Open', command=lambda: open_folder(config.sett_folder)).pack(side='right',
+                                                                                                     padx=5)
 
         separator()
 
-        # Video / Audio ------------------------------------------------------------------------------------------------
-        heading('Video / Audio:')
-
-        CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
-        CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(
-            anchor='w')
-        CheckOption(tab, 'Download Video Thumbnail', key='download_thumbnail').pack(anchor='w')
-        CheckOption(tab, 'Enable CAPTCHA! workaround', key='enable_captcha_workaround').pack(anchor='w')
+        # ------------------------------------------------------------------------------------Filesystem options--------
+        heading('Filesystem options:')
+        CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
         CheckOption(tab, 'Add numbers to filenames when downloading thru playlist menu',
                     key='use_playlist_numbers').pack(anchor='w')
+
+        separator()
+        # ------------------------------------------------------------------------------------Network options-----------
+        heading('Network options:')
+        proxy_frame = tk.Frame(tab, bg=bg)
+        CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy'
+                         ).pack(side='left', expand=True, fill='x')
+        tip = ['proxy url should have a proper scheme', 'http, https, socks4, or socks5', '',
+               'e.g. "scheme://proxy_address:port"', '', 'or when using login usr/pass',
+               '"scheme://usr:pass@proxy_address:port"', '',
+               'examples:', 'socks5://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
+
+        btn = Button(proxy_frame, text='tip!');
+        btn.pack(side='left', padx=5)
+        atk.RightClickMenu(btn, tip, bind_left_click=True, bg=RCM_BG, fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
+
+        proxy_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
+
+        CheckOption(tab, 'use proxy DNS', key='use_proxy_dns').pack(anchor='w')
+
+        separator()
+
+        # ------------------------------------------------------------------------------------Authentication options----
+        heading('Authentication options:')
+        login_frame = tk.Frame(tab, bg=bg)
+        CheckOption(login_frame, 'Login', key='use_web_auth').pack(side='left')
+        LabeledEntryOption(login_frame, 'User:', entry_key='username').pack(side='left', padx=(0, 5))
+        LabeledEntryOption(login_frame, 'Pass:', entry_key='password', show='*').pack(side='left', padx=5)
+        login_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
+
+        separator()
+
+        # ------------------------------------------------------------------------------------Video options-------------
+        heading('Video options:')
+        CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(
+            anchor='w')
 
         # video extractor backend -------------------------
         extractor_frame = tk.Frame(tab, bg=bg)
@@ -3408,50 +3449,14 @@ class MainWindow(IView):
 
         separator()
 
-        # Network ------------------------------------------------------------------------------------------------------
-        heading('Network:')
+        # ------------------------------------------------------------------------------------Workarounds---------------
+        heading('Workarounds:')
+        if config.operating_system == 'Linux':
+            CheckOption(tab, 'Enable ibus workaround, to fix slow application startup.',
+                        key='ibus_workaround').pack(anchor='w')
+        CheckOption(tab, 'Enable CAPTCHA! workaround', key='enable_captcha_workaround').pack(anchor='w')
 
-        # concurrent downloads
-        LabeledEntryOption(tab, 'Concurrent downloads (1 ~ 100): ', entry_key='max_concurrent_downloads',
-                           get_text_validator=lambda x: int(x) if 0 < int(x) < 101 else 3, width=8).pack(anchor='w')
-        LabeledEntryOption(tab, 'Connections per download (1 ~ 100): ', entry_key='max_connections', width=8,
-                           get_text_validator=lambda x: int(x) if 0 < int(x) < 101 else 10).pack(anchor='w')
-
-        # speed limit
-        speed_frame = tk.Frame(tab, bg=bg)
-        CheckEntryOption(speed_frame, 'Speed Limit (kb/s, mb/s. gb/s): ', entry_key='speed_limit', width=8,
-                         set_text_validator=lambda x: size_format(x), callback=self.show_speed_limit,
-                         get_text_validator=lambda x: self.validate_speed_limit(x),
-                         entry_disabled_value=0).pack(side='left')
-        self.speed_limit_label = tk.Label(speed_frame, bg=bg, fg=fg)
-        self.speed_limit_label.pack(side='left', padx=10)
-        speed_frame.pack(anchor='w')
-        self.show_speed_limit()
-
-        # proxy
-        proxy_frame = tk.Frame(tab, bg=bg)
-        CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy'
-                         ).pack(side='left', expand=True, fill='x')
-        tip = ['proxy url should have a proper scheme', 'http, https, socks4, or socks5', '',
-               'e.g. "scheme://proxy_address:port"', '', 'or when using login usr/pass',
-               '"scheme://usr:pass@proxy_address:port"', '',
-               'examples:', 'socks5://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
-
-        btn = Button(proxy_frame, text='tip!'); btn.pack(side='left', padx=5)
-        atk.RightClickMenu(btn, tip, bind_left_click=True, bg=RCM_BG, fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
-
-        proxy_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
-
-        CheckOption(tab, 'use proxy DNS', key='use_proxy_dns').pack(anchor='w')
-
-        # login
-        login_frame = tk.Frame(tab, bg=bg)
-        CheckOption(login_frame, 'Login', key='use_web_auth').pack(side='left')
-        LabeledEntryOption(login_frame, 'User:', entry_key='username').pack(side='left', padx=(0, 5))
-        LabeledEntryOption(login_frame, 'Pass:', entry_key='password', show='*').pack(side='left', padx=5)
-        login_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
-
-        # cookies ---------------------------------------------
+        # cookies
         def get_cookie_file(target):
             """get cookie file path"""
             fp = filechooser()
@@ -3459,7 +3464,8 @@ class MainWindow(IView):
                 target.set(fp)
 
         cookies_frame = tk.Frame(tab, bg=MAIN_BG)
-        cookies = CheckEntryOption(cookies_frame, 'Cookies file:', check_key='use_cookies', entry_key='cookie_file_path')
+        cookies = CheckEntryOption(cookies_frame, 'Cookies file:', check_key='use_cookies',
+                                   entry_key='cookie_file_path')
         cookies.pack(side='left', expand=True, fill='x')
         Button(cookies_frame, text='...', transparent=True, command=lambda: get_cookie_file(cookies)).pack(side='left')
         cookies_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
@@ -3486,13 +3492,16 @@ class MainWindow(IView):
                                       callback=ssl_disable_warning)
         ssl_cert_option.pack(anchor='w')
 
-        LabeledEntryOption(tab, 'Auto refreshing expired urls [Num of retries]: ', entry_key='refresh_url_retries',
-                           width=8, get_text_validator=lambda x: int(x)).pack(anchor='w')
-
         separator()
 
-        # On Completion actions ----------------------------------------------------------------------------------------
-        heading('On Download Completion:')
+        # ------------------------------------------------------------------------------------Post-processing options---
+        heading('Post-processing options:')
+        CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
+        CheckOption(tab, 'use server timestamp as a "last modified" property for downloaded file',
+                    key='use_server_timestamp').pack(anchor='w')
+        CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
+        CheckOption(tab, 'Write thumbnail image to disk', key='download_thumbnail').pack(anchor='w')
+
         tk.Label(tab, text='Select action to run after "ALL" download items are completed:', bg=bg,
                  fg=fg).pack(anchor='w', padx=5)
 
@@ -3502,23 +3511,35 @@ class MainWindow(IView):
 
         separator()
 
-        # Popup messages------------------------------------------------------------------------------------------------
-        heading('Popup messages:')
-        
-        for k, item in config.popups.items():
-            description = item['description']
-            var_name = f'popup_{k}'
-            CheckOption(tab, description, key=var_name).pack(anchor='w')
+        # ------------------------------------------------------------------------------------Downloader options--------
+        heading('Downloader options:')
+        LabeledEntryOption(tab, 'Concurrent downloads (1 ~ 100): ', entry_key='max_concurrent_downloads',
+                           get_text_validator=lambda x: int(x) if 0 < int(x) < 101 else 3, width=8).pack(anchor='w')
+        LabeledEntryOption(tab, 'Connections per download (1 ~ 100): ', entry_key='max_connections', width=8,
+                           get_text_validator=lambda x: int(x) if 0 < int(x) < 101 else 10).pack(anchor='w')
 
-        CheckOption(tab, 'Disable extra info popups, "same info will be available in the log tab"', 
-                    key='disable_log_popups').pack(anchor='w')
+        # speed limit
+        speed_frame = tk.Frame(tab, bg=bg)
+        CheckEntryOption(speed_frame, 'Speed Limit (kb/s, mb/s. gb/s): ', entry_key='speed_limit', width=8,
+                         set_text_validator=lambda x: size_format(x), callback=self.show_speed_limit,
+                         get_text_validator=lambda x: self.validate_speed_limit(x),
+                         entry_disabled_value=0).pack(side='left')
+        self.speed_limit_label = tk.Label(speed_frame, bg=bg, fg=fg)
+        self.speed_limit_label.pack(side='left', padx=10)
+        speed_frame.pack(anchor='w')
+        self.show_speed_limit()
+
+        LabeledEntryOption(tab, 'Auto refreshing expired urls [Num of retries]: ', entry_key='refresh_url_retries',
+                           width=8, get_text_validator=lambda x: int(x)).pack(anchor='w')
 
         separator()
 
-        # Debugging ----------------------------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------------Debugging options---------
         heading('Debugging:')
-        CheckOption(tab, 'keep temp files / folders after done downloading for debugging.', key='keep_temp').pack(anchor='w')
-        CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"', key='TEST_MODE').pack(anchor='w')
+        CheckOption(tab, 'keep temp files / folders after done downloading for debugging.',
+                    key='keep_temp').pack(anchor='w')
+        CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"',
+                    key='TEST_MODE').pack(anchor='w')
         CheckOption(tab, 'Use Download Simulator', key='SIMULATOR').pack(anchor='w')
 
         separator()
@@ -3563,7 +3584,6 @@ class MainWindow(IView):
         return tab
 
     def create_update_tab(self):
-        # update -----------------------------------------------------------------------------------------------------
         bg = MAIN_BG
         fg = MAIN_FG
         tab = tk.Frame(self.main_frame, bg=bg)

@@ -58,6 +58,8 @@ appimage_update_folder = None  # will be set by AppImage run script
 # application exit flag
 shutdown = False
 
+on_download_notification = True  # show notify message when done downloading
+
 # ----------------------------------------------------------------------------------------Filesystem options------------
 # current folders
 if hasattr(sys, 'frozen'):  # like if application frozen by cx_freeze
@@ -180,7 +182,6 @@ minimize_to_systray = False
 
 DEFAULT_WINDOW_SIZE = (780, 433)  # width, height in pixels
 window_size = DEFAULT_WINDOW_SIZE
-on_download_notification = True  # show notify message when done downloading
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
