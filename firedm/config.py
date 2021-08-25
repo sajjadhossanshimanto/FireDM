@@ -18,11 +18,11 @@ from .version import __version__
 settings_keys = [
     'active_video_extractor', 'auto_rename', 'autoscroll_download_tab', 'check_for_update', 'checksum', 'current_theme',
     'custom_user_agent', 'disable_log_popups', 'ditem_show_top', 'download_folder', 'download_thumbnail',
-    'enable_captcha_workaround', 'enable_proxy', 'enable_systray', 'gui_font', 'ibus_workaround', 'keep_temp',
-    'last_update_check', 'log_level', 'manually_select_dash_audio', 'max_concurrent_downloads', 'max_connections',
-    'minimize_to_systray', 'monitor_clipboard', 'on_download_notification', 'proxy', 'recent_folders',
-    'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency', 'use_playlist_numbers',
-    'use_proxy_dns', 'verify_ssl_cert', 'window_size', 'write_metadata']
+    'enable_captcha_workaround', 'enable_proxy', 'enable_systray', 'gui_font', 'ibus_workaround', 'ignore_ssl_cert',
+    'keep_temp', 'last_update_check', 'log_level', 'manually_select_dash_audio', 'max_concurrent_downloads',
+    'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification', 'proxy',
+    'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
+    'use_playlist_numbers', 'use_proxy_dns', 'window_size', 'write_metadata']
 
 # ----------------------------------------------------------------------------------------General ----------------------
 # CONSTANTS
@@ -104,7 +104,7 @@ prefere_mp4 = True
 
 # ---------------------------------------------------------------------------------------Workarounds--------------------
 ibus_workaround = False  # issue 256: https://github.com/firedm/FireDM/issues/256
-verify_ssl_cert = True  # verify server's ssl certificate
+ignore_ssl_cert = False  # ignore ssl certificate validation
 
 #  a random user agent will be used later when importing youtube-dl, if no custom user agent
 DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3721.3'
@@ -255,8 +255,8 @@ popups = {
 
     6: {'tag': 'ssl-warning',
         'description': 'Show warning when Disabling SSL verification.',
-        'body': ('WARNING: disable SSL certificate verification could allows hackers to man-in-the-middle attack '
-                 'and makes the communication insecure. \n'
+        'body': ('WARNING: disable SSL certificate verification could allow hackers to man-in-the-middle attack '
+                 'and makes the communication insecure. \n\n'
                  'Are you sure?'),
         'options': ['Yes', 'Cancel'],
         'default': 'Yes',

@@ -3480,17 +3480,18 @@ class MainWindow(IView):
         CheckEntryOption(tab, 'Custom user agent:', entry_key='custom_user_agent',
                          callback=update_headers).pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
-        # verify server's ssl certificate
-        def ssl_disable_warning():
-            if not config.verify_ssl_cert:
+        # ssl certificate validation
+        def ignore_ssl_warning():
+            if config.ignore_ssl_cert:
                 res = self.show_popup(6)
 
                 if res != 'Yes':
-                    ssl_cert_option.set(True)
+                    config.ignore_ssl_cert = False
+                    ignore_ssl_option.set(False)
 
-        ssl_cert_option = CheckOption(tab, "verify server's SSL certificate", key='verify_ssl_cert',
-                                      callback=ssl_disable_warning)
-        ssl_cert_option.pack(anchor='w')
+        ignore_ssl_option = CheckOption(tab, "ignore ssl certificate validation", key='ignore_ssl_cert',
+                                        callback=ignore_ssl_warning)
+        ignore_ssl_option.pack(anchor='w')
 
         separator()
 

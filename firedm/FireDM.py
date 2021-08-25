@@ -213,9 +213,9 @@ def main():
         action='store_true',
         help='ibus workaround, to fix slow gui startup')
     workarounds.add_argument(
-        '--no-check-certificate', dest='verify_ssl_cert',
-        action='store_false',
-        help='Suppress HTTPS certificate validation')
+        '--no-check-certificate', dest='ignore_ssl_cert',
+        action='store_true',
+        help='ignore ssl certificate validation')
     workarounds.add_argument(
         '--user-agent',
         metavar='UA', dest='custom_user_agent',

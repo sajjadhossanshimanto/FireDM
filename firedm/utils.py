@@ -160,7 +160,7 @@ def set_curl_options(c, http_headers=None):
     # verifies SSL certificate
     # fix for pycurl.error: (43, 'CURLOPT_SSL_VERIFYHOST no longer supports 1 as value!'), issue #183
     # reference: https://curl.haxx.se/libcurl/c/CURLOPT_SSL_VERIFYHOST.html
-    if not config.verify_ssl_cert:
+    if config.ignore_ssl_cert:
         c.setopt(pycurl.SSL_VERIFYPEER, 0)
         c.setopt(pycurl.SSL_VERIFYHOST, 0)
 

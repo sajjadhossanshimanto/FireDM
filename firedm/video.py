@@ -48,6 +48,7 @@ class Logger(object):
 
 
 def get_ytdl_options():
+    # reference: https://github.com/ytdl-org/youtube-dl/blob/a8035827177d6b59aca03bd717acb6a9bdd75ada/youtube_dl/__init__.py#L317
     ydl_opts = {'ignoreerrors': True, 'logger': Logger()}  # 'prefer_insecure': False, 'no_warnings': False,
     if config.proxy:
         proxy = validate_proxy_scheme(config.proxy, config.use_proxy_dns)
@@ -62,7 +63,7 @@ def get_ytdl_options():
         ytdl.utils.std_headers['Referer'] = config.referer_url
 
     # verify / bypass server's ssl certificate
-    ydl_opts['nocheckcertificate'] = not config.verify_ssl_cert
+    ydl_opts['nocheckcertificate'] = config.ignore_ssl_cert
 
     # website authentication
     if config.username or config.password:
