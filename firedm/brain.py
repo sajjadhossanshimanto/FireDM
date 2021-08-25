@@ -46,7 +46,6 @@ def brain(d=None):
 
     # hls / m3u8 protocols
     if 'hls' in d.subtype_list:
-        keep_segments = True  # don't delete segments after completed, it will be post-processed by ffmpeg
         try:
             success = pre_process_hls(d)
             if not success:
@@ -59,9 +58,6 @@ def brain(d=None):
                 raise e
             return
     else:
-        # for non hls videos and normal files
-        keep_segments = True  # False
-
         # build segments
         d.build_segments()
 
@@ -81,7 +77,7 @@ def brain(d=None):
     Thread(target=spr, daemon=True, args=(d, spr_q)).start()
 
     # run file manager in a separate thread
-    Thread(target=file_manager, daemon=True, args=(d, fm_q, keep_segments)).start()
+    Thread(target=file_manager, daemon=True, args=(d, fm_q)).start()
 
     # run thread manager in a separate thread
     Thread(target=thread_manager, daemon=True, args=(d, tm_q)).start()
@@ -90,7 +86,7 @@ def brain(d=None):
         time.sleep(0.1)  # a sleep time to make the program responsive
 
         if d.status not in Status.active_states:
-            log(f'File {d.status}.')
+            log(f'File {d.status}.', log_level=2)
             break
 
     # report quitting
@@ -98,28 +94,7 @@ def brain(d=None):
     for q in (spr_q, fpr_q, tm_q, fm_q):
         q.put('quit')
 
-    if d.status == Status.completed:
-        if config.checksum:
-            log()
-            log(f'Calculating MD5 and SHA256 for {d.target_file} .....')
-            md5, sha256 = calc_md5_sha256(fp=d.target_file)
-            log(f'MD5: {md5} - for {d.name}')
-            log(f'SHA256: {sha256} - for {d.name}')
-
-        if config.on_download_notification:
-            # os notification popup
-            notification = f"File: {d.name} \nsaved at: {d.folder}"
-            notify(notification, title=f'{APP_NAME} - Download completed')
-
-        log(f"File: {d.name}, saved at: {d.folder}")
-
-        # uncomment to debug segments ranges
-        # segments = sorted([seg for seg in d.segments], key=lambda seg: seg.range[0])
-        # print('d.size:', d.size)
-        # for seg in segments:
-        #     print(seg.basename, seg.range, seg.range[1] - seg.range[0], seg.size, seg.remaining)
-
-    log('-' * 50, '\n')
+    log('-' * 50, '\n', log_level=2)
 
 
 def file_manager(d, q, keep_segments=True):
@@ -509,7 +484,8 @@ def thread_manager(d, q):
                         threads_to_workers[thread] = worker
 
                         # save progress info for future resuming
-                        d.save_progress_info()
+                        if os.path.isdir(d.temp_folder):
+                            d.save_progress_info()
 
         # check thread completion
         for thread in list(threads_to_workers.keys()):

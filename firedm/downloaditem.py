@@ -687,13 +687,13 @@ class DownloadItem:
             if isinstance(data, list):
                 progress_info = data
 
-        # delete any segment which is not in progress_info file
-        if os.path.isdir(self.temp_folder):
-            fps = [item.get('name', '') for item in progress_info] + [progress_fp]
-            for f_name in os.listdir(self.temp_folder):
-                fp = os.path.join(self.temp_folder, f_name)
-                if fp not in fps:
-                    delete_file(fp, verbose=True)
+        # # delete any segment which is not in progress_info file
+        # if os.path.isdir(self.temp_folder):
+        #     fps = [item.get('name', '') for item in progress_info] + [progress_fp]
+        #     for f_name in os.listdir(self.temp_folder):
+        #         fp = os.path.join(self.temp_folder, f_name)
+        #         if fp not in fps:
+        #             delete_file(fp, verbose=True)
 
         # update segments from progress info
         if progress_info:

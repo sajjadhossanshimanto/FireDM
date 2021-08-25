@@ -108,8 +108,14 @@ def main():
         help='Do not load settings from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
     general.add_argument(
         '--ignore-dlist', dest='ignore_dlist',
-        action='store_true',
-        help='Do not load "download list" from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
+        action='store_true', default=None,
+        help='Do not load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
+             '(APPDATA/FireDM/ on Windows), default="True in cmdline mode and False in GUI mode"')
+    general.add_argument(
+        '--use-dlist', dest='ignore_dlist',
+        action='store_false', default=None,
+        help='load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
+             '(APPDATA/FireDM/ on Windows), default="False in cmdline mode and True in GUI mode"')
     general.add_argument(
         '-g', '--gui',
         action='store_true',
@@ -126,7 +132,7 @@ def main():
     general.add_argument(
         '--persistent',
         action='store_true', default=False,
-        help='save current options in global configuration file.')
+        help='save current options in global configuration file, used in cmdline mode.')
 
     # ----------------------------------------------------------------------------------------Filesystem options--------
     filesystem = parser.add_argument_group(title='Filesystem options:')
@@ -341,7 +347,11 @@ def main():
 
     if args.output:
         fp = os.path.realpath(args.output)
-        folder = os.path.dirname(fp)
+        if os.path.isdir(fp):
+            folder = fp
+        else:
+            folder = os.path.dirname(fp)
+            
         if folder:
             custom_settings['folder'] = folder
 
@@ -349,10 +359,15 @@ def main():
         if name:
             custom_settings['name'] = name
 
+    guimode = True if len(sys.argv) == 1 or args.gui else False
+
+    # set ignore_dlist argument to True in cmdline mode if not explicitly used
+    if args.ignore_dlist is None and not guimode: 
+        custom_settings['ignore_dlist'] = True
+
     # update config module with custom settings
     config.__dict__.update(custom_settings)
 
-    guimode = True if len(sys.argv) == 1 or args.gui else False
     controller = None
 
     def cleanup():
@@ -402,8 +417,6 @@ def main():
                 controller.interactive_download(url)
         else:
             controller.batch_download(urls, **custom_settings, threaded=False)
-
-        config.shutdown = True
 
     cleanup()
 

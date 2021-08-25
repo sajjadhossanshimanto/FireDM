@@ -821,7 +821,6 @@ class Controller:
             return False
 
         # check if file with the same name exist in destination --------------------------------------------------------
-        action = None
         if os.path.isfile(d.target_file):
 
             # auto rename option
@@ -838,6 +837,7 @@ class Controller:
             if action == 'Rename':
                 self.rename(d)
                 log('File with the same name exist in download folder, generate new name:', d.name)
+                return self._pre_download_checks(d, silent=silent)
             elif action == 'Overwrite':
                 delete_file(d.target_file)
 
@@ -855,6 +855,7 @@ class Controller:
             else:
                 log('Rename File')
                 self.rename(d)
+                return self._pre_download_checks(d, silent=silent)
 
         else:  # new file
             log('fresh file download')
@@ -874,7 +875,7 @@ class Controller:
         """
         rename download item
         """
-        forbidden_names = os.listdir(d.folder) + [d.name for d in self.d_map.values()]
+        forbidden_names = os.listdir(d.folder) # + [d.name for d in self.d_map.values()]
         d.name = auto_rename(d.name, forbidden_names)
         d.calculate_uid()
         
@@ -987,6 +988,15 @@ class Controller:
                 # actions to be done after completing download
                 self._post_download(d)
 
+                # report completion
+                if d.status == Status.completed:
+                    if config.on_download_notification:
+                        # os notification popup
+                        notification = f"File: {d.name} \nsaved at: {d.folder}"
+                        notify(notification, title=f'{config.APP_NAME} - Download completed')
+
+                    log(f"File: {d.name}, saved at: {d.folder}")
+
         except Exception as e:
             log('download()> error:', e)
             if config.TEST_MODE:
@@ -1062,6 +1072,14 @@ class Controller:
             if config.download_thumbnail:
                 self._download_thumbnail(d)
 
+            if config.checksum:
+                log()
+                log(f'Calculating MD5 and SHA256 for {d.target_file} .....')
+                md5, sha256 = calc_md5_sha256(fp=d.target_file)
+                log(f'MD5: {md5} - for {d.name}')
+                log(f'SHA256: {sha256} - for {d.name}')
+
+
             if config.use_server_timestamp:
                 self._write_timestamp(d)
 
@@ -1073,6 +1091,8 @@ class Controller:
             if d.shutdown_pc:
                 d.shutdown_pc = False
                 self.shutdown_pc()
+
+
 
     def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
@@ -1136,6 +1156,7 @@ class Controller:
 
         for url in urls:
             if config.shutdown:
+                print('config.shutdown is true')
                 break
             self.autodownload(url, **kwargs)
             time.sleep(0.5)
@@ -1165,7 +1186,7 @@ class Controller:
 
     # region Application update
     @threaded
-    def check_for_update(self, signal_id=None, wait=False, timeout=30):
+    def check_for_update(self, signal_id=None, wait=False, timeout=30, **kwargs):
         """check for newer version of FireDM, youtube-dl, and yt_dlp
         Args:
             signal_id(any): signal a view when this function done
@@ -1833,7 +1854,7 @@ class Controller:
         config.ytdl_abort = True
 
         # cancel all current downloads
-        print('Stop all downloads')
+        # print('Stop all downloads')
         for d in self.d_map.values():
             self.stop_download(d.uid)
 
