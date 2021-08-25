@@ -48,7 +48,8 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 
 ---
 # How to use FireDM:
-running in command line: show help by typing `firedm -h`
+running in command line: show help by typing `firedm -h`  <br>
+
 running GUI: Refer to user guide at https://github.com/firedm/FireDM/blob/master/docs/user_guide.md
 
 ----------------------
