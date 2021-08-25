@@ -1787,7 +1787,7 @@ class DItem(tk.Frame):
 
         except Exception as e:
             log('DItem.update()> error:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     def toggle_blinker(self):

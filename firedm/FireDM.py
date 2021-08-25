@@ -156,14 +156,6 @@ def main():
         '--auto-rename',
         action='store_true', default=get_default("auto_rename"),
         help='auto rename file if same name already exist on disk, default=%(default)s')
-    filesystem.add_argument(
-        '--checksum',
-        action='store_true', default=get_default("checksum"),
-        help='calculate checksums for completed files MD5 and SHA256, default=%(default)s')
-    filesystem.add_argument(
-        '-A', '--auto-number',
-        action='store_true', dest='use_playlist_numbers', default=get_default("use_playlist_numbers"),
-        help='Auto number playlist filenames, default=%(default)s')
 
     # ---------------------------------------------------------------------------------------Network Options------------
     network = parser.add_argument_group(title='Network Options')
@@ -198,12 +190,12 @@ def main():
         help="select video extractor, available choices are: ('youtube_dl', and 'ytdlp'), default=%(default)s")
     vid.add_argument(
         '--video-quality', dest='video_quality',
-        type=str, metavar='QUALITY', default=get_default("video_quality"),
+        type=str, metavar='QUALITY', default='best',
         help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
              "and 'lowest'), default=%(default)s")
     vid.add_argument(
         '--prefere-mp4',
-        action='store_true', default=get_default("prefere_mp4"),
+        action='store_true', default=False,
         help='prefere mp4 streams if available, default=%(default)s')
 
     # --------------------------------------------------------------------------------------Workarounds-----------------
@@ -240,6 +232,10 @@ def main():
         '--write-thumbnail', dest='download_thumbnail',
         action='store_true', default=get_default("download_thumbnail"),
         help='Write thumbnail image to disk after downloading video file, default=%(default)s')
+    postproc.add_argument(
+        '--checksum',
+        action='store_true', default=get_default("checksum"),
+        help='calculate checksums for completed files MD5 and SHA256, default=%(default)s')
 
     # -------------------------------------------------------------------------------------Application Update Options---
     appupdate = parser.add_argument_group(title='Application Update Options')

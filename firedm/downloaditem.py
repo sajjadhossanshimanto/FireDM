@@ -822,7 +822,7 @@ class DownloadItem:
                 segments_progress = [total_size, sp]
 
             except Exception as e:
-                if config.TEST_MODE:
+                if config.test_mode:
                     log('update_segments_progress()>', e)
 
         self.segments_progress = segments_progress

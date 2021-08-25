@@ -99,9 +99,6 @@ manually_select_dash_audio = False  # if True, will prompt user to select audio 
 ffmpeg_actual_path = None
 ffmpeg_download_folder = sett_folder
 
-video_quality = 'best'  # 'best', '1080p', '720p', '480p', '360p', and 'lowest'
-prefere_mp4 = True
-
 # ---------------------------------------------------------------------------------------Workarounds--------------------
 ibus_workaround = False  # issue 256: https://github.com/firedm/FireDM/issues/256
 ignore_ssl_cert = False  # ignore ssl certificate validation
@@ -124,7 +121,7 @@ cookie_file_path = ''
 
 # ---------------------------------------------------------------------------------------Post-processing Options--------
 download_thumbnail = False
-write_metadata = True  # write metadata to video file
+write_metadata = False  # write metadata to video file
 shutdown_pc = False
 on_completion_command = ''
 use_server_timestamp = False  # write 'last modified' timestamp to downloaded file
@@ -151,7 +148,6 @@ max_seg_retries = 10  # maximum retries for a segment until reporting downloaded
 # ---------------------------------------------------------------------------------------Debugging options--------------
 keep_temp = False  # keep temp files / folders after done downloading for debugging
 
-log_entry = ''  # one log line
 max_log_size = 1024 * 1024 * 5  # 5 MB
 log_level = 2  # standard=1, verbose=2, debug=3
 
@@ -159,8 +155,8 @@ log_level = 2  # standard=1, verbose=2, debug=3
 # callback and popup should accept 3 positional args e.g. log_callback(start, text, end)
 log_callbacks = []
 log_popup_callback = None
-TEST_MODE = False
-SIMULATOR = False
+test_mode = False
+simulator = False
 
 # ---------------------------------------------------------------------------------------GUI options--------------------
 DEFAULT_THEME = 'Dark'

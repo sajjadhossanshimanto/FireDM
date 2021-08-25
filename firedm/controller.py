@@ -336,7 +336,7 @@ class Controller:
             # print('controller._update_view:', kwargs)
         except Exception as e:
             log('controller._update_view()> error, ', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     @threaded
@@ -411,7 +411,7 @@ class Controller:
         
         except Exception as e:
             log('_process_video_info()> error:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     def _process_video(self, vid):
@@ -433,7 +433,7 @@ class Controller:
                 log('_process_video()> Failed,  url:', vid.url, log_level=3)
         except Exception as e:
             log('_process_video()> error:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
         finally:
             vid.busy = False
@@ -602,7 +602,7 @@ class Controller:
         except Exception as e:
             playlist = []
             log('controller._create_video_playlist:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
         return playlist
@@ -641,7 +641,7 @@ class Controller:
 
             except Exception as e:
                 log('_pre_download_process()> error:', e)
-                if config.TEST_MODE:
+                if config.test_mode:
                     raise e
 
             finally:
@@ -801,17 +801,17 @@ class Controller:
             d.folder = folder
         except FileNotFoundError:
             log(f'destination folder {folder} does not exist', start='', showpopup=showpopup)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise
             return False
         except (PermissionError, OSError):
             log(f"you don't have enough permission for destination folder {folder}", start='', showpopup=showpopup)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise
             return False
         except Exception as e:
             log(f'problem in destination folder {repr(e)}', start='', showpopup=showpopup)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
             return False
 
@@ -955,7 +955,7 @@ class Controller:
                     # retry multiple times to download and auto refresh expired url
                     for n in range(config.refresh_url_retries + 1):
                         # start brain in a separate thread
-                        if config.SIMULATOR:
+                        if config.simulator:
                             t = Thread(target=self.download_simulator, daemon=True, args=(d,))
                         else:
                             t = Thread(target=brain, daemon=False, args=(d,))
@@ -999,7 +999,7 @@ class Controller:
 
         except Exception as e:
             log('download()> error:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     def stop_download(self, uid):
@@ -1028,7 +1028,7 @@ class Controller:
 
         except Exception as e:
             log('controller._download_thumbnail()> error:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     def _write_timestamp(self, d):
@@ -1057,7 +1057,7 @@ class Controller:
 
         except Exception as e:
             log('controller._write_timestamp()> error:', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     def _post_download(self, d):

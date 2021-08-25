@@ -54,7 +54,7 @@ def brain(d=None):
         except Exception as e:
             d.status = Status.error
             log('pre_process_hls()> error: ', e, showpopup=True)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
             return
     else:
@@ -165,7 +165,7 @@ def file_manager(d, q, keep_segments=True):
 
             except Exception as e:
                 log('failed to merge segment', seg.name, ' - ', e)
-                if config.TEST_MODE:
+                if config.test_mode:
                     raise e
 
         # all segments already merged

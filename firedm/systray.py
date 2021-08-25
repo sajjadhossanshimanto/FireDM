@@ -46,7 +46,7 @@ class SysTray:
             return img
         except Exception as e:
             log('systray: tray_icon', e)
-            if config.TEST_MODE:
+            if config.test_mode:
                 raise e
 
     def run(self):

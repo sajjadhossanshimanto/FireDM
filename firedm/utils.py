@@ -700,7 +700,7 @@ def open_folder(path):
             subprocess.Popen(shlex.split(cmd))
     except Exception as e:
         log('utils> open_folder()> ', e, log_level=2)
-        if config.TEST_MODE:
+        if config.test_mode:
             raise e
 
 
