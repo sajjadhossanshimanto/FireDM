@@ -3409,7 +3409,7 @@ class MainWindow(IView):
         CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy'
                          ).pack(side='left', expand=True, fill='x')
         tip = ['proxy url should have a proper scheme', 'http, https, socks4, or socks5', '',
-               'e.g. "scheme://proxy_address:port"', '', 'or when using login usr/pass',
+               'e.g. "scheme://proxy_address:port"', '', 'if proxy server requires login',
                '"scheme://usr:pass@proxy_address:port"', '',
                'examples:', 'socks5://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
 
@@ -3420,16 +3420,6 @@ class MainWindow(IView):
         proxy_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         CheckOption(tab, 'use proxy DNS', key='use_proxy_dns').pack(anchor='w')
-
-        separator()
-
-        # ------------------------------------------------------------------------------------Authentication options----
-        heading('Authentication options:')
-        login_frame = tk.Frame(tab, bg=bg)
-        CheckOption(login_frame, 'Login', key='use_web_auth').pack(side='left')
-        LabeledEntryOption(login_frame, 'User:', entry_key='username').pack(side='left', padx=(0, 5))
-        LabeledEntryOption(login_frame, 'Pass:', entry_key='password', show='*').pack(side='left', padx=5)
-        login_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         separator()
 
@@ -3446,6 +3436,16 @@ class MainWindow(IView):
         self.extractors_menu.callback = lambda: self.controller.set_video_backend(self.extractors_menu.selection)
         self.extractors_menu.pack(side='left')
         extractor_frame.pack(anchor='w')
+
+        separator()
+
+        # ------------------------------------------------------------------------------------Authentication options----
+        heading('Website Authentication options:')
+        login_frame = tk.Frame(tab, bg=bg)
+        CheckOption(login_frame, 'Login', key='use_web_auth').pack(side='left')
+        LabeledEntryOption(login_frame, 'User:', entry_key='username').pack(side='left', padx=(0, 5))
+        LabeledEntryOption(login_frame, 'Pass:', entry_key='password', show='*').pack(side='left', padx=5)
+        login_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         separator()
 
