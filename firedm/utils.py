@@ -1130,12 +1130,23 @@ def get_pkg_version(pkg):
     return version
 
 
+def import_file(fp, exec_module=True):
+    module_name = os.path.basename(fp).replace('.py', '')
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(module_name, fp)
+    module = importlib.util.module_from_spec(spec)
+    if exec_module:
+        spec.loader.exec_module(module)
+    return module
+
+
 __all__ = [
     'notify', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded', 'parse_urls', 'validate_proxy_scheme', 'get_pkg_path', 'get_pkg_version'
+    'derender_text', 'threaded', 'parse_urls', 'validate_proxy_scheme', 'get_pkg_path', 'get_pkg_version',
+    'import_file'
 
 ]

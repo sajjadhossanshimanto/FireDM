@@ -187,7 +187,7 @@ def main():
     vid.add_argument(
         '--extractor', dest='active_video_extractor',
         type=str, metavar='EXTRACTOR', default=get_default("active_video_extractor"),
-        help="select video extractor, available choices are: ('youtube_dl', and 'ytdlp'), default=%(default)s")
+        help="select video extractor, available choices are: ('youtube_dl', and 'yt_dlp'), default=%(default)s")
     vid.add_argument(
         '--video-quality', dest='video_quality',
         type=str, metavar='QUALITY', default='best',

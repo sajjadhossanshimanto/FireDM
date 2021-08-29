@@ -16,7 +16,7 @@ import importlib
 from . import config
 from .downloaditem import DownloadItem, Segment
 from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file,
-                    run_thread, validate_proxy_scheme)
+                    run_thread, validate_proxy_scheme, import_file)
 
 
 # todo: change docstring to google format and clean unused code
@@ -548,7 +548,35 @@ def merge_video_audio(video, audio, output, d):
         error, output = run_command(cmd2, verbose=verbose, hide_window=True, d=d)
 
     return error, output
-            
+
+
+def load_user_extractors(engine=youtube_dl):
+    # load user's video extractors
+    extractors_folder = os.path.join(config.sett_folder, 'extractors')
+    if not os.path.isdir(extractors_folder):
+        return
+
+    for fname in os.listdir(extractors_folder):
+        if not fname.endswith('.py'):
+            continue
+        try:
+            fp = os.path.join(extractors_folder, fname)
+            module_name = fname.replace('.py', '')
+            # print('fp:', fp)
+            # print('module_name:', module_name)
+            module = import_file(fp)
+
+            # get ie name e.g. YoutubeIE for youtube.py file
+            ie_key = [k for k in module.__dict__.keys() if k.lower() == module_name + 'ie'][0]
+            # print('module_name, ie_key', module_name, ie_key)
+
+            ie = getattr(module, ie_key)
+            setattr(engine.extractor, ie_key, ie)
+            engine.extractor._ALL_CLASSES.insert(0, ie)
+        except Exception as e:
+            log('load_user_extractors() error,', e, log_level=2)
+            raise
+
 
 def load_extractor_engines(reload=False):
     """import extractor engines
@@ -586,6 +614,8 @@ def load_extractor_engines(reload=False):
         if config.active_video_extractor == 'youtube_dl':
             set_default_extractor('youtube_dl')
 
+        load_user_extractors(engine=youtube_dl)
+
     # yt_dlp ----------------------------------------------------------------------------------------------------
     def import_yt_dlp():
         global yt_dlp
@@ -609,6 +639,8 @@ def load_extractor_engines(reload=False):
         # set default extractor
         if config.active_video_extractor == 'yt_dlp':
             set_default_extractor('yt_dlp')
+
+        load_user_extractors(engine=yt_dlp)
 
     run_thread(import_youtube_dl, daemon=True)
     run_thread(import_yt_dlp, daemon=True)
