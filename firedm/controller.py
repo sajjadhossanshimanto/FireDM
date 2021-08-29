@@ -445,7 +445,7 @@ class Controller:
 
         # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
         if video.ytdl is None:
-            log('youtube-dl module still not loaded completely, please wait')
+            log(f'{config.active_video_extractor} module still not loaded completely, please wait')
             while not video.ytdl:
                 time.sleep(1)  # wait until module gets imported
 
@@ -1320,6 +1320,7 @@ class Controller:
                 last_check = date(*config.last_update_check)
             except:
                 last_check = today
+                config.last_update_check = (today.year, today.month, today.day)
 
             delta = today - last_check
             if delta.days >= config.update_frequency:
