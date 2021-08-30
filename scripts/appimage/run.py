@@ -66,7 +66,7 @@ def get_pkg_version(pkg_path):
         except:
             pass
 
-    if not version:        
+    if not version:
         try:
             fp = os.path.join(pkg_path, 'version.pyc')
             with open(fp, 'rb') as f:
@@ -96,37 +96,36 @@ for d in os.listdir(appimage_update_folder):
         pkg_full_path = os.path.join(appimage_update_folder, d, folders[0])
         pkgs.append(pkg_full_path)
 
-
 # ignore old packages
 for pkg in pkgs[:]:
     pkg_name = os.path.basename(pkg)
     pkg_version = get_pkg_version(pkg)
     if pkg_name == 'firedm':
-         src_folder = firedm_src
+        src_folder = firedm_src
     else:
         src_folder = site_pkgs
     orig_pkg_version = get_pkg_version(os.path.join(src_folder, pkg_name))
 
     # print(pkg, 'orig_pkg_version:', orig_pkg_version, ' - pkg_version:', pkg_version)
-    
+
     origver = parse(orig_pkg_version)
     ver = parse(pkg_version)
 
     if origver > ver:
         pkgs.remove(pkg)
-    else:
-        print(f'Sourcing package: {pkg_name} from {pkg}, version: {pkg_version}')
-
 
 # add pkgs to sys.path
 for pkg in pkgs:
     sys.path.insert(0, os.path.dirname(pkg))
 
-
 from firedm import FireDM, config
+
 config.isappimage = True
 config.appimage_update_folder = appimage_update_folder
 
+# fix second argument is an empty string
+if len(sys.argv) > 1 and not sys.argv[1]:
+    sys.argv.pop(1)
+
 # launch application
 FireDM.main()
-
