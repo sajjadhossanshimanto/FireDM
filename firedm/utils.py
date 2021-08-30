@@ -82,28 +82,6 @@ def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,
         log(f'plyer notification: {e}')
 
 
-def validate_proxy_scheme(url, proxydns):
-    """correct socks scheme based on proxydns
-    e.g. ('socks4', 'socks5') for local dns resolving,
-         and ('socks4a', 'socks5h') where dns handled by proxy server
-    Args:
-        url: proxy url
-        proxydns(bool): True=use proxy dns, False=use local dns
-    Returns:
-        url(str): url after fix scheme
-    """
-    scheme = urlparse(url).scheme
-
-    schemes = {'socks4': 'socks4a', 'socks5': 'socks5h'}
-    if not proxydns:
-        schemes = {v: k for k, v in schemes.items()}
-
-    if scheme in schemes:
-        url = url.replace(scheme, schemes[scheme])
-
-    return url
-
-
 def set_curl_options(c, http_headers=None):
     """take pycurl object as an argument and set basic options
 
@@ -130,8 +108,7 @@ def set_curl_options(c, http_headers=None):
 
     # set proxy, must be string empty '' means no proxy
     if config.proxy:
-        proxy = validate_proxy_scheme(config.proxy, config.use_proxy_dns)
-        c.setopt(pycurl.PROXY, proxy)
+        c.setopt(pycurl.PROXY, config.proxy)
 
     # referer
     if config.referer_url:
@@ -1146,7 +1123,7 @@ __all__ = [
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded', 'parse_urls', 'validate_proxy_scheme', 'get_pkg_path', 'get_pkg_version',
+    'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version',
     'import_file'
 
 ]

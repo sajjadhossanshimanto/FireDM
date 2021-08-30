@@ -3408,18 +3408,16 @@ class MainWindow(IView):
         proxy_frame = tk.Frame(tab, bg=bg)
         CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy'
                          ).pack(side='left', expand=True, fill='x')
-        tip = ['proxy url should have a proper scheme', 'http, https, socks4, or socks5', '',
+        tip = ['proxy url should have one of below schemes:', 'http, https, socks4, socks4a, socks5, or socks5h', '',
                'e.g. "scheme://proxy_address:port"', '', 'if proxy server requires login',
                '"scheme://usr:pass@proxy_address:port"', '',
-               'examples:', 'socks5://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
+               'examples:', 'socks5h://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
 
         btn = Button(proxy_frame, text='tip!');
         btn.pack(side='left', padx=5)
         atk.RightClickMenu(btn, tip, bind_left_click=True, bg=RCM_BG, fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
 
         proxy_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
-
-        CheckOption(tab, 'use proxy DNS', key='use_proxy_dns').pack(anchor='w')
 
         separator()
 

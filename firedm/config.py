@@ -22,7 +22,7 @@ settings_keys = [
     'keep_temp', 'last_update_check', 'log_level', 'manually_select_dash_audio', 'max_concurrent_downloads',
     'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification', 'proxy',
     'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
-    'use_playlist_numbers', 'use_proxy_dns', 'window_size', 'write_metadata']
+    'use_playlist_numbers', 'window_size', 'write_metadata']
 
 # ----------------------------------------------------------------------------------------General ----------------------
 # CONSTANTS
@@ -82,7 +82,6 @@ use_playlist_numbers = True  # add numbers to video file names when downloading 
 # ---------------------------------------------------------------------------------------Network Options----------------
 proxy = ''  # must be string example: 127.0.0.1:8080
 enable_proxy = False
-use_proxy_dns = False
 
 # ---------------------------------------------------------------------------------------Authentication Options---------
 use_web_auth = False
@@ -252,7 +251,7 @@ popups = {
     6: {'tag': 'ssl-warning',
         'description': 'Show warning when Disabling SSL verification.',
         'body': ('WARNING: disable SSL certificate verification could allow hackers to man-in-the-middle attack '
-                 'and makes the communication insecure. \n\n'
+                 'and make the communication insecure. \n\n'
                  'Are you sure?'),
         'options': ['Yes', 'Cancel'],
         'default': 'Yes',

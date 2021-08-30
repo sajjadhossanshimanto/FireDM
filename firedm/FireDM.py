@@ -166,10 +166,6 @@ def main():
              '"scheme://proxy_address:port", or when using login usr/pass: '
              '"scheme://usr:pass@proxy_address:port", '
              'examples: "socks5://127.0.0.1:8080",  "socks4://john:pazzz@127.0.0.1:1080", default="%(default)s"')
-    network.add_argument(
-        '--use-proxy-dns',
-        action='store_true', default=get_default("use_proxy_dns"),
-        help='use proxy dns, default=%(default)s')
 
     # ---------------------------------------------------------------------------------------Authentication Options-----
     authentication = parser.add_argument_group(title='Authentication Options')

@@ -16,7 +16,7 @@ import importlib
 from . import config
 from .downloaditem import DownloadItem, Segment
 from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file,
-                    run_thread, validate_proxy_scheme, import_file)
+                    run_thread, import_file)
 
 
 # todo: change docstring to google format and clean unused code
@@ -51,10 +51,9 @@ def get_ytdl_options():
     # reference: https://github.com/ytdl-org/youtube-dl/blob/a8035827177d6b59aca03bd717acb6a9bdd75ada/youtube_dl/__init__.py#L317
     ydl_opts = {'ignoreerrors': True, 'logger': Logger()}  # 'prefer_insecure': False, 'no_warnings': False,
     if config.proxy:
-        proxy = validate_proxy_scheme(config.proxy, config.use_proxy_dns)
         # youtube-dl accept socks4a, but not socks5h,
         # https://github.com/ytdl-org/youtube-dl/blob/a8035827177d6b59aca03bd717acb6a9bdd75ada/youtube_dl/utils.py#L5404
-        proxy = proxy.replace('socks5h', 'socks5')
+        proxy = config.proxy.replace('socks5h', 'socks5')
         ydl_opts['proxy'] = proxy
 
     # set Referer website
