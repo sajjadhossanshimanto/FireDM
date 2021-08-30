@@ -561,18 +561,23 @@ def load_user_extractors(engine=youtube_dl):
             continue
         try:
             fp = os.path.join(extractors_folder, fname)
-            module_name = fname.replace('.py', '')
-            # print('fp:', fp)
-            # print('module_name:', module_name)
             module = import_file(fp)
 
-            # get ie name e.g. YoutubeIE for youtube.py file
-            ie_key = [k for k in module.__dict__.keys() if k.lower() == module_name + 'ie'][0]
-            # print('module_name, ie_key', module_name, ie_key)
+            extractors = {}
+            for key, value in module.__dict__.items():
+                if key.startswith('__') or value is module.InfoExtractor:
+                    continue
+                try:
+                    if issubclass(value, module.InfoExtractor):
+                        extractors[key] = value
+                except:
+                    pass
 
-            ie = getattr(module, ie_key)
-            setattr(engine.extractor, ie_key, ie)
-            engine.extractor._ALL_CLASSES.insert(0, ie)
+            # print('extractors:', extractors)
+
+            for ie_key, ie in extractors.items():
+                setattr(engine.extractor, ie_key, ie)
+                engine.extractor._ALL_CLASSES.insert(0, ie)
         except Exception as e:
             log('load_user_extractors() error,', e, log_level=2)
             raise
