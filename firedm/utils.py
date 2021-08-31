@@ -1041,10 +1041,7 @@ def get_pkg_path(pkg_name):
 
 def get_pkg_version(pkg):
     """parse version number for a package
-    using .dist-info folder
-    or as afallback it will search for a date based version number
-    can be used with FireDM, youtube-dl, and yt_dlp
-    version file can be normal string or compiled, .py or .pyc code
+    using .dist-info folder or version.py/version.pyc files
 
     Args:
         pkg(str): name or path of the package
@@ -1069,13 +1066,17 @@ def get_pkg_version(pkg):
         version_module = {}
         fp = os.path.join(pkg_path, 'version.py')
         with open(fp) as f:
-            exec(f.read(), version_module)  # then we can use it as: version_module['__version__']
-            version = version_module['__version__']
+            txt = f.read()
+            exec(txt, version_module)  # then we can use it as: version_module['__version__']
+            version = version_module.get('__version__')
+            if not version:
+                match = re.search(r'_*version_*=[\'\"](.*?)[\'\"]', txt.replace(' ', ''), re.IGNORECASE)
+                version = match.groups()[0]
     except:
         pass
 
     if not version:
-        # read version.pyc file
+        # read version.pyc file, will be limited to specific versions format, e.g. 2.3.4, or 2021.8.30
         try:
             fp = os.path.join(pkg_path, 'version.pyc')
             with open(fp, 'rb') as f:
@@ -1086,21 +1087,16 @@ def get_pkg_version(pkg):
             pass
 
     if not version:
-        # parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info
+        # parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info or FireDM-2021.2.9.dist-info
         try:
             parent_folder = os.path.dirname(pkg_path)
             pkg_name = os.path.basename(pkg_path)
 
-            # .dist-info folder, eg: FireDM-2021.2.9.dist-info
-            r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
-
-            # delete old dist-info folder if found
-            match = list(filter(r.match, os.listdir(parent_folder)))
-            if match:
-                name = match[0]
-                name = name.replace(pkg_name + '-', '')
-                name = name.replace('.dist-info', '')
-                version = name
+            for folder_name in os.listdir(parent_folder):
+                match = re.match(pkg_name + r'-(.*?)\.dist-info', folder_name, re.IGNORECASE)
+                if match:
+                    version = match.groups()[0]
+                    break
         except:
             pass
 
