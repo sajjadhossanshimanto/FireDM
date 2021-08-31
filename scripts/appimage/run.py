@@ -21,74 +21,14 @@ home_folder = os.path.expanduser('~')
 fp = os.path.realpath(__file__)
 AppDir = os.path.dirname(fp)
 sett_folder = f'{home_folder}/.config/FireDM'
-
-
-def get_pkg_version(pkg_path):
-    """parse version number for a package
-    using .dist-info folder 
-    or as afallback it will search for a date based version number
-    can be used with FireDM, youtube-dl, and yt_dlp
-    version file can be normal string or compiled, .py or .pyc code
-
-    Args:
-        pkg_path(str): path to package folder
-
-    Returns:
-        (str): version number or empty string
-    """
-
-    version = ''
-    try:
-        # try to parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info
-        parent_folder = os.path.dirname(pkg_path)
-        pkg_name = os.path.basename(pkg_path)
-
-        # .dist-info folder, eg: FireDM-2021.2.9.dist-info
-        r = re.compile(f'{pkg_name}.*dist-info', re.IGNORECASE)
-
-        # delete old dist-info folder if found
-        match = list(filter(r.match, os.listdir(parent_folder)))
-        if match:
-            name = match[0]
-            name = name.replace(pkg_name + '-', '')
-            name = name.replace('.dist-info', '')
-            version = name
-    except:
-        pass
-
-    if not version:
-        try:
-            version_module = {}
-            fp = os.path.join(pkg_path, 'version.py')
-            with open(fp) as f:
-                exec(f.read(), version_module)  # then we can use it as: version_module['__version__']
-                version = version_module['__version__']
-        except:
-            pass
-
-    if not version:
-        try:
-            fp = os.path.join(pkg_path, 'version.pyc')
-            with open(fp, 'rb') as f:
-                text = f.read()
-                match = re.search(rb'\d+\.\d+\.\d+', text)
-                version = match.group().decode('utf-8')
-        except:
-            pass
-
-    return version
-
-
 site_pkgs = os.path.join(AppDir, 'usr/lib/python3.6/site-packages')
 appimage_update_folder = os.path.join(sett_folder, 'appimage-update-folder')
 firedm_src = os.path.join(AppDir, 'usr/src')
 
 os.makedirs(appimage_update_folder, exist_ok=True)
+sys.path.insert(0, firedm_src)
+from firedm.utils import get_pkg_version
 
-sys.path.append(firedm_src)
-
-# check packages in updated-site-pkgs folder
-# every package folder will have a parent folder named "updated-pkgname"
 pkgs = []
 for d in os.listdir(appimage_update_folder):
     folders = os.listdir(os.path.join(appimage_update_folder, d))
