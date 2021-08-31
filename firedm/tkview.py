@@ -4183,7 +4183,6 @@ class MainWindow(IView):
 
     def quit(self):
         """Quit application and systray"""
-        config.shutdown = True
         # start = time.time()
         # self.root.destroy()  # destroy all widgets and quit mainloop, consume 4~5 seconds to destroy widgets???
         self.root.quit()  # quit main loop without destroying widgets, faster to quit application

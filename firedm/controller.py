@@ -1840,18 +1840,14 @@ class Controller:
     def run(self):
         """run current "view" main loop"""
         self.view.run()
-        self.quit()
 
     def quit(self):
         config.shutdown = True  # set global shutdown flag
         config.ytdl_abort = True
 
         # cancel all current downloads
-        # print('Stop all downloads')
         for d in self.d_map.values():
             self.stop_download(d.uid)
-
-        self.view.quit()
 
         self._save_settings()
 
