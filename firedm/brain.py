@@ -315,8 +315,14 @@ def thread_manager(d, q):
 
     def sort_segs(segs):
         # sort segments based on their range in reverse to use .pop()
+        def sort_key(seg):
+            if seg.range:
+                return seg.range[0]
+            else:
+                return seg.num
+
         def sort(_segs):
-            return sorted(_segs, key=lambda seg: seg.range[0], reverse=True)
+            return sorted(_segs, key=sort_key, reverse=True)
 
         try:
             video_segs = [seg for seg in segs if seg.media_type == config.MediaType.video]
@@ -329,6 +335,8 @@ def thread_manager(d, q):
             sorted_segs = segs
             log('sort_segs error:', e)
 
+        # print('segs:', [f'{seg.media_type}-{seg.num}' for seg in segs])
+        # print('sorted_segs:', [f'{seg.media_type}-{seg.num}' for seg in sorted_segs])
         return sorted_segs
 
     # job_list
