@@ -230,7 +230,7 @@ def get_headers(url, verbose=False, http_headers=None):
     return curl_headers
 
 
-def download(url, fp=None, verbose=True, http_headers=None):
+def download(url, fp=None, verbose=True, http_headers=None, decode=True, return_buffer=False):
     """
     simple file download, into bytesio buffer and store it on disk if file_name is given
 
@@ -239,10 +239,14 @@ def download(url, fp=None, verbose=True, http_headers=None):
         fp(str): output file path
         verbose: bool, log events if true
         http_headers: key, value dict for http headers to be sent to the server
+        decode(bool): decode downloaded data, used for text / string type data
+        return_buffer(bool): return io.BytesIO() buffer containing downloaded data
 
     Return:
-        bytesIo buffer or None
+        downloaded data
     """
+
+    data = None
 
     if not url:
         log('download()> url not valid:', url)
@@ -270,25 +274,35 @@ def download(url, fp=None, verbose=True, http_headers=None):
         # run libcurl
         c.perform()
 
+        # after PyCurl done writing download data into buffer the current "cursor" position is at the end
+        # bring position back to start of the buffer
+        buffer.seek(0)
+        data = buffer.read()
+
         if fp:
             # save file name
             with open(fp, 'wb') as file:
-                # after PyCurl done writing download data into buffer the current "cursor" position is at end of buffer
-                # bring position back to start of the buffer
-                buffer.seek(0)
-                file.write(buffer.read())
+                file.write(data)
                 file.close()
 
-        # reset buffer stream position
-        buffer.seek(0)
-        return buffer
+        if decode:
+            try:
+                data = data.decode()
+            except Exception as e:
+                if verbose:
+                    log('download()> can\'t decode data, will return data as is, details:', e)
 
     except Exception as e:
         log('download():', e)
-        return None
     finally:
         # close curl
         c.close()
+
+        if return_buffer:
+            buffer.seek(0)
+            return buffer
+        else:
+            return data
 
 
 def simpledownload(url, fp=None, return_data=True, overwrite=False):
@@ -772,7 +786,7 @@ def get_thumbnail(url):
     """
     try:
         log('downloading Thumbnail', log_level=2)
-        buffer = download(url, verbose=False)  # get BytesIO object
+        buffer = download(url, verbose=False, return_buffer=True)
 
         return buffer
     except:

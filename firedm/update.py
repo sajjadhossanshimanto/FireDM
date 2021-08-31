@@ -51,11 +51,9 @@ def check_for_new_version():
         if config.FROZEN:
             # use github API to get latest version
             url = 'https://api.github.com/repos/firedm/firedm/releases/latest'
-            buffer = download(url, verbose=False)
+            contents = download(url, verbose=False)
 
-            if buffer:
-                # convert to string
-                contents = buffer.getvalue().decode()
+            if contents:
                 j = json.loads(contents)
                 latest_version = j.get('tag_name', '0')
 
@@ -68,11 +66,7 @@ def check_for_new_version():
 
             # download change log file
             url = 'https://github.com/firedm/FireDM/raw/master/ChangeLog.txt'
-            buffer = download(url, verbose=False)  # get BytesIO object
-
-            if buffer:
-                # convert to string
-                changelog = buffer.getvalue().decode()
+            changelog = download(url, verbose=False)
     except Exception as e:
         log('check_for_new_version()> error:', e)
 
@@ -116,14 +110,11 @@ def get_pkg_latest_version(pkg, fetch_url=True):
 
     # get BytesIO object
     log(f'check for {pkg} latest version on pypi.org...')
-    buffer = download(url, verbose=False)
+    contents = download(url, verbose=False)
     latest_version = None
     url = None
 
-    if buffer:
-        # convert to string
-        contents = buffer.getvalue().decode()
-
+    if contents:
         # rss feed
         if not fetch_url:
             match = re.findall(r'<title>(\d+.\d+.\d+.*)</title>', contents)
@@ -247,8 +238,8 @@ def update_pkg(pkg, url):
 
         # download from pypi
         log(f'downloading {pkg} raw files')
-        buffer = download(url, fp=z_fp)
-        if not buffer:
+        data = download(url, fp=z_fp)
+        if not data:
             log(f'failed to download {pkg}, abort update')
             return
 

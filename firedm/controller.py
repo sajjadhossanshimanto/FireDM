@@ -1264,17 +1264,13 @@ class Controller:
 
                 # download change log file
                 url = 'https://github.com/firedm/FireDM/raw/master/ChangeLog.txt'
-                buffer = download(url, verbose=False)  # get BytesIO object
+                changelog = download(url, verbose=False)
 
-                if buffer:
-                    # convert to string
-                    changelog = buffer.getvalue().decode()
-
-                    # verify server didn't send html page
-                    if '<!DOCTYPE html>' not in changelog:
-                        msg += '\n\n\n'
-                        msg += 'FireDM Change Log:\n'
-                        msg += changelog
+                # verify server didn't send html page
+                if changelog and '<!DOCTYPE html>' not in changelog:
+                    msg += '\n\n\n'
+                    msg += 'FireDM Change Log:\n'
+                    msg += changelog
 
             res = self.get_user_response(msg, options)
             if res == options[0]:
@@ -1408,15 +1404,11 @@ class Controller:
             # if d type is hls video will download file to check if it's an m3u8 or not
             if 'hls' in d.subtype_list:
                 log('downloading subtitle', file_name)
-                buffer = download(url, http_headers=d.http_headers)
+                data = download(url, http_headers=d.http_headers)
 
-                if buffer:
-                    # convert to string
-                    buffer = buffer.getvalue().decode()
-
-                    # check if downloaded file is an m3u8 file
-                    if '#EXT' in repr(buffer):
-                        sub_d.subtype_list.append('hls')
+                # check if downloaded file is an m3u8 file
+                if data and '#EXT' in repr(data):  # why using repr(data) instead of data?
+                    sub_d.subtype_list.append('hls')
 
             self.download(sub_d)
 

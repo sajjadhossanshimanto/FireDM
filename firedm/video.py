@@ -931,23 +931,21 @@ def parse_m3u8_line(line):
 
 
 def download_m3u8(url, http_headers=config.http_headers):
+    data = None
     try:
         # download the manifest from m3u8 file descriptor located at url
-        buffer = download(url, verbose=False, http_headers=http_headers)  # get BytesIO object
+        data = download(url, verbose=False, http_headers=http_headers)
 
-        if buffer:
-            # convert to string
-            buffer = buffer.getvalue().decode()
+        # verify file is m3u8 format
+        if data and '#EXT' in repr(data):
+            return data
 
-            # verify file is m3u8 format
-            if '#EXT' in repr(buffer):
-                return buffer
     except Exception as e:
         log(e)
 
     log('received invalid m3u8 file from server')
     if config.log_level >= 3:
-        log('\n---------------------------------------\n', buffer, '\n---------------------------------------\n')
+        log('\n---------------------------------------\n', data, '\n---------------------------------------\n')
     return None
 
 
@@ -993,18 +991,14 @@ def download_sub(lang_name, url, extension, d):
         sub_d.type = 'subtitle'
         sub_d.http_headers = d.http_headers
 
-        # if d type is hls video will download file to check if it's m3u8 or not
+        # if d type is hls video will download subtitle file to check if its type is m3u8 or not
         if 'hls' in d.subtype_list:
             log('downloading subtitle', file_name)
-            buffer = download(url, http_headers=d.http_headers)
+            data = download(url, http_headers=d.http_headers)
 
-            if buffer:
-                # convert to string
-                buffer = buffer.getvalue().decode()
-
-                # check if downloaded file is an m3u8 file
-                if '#EXT' in repr(buffer):
-                    sub_d.subtype_list.append('hls')
+            # check if downloaded file is an m3u8 file
+            if data and '#EXT' in repr(data):
+                sub_d.subtype_list.append('hls')
 
         # execute_command('start_download', sub_d)
 
