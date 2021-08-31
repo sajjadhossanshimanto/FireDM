@@ -39,7 +39,7 @@ requirements_fp = os.path.join(project_folder, 'requirements.txt')
 main_script_path = os.path.join(project_folder, 'firedm.py')
 
 sys.path.insert(0,  project_folder)  # for imports to work
-from scripts.utils import download, delete_folder, create_folder
+from firedm.utils import simpledownload, delete_folder, create_folder
 
 # create build folder
 create_folder(build_folder)
@@ -120,7 +120,7 @@ if not os.path.isfile(os.path.join(app_folder, 'ffmpeg.exe')):
     if not os.path.isfile(ffmpeg_path):
         # download from github
         ffmpeg_url = 'https://github.com/firedm/FireDM/releases/download/extra/ffmpeg_32bit.exe'
-        download(ffmpeg_url, fp=ffmpeg_path)
+        simpledownload(ffmpeg_url, fp=ffmpeg_path)
     shutil.copy(ffmpeg_path, os.path.join(app_folder, 'ffmpeg.exe'))
 
 # write resource fields for exe file, i.e. version, app name, copyright, etc -------------------------------------------
@@ -131,7 +131,7 @@ rcedit_fp = os.path.join(current_folder, 'rcedit.exe')
 if not (os.path.isfile(rcedit_fp) or os.path.isfile(os.path.join(app_folder, 'rcedit.exe'))):
     # download file, will get x86 version, for x64 visit https://github.com/electron/rcedit/releases/latest
     rcedit_url = 'https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x86.exe'
-    download(rcedit_url, fp=rcedit_fp, return_data=False)
+    simpledownload(rcedit_url, fp=rcedit_fp, return_data=False)
 
 # for some reasons rcedit must be in same directory with target file to work properly
 if not os.path.isfile(os.path.join(app_folder, 'rcedit.exe')):

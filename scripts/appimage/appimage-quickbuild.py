@@ -32,7 +32,7 @@ AppDir = os.path.join(build_folder, 'AppDir')
 project_folder = os.path.dirname(os.path.dirname(current_folder))
 
 sys.path.insert(0,  project_folder)  # for imports to work
-from scripts.utils import download, get_pkg_version, delete_folder
+from firedm.utils import simpledownload, get_pkg_version, delete_folder
 
 
 # get application version ----------------------------------------------------------------------------------------------
@@ -41,7 +41,7 @@ version = get_pkg_version(os.path.join(project_folder, 'firedm'))
 # check for app folder existence, otherwise download latest version from github
 if not os.path.isdir(AppDir):
     print('downloading ', APP_NAME)
-    data = download('https://api.github.com/repos/firedm/firedm/releases/latest').decode("utf-8")
+    data = simpledownload('https://api.github.com/repos/firedm/firedm/releases/latest').decode("utf-8")
     # "browser_download_url": "https://github.com/firedm/FireDM/releases/download/2021.2.9/FireDM-2021.2.9-x86_64.AppImage"
     data = json.loads(data)
     assets = data['assets']
@@ -57,7 +57,7 @@ if not os.path.isdir(AppDir):
         # download file
         z_fp = os.path.join(build_folder, filename)
         if not os.path.isfile(z_fp):
-            download(url, z_fp)
+            simpledownload(url, z_fp)
 
         # extract and rename
         print('extracting, please wait ...')
@@ -158,7 +158,7 @@ subprocess.run(f'{AppDir}/AppRun --imports-only', shell=True)
 print('build AppImage file from AppDir')
 url = 'https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage'
 appimagetool = os.path.join(current_folder, 'appimagetool-x86_64.AppImage')
-download(url, fp=appimagetool)
+simpledownload(url, fp=appimagetool)
 subprocess.run(f'chmod +x {appimagetool}', shell=True)
 
 filename = f'{APP_NAME}-{version}-x86_64.AppImage'

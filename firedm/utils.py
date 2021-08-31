@@ -24,7 +24,9 @@ import subprocess
 import shlex
 import re
 import json
+import zipfile
 from PIL import Image
+import urllib.request
 from urllib.parse import urlparse
 
 from . import config
@@ -287,6 +289,58 @@ def download(url, file_name=None, verbose=True, http_headers=None):
     finally:
         # close curl
         c.close()
+
+
+def simpledownload(url, fp=None, return_data=True, overwrite=False):
+    """download with urllib"""
+    if not overwrite and fp and os.path.isfile(fp):
+        return
+
+    print('download:', url)
+    response = urllib.request.urlopen(url)
+    chunk_size = 1024 * 1024 * 5  # 5 MB
+    size = response.getheader('content-length')
+
+    if size:
+        size = int(size)
+        chunk_size = max(size // 10 + (1 if size % 10 else 0), chunk_size)
+    data = b''
+    done = 0
+
+    while True:
+        start = time.time()
+        chunk = response.read(chunk_size)
+        if chunk:
+            data += chunk
+
+            done += len(chunk)
+
+            elapsed_time = time.time() - start
+
+            if elapsed_time:
+                speed = size_format(round(len(chunk) / elapsed_time, 1), tail='/s')
+            else:
+                speed = ''
+            percent = done * 100 // size if size else 0
+            bar_length = percent//10
+            progress_bar = f'[{"="*bar_length}{" "*(10-bar_length)}]'
+            progress = f'{progress_bar} {size_format(done)} of {size_format(size)} - {speed}' \
+                       f' - {percent}%' if percent else ''
+            print(f'\r{progress}            ', end='')
+        else:
+            print()
+            break
+
+    if fp:
+        if not os.path.isdir(os.path.dirname(fp)):
+            os.makedirs(os.path.dirname(fp))
+        with open(fp, 'wb') as f:
+            f.write(data)
+
+    if return_data:
+        return data
+    else:
+        return True
 
 
 def size_format(size, tail=''):
@@ -1113,6 +1167,20 @@ def import_file(fp, exec_module=True):
     return module
 
 
+def zip_extract(z_fp, extract_folder):
+    """extract compressed zip file
+    Args:
+        z_fp(str): zip file path
+        extract_folder(str): target folder path
+    """
+    with zipfile.ZipFile(z_fp, 'r') as z:
+        z.extractall(path=extract_folder)
+
+
+def create_folder(folder_path):
+    os.makedirs(folder_path, exist_ok=True)
+
+
 __all__ = [
     'notify', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
@@ -1120,6 +1188,6 @@ __all__ = [
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
     'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version',
-    'import_file'
+    'import_file', 'zip_extract', 'create_folder'
 
 ]
