@@ -13,6 +13,7 @@
 
 # standard modules
 import os
+import subprocess
 import sys
 import argparse
 import re
@@ -48,10 +49,6 @@ def main():
     if '--ignore-config' not in sys.argv:
         load_setting()
 
-    def get_default(varname):
-        default_value = getattr(config, varname, None)
-        return default_value
-
     def iterable(txt):
         # process iterable in arguments, e.g. tuple or list,
         # example --window=(600,300)
@@ -75,10 +72,10 @@ def main():
                'Author: Mahmoud Elshahat, '
                'Isuues: https://github.com/firedm/FireDM/issues',
         usage='\n'
-              '       %(prog)s [OPTIONS] URL \n'
-              '       example: %(prog)s "https://somesite.com/somevideo" --connections=8 \n'
-              '       Note: to run %(prog)s in GUI(Graphical User Interface) mode, use "--gui" option along with other '
-              '       arguments, or start %(prog)s without any arguments.',
+              '%(prog)s [OPTIONS] URL \n'
+              'example: %(prog)s "https://somesite.com/somevideo"\n'
+              'Note: to run %(prog)s in GUI(Graphical User Interface) mode, use "--gui" option along with other '
+              'arguments, or start %(prog)s without any arguments.',
         add_help=False
     )
 
@@ -89,19 +86,24 @@ def main():
                         which might be found in the url e.g. "&" """)
 
     # ------------------------------------------------------------------------------------General options---------------
-    general = parser.add_argument_group(title='General options:')
+    general = parser.add_argument_group(title='General options')
     general.add_argument(
         '-h', '--help',
         action='help',
         help='show this help message and exit')
     general.add_argument(
         '-v', '--version',
-        action='version', version='%(prog)s ' + __version__,
+        action='version', version='FireDM version: ' + __version__,
         help='Print program version and exit')
     general.add_argument(
         '--config',
         action='store_true',
         help='show current application settings and their current values and exit')
+    general.add_argument(
+        '--edit-config', dest='edit_config',
+        type=str, metavar='EDITOR', default='nano',  # default if argument not used
+        action='store', nargs='?', const='nano',  # const if use argument without value
+        help='Edit config file, you should specify your text editor executable, otherwise "%(default)s" will be used')
     general.add_argument(
         '--ignore-config', dest='ignore_config',
         action='store_true',
@@ -112,7 +114,7 @@ def main():
         help='Do not load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
              '(APPDATA/FireDM/ on Windows), default="True in cmdline mode and False in GUI mode"')
     general.add_argument(
-        '--use-dlist', dest='ignore_dlist',
+        '--dlist', dest='ignore_dlist',
         action='store_false', default=None,
         help='load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
              '(APPDATA/FireDM/ on Windows), default="False in cmdline mode and True in GUI mode"')
@@ -135,35 +137,31 @@ def main():
         help='save current options in global configuration file, used in cmdline mode.')
 
     # ----------------------------------------------------------------------------------------Filesystem options--------
-    filesystem = parser.add_argument_group(title='Filesystem options:')
+    filesystem = parser.add_argument_group(title='Filesystem options')
     filesystem.add_argument(
         '-o', '--output',
         type=str, metavar='<PATH>',
-        help='target file name, if omitted remote file name will be used, '
-             'if file path included, "--download-folder" flag will be ignored, \n'
-             'be careful with video extension, since ffmpeg will try to convert video '
-             'based on filename extension')
+        help='output file path, filename, or download folder: if input value is a file name without path, file will '
+             f'be saved in default download folder "{config.download_folder}", if input value is a folder path only, '
+             'remote file name will be used, '
+             'be careful with video extension in filename, since ffmpeg will convert video based on extension')
     filesystem.add_argument(
         '-b', '--batch-file',
         type=argparse.FileType('r', encoding='UTF-8'), metavar='<PATH>',
         help='path to text file containing multiple urls to be downloaded, file should have '
              'every url in a separate line, empty lines and lines start with "#" will be ignored.')
     filesystem.add_argument(
-        '-d', '--download_folder', dest='download_folder',
-        type=str, metavar='<PATH>', default=get_default("download_folder"),
-        help=f'download folder path, default=%(default)s')
-    filesystem.add_argument(
         '--auto-rename',
-        action='store_true', default=get_default("auto_rename"),
+        action='store_true', default=config.auto_rename,
         help='auto rename file if same name already exist on disk, default=%(default)s')
 
     # ---------------------------------------------------------------------------------------Network Options------------
     network = parser.add_argument_group(title='Network Options')
     network.add_argument(
         '--proxy', dest='proxy',
-        metavar='URL', default=get_default("proxy"),
-        help='proxy url should have a proper scheme, http, https, socks4, or socks5, e.g. '
-             '"scheme://proxy_address:port", or when using login usr/pass: '
+        metavar='URL', default=config.proxy,
+        help='proxy url should have one of these schemes: (http, https, socks4, socks4a, socks5, or socks5h) '
+             'e.g. "scheme://proxy_address:port", and if proxy server requires login '
              '"scheme://usr:pass@proxy_address:port", '
              'examples: "socks5://127.0.0.1:8080",  "socks4://john:pazzz@127.0.0.1:1080", default="%(default)s"')
 
@@ -181,11 +179,11 @@ def main():
     # --------------------------------------------------------------------------------------Video Options---------------
     vid = parser.add_argument_group(title='Video Options')
     vid.add_argument(
-        '--extractor', dest='active_video_extractor',
-        type=str, metavar='EXTRACTOR', default=get_default("active_video_extractor"),
-        help="select video extractor, available choices are: ('youtube_dl', and 'yt_dlp'), default=%(default)s")
+        '--engine', dest='active_video_extractor',
+        type=str, metavar='ENGINE', default=config.active_video_extractor,
+        help="select video extractor engine, available choices are: ('youtube_dl', and 'yt_dlp'), default=%(default)s")
     vid.add_argument(
-        '--video-quality', dest='video_quality',
+        '--quality', dest='video_quality',
         type=str, metavar='QUALITY', default='best',
         help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
              "and 'lowest'), default=%(default)s")
@@ -196,10 +194,6 @@ def main():
 
     # --------------------------------------------------------------------------------------Workarounds-----------------
     workarounds = parser.add_argument_group(title='Workarounds')
-    workarounds.add_argument(
-        '--ibus-workaround',
-        action='store_true',
-        help='ibus workaround, to fix slow gui startup')
     workarounds.add_argument(
         '--no-check-certificate', dest='ignore_ssl_cert',
         action='store_true',
@@ -217,19 +211,15 @@ def main():
     postproc = parser.add_argument_group(title='Post-processing Options')
     postproc.add_argument(
         '--add-metadata', dest='write_metadata',
-        action='store_true', default=get_default("write_metadata"),
+        action='store_true', default=config.write_metadata,
         help='Write metadata to the video file, default=%(default)s')
     postproc.add_argument(
-        '--exec',
-        metavar='CMD', dest='exec_cmd',
-        help='Execute a command on the file after downloading and post-processing')
-    postproc.add_argument(
         '--write-thumbnail', dest='download_thumbnail',
-        action='store_true', default=get_default("download_thumbnail"),
+        action='store_true', default=config.download_thumbnail,
         help='Write thumbnail image to disk after downloading video file, default=%(default)s')
     postproc.add_argument(
         '--checksum',
-        action='store_true', default=get_default("checksum"),
+        action='store_true', default=config.checksum,
         help='calculate checksums for completed files MD5 and SHA256, default=%(default)s')
 
     # -------------------------------------------------------------------------------------Application Update Options---
@@ -243,7 +233,7 @@ def main():
     downloader = parser.add_argument_group(title='Downloader Options')
     downloader.add_argument(
         '-R', '--retries', dest='refresh_url_retries',
-        type=int, metavar='RETRIES', default=get_default("refresh_url_retries"),
+        type=int, metavar='RETRIES', default=config.refresh_url_retries,
         help='Number of retries to download a file, default=%(default)s.')
     downloader.add_argument(
         '-l', '--speed-limit', dest='speed_limit',
@@ -252,40 +242,43 @@ def main():
              f'current value={size_format(config.speed_limit)}/s.')
     downloader.add_argument(
         '--concurrent', dest='max_concurrent_downloads',
-        type=int, metavar='NUMBER', default=get_default("max_concurrent_downloads"),
+        type=int, metavar='NUMBER', default=config.max_concurrent_downloads,
         help='max concurrent downloads, default=%(default)s.')
     downloader.add_argument(
         '--connections', dest='max_connections',
-        type=int, metavar='NUMBER', default=get_default("max_connections"),
+        type=int, metavar='NUMBER', default=config.max_connections,
         help='max download connections per item, default=%(default)s.')
 
     # -------------------------------------------------------------------------------------Debugging options------------
     debug = parser.add_argument_group(title='Debugging Options')
     debug.add_argument(
-        '-V', '--verbose', dest='log_level',
-        type=int, metavar='NUMBER', default=get_default("log_level"),
-        help='Log verbosity level in GUI mode, 1 to 3, default=%(default)s.')
+        '-V', '--verbose', dest='verbose',
+        type=int, metavar='LEVEL', default=1,
+        help='verbosity level 1, 2, or 3, default=%(default)s.')
     debug.add_argument(
         '--keep-temp',
-        action='store_true', default=get_default("keep_temp"),
+        action='store_true', default=config.keep_temp,
         help='keep temp files for debugging, default=%(default)s.')
 
     # -------------------------------------------------------------------------------------GUI options------------------
     gui = parser.add_argument_group(title='GUI Options')
     gui.add_argument(
         '--theme', dest='current_theme',
-        type=str, metavar='THEME', default=get_default("current_theme"),
+        type=str, metavar='THEME', default=config.current_theme,
         help='theme name, e.g. "Dark", default=%(default)s.')
     gui.add_argument(
         '--monitor-clipboard', dest='monitor_clipboard',
-        action='store_true', default=get_default("monitor_clipboard"),
+        action='store_true', default=config.monitor_clipboard,
         help='monitor clipboard, and process any copied url, default=%(default)s.')
     gui.add_argument(
         '--window', dest='window_size',
-        type=int_iterable, metavar='(WIDTH,HIGHT)', default=get_default("window_size"),
+        type=int_iterable, metavar='(WIDTH,HIGHT)', default=config.window_size,
         help='window size, example: --window=(600,400) no space allowed, default=%(default)s.')
     # ------------------------------------------------------------------------------------------------------------------
     # endregion
+
+    guimode = True if len(sys.argv) == 1 or '--gui' in sys.argv else False
+    config_fp = os.path.join(config.sett_folder, 'setting.cfg')
 
     args = parser.parse_args()
     custom_settings = vars(args)
@@ -293,9 +286,14 @@ def main():
     if args.config:
         for key, value in custom_settings.items():
             print(f'{key}: {value}')
+        print('\nconfig file path:', config_fp)
         sys.exit(0)
 
-    # print('Arguments:', custom_settings)
+    if args.edit_config:
+        executable = args.edit_config
+        cmd = f'{executable} {config_fp}'
+        subprocess.run(cmd, shell=True)
+        sys.exit(0)
 
     if args.imports_only:
         import importlib, time
@@ -349,8 +347,6 @@ def main():
         if folder:
             custom_settings['folder'] = folder
 
-    guimode = True if len(sys.argv) == 1 or args.gui else False
-
     # set ignore_dlist argument to True in cmdline mode if not explicitly used
     if args.ignore_dlist is None and not guimode: 
         custom_settings['ignore_dlist'] = True
@@ -383,7 +379,6 @@ def main():
         controller = Controller(view_class=MainWindow, custom_settings=custom_settings)
         controller.run()
     else:
-        config.log_level = 1
         controller = Controller(view_class=CmdView, custom_settings=custom_settings)
 
         if args.update_self:

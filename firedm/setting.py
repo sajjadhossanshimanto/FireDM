@@ -179,7 +179,7 @@ def get_user_settings():
 
 def load_setting():
 
-    log('Load Application setting from', config.sett_folder)
+    # log('Load Application setting from', config.sett_folder)
     settings = get_user_settings()
 
     # update config module
