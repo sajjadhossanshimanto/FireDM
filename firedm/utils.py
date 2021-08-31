@@ -230,13 +230,13 @@ def get_headers(url, verbose=False, http_headers=None):
     return curl_headers
 
 
-def download(url, file_name=None, verbose=True, http_headers=None):
+def download(url, fp=None, verbose=True, http_headers=None):
     """
     simple file download, into bytesio buffer and store it on disk if file_name is given
 
     Args:
         url: string url/link
-        file_name: string type for file path
+        fp(str): output file path
         verbose: bool, log events if true
         http_headers: key, value dict for http headers to be sent to the server
 
@@ -270,9 +270,9 @@ def download(url, file_name=None, verbose=True, http_headers=None):
         # run libcurl
         c.perform()
 
-        if file_name:
+        if fp:
             # save file name
-            with open(file_name, 'wb') as file:
+            with open(fp, 'wb') as file:
                 # after PyCurl done writing download data into buffer the current "cursor" position is at end of buffer
                 # bring position back to start of the buffer
                 buffer.seek(0)
@@ -1188,6 +1188,6 @@ __all__ = [
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
     'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version',
-    'import_file', 'zip_extract', 'create_folder'
+    'import_file', 'zip_extract', 'create_folder', 'simpledownload'
 
 ]

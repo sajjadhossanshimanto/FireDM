@@ -247,7 +247,7 @@ def update_pkg(pkg, url):
 
         # download from pypi
         log(f'downloading {pkg} raw files')
-        buffer = download(url, file_name=z_fp)
+        buffer = download(url, fp=z_fp)
         if not buffer:
             log(f'failed to download {pkg}, abort update')
             return
