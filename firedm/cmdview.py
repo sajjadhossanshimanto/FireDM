@@ -90,6 +90,9 @@ class CmdView(IView):
         # in terminal view, it will be only one download takes place in a time
         # since there is no updates coming from d_list items, it is easier to identify the currently downloading item
         # by checking progress
+        if 0 < progress < 100 <= self.progress:
+            self.progress = progress
+
         if progress > 0 and self.progress < 100:
             # print progress bar on screen
 
@@ -104,7 +107,7 @@ class CmdView(IView):
             if progress >= 100:
                 print()  # print empty line
 
-            # ignore repeated updates after 100%
+            # to ignore repeated updates after 100%
             self.progress = progress
 
     def get_user_response(self, msg, options, **kwargs):
