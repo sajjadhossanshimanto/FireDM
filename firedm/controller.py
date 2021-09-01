@@ -53,7 +53,7 @@ def check_ffmpeg():
     """check for ffmpeg availability, first: current folder, second config.global_sett_folder,
     and finally: system wide"""
 
-    log('check ffmpeg availability?')
+    log('check ffmpeg availability?', log_level=2)
     found = False
 
     # search in current app directory then default setting folder
@@ -83,7 +83,7 @@ def check_ffmpeg():
             config.ffmpeg_actual_path = os.path.realpath(output)
 
     if found:
-        log('ffmpeg checked ok! - at: ', config.ffmpeg_actual_path)
+        log('ffmpeg checked ok! - at: ', config.ffmpeg_actual_path, log_level=2)
         return True
     else:
         log(f'can not find ffmpeg!!, install it, or add executable location to PATH, or copy executable to ',
@@ -440,7 +440,7 @@ class Controller:
 
     def _create_video_playlist(self, url, ytdloptions=None):
         """Process url and build video object(s) and return a video playlist"""
-        log('start create video playlist')
+        log('creating video playlist', log_level=2)
         playlist = []
 
         # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
@@ -1142,7 +1142,6 @@ class Controller:
         video_quality = kwargs.get('video_quality', None)
 
         if video_quality and d.type == MediaType.video:
-            print('video_quality=', video_quality)
             d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
 
         # download item
