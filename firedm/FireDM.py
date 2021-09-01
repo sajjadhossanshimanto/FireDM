@@ -101,7 +101,7 @@ def main():
         help='show current application settings and their current values and exit')
     general.add_argument(
         '--edit-config', dest='edit_config',
-        type=str, metavar='EDITOR', default='nano',  # default if argument not used
+        type=str, metavar='EDITOR', default=None,  # default if argument not used
         action='store', nargs='?', const='nano',  # const if use argument without value
         help='Edit config file, you should specify your text editor executable, otherwise "%(default)s" will be used')
     general.add_argument(
@@ -329,10 +329,6 @@ def main():
 
     if args.proxy:
         custom_settings['enable_proxy'] = True
-
-    if args.download_folder:
-        folder = os.path.realpath(args.download_folder)
-        custom_settings['folder'] = args.download_folder = folder
 
     if args.output:
         fp = os.path.realpath(args.output)
