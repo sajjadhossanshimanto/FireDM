@@ -79,7 +79,7 @@ def main():
         add_help=False
     )
 
-    parser.add_argument('url', type=str, nargs='?',
+    parser.add_argument('url', nargs='*',  # list of urls or empty list
                         help="""url / link of the file you want to download, 
                         url must be quoted by a single or double quotation 
                         example: "www.linktomyfile" to avoid shell capturing special characters
@@ -381,10 +381,7 @@ def main():
             controller.check_for_update(wait=True, threaded=False)
             sys.exit(0)
 
-        urls = []
-        url = custom_settings.pop('url')
-        if url:
-            urls.append(url)
+        urls = custom_settings.pop('url')  # list of urls or empty list
 
         if args.batch_file:
             text = args.batch_file.read()
