@@ -2673,9 +2673,26 @@ class BatchWindow(tk.Toplevel):
 
         self.create_widgets()
 
+    def load_batch_file(self):
+        fp = filechooser()
+        try:
+            with open(fp) as f:
+                text = f.read()
+                urls = parse_urls(text)
+                for url in urls:
+                    self.add_url(url)
+        except:
+            pass
+
     def create_widgets(self):
         main_frame = tk.Frame(self, bg=MAIN_BG)
-        tk.Label(main_frame, text='Enter Links below:', bg=MAIN_BG, fg=MAIN_FG).pack(anchor='w', padx=5, pady=5)
+        f = tk.Frame(main_frame, bg=MAIN_BG)
+        tk.Label(f, text='Enter Links below or import urls from a file', bg=MAIN_BG,
+                 fg=MAIN_FG).pack(side='left', anchor='w', padx=5, pady=5)
+        Button(f, image=imgs['folder_icon'], command=self.load_batch_file,
+               tooltip='load batch file').pack(side='left', padx=5)
+        f.pack(anchor='w')
+
         self.urls_text = atk.ScrolledText(main_frame, height=4, width=10, sbar_bg=SBAR_BG, sbar_fg=SBAR_FG, bg=MAIN_BG,
                                           fg=MAIN_FG, insertbackground=MAIN_FG)
         self.urls_text.pack(expand=True, fill='both')
@@ -2723,7 +2740,7 @@ class BatchWindow(tk.Toplevel):
         self.close()
 
     def add_url(self, url):
-        self.append( '\n' + url)
+        self.append('\n' + url)
 
     def get(self):
         return self.urls_text.get("1.0", tk.END)
