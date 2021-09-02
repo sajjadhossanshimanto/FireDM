@@ -683,17 +683,27 @@ def translate_server_code(code):
     return server_codes.get(code, ' ')[0]
 
 
-def open_file(file, silent=False):
+def open_file(fp, silent=False):
+    """open file with default application, e.g. video files will be played by default video player
+    Args:
+        fp(str): file path
+        silent(bool): if True, ignore subprocess output
+    """
     try:
+        # file should have non-zero size
+        size = os.path.getsize(fp)
+        if not size:
+            return
+
         if config.operating_system == 'Windows':
-            os.startfile(file)
+            os.startfile(fp)
             return
 
         if config.operating_system == 'Linux':
-            cmd = f'xdg-open "{file}"'
+            cmd = f'xdg-open "{fp}"'
 
         elif config.operating_system == 'Darwin':
-            cmd = f'open "{file}"'
+            cmd = f'open "{fp}"'
 
         # run command
         if silent:
