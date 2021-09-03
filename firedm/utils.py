@@ -10,6 +10,7 @@ import base64
 import datetime
 import hashlib
 import importlib
+import sys
 import os
 import io
 import webbrowser
@@ -29,6 +30,7 @@ from PIL import Image
 import urllib.request
 from urllib.parse import urlparse
 
+__package__ = 'firedm'
 from . import config
 
 
@@ -779,7 +781,16 @@ def save_json(file=None, data=None):
 
 def natural_sort(my_list):
     """ Sort the given list in the way that humans expect.
-    source: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/	"""
+    source: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
+
+    Example:
+        >>> natural_sort(['c2', 'c10', 'c1'])
+        ['c1', 'c2', 'c10']
+
+        # in other hand sorted will give wrong order
+        >>> sorted(['c2', 'c10', 'c1'])
+        ['c1', 'c10', 'c2']
+    """
     convert = lambda text: int(text) if text.isdigit() else text
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(my_list, key=alphanum_key)
@@ -849,7 +860,23 @@ def image_to_base64(img):
 
 def parse_bytes(bytestr):
     """Parse a string indicating a byte quantity into an integer., example format: 536.71KiB, 31.5 mb, etc...
-    modified from original source at youtube-dl.common"""
+    modified from original source at youtube-dl.common
+
+    Args:
+        bytestr(str): byte quantity, e.g. 5 mb, 30k, etc..., unit will be calculated based on the first letter in
+        the string, the following letters are ignored, also spaces are stripped
+
+    Return:
+        (int): bytes
+
+    Example:
+        >>> parse_bytes('30k')
+        30720
+        >>> parse_bytes('5 mb')
+        5242880
+        >>> parse_bytes('3 giga bytessss')
+        3221225472
+    """
 
     try:
         # if input value is int return it as it is
@@ -863,15 +890,55 @@ def parse_bytes(bytestr):
         if matchobj is None:
             return 0
         number = float(matchobj.group(1))
-        unit = matchobj.group(2).lower()[0:1] if  matchobj.group(2) else ''
+        unit = matchobj.group(2).lower()[0:1] if matchobj.group(2) else ''
         multiplier = 1024.0 ** 'bkmgtpezy'.index(unit)
         return int(round(number * multiplier))
     except:
         return 0
 
 
-def is_pkg_exist(pkg):
-    if importlib.util.find_spec(pkg) is not None:
+def format_bytes(bytesint, tail=''):
+    """
+    format bytes integer into string with proper unit
+
+    Args:
+        bytesint(int): bytes quantity
+        tail(str): optional suffix
+
+    Return:
+        (str): representation of bytes with a proper unit
+
+    Example:
+        >>> format_bytes(1500)
+        '1.46 KB'
+    """
+
+    try:
+        # Byte, Kilobyte, Megabyte, Gigabyte, Terabyte, Petabyte, Exabyte, Zettabyte, Yottabyte
+        units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+        for i in range(len(units)):
+            threshold = 1024**(i+1)
+            if bytesint < threshold:
+                unit = units[i]
+                return f'{round(bytesint/(1024**i), 2)} {unit}{tail}'
+    except:
+        return bytesint
+
+
+def is_pkg_exist(pkg_name):
+    """
+    return True if pkg exist in sys.path and can be imported
+
+    Args:
+        pkg_name(str): package name, spaces will be stripped
+
+    >>> is_pkg_exist('   firedm  ')
+    True
+    >>> is_pkg_exist('blahx123456789x')
+    False
+    """
+    pkg_name = pkg_name.strip()
+    if importlib.util.find_spec(pkg_name) is not None:
         return True
     else:
         return False
@@ -879,7 +946,7 @@ def is_pkg_exist(pkg):
 
 def auto_rename(file_name, forbidden_names):
     """
-    rename file to avoid clash with existing file name
+    rename file to avoid clash with existing file names
 
     Args:
         file_name(str): file name without path
@@ -887,6 +954,10 @@ def auto_rename(file_name, forbidden_names):
 
     Return:
         new name or None
+
+    Example:
+        >>> auto_rename('video.mp4', ('video.mp4', 'video_2.mp4'))
+        'video_3.mp4'
     """
 
     name, ext = os.path.splitext(file_name)
@@ -898,13 +969,19 @@ def auto_rename(file_name, forbidden_names):
 
 
 def calc_md5(fp=None, buffer=None):
-    """calculate md5 hash
+    """
+    calculate md5 hash
         Args:
             fp (str): file path
             buffer (io.buffer): file like object
 
         Return:
             (str): MD5 hexadecimal string
+
+        Example:
+            >>> buf = io.BytesIO(b'hello world!')
+            >>> calc_md5(buffer=buf)
+            'fc3ff98e8c6a0d3087d515c0473f8677'
     """
     try:
         if fp:
@@ -938,6 +1015,11 @@ def calc_sha256(fp=None, buffer=None):
 
     Return:
         (str): sha26 hexadecimal string
+
+    Example:
+        >>> buf = io.BytesIO(b'hello world!')
+        >>> calc_sha256(buffer=buf)
+        '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9'
     """
     try:
         if fp:
@@ -971,6 +1053,11 @@ def calc_md5_sha256(fp=None, buffer=None):
 
     Return:
         (str, str): 2-tuple of MD5, SHA256 hexadecimal string
+
+    Example:
+        >>> buf = io.BytesIO(b'hello world!')
+        >>> calc_md5_sha256(buffer=buf)
+        ('fc3ff98e8c6a0d3087d515c0473f8677', '7509e5bda0c762d2bac7f90d758b5b2263fa01ccbc542ab5e3df163be08e6ca9')
     """
     try:
         if fp:
@@ -992,7 +1079,7 @@ def calc_md5_sha256(fp=None, buffer=None):
         if fp:
             buffer.close()
 
-        return md5_hash.hexdigest().upper(), sha256_hash.hexdigest().upper()
+        return md5_hash.hexdigest(), sha256_hash.hexdigest()
 
     except Exception as e:
         return f'calc_md5_sha256()> error, {str(e)}'
@@ -1003,10 +1090,23 @@ def get_range_list(file_size):
     return a list of ranges to improve watch while downloading feature
     
     Args:
-        file_size: file size in bytes
+        file_size(int): file size in bytes
 
     Return:
         list of ranges i.e. [[0, 100], [101, 2000], ... ]
+
+    Example:
+        >>> get_range_list(1000000)
+        [[0, 999999]]
+        >>> get_range_list(3000000)
+        [[0, 149999], [150000, 449999], [450000, 899999], [900000, 1499999], [1500000, 2999999]]
+        >>> get_range_list(0)
+        [None]
+        >>> get_range_list('xxxxx')
+        Traceback (most recent call last):
+                ...
+        TypeError: '<' not supported between instances of 'str' and 'float'
+
     """
 
     if file_size == 0:
@@ -1068,8 +1168,8 @@ def generate_unique_name(*args, prefix='', suffix=''):
         suffix (str): concatenated at the end of hashed value
 
     Example:
-        generate_unique_name('duck can quack', 'cat', prefix='uid')
-        >>  uid159e7e2ca7a89ee77348f97b4660e56e
+        >>> generate_unique_name('duck can quack', 'cat', prefix='uid')
+        'uid159e7e2ca7a89ee77348f97b4660e56e'
 
     """
 
@@ -1098,7 +1198,12 @@ def open_webpage(url):
 
 
 def parse_urls(text):
-    """parse urls in a text, every url in a separate line, empty lines and lines start with # will be ignored"""
+    """parse urls in a text, every url in a separate line, empty lines and lines start with # will be ignored
+
+    Example:
+        >>> parse_urls('url1 \\n url2  \\n # comment \\n url3 \\n url2')
+        ['url1', 'url2', 'url3']
+    """
     urls = []
     for line in text.splitlines():
         line = line.strip()
@@ -1211,7 +1316,14 @@ __all__ = [
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version',
+    'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version', 'format_bytes',
     'import_file', 'zip_extract', 'create_folder', 'simpledownload'
 
 ]
+
+
+if __name__ == '__main__':
+    print('Run doctest ...')
+    import doctest
+    doctest.testmod(verbose=False)
+    print('done ...')
