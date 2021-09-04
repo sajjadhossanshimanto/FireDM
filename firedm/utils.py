@@ -813,25 +813,38 @@ def image_to_base64(img):
     return base64.b64encode(buffer.getvalue())
 
 
-def time_format(t, tail=''):
+def format_seconds(t, tail='', sep=' ', percision=1, fullunit=False):
+    """
+        format seconds integer into string with proper time unit
+
+        Args:
+            t(int): seconds quantity
+            tail(str): optional suffix
+            sep(str): separator between number and unit, default is one space
+            percision(int): number of digits after decimal point
+            fullunit(bool): if True, use full unit name, e.g. "month" instead of "m"
+
+        Return:
+            (str): representation of seconds with a proper unit
+
+        Example:
+            >>> format_seconds(90)
+            '1.5 m'
+        """
     if t == -1:
-        return '...'
+        return ''
 
     try:
-        if t <= 60:
-            s = f'{round(t)} seconds'
-        elif 60 < t <= 3600:
-            s = f'{round(t / 60)} minutes'
-        elif 3600 < t <= 86400:
-            s = f'{round(t / 3600, 1)} hours'
-        elif 86400 < t <= 2592000:
-            s = f'{round(t / 86400, 1)} days'
-        elif 2592000 < t <= 31536000:
-            s = f'{round(t / 2592000, 1)} months'
-        else:
-            s = f'{round(t / 31536000, 1)} years'
-
-        return f'{s}{tail}'
+        units = ['second', 'minute', 'hour', 'day', 'month', 'year'] if fullunit else ['s', 'm', 'h', 'D', 'M', 'Y']
+        thresholds = [1, 60, 3600, 86400, 2592000, 31536000]
+        for i in range(len(units)):
+            threshold = thresholds[i + 1] if i < len(units) - 1 else t + 1
+            if t < threshold:
+                unit = units[i]
+                num = round(t / thresholds[i], percision)
+                # remove zeros after decimal point
+                num = int(num) if num % 1 == 0 else num
+                return f'{num}{sep}{unit}{tail}'
     except:
         return t
 
@@ -897,7 +910,7 @@ def format_bytes(bytesint, tail='', sep=' ', percision=2):
         # Byte, Kilobyte, Megabyte, Gigabyte, Terabyte, Petabyte, Exabyte, Zettabyte, Yottabyte
         units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
         for i in range(len(units)):
-            threshold = 1024**(i+1)
+            threshold = 1024**(i+1) if i < len(units) - 1 else bytesint + 1
             if bytesint < threshold:
                 unit = units[i]
                 num = round(bytesint/(1024**i), percision)
@@ -1294,7 +1307,7 @@ def create_folder(folder_path):
 
 
 __all__ = [
-    'notify', 'get_headers', 'download', 'format_bytes', 'time_format', 'log', 'validate_file_name', 'delete_folder',
+    'notify', 'get_headers', 'download', 'format_bytes', 'format_seconds', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',

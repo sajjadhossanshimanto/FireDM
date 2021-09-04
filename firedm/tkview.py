@@ -1687,7 +1687,7 @@ class DItem(tk.Frame):
                 self.speed = f'- Speed: {format_bytes(speed)}/s' if speed > 0 else ''
 
             if time_left is not None:
-                self.eta = f'- ETA: {time_format(time_left)}' if time_left > 0 else ''
+                self.eta = f'- ETA: {format_seconds(time_left, fullunit=True)}' if time_left > 0 else ''
 
             if progress is not None:
                 try:
