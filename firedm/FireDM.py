@@ -34,7 +34,7 @@ from . import config, setting
 from .controller import Controller
 from .tkview import MainWindow
 from .cmdview import CmdView
-from .utils import parse_urls, parse_bytes, size_format
+from .utils import parse_urls, parse_bytes, format_bytes
 from .setting import load_setting
 from .version import __version__
 
@@ -239,7 +239,7 @@ def main():
         '-l', '--speed-limit', dest='speed_limit',
         type=speed, metavar='LIMIT', default=config.speed_limit,
         help=f'download speed limit, in bytes per second (e.g. 100K or 5M), zero means no limit, '
-             f'current value={size_format(config.speed_limit)}/s.')
+             f'current value={format_bytes(config.speed_limit)}.')
     downloader.add_argument(
         '--concurrent', dest='max_concurrent_downloads',
         type=int, metavar='NUMBER', default=config.max_concurrent_downloads,

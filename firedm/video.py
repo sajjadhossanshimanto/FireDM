@@ -15,7 +15,7 @@ import importlib
 
 from . import config
 from .downloaditem import DownloadItem, Segment
-from .utils import (log, validate_file_name, get_headers, size_format, run_command, delete_file, download, rename_file,
+from .utils import (log, validate_file_name, get_headers, format_bytes, run_command, delete_file, download, rename_file,
                     run_thread, import_file)
 
 
@@ -486,7 +486,7 @@ class Stream:
     @property
     def name(self):
         fps = f' - {self.fps} fps' if self.fps else ''
-        return self.raw_name + f' - {size_format(self.size)} - id:{self.format_id}{fps}'  # ¤ »
+        return self.raw_name + f' - {format_bytes(self.size)} - id:{self.format_id}{fps}'  # ¤ »
 
     @property
     def raw_name(self):

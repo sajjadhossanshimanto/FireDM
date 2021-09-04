@@ -16,7 +16,7 @@ import time
 import pycurl
 
 from .config import Status, error_q, jobs_q, max_seg_retries
-from .utils import log, set_curl_options, size_format, translate_server_code
+from .utils import log, set_curl_options, format_bytes, translate_server_code
 
 
 class Worker:
@@ -66,7 +66,7 @@ class Worker:
         self.minimum_speed = minimum_speed
         self.timeout = timeout
 
-        msg = f'Seg {self.seg.basename} start, size: {size_format(self.seg.size)} - range: {self.seg.range}'
+        msg = f'Seg {self.seg.basename} start, size: {format_bytes(self.seg.size)} - range: {self.seg.range}'
         if self.speed_limit:
             msg += f'- SL= {self.speed_limit}'
         if self.minimum_speed:
@@ -122,7 +122,7 @@ class Worker:
         # Case-2: over-sized, in case the server sent extra bytes from last session by mistake, truncate file
         elif self.seg.current_size > self.seg.size:
             log('Seg', self.seg.basename, 'over-sized', self.seg.current_size, 'will be truncated to:',
-                size_format(self.seg.size), ' - worker', self.tag, log_level=3)
+                format_bytes(self.seg.size), ' - worker', self.tag, log_level=3)
 
             self.seg.downloaded = True
             self.report_download(- (self.seg.current_size - self.seg.size))
@@ -140,7 +140,7 @@ class Worker:
 
             # report
             log('Seg', self.seg.basename, 'resuming, new range:', self.resume_range,
-                'current segment size:', size_format(self.seg.current_size), ' - worker', self.tag, log_level=3)
+                'current segment size:', format_bytes(self.seg.current_size), ' - worker', self.tag, log_level=3)
 
         # case-x: overwrite
         else:
@@ -171,8 +171,8 @@ class Worker:
             return False
 
     def report_not_completed(self):
-        log('Seg', self.seg.basename, 'did not complete', '- done', size_format(self.seg.current_size), '- target size:',
-            size_format(self.seg.size), '- left:', size_format(self.seg.size - self.seg.current_size), '- worker', self.tag, log_level=3)
+        log('Seg', self.seg.basename, 'did not complete', '- done', format_bytes(self.seg.current_size), '- target size:',
+            format_bytes(self.seg.size), '- left:', format_bytes(self.seg.size - self.seg.current_size), '- worker', self.tag, log_level=3)
 
     def report_completed(self):
         # self.debug('worker', self.tag, 'completed', self.seg.name)
@@ -183,7 +183,7 @@ class Worker:
             self.seg.size = self.seg.current_size
         # print(self.headers)
 
-        log('downloaded segment: ',  self.seg.basename, self.seg.range, size_format(self.seg.size), '- worker', self.tag, log_level=2)
+        log('downloaded segment: ', self.seg.basename, self.seg.range, format_bytes(self.seg.size), '- worker', self.tag, log_level=2)
 
     def set_options(self):
 

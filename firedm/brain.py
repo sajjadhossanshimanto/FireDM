@@ -16,7 +16,7 @@ from .video import merge_video_audio, pre_process_hls, post_process_hls, \
     convert_audio, download_subtitles, write_metadata
 from . import config
 from .config import Status, APP_NAME
-from .utils import (log, size_format, notify, delete_file, rename_file, calc_md5_sha256, run_command)
+from .utils import (log, format_bytes, notify, delete_file, rename_file, calc_md5_sha256, run_command)
 from .worker import Worker
 from .downloaditem import Segment
 
@@ -41,7 +41,7 @@ def brain(d=None):
 
     log('\n')
     log('-' * 50)
-    log(f'start downloading file: "{d.name}", size: {size_format(d.total_size)}, to: {d.folder}')
+    log(f'start downloading file: "{d.name}", size: {format_bytes(d.total_size)}, to: {d.folder}')
     log(f'url: "{d.url}" \n')
 
     # hls / m3u8 protocols
@@ -473,7 +473,7 @@ def thread_manager(d, q):
                         # add to segments
                         d.segments.append(seg)
                         log('-' * 10, f'new segment: {seg.basename} {seg.range}, updated seg {current_seg.basename} '
-                                      f'{current_seg.range}, minimum seg size:{size_format(min_seg_size)}', log_level=3)
+                                      f'{current_seg.range}, minimum seg size:{format_bytes(min_seg_size)}', log_level=3)
 
                 if seg and not seg.downloaded and not seg.locked:
                     worker = free_workers.pop()

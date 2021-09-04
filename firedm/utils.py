@@ -334,13 +334,13 @@ def simpledownload(url, fp=None, return_data=True, overwrite=False):
             elapsed_time = time.time() - start
 
             if elapsed_time:
-                speed = size_format(round(len(chunk) / elapsed_time, 1), tail='/s')
+                speed = format_bytes(round(len(chunk) / elapsed_time, 1), tail='/s')
             else:
                 speed = ''
             percent = done * 100 // size if size else 0
             bar_length = percent//10
             progress_bar = f'[{"="*bar_length}{" "*(10-bar_length)}]'
-            progress = f'{progress_bar} {size_format(done)} of {size_format(size)} - {speed}' \
+            progress = f'{progress_bar} {format_bytes(done)} of {format_bytes(size)} - {speed}' \
                        f' - {percent}%' if percent else ''
             print(f'\r{progress}            ', end='')
         else:
@@ -357,51 +357,6 @@ def simpledownload(url, fp=None, return_data=True, overwrite=False):
         return data
     else:
         return True
-
-
-def size_format(size, tail=''):
-    # 1 kb = 1024 byte, 1MB = 1024 KB, 1GB = 1024 MB
-    # 1 MB = 1024 * 1024 = 1_048_576 bytes
-    # 1 GB = 1024 * 1024 * 1024 = 1_073_741_824 bytes
-
-    try:
-        if size == 0: return '...'
-        """take size in num of byte and return representation string"""
-        if size < 1024:  # less than KB
-            s = f'{round(size)} bytes'
-
-        elif 1_048_576 > size >= 1024:  # more than or equal 1 KB and less than MB
-            s = f'{round(size / 1024)} KB'
-        elif 1_073_741_824 > size >= 1_048_576:  # MB
-            s = f'{round(size / 1_048_576, 1)} MB'
-        else:  # GB
-            s = f'{round(size / 1_073_741_824, 2)} GB'
-        return f'{s}{tail}'
-    except:
-        return size
-
-
-def time_format(t, tail=''):
-    if t == -1:
-        return '...'
-
-    try:
-        if t <= 60:
-            s = f'{round(t)} seconds'
-        elif 60 < t <= 3600:
-            s = f'{round(t / 60)} minutes'
-        elif 3600 < t <= 86400:
-            s = f'{round(t / 3600, 1)} hours'
-        elif 86400 < t <= 2592000:
-            s = f'{round(t / 86400, 1)} days'
-        elif 2592000 < t <= 31536000:
-            s = f'{round(t / 2592000, 1)} months'
-        else:
-            s = f'{round(t / 31536000, 1)} years'
-
-        return f'{s}{tail}'
-    except:
-        return t
 
 
 def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **kwargs):
@@ -858,6 +813,29 @@ def image_to_base64(img):
     return base64.b64encode(buffer.getvalue())
 
 
+def time_format(t, tail=''):
+    if t == -1:
+        return '...'
+
+    try:
+        if t <= 60:
+            s = f'{round(t)} seconds'
+        elif 60 < t <= 3600:
+            s = f'{round(t / 60)} minutes'
+        elif 3600 < t <= 86400:
+            s = f'{round(t / 3600, 1)} hours'
+        elif 86400 < t <= 2592000:
+            s = f'{round(t / 86400, 1)} days'
+        elif 2592000 < t <= 31536000:
+            s = f'{round(t / 2592000, 1)} months'
+        else:
+            s = f'{round(t / 31536000, 1)} years'
+
+        return f'{s}{tail}'
+    except:
+        return t
+
+
 def parse_bytes(bytestr):
     """Parse a string indicating a byte quantity into an integer., example format: 536.71KiB, 31.5 mb, etc...
     modified from original source at youtube-dl.common
@@ -897,13 +875,15 @@ def parse_bytes(bytestr):
         return 0
 
 
-def format_bytes(bytesint, tail=''):
+def format_bytes(bytesint, tail='', sep=' ', percision=2):
     """
     format bytes integer into string with proper unit
 
     Args:
         bytesint(int): bytes quantity
         tail(str): optional suffix
+        sep(str): separator between number and unit, default is one space
+        percision(int): number of digits after decimal point
 
     Return:
         (str): representation of bytes with a proper unit
@@ -920,7 +900,10 @@ def format_bytes(bytesint, tail=''):
             threshold = 1024**(i+1)
             if bytesint < threshold:
                 unit = units[i]
-                return f'{round(bytesint/(1024**i), 2)} {unit}{tail}'
+                num = round(bytesint/(1024**i), percision)
+                # remove zeros after decimal point
+                num = int(num) if num % 1 == 0 else num
+                return f'{num}{sep}{unit}{tail}'
     except:
         return bytesint
 
@@ -1311,12 +1294,12 @@ def create_folder(folder_path):
 
 
 __all__ = [
-    'notify', 'get_headers', 'download', 'size_format', 'time_format', 'log', 'validate_file_name', 'delete_folder',
+    'notify', 'get_headers', 'download', 'format_bytes', 'time_format', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
     'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version', 'format_bytes',
+    'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version',
     'import_file', 'zip_extract', 'create_folder', 'simpledownload'
 
 ]

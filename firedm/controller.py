@@ -1512,7 +1512,7 @@ class Controller:
                f'Name: {d.rendered_name} \n' \
                f'Folder: {d.folder} \n' \
                f'Progress: {d.progress}% \n' \
-               f'Downloaded: {size_format(d.downloaded)} of {size_format(d.total_size)} \n' \
+               f'Downloaded: {format_bytes(d.downloaded)} of {format_bytes(d.total_size)} \n' \
                f'Status: {d.status} \n' \
                f'Resumable: {d.resumable} \n' \
                f'Type: {d.type}, {", ".join(d.subtype_list)}\n' \
@@ -1700,7 +1700,7 @@ class Controller:
                 audio = self.get_user_response(msg, options)
                 d.select_audio(audio)
 
-        msg = f'Item: {d.name} with size {size_format(d.total_size)}\n'
+        msg = f'Item: {d.name} with size {format_bytes(d.total_size)}\n'
         if d.type == 'video':
             msg += f'selected video stream: {d.selected_stream}\n'
             msg += f'selected audio stream: {d.audio_stream}\n'

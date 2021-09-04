@@ -1342,7 +1342,7 @@ class FileProperties(ttk.Frame):
         if folder:
             self.folder = folder
         if size is not None:
-            self.size.set(f'{size_format(size) if size > 0 else "unknown"}')
+            self.size.set(f'{format_bytes(size) if size > 0 else "unknown"}')
         if type_:
             self.type.set(type_)
         if subtype_list:
@@ -1678,13 +1678,13 @@ class DItem(tk.Frame):
                 self.name_lbl.config(text=self.name)
 
             if downloaded is not None:
-                self.size = size_format(downloaded)
+                self.size = format_bytes(downloaded)
 
             if total_size is not None:
-                self.total_size = size_format(total_size)
+                self.total_size = format_bytes(total_size)
 
             if speed is not None:
-                self.speed = f'- Speed: {size_format(speed)}/s' if speed > 0 else ''
+                self.speed = f'- Speed: {format_bytes(speed)}/s' if speed > 0 else ''
 
             if time_left is not None:
                 self.eta = f'- ETA: {time_format(time_left)}' if time_left > 0 else ''
@@ -2438,7 +2438,7 @@ class PlaylistWindow(tk.Toplevel):
             return size
 
         total_size = sum([get_size(video_idx) for video_idx in self.selected_videos])
-        self.total_size.set(f'Total Size ≈ {size_format(total_size)}')
+        self.total_size.set(f'Total Size ≈ {format_bytes(total_size)}')
 
 
 class SubtitleWindow(tk.Toplevel):
@@ -3537,7 +3537,7 @@ class MainWindow(IView):
         # speed limit
         speed_frame = tk.Frame(tab, bg=bg)
         CheckEntryOption(speed_frame, 'Speed Limit (kb/s, mb/s. gb/s): ', entry_key='speed_limit', width=8,
-                         set_text_validator=lambda x: size_format(x), callback=self.show_speed_limit,
+                         set_text_validator=lambda x: format_bytes(x), callback=self.show_speed_limit,
                          get_text_validator=lambda x: self.validate_speed_limit(x),
                          entry_disabled_value=0).pack(side='left')
         self.speed_limit_label = tk.Label(speed_frame, bg=bg, fg=fg)
@@ -3695,7 +3695,7 @@ class MainWindow(IView):
     def show_speed_limit(self):
         """display current speed limit in settings tab"""
         sl = get_option('speed_limit', 0)
-        text = size_format(sl) if sl else '.. No Limit!'
+        text = format_bytes(sl) if sl else '.. No Limit!'
         self.speed_limit_label.config(text=f'current value: {text}')
 
     def remember_window_size(self, *args):
@@ -4181,7 +4181,7 @@ class MainWindow(IView):
 
         # total speed
         elif command == 'total_speed':
-            ts = size_format(kwargs.get('total_speed'), tail='/s')
+            ts = format_bytes(kwargs.get('total_speed'), tail='/s')
             self.total_speed.set(ts)
 
     # endregion

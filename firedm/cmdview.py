@@ -96,10 +96,10 @@ class CmdView(IView):
         if progress > 0 and self.progress < 100:
             # print progress bar on screen
 
-            suffix = f'{size_format(downloaded)}'
+            suffix = f'{format_bytes(downloaded)}'
             if self.total_size:
-                suffix += f'/{size_format(self.total_size)}:'
-            suffix += f" {size_format(speed, tail='/s')}" if speed else ''
+                suffix += f'/{format_bytes(self.total_size)}:'
+            suffix += f" {format_bytes(speed, tail='/s')}" if speed else ''
             suffix += f', {time_format(eta)}'
 
             print_progress_bar(progress, suffix=suffix, fill='=')
