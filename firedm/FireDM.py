@@ -61,8 +61,7 @@ def main():
         return parse_bytes(txt)
 
     # region cmdline arguments
-    # Since this application is based on youtube-dl as a video extractor
-    # it is recommended to use arguments names same to youtube-dl, refer to:
+    # some args' names are taken from youtube-dl, reference:
     # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/options.py
 
     parser = argparse.ArgumentParser(
@@ -72,18 +71,17 @@ def main():
                'Author: Mahmoud Elshahat, '
                'Isuues: https://github.com/firedm/FireDM/issues',
         usage='\n'
-              '%(prog)s [OPTIONS] URL \n'
-              'example: %(prog)s "https://somesite.com/somevideo"\n'
+              '%(prog)s [OPTIONS] URL1 URL2 URL3 \n'
+              'example: %(prog)s "https://somesite.com/somevideo" "https://somesite.com/anothervideo"\n'
               'Note: to run %(prog)s in GUI(Graphical User Interface) mode, use "--gui" option along with other '
               'arguments, or start %(prog)s without any arguments.',
         add_help=False
     )
 
     parser.add_argument('url', nargs='*',  # list of urls or empty list
-                        help="""url / link of the file you want to download, 
-                        url must be quoted by a single or double quotation 
-                        example: "www.linktomyfile" to avoid shell capturing special characters
-                        which might be found in the url e.g. "&" """)
+                        help="""url / link of the file you want to download or multiple urls, if url contains special 
+                        shell characters e.g. "&", it must be quoted by a single or double quotation to avoid shell 
+                        error""")
 
     # ------------------------------------------------------------------------------------General options---------------
     general = parser.add_argument_group(title='General options')
