@@ -158,7 +158,7 @@ class Controller:
     # region process url
     def auto_refresh_url(self, d):
         """refresh an expired url"""
-        log('auto refresh url for:', d.rendered_name)
+        log('auto refresh url for:', d.name)
         url = d.url
         name = d.name
         folder = d.folder
@@ -263,7 +263,7 @@ class Controller:
 
             if is_video_playlist:
                 log('controller> playlist ready')
-                self._update_playlist_menu([str(i + 1) + '- ' + video.rendered_name for i, video in enumerate(self.playlist)])
+                self._update_playlist_menu([str(i + 1) + '- ' + vid.name for i, vid in enumerate(self.playlist)])
             else:
                 self._update_playlist_menu([])
 
@@ -1509,7 +1509,7 @@ class Controller:
 
         # General properties
         text = f'UID: {d.uid} \n' \
-               f'Name: {d.rendered_name} \n' \
+               f'Name: {d.name} \n' \
                f'Folder: {d.folder} \n' \
                f'Progress: {d.progress}% \n' \
                f'Downloaded: {format_bytes(d.downloaded)} of {format_bytes(d.total_size)} \n' \
@@ -1766,7 +1766,7 @@ class Controller:
         d = self.get_d(uid=uid)
         if d.shutdown_pc:
             d.shutdown_pc = False
-            log('shutdown schedule cancelled for:', d.rendered_name)
+            log('shutdown schedule cancelled for:', d.name)
 
     def toggle_shutdown(self, uid):
         """set shutdown flag on/off"""

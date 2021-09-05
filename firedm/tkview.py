@@ -1319,13 +1319,12 @@ class FileProperties(ttk.Frame):
 
     def update(self, **kwargs):
         """update widget's variable
-        example arguments: {'rendered_name': 'The search for new planets.mp4', 'folder': '/home/downloads',
+        example arguments: {'name': 'The search for new planets.mp4', 'folder': '/home/downloads',
         'type': 'video', 'subtype_list': ['dash', 'fragmented'], 'resumable': True, 'total_size': 100000}
 
         """
         title = kwargs.get('title', None)
         extension = kwargs.get('extension', None)
-        rendered_name = kwargs.get('rendered_name', None)
         size = kwargs.get('total_size', None)
         folder = kwargs.get('folder', None)
         type_ = kwargs.get('type', '')
@@ -1664,7 +1663,7 @@ class DItem(tk.Frame):
         # a led like blinking button, to react with data flow
         self.toggle_blinker()
 
-    def update(self, rendered_name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
+    def update(self, name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
                on_completion_command=None, video_progress=None, audio_progress=None, merge_progress=None,
@@ -1673,8 +1672,8 @@ class DItem(tk.Frame):
         # print(locals())
         try:
 
-            if rendered_name:
-                self.name = rendered_name
+            if name:
+                self.name = name
                 self.name_lbl.config(text=self.name)
 
             if downloaded is not None:

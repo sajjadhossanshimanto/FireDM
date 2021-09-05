@@ -15,10 +15,9 @@ import time
 from collections import deque
 from threading import Lock
 from urllib.parse import urljoin
-import awesometkinter as atk
 
 from .utils import (validate_file_name, get_headers, translate_server_code, log, delete_file, delete_folder, save_json,
-                    load_json, get_range_list, render_text)
+                    load_json, get_range_list)
 from . import config
 from .config import MediaType
 
@@ -391,22 +390,6 @@ class DownloadItem:
         self._name = validate_file_name(new_value)
 
         self.title, self.extension = os.path.splitext(self._name)
-
-    @property
-    def rendered_name(self):
-        name = self.name
-        # fix tkinter bad arabic language display in linux
-        if config.operating_system == 'Linux':
-            try:
-                if not self.title:
-                    self.title, self.extension = os.path.splitext(self.name)
-
-                name = render_text(self.title)
-                name += self.extension
-            except:
-                pass
-
-        return name
 
     @property
     def temp_folder(self):
