@@ -43,6 +43,19 @@ from .systray import SysTray
 from .about import about_notes
 from .themes import *
 
+# ignore bidi support on non-Linux operating systems
+add_bidi_support = lambda widget, *args, **kwargs: widget
+render_text = lambda text, *args, **kwargs: text
+derender_text = lambda text, *args, **kwargs: text
+
+# bidi support on linux
+if config.operating_system == 'Linux':
+    try:
+        from awesometkinter.bidirender import add_bidi_support, render_text, derender_text
+    except Exception as e:
+        print('Bidi support error:', e)
+
+
 config.atk_version = atk_version
 gui_font = None
 
@@ -564,7 +577,11 @@ class Popup(tk.Toplevel):
 
         """
         self.parent = parent
-        self.msg = '\n'.join(args)
+
+        # fix bidi
+        rendered_msgs = [render_text(msg) for msg in args]
+        self.msg = '\n'.join(rendered_msgs)
+
         self.buttons = buttons or ['Ok', 'Cancel']
         self.bg = bg or MAIN_BG
         self.fg = fg or MAIN_FG
@@ -979,8 +996,12 @@ class MediaListBox(tk.Frame):
         self.show_progressbar()
         # self.set_progressbar(75)
 
-        self.set = self.var.set
         self.get = self.var.get
+
+    def set(self, values):
+        # fix bidi
+        rendered_values = [render_text(x) for x in values]
+        self.var.set(rendered_values)
 
     def v_scrollbar_set(self, start, end):
         """Auto-hide scrollbar if not needed"""
@@ -1051,11 +1072,8 @@ class MediaListBox(tk.Frame):
             # select item number idx
             self.listbox.selection_set(idx)
 
-    def set_listbox_values(self, values):
-        self.var.set(values)
-
     def reset(self):
-        self.set_listbox_values([])
+        self.set([])
         self.reset_progressbar()
         self.show_progressbar()
         self.update_title(self.original_title)
@@ -1674,7 +1692,8 @@ class DItem(tk.Frame):
 
             if name:
                 self.name = name
-                self.name_lbl.config(text=self.name)
+                title, ext = os.path.splitext(name)
+                self.name_lbl.config(text=render_text(title) + ext)
 
             if downloaded is not None:
                 self.size = format_bytes(downloaded)
@@ -4633,6 +4652,9 @@ class MainWindow(IView):
     def log_callback(self, start, text, end):
         """thread safe - log callback to be executed when calling utils.log"""
         msg = start + text + end
+
+        # fix bidi, todo: add bidi support to awesometkinter.ScrolledText
+        msg = render_text(msg)
         self.run_method(self.log_text.append, msg, get_response=False)
 
     def log_popup(self, start, text, end):

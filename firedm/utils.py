@@ -6,51 +6,38 @@
     :copyright: (c) 2019-2021 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
-import base64
-import datetime
-import hashlib
-import importlib
-import sys
 import os
 import io
+import base64
+import hashlib
+import time
+import re
+import importlib
+from importlib.util import find_spec
 import webbrowser
 from threading import Thread
-from importlib.util import find_spec
-import pycurl
-import time
-import plyer
-import certifi
-import shutil
 import subprocess
 import shlex
-import re
+import certifi
+import shutil
 import json
 import zipfile
-from PIL import Image
 import urllib.request
-from urllib.parse import urlparse
+
+# 3rd party
+import pycurl
+import plyer
+from PIL import Image
 
 __package__ = 'firedm'
+
 from . import config
-
-
-# ignore bidi support on non-Linux operating systems
-add_bidi_support = lambda widget, *args, **kwargs: widget
-render_text = lambda text, *args, **kwargs: text
-derender_text = lambda text, *args, **kwargs: text
-
-
-# bidi support on linux
-if config.operating_system == 'Linux':
-    try:
-        from awesometkinter.bidirender import add_bidi_support, render_text, derender_text
-    except Exception as e:
-        print('Bidi support error:', e)
 
 
 def threaded(func):
     """a decorator to run any function / method in a thread
     you can pass threaded=False option when calling the decorated function if you need to disable threadding"""
+
     def wraper(*args, **kwargs):
         if kwargs.get('threaded', True):
             Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
@@ -60,7 +47,7 @@ def threaded(func):
     return wraper
 
 
-def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False,  app_name=config.APP_TITLE):
+def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False, app_name=config.APP_TITLE):
     """
     show os notification at systray area
 
@@ -338,8 +325,8 @@ def simpledownload(url, fp=None, return_data=True, overwrite=False):
             else:
                 speed = ''
             percent = done * 100 // size if size else 0
-            bar_length = percent//10
-            progress_bar = f'[{"="*bar_length}{" "*(10-bar_length)}]'
+            bar_length = percent // 10
+            progress_bar = f'[{"=" * bar_length}{" " * (10 - bar_length)}]'
             progress = f'{progress_bar} {format_bytes(done)} of {format_bytes(size)} - {speed}' \
                        f' - {percent}%' if percent else ''
             print(f'\r{progress}            ', end='')
@@ -493,7 +480,7 @@ def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblo
 
         # start subprocess using Popen instead of subprocess.run() to get a real-time output
         # since run() gets the output only when finished
-        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=None if ignore_stderr else subprocess.STDOUT, 
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=None if ignore_stderr else subprocess.STDOUT,
                                    encoding='utf-8', errors='replace', shell=shell, startupinfo=startupinfo)
 
         if nonblocking:
@@ -515,7 +502,7 @@ def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblo
             # if d and d.status == config.Status.cancelled:
             #     log('terminate run_command()>', cmd)
             #     process.kill()
-                # return 1, 'Cancelled by user'
+            # return 1, 'Cancelled by user'
 
         # wait for subprocess to finish, process.wait() is not recommended
         process.communicate()
@@ -910,10 +897,10 @@ def format_bytes(bytesint, tail='', sep=' ', percision=2):
         # Byte, Kilobyte, Megabyte, Gigabyte, Terabyte, Petabyte, Exabyte, Zettabyte, Yottabyte
         units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
         for i in range(len(units)):
-            threshold = 1024**(i+1) if i < len(units) - 1 else bytesint + 1
+            threshold = 1024 ** (i + 1) if i < len(units) - 1 else bytesint + 1
             if bytesint < threshold:
                 unit = units[i]
-                num = round(bytesint/(1024**i), percision)
+                num = round(bytesint / (1024 ** i), percision)
                 # remove zeros after decimal point
                 num = int(num) if num % 1 == 0 else num
                 return f'{num}{sep}{unit}{tail}'
@@ -1110,7 +1097,7 @@ def get_range_list(file_size):
     elif file_size < config.SEGMENT_SIZE * 100 / 5:
         return [[0, file_size - 1]]
 
-    range_list = [] 
+    range_list = []
 
     sizes = []
     # make first segments smaller to finish quickly and be ready for watch while 
@@ -1311,15 +1298,13 @@ __all__ = [
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
-    'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'add_bidi_support', 'render_text',
-    'derender_text', 'threaded', 'parse_urls', 'get_pkg_path', 'get_pkg_version',
-    'import_file', 'zip_extract', 'create_folder', 'simpledownload'
-
+    'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'threaded', 'parse_urls',
+    'get_pkg_path', 'get_pkg_version', 'import_file', 'zip_extract', 'create_folder', 'simpledownload'
 ]
-
 
 if __name__ == '__main__':
     print('Run doctest ...')
     import doctest
+
     doctest.testmod(verbose=False)
     print('done ...')
