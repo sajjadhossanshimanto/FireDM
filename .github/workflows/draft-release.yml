@@ -35,9 +35,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: install pip
-        run: |
-          sudo apt install python3-pip
+      - name: upgrade pip
+        run: python3 -m pip install --upgrade pip
 
       - name: create windows binary
         run: |
