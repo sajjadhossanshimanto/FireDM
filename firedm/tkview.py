@@ -1490,7 +1490,7 @@ class DItem(tk.Frame):
 
         self.uid = uid
 
-        tk.Frame.__init__(self, parent, bg=self.bg, highlightbackground=self.bg, highlightthickness=5)
+        tk.Frame.__init__(self, parent, bg=self.bg, highlightthickness=0)
 
         self.name = ''
         self.status = status
@@ -1523,7 +1523,7 @@ class DItem(tk.Frame):
         self.thumbnail_label = tk.Label(self, bg='white', image=self.blank_img, text='', font='any 20 bold', fg='black',
                                         justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=2,
                                         compound='center', width=self.thumbnail_width, height=self.thumbnail_height)
-        self.thumbnail_label.grid(row=0, column=0, rowspan=4, padx=(0, 5), sticky='ns')
+        self.thumbnail_label.grid(row=0, column=0, rowspan=4, padx=5, pady=5, sticky='ns')
 
         # name text
         self.name_lbl = AutoWrappingLabel(self, bg=self.bg, fg=self.fg, anchor='w')
@@ -1569,7 +1569,7 @@ class DItem(tk.Frame):
 
             # segments progressbar
             self.segment_bar = Segmentbar(self)
-            self.segment_bar.grid(row=4, column=0, columnspan=3, sticky='ew', padx=0)
+            self.segment_bar.grid(row=4, column=0, columnspan=3, sticky='ew', padx=5)
 
             # create buttons
             self.play_button = Button(btns_frame, image=imgs['play_icon'])
@@ -1587,7 +1587,7 @@ class DItem(tk.Frame):
         self.status_icon.pack(side='left', padx=5, pady=5)
 
         # separator
-        ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=0)
+        ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=5)
 
     def __repr__(self):
         return f'DItem({self.uid})'
@@ -1600,9 +1600,9 @@ class DItem(tk.Frame):
             self.selected = flag
 
         # change highlight color
-        highlight_bg = SEL_BG if flag else self.bg
-        highlight_fg = SEL_FG if flag else self.fg
-        self.config(highlightbackground=highlight_bg, background=highlight_bg)
+        selection_bg = SEL_BG if flag else self.bg
+        selection_fg = SEL_FG if flag else self.fg
+        self.config(background=selection_bg)
 
         s = ttk.Style()
 
@@ -1611,7 +1611,7 @@ class DItem(tk.Frame):
                 try:
 
                     if child is not self.thumbnail_label and child.winfo_class() not in ('TSeparator', 'Menu', 'Canvas'):
-                        atk.configure_widget(child, background=highlight_bg, foreground=highlight_fg)
+                        atk.configure_widget(child, background=selection_bg, foreground=selection_fg)
                     
                     # correction for bottom bars
                     if child.winfo_class() in ('TProgressbar', ):
@@ -3985,11 +3985,12 @@ class MainWindow(IView):
 
     def on_toggle_ditem(self, uid):
         current_item = self.d_items[uid]
-        current_item.select()
 
         for item in self.d_items.values():
             if item is not current_item:
                 item.select(False)
+
+        current_item.select()
 
     def get_selected_items(self):
         """return a list of selected items"""
