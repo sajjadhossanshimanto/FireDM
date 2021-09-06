@@ -1051,7 +1051,7 @@ class Controller:
             # download thumbnail
             if d.status == Status.completed and d.thumbnail_url:
                 fp = os.path.splitext(d.target_file)[0] + '.png'
-                download_thumbnail(d.thumbnail_url, fp)
+                download(d.thumbnail_url, fp=fp, decode=False)
 
         except Exception as e:
             log('controller._download_thumbnail()> error:', e)

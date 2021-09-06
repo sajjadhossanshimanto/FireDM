@@ -12,6 +12,8 @@ import re
 import time
 from urllib.parse import urljoin
 import importlib
+import io
+import base64
 
 from . import config
 from .downloaditem import DownloadItem, Segment
@@ -314,8 +316,23 @@ class Video(DownloadItem):
         self.update_param()
 
     def get_thumbnail(self):
-        """get thumbnail, will be implemented in subclass"""
-        raise Exception('get_thumbnail is Not Implemented in base class "Video"')
+        """get video thumbnail and store it as base64 text in self.thumbnail"""
+        size = (220, 115)
+
+        if self.thumbnail_url and not self.thumbnail:
+            try:
+                from PIL import Image
+                log('downloading Thumbnail', log_level=2)
+                buffer = download(self.thumbnail_url, verbose=False, return_buffer=True, decode=False)
+                import awesometkinter
+                img = Image.open(buffer)
+                img = img.resize(size, resample=Image.LANCZOS)
+                buffer = io.BytesIO()
+                img.save(buffer, format='PNG')
+                self.thumbnail = base64.b64encode(buffer.getvalue())
+            except Exception as e:
+                log('vide.get_thumbnail() error:', e, log_level=2)
+
 
     def update_param(self):
         """Mainly used when select a stream for current video object"""

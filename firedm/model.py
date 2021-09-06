@@ -119,8 +119,6 @@ class ObservableVideo(Video, Observable):
         Observable.__init__(self, observer_callbacks=observer_callbacks)
         Video.__init__(self, url, vid_info=vid_info)
 
-        self.thumbnail_size = (220, 115)
-
     def __setattr__(self, key, value):
         """Called when an attribute assignment is attempted."""
         self.setter(Video, key, value)
@@ -135,13 +133,6 @@ class ObservableVideo(Video, Observable):
 
         # re-calculate total size
         self.total_size = self.calculate_total_size()
-
-    def get_thumbnail(self):
-        """get video thumbnail and store it as base64 text in self.thumbnail"""
-        if self.thumbnail_url and not self.thumbnail:
-            buffer = utils.get_thumbnail(self.thumbnail_url)
-            img = utils.resize_image(buffer=buffer, size=self.thumbnail_size)
-            self.thumbnail = utils.image_to_base64(img)
 
     def prepare_subtitles(self):
         """merge subtitles and captions in one list and handle duplicated names

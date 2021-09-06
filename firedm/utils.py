@@ -8,7 +8,6 @@
 """
 import os
 import io
-import base64
 import hashlib
 import time
 import re
@@ -26,7 +25,6 @@ import urllib.request
 
 # 3rd party
 import pycurl
-from PIL import Image
 
 __package__ = 'firedm'
 
@@ -711,68 +709,6 @@ def natural_sort(my_list):
     return sorted(my_list, key=alphanum_key)
 
 
-# todo: no need a separate function for downloading thumbnail, use download() instead
-def get_thumbnail(url):
-    """download video thumbnail
-    Args:
-        url (str): http url of thumbnail image
-
-    Returns:
-        BytesIO object contains thumbnail image data
-    """
-    try:
-        log('downloading Thumbnail', log_level=2)
-        buffer = download(url, verbose=False, return_buffer=True)
-
-        return buffer
-    except:
-        log('downloading Thumbnail failed', log_level=2)
-
-
-# todo: should move it to video.py file
-def download_thumbnail(url, fp):
-    """download thumbnail
-
-    Args:
-        url (str): thumbnail url link
-        fp (str): file path
-    """
-
-    try:
-        buffer = get_thumbnail(url)
-        img = Image.open(buffer)
-        img.save(fp)
-        log('Thumbnail saved to:', fp)
-    except Exception as e:
-        log('Saving Thumbnail failed', log_level=2)
-
-
-def resize_image(img=None, buffer=None, size=None):
-    """resize image
-    Args:
-        img (Image): pillow image object
-        buffer (io.BytesIO): or any file like object
-        size (2-tuple(int, int)): an image required size in a (width, height) tuple
-
-    Returns:
-        pillow image object
-    """
-    if not img and buffer:
-        img = Image.open(buffer)
-
-    if size:
-        img = img.resize(size, resample=Image.LANCZOS)
-    return img
-
-
-def image_to_base64(img):
-    """convert pillow image object to base64"""
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-
-    return base64.b64encode(buffer.getvalue())
-
-
 def format_seconds(t, tail='', sep=' ', percision=1, fullunit=False):
     """
         format seconds integer into string with proper time unit
@@ -1270,8 +1206,8 @@ __all__ = [
     'get_headers', 'download', 'format_bytes', 'format_seconds', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
-    'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',
-    'run_thread', 'generate_unique_name', 'open_webpage', 'download_thumbnail', 'threaded', 'parse_urls',
+    'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list',
+    'run_thread', 'generate_unique_name', 'open_webpage', 'threaded', 'parse_urls',
     'get_pkg_path', 'get_pkg_version', 'import_file', 'zip_extract', 'create_folder', 'simpledownload'
 ]
 
