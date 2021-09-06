@@ -22,9 +22,13 @@ import shutil
 import json
 import zipfile
 import urllib.request
+import platform
 
 # 3rd party
-import pycurl
+try:
+    import pycurl
+except:
+    print('pycurl not found')
 
 __package__ = 'firedm'
 
@@ -134,10 +138,6 @@ def get_headers(url, verbose=False, http_headers=None):
     curl_headers = {}
 
     def header_callback(header_line):
-        # quit flag
-        if config.shutdown:
-            return
-
         header_line = header_line.decode('iso-8859-1')
         header_line = header_line.lower()
 
@@ -442,7 +442,7 @@ def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblo
             cmd = shlex.split(cmd)
 
         # startupinfo to hide terminal window on windows
-        if hide_window and config.operating_system == 'Windows':
+        if hide_window and platform.system() == 'Windows':
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags = subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = subprocess.SW_HIDE
@@ -610,14 +610,14 @@ def open_file(fp, silent=False):
         if not size:
             return
 
-        if config.operating_system == 'Windows':
+        if platform.system() == 'Windows':
             os.startfile(fp)
             return
 
-        if config.operating_system == 'Linux':
+        if platform.system() == 'Linux':
             cmd = f'xdg-open "{fp}"'
 
-        elif config.operating_system == 'Darwin':
+        elif platform.system() == 'Darwin':
             cmd = f'open "{fp}"'
 
         # run command
@@ -656,7 +656,7 @@ def open_folder(path):
             folder = os.path.dirname(path)
             print(folder)
 
-        if config.operating_system == 'Windows':
+        if platform.system() == 'Windows':
             if file:
                 # open folder and select the file
                 cmd = f'explorer /select, "{file}"'
@@ -670,8 +670,6 @@ def open_folder(path):
             subprocess.Popen(shlex.split(cmd))
     except Exception as e:
         log('utils> open_folder()> ', e, log_level=2)
-        if config.test_mode:
-            raise e
 
 
 def load_json(file=None):
@@ -977,33 +975,29 @@ def calc_md5_sha256(fp=None, buffer=None):
         return f'calc_md5_sha256()> error, {str(e)}'
 
 
-def get_range_list(file_size):
+def get_range_list(file_size, minsize):
     """
     return a list of ranges to improve watch while downloading feature
     
     Args:
         file_size(int): file size in bytes
+        minsize(int): minimum segment size
 
     Return:
         list of ranges i.e. [[0, 100], [101, 2000], ... ]
 
     Example:
-        >>> get_range_list(1000000)
+        >>> get_range_list(1000000, 102400)
         [[0, 999999]]
-        >>> get_range_list(3000000)
+        >>> get_range_list(3000000, 102400)
         [[0, 149999], [150000, 449999], [450000, 899999], [900000, 1499999], [1500000, 2999999]]
-        >>> get_range_list(0)
+        >>> get_range_list(0, 102400)
         [None]
-        >>> get_range_list('xxxxx')
-        Traceback (most recent call last):
-                ...
-        TypeError: '<' not supported between instances of 'str' and 'float'
-
     """
 
     if file_size == 0:
         return [None]
-    elif file_size < config.SEGMENT_SIZE * 100 / 5:
+    elif file_size < minsize * 100 / 5:
         return [[0, file_size - 1]]
 
     range_list = []

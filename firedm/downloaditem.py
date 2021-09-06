@@ -601,7 +601,7 @@ class DownloadItem:
             # general files or video files with known sizes and resumable
             if self.resumable and self.size:
                 # get list of ranges i.e. [[0, 100], [101, 2000], ... ]
-                range_list = get_range_list(self.size)
+                range_list = get_range_list(self.size, config.SEGMENT_SIZE)
             else:
                 range_list = [None]  # add None in a list to make one segment with range=None
 
@@ -622,7 +622,7 @@ class DownloadItem:
                     for i, x in enumerate(self.audio_fragments)]
 
             else:
-                range_list = get_range_list(self.audio_size)
+                range_list = get_range_list(self.audio_size, config.SEGMENT_SIZE)
 
                 audio_segments = [
                     Segment(name=os.path.join(self.temp_folder, str(i) + '_audio'), num=i, range=x,
