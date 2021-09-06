@@ -7,6 +7,9 @@ on:
   release:
     types: [published]
 
+  # Allows manual running for this workflow
+  workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
