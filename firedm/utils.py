@@ -26,7 +26,6 @@ import urllib.request
 
 # 3rd party
 import pycurl
-import plyer
 from PIL import Image
 
 __package__ = 'firedm'
@@ -45,32 +44,6 @@ def threaded(func):
             func(*args, **kwargs)
 
     return wraper
-
-
-def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False, app_name=config.APP_TITLE):
-    """
-    show os notification at systray area
-
-    Args:
-
-        title(str): Title of the notification
-        message(str): Message of the notification
-        app_name(str): Name of the app launching this notification
-        app_icon(str): Icon to be displayed along with the message
-        timeout(int): time to display the message for, defaults to 10
-        ticker(str): text to display on status bar as the notification arrives
-        toast(bool): simple Android message instead of full notification
-
-
-    Note:
-       When called on Windows, "app_icon" has to be a path to a file in .ICO format.
-    """
-
-    try:
-        plyer.notification.notify(title=title, message=message, app_name=app_name, app_icon=app_icon, timeout=timeout,
-                                  ticker='', toast=False)
-    except Exception as e:
-        log(f'plyer notification: {e}')
 
 
 def set_curl_options(c, http_headers=None):
@@ -1294,7 +1267,7 @@ def create_folder(folder_path):
 
 
 __all__ = [
-    'notify', 'get_headers', 'download', 'format_bytes', 'format_seconds', 'log', 'validate_file_name', 'delete_folder',
+    'get_headers', 'download', 'format_bytes', 'format_seconds', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list', 'get_thumbnail', 'resize_image',

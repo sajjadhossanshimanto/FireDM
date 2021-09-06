@@ -15,8 +15,8 @@ import concurrent.futures
 from .video import merge_video_audio, pre_process_hls, post_process_hls, \
     convert_audio, download_subtitles, write_metadata
 from . import config
-from .config import Status, APP_NAME
-from .utils import (log, format_bytes, notify, delete_file, rename_file, calc_md5_sha256, run_command)
+from .config import Status
+from .utils import (log, format_bytes, delete_file, rename_file, run_command)
 from .worker import Worker
 from .downloaditem import Segment
 

@@ -31,6 +31,8 @@ from . import video
 from .video import get_ytdl_options
 from .model import ObservableDownloadItem, ObservableVideo
 
+import plyer
+
 
 def set_option(**kwargs):
     """set global setting option(s) in config.py"""
@@ -88,6 +90,32 @@ def check_ffmpeg():
     else:
         log(f'can not find ffmpeg!!, install it, or add executable location to PATH, or copy executable to ',
             config.global_sett_folder, 'or', config.current_directory)
+
+
+def notify(message='', title='', timeout=5, app_icon='', ticker='', toast=False, app_name='FireDM'):
+    """
+    show os notification at systray area
+
+    Args:
+
+        title(str): Title of the notification
+        message(str): Message of the notification
+        app_name(str): Name of the app launching this notification
+        app_icon(str): Icon to be displayed along with the message
+        timeout(int): time to display the message for, defaults to 10
+        ticker(str): text to display on status bar as the notification arrives
+        toast(bool): simple Android message instead of full notification
+
+
+    Note:
+       When called on Windows, "app_icon" has to be a path to a file in .ICO format.
+    """
+
+    try:
+        plyer.notification.notify(title=title, message=message, app_name=app_name, app_icon=app_icon, timeout=timeout,
+                                  ticker='', toast=False)
+    except Exception as e:
+        log(f'plyer notification: {e}')
 
 
 class Controller:
