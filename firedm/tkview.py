@@ -3014,7 +3014,8 @@ class MainWindow(IView):
     def save_user_themes(self):
         try:
             file = os.path.join(config.sett_folder, 'user_themes.cfg')
-            save_json(file, user_themes)
+            stripped_user_themes = {k: strip_theme(v) for k, v in user_themes.items()}
+            save_json(file, stripped_user_themes)
         except Exception as e:
             log('save_themes() > error', e)
 
@@ -3022,11 +3023,14 @@ class MainWindow(IView):
         try:
             global user_themes
             # print('load user themes')
-            file = os.path.join(config.sett_folder, 'user_themes.cfg')
-            themes = load_json(file)
+            fp = os.path.join(config.sett_folder, 'user_themes.cfg')
+            themes = load_json(fp)
             # print(themes)
 
             if themes:
+                # remove duplicates
+                themes = {k: v for k, v in themes.items() if k not in builtin_themes}
+
                 # remove invalid colors
                 for name, theme in themes.items():
                     themes[name] = {k: v for k, v in theme.items() if self.is_color(v)}

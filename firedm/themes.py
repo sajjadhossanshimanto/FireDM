@@ -1,191 +1,273 @@
 import awesometkinter as atk
-from . import config
-
-# theme colors as global constants, you must set their values before creating widgets
-# use MainWindow.apply_theme() to set all values
 
 # main colors
-MAIN_BG = None
-MAIN_FG = None
+MAIN_BG = "#1c1c21"
+MAIN_FG = "white"
 
 # side frame colors
-SF_BG = None
-SF_BTN_BG = None
-SF_FG = None
-SF_CHKMARK = None
+SF_BG = "#000300"
+SF_FG = "white"
+SF_BTN_BG = "#d9dc4b"
+SF_CHKMARK = "#d9dc4b"
 
-THUMBNAIL_BG = None  # color of thumbnail frame in Home
-THUMBNAIL_FG = None  # color of base thumbnail photo
-THUMBNAIL_BD = None  # thumbnail border color
+THUMBNAIL_BG = "#000300"  # color of thumbnail frame in Home
+THUMBNAIL_FG = "#d9dc4b"  # color of base thumbnail photo
+THUMBNAIL_BD = "#d9dc4b"  # thumbnail border color
 
 # progressbar
-PBAR_BG = None
-PBAR_FG = None
-PBAR_TXT = None
+PBAR_BG = "#26262b"
+PBAR_FG = "#d9dc4b"
+PBAR_TXT = "white"
 
-ENTRY_BD_COLOR = None
+ENTRY_BD_COLOR = "#000300"
 
-BTN_BG = None
-BTN_FG = None
-BTN_HBG = None  # highlight background
-BTN_ABG = None  # active background
-BTN_AFG = None
+BTN_BG = "#d9dc4b"
+BTN_FG = "black"
+BTN_HBG = "#000300"  # highlight background
+BTN_ABG = "#000300"  # active background
+BTN_AFG = "white"
 
-HDG_BG = None  # heading e.g. "Network:" heading in Settings tab
-HDG_FG = None
+# heading e.g. "Network:" heading in Settings tab
+HDG_BG = "#d9dc4b"
+HDG_FG = "black"
 
 # scrollbar
-SBAR_BG = None
-SBAR_FG = None
+SBAR_BG = "#1c1c21"
+SBAR_FG = "white"
 
 # right click menu
-RCM_BG = None
-RCM_FG = None
-RCM_ABG = None
-RCM_AFG = None
+RCM_BG = "#1c1c21"
+RCM_FG = "white"
+RCM_ABG = "#d9dc4b"
+RCM_AFG = "black"
 
 # titlebar
-TITLE_BAR_BG = None
-TITLE_BAR_FG = None
+TITLE_BAR_BG = "#d9dc4b"
+TITLE_BAR_FG = "black"
 
 # selection color for DItem
-SEL_BG = None
-SEL_FG = None
+SEL_BG = "#000300"
+SEL_FG = "white"
 
 builtin_themes = {
-    'Dark': {
-        "MAIN_BG": "#1c1c21", "MAIN_FG": "white", "SF_BG": "#000300", "SF_FG": "white", "SF_BTN_BG": "#d9dc4b",
-        "SF_CHKMARK": "#d9dc4b", "THUMBNAIL_BG": "#000300", "THUMBNAIL_FG": "#d9dc4b", "PBAR_BG": "#26262b",
-        "PBAR_FG": "#d9dc4b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#000300", "BTN_BG": "#d9dc4b", "BTN_FG": "black",
-        "BTN_HBG": "#000300", "BTN_ABG": "#000300", "BTN_AFG": "white", "HDG_BG": "#d9dc4b", "HDG_FG": "black",
-        "THUMBNAIL_BD": "#d9dc4b", "SBAR_BG": "#1c1c21", "SBAR_FG": "white", "RCM_BG": "#1c1c21", "RCM_FG": "white",
-        "RCM_ABG": "#d9dc4b", "RCM_AFG": "black", "TITLE_BAR_BG": "#d9dc4b", "TITLE_BAR_FG": "black"},
-
-    "Gainsboro-SandyBrown-Teal": {
-        "MAIN_BG": "#DDDDDD", "SF_BG": "#F5A962", "SF_BTN_BG": "#3C8DAD", "PBAR_FG": "#125D98", "MAIN_FG": "black",
-        "SF_FG": "#125D98", "SF_CHKMARK": "#125D98", "THUMBNAIL_BG": "#F5A962", "THUMBNAIL_FG": "#125D98",
-        "THUMBNAIL_BD": "black", "PBAR_BG": "#d3d3d3", "PBAR_TXT": "#125D98", "ENTRY_BD_COLOR": "#F5A962",
-        "BTN_BG": "#3C8DAD", "BTN_FG": "#DDDDDD", "BTN_HBG": "#F5A962", "BTN_ABG": "#F5A962", "BTN_AFG": "white",
-        "HDG_BG": "#3C8DAD", "HDG_FG": "#DDDDDD", "SBAR_BG": "#DDDDDD", "SBAR_FG": "#125D98", "RCM_BG": "#DDDDDD",
-        "RCM_FG": "#125D98", "RCM_ABG": "#3C8DAD", "RCM_AFG": "#DDDDDD", "TITLE_BAR_BG": "#3C8DAD",
-        "TITLE_BAR_FG": "#125D98", "SEL_BG": "#F5A962", "SEL_FG": "black"},
-
+    "Black & White & Midnight": {
+        "MAIN_BG": "white",
+        "SF_BG": "Black",
+        "SF_BTN_BG": "White",
+        "SF_FG": "#f2a541",
+        "BTN_BG": "#631d76",
+        "BTN_FG": "white",
+        "BTN_HBG": "white",
+        "RCM_FG": "black",
+        "RCM_ABG": "#631d76",
+        "RCM_AFG": "white",
+        "SEL_BG": "#f2a541",
+        "SEL_FG": "black",
+        "TITLE_BAR_BG": "#631d76",
+        "TITLE_BAR_FG": "white",
+    },
     "Black_Grey_Shade-of-Pink": {
-        "MAIN_BG": "#444444", "SF_BG": "#171717", "SF_BTN_BG": "#EDEDED", "PBAR_FG": "#DA0037", "MAIN_FG": "#EDEDED",
-        "SF_FG": "#EDEDED", "SF_CHKMARK": "#DA0037", "THUMBNAIL_BG": "#171717", "THUMBNAIL_FG": "#DA0037",
-        "THUMBNAIL_BD": "white", "PBAR_BG": "#4e4e4e", "PBAR_TXT": "#DA0037", "ENTRY_BD_COLOR": "#171717",
-        "BTN_BG": "#EDEDED", "BTN_FG": "black", "BTN_HBG": "#171717", "BTN_ABG": "#171717", "BTN_AFG": "#DA0037",
-        "HDG_BG": "#EDEDED", "HDG_FG": "black", "SBAR_BG": "#171717", "SBAR_FG": "#DA0037", "RCM_BG": "#444444",
-        "RCM_FG": "#EDEDED", "RCM_ABG": "#EDEDED", "RCM_AFG": "#DA0037", "TITLE_BAR_BG": "#EDEDED",
-        "TITLE_BAR_FG": "black", "SEL_BG": "#171717", "SEL_FG": "#EDEDED"},
-
+        "MAIN_BG": "#444444",
+        "SF_BG": "#171717",
+        "SF_BTN_BG": "#EDEDED",
+        "PBAR_FG": "#DA0037",
+        "MAIN_FG": "#EDEDED",
+        "SF_FG": "#EDEDED",
+        "SF_CHKMARK": "#DA0037",
+        "THUMBNAIL_FG": "#DA0037",
+        "PBAR_TXT": "#DA0037",
+        "BTN_AFG": "#DA0037",
+        "SBAR_BG": "#171717",
+        "SBAR_FG": "#DA0037",
+        "RCM_FG": "#EDEDED",
+        "RCM_AFG": "#DA0037",
+        "SEL_FG": "#EDEDED",
+        "THUMBNAIL_BD": "#EDEDED",
+    },
+    "Dark": {
+        "MAIN_BG": "#1c1c21",
+        "SF_BG": "#000300",
+        "SF_BTN_BG": "#d9dc4b",
+        "THUMBNAIL_FG": "#d9dc4b",
+        "PBAR_FG": "#d9dc4b",
+        "THUMBNAIL_BD": "#d9dc4b",
+    },
+    "Gainsboro-SandyBrown-Teal": {
+        "MAIN_BG": "#DDDDDD",
+        "SF_BG": "#F5A962",
+        "SF_BTN_BG": "#3C8DAD",
+        "PBAR_FG": "#125D98",
+        "SF_FG": "#125D98",
+        "SF_CHKMARK": "#125D98",
+        "THUMBNAIL_FG": "#125D98",
+        "PBAR_TXT": "#125D98",
+        "BTN_FG": "#DDDDDD",
+        "HDG_FG": "#DDDDDD",
+        "SBAR_FG": "#125D98",
+        "RCM_FG": "#125D98",
+        "RCM_AFG": "#DDDDDD",
+        "TITLE_BAR_FG": "#125D98",
+        "SEL_FG": "#125D98",
+    },
     "Green-Brown": {
-        "MAIN_BG": "#3A6351", "SF_BG": "#F2EDD7", "SF_BTN_BG": "#A0937D", "PBAR_FG": "#5F939A", "MAIN_FG": "white",
-        "SF_FG": "black", "SF_CHKMARK": "#A0937D", "THUMBNAIL_BG": "#F2EDD7", "THUMBNAIL_FG": "white",
-        "THUMBNAIL_BD": "white", "PBAR_BG": "#446d5b", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#F2EDD7",
-        "BTN_BG": "#A0937D", "BTN_FG": "black", "BTN_HBG": "#F2EDD7", "BTN_ABG": "#446d5b", "BTN_AFG": "white",
-        "HDG_BG": "#A0937D", "HDG_FG": "black", "SBAR_BG": "#3A6351", "SBAR_FG": "white", "RCM_BG": "#3A6351",
-        "RCM_FG": "white", "RCM_ABG": "#A0937D", "RCM_AFG": "black", "TITLE_BAR_BG": "#A0937D", "TITLE_BAR_FG": "black",
-        "SEL_BG": "#F2EDD7", "SEL_FG": "black"},
-
-    "Yellow-Foil-covered Sneakers": {
-        "MAIN_BG": "#333652", "SF_BG": "#90adc6", "SF_BTN_BG": "#fad02c", "PBAR_FG": "#e9eaec", "MAIN_FG": "#e9eaec",
-        "SF_FG": "black", "SF_CHKMARK": "#e9eaec", "THUMBNAIL_BG": "#90adc6", "THUMBNAIL_FG": "white",
-        "THUMBNAIL_BD": "white", "PBAR_BG": "#3d405c", "PBAR_TXT": "white", "ENTRY_BD_COLOR": "#90adc6",
-        "BTN_BG": "#fad02c", "BTN_FG": "black", "BTN_HBG": "#e9eaec", "BTN_ABG": "#90adc6", "BTN_AFG": "white",
-        "HDG_BG": "#fad02c", "HDG_FG": "black", "SBAR_BG": "#333652", "SBAR_FG": "#90adc6", "RCM_BG": "#333652",
-        "RCM_FG": "#e9eaec", "RCM_ABG": "#fad02c", "RCM_AFG": "black", "TITLE_BAR_BG": "#fad02c",
-        "TITLE_BAR_FG": "black", "SEL_BG": "#90adc6", "SEL_FG": "black"},
-
-    "Red_Black": {
-        "SF_BTN_BG": "#960000", "PBAR_FG": "#e09f3e", "MAIN_FG": "white", "SF_FG": "white",
-        "SF_CHKMARK": "#e09f3e", "THUMBNAIL_FG": "white", "THUMBNAIL_BD": "white", "PBAR_BG": "#0a0a0a",
-        "PBAR_TXT": "white", "BTN_BG": "#960000", "BTN_FG": "white", "BTN_AFG": "white", "HDG_BG": "#960000",
-        "HDG_FG": "white", "SBAR_FG": "#960000", "RCM_FG": "white", "RCM_ABG": "#960000", "RCM_AFG": "white",
-        "TITLE_BAR_BG": "#960000", "TITLE_BAR_FG": "black", "SEL_FG": "white"},
-
+        "MAIN_BG": "#3A6351",
+        "SF_BG": "#F2EDD7",
+        "SF_BTN_BG": "#A0937D",
+        "PBAR_FG": "#5F939A",
+        "BTN_ABG": "#446d5b",
+    },
     "Orange_Black": {
-        "SF_BTN_BG": "#e09f3e", "PBAR_FG": "#FFFFFF", "MAIN_FG": "white", "SF_FG": "white", "SF_CHKMARK": "white",
-        "THUMBNAIL_FG": "white", "THUMBNAIL_BD": "white", "PBAR_BG": "#0a0a0a", "PBAR_TXT": "white",
-        "BTN_BG": "#e09f3e", "BTN_FG": "black", "BTN_AFG": "white", "HDG_BG": "#e09f3e", "HDG_FG": "black",
-        "SBAR_FG": "#e09f3e", "RCM_FG": "white", "RCM_ABG": "#e09f3e", "RCM_AFG": "black", "TITLE_BAR_BG": "#e09f3e",
-        "TITLE_BAR_FG": "black", "SEL_FG": "white"},
-
-    "White_BlueCryola": {
-        "MAIN_BG": "white", "SF_BG": "white", "SF_BTN_BG": "#2d82b7", "PBAR_FG": "black", "MAIN_FG": "black",
-        "SF_FG": "black", "SF_CHKMARK": "black", "THUMBNAIL_BG": "white", "THUMBNAIL_FG": "black",
-        "THUMBNAIL_BD": "black", "PBAR_BG": "#f5f5f5", "PBAR_TXT": "black", "ENTRY_BD_COLOR": "white",
-        "BTN_BG": "#2d82b7", "BTN_FG": "white", "BTN_HBG": "black", "BTN_ABG": "white", "BTN_AFG": "#2d82b7",
-        "HDG_BG": "#2d82b7", "HDG_FG": "white", "SBAR_BG": "white", "SBAR_FG": "#2d82b7", "RCM_BG": "white",
-        "RCM_FG": "black", "RCM_ABG": "#2d82b7", "RCM_AFG": "white", "TITLE_BAR_BG": "#2d82b7", "TITLE_BAR_FG": "white",
-        "SEL_BG": "#58a7d6", "SEL_FG": "white"},
-
+        "SF_BTN_BG": "#e09f3e",
+        "PBAR_FG": "#FFFFFF",
+        "SF_CHKMARK": "white",
+        "PBAR_BG": "#0a0a0a",
+        "SBAR_FG": "#e09f3e",
+        "MAIN_BG": "#1c1c21",
+        "SF_BG": "#000300",
+    },
+    "Red_Black": {
+        "SF_BTN_BG": "#960000",
+        "PBAR_FG": "#e09f3e",
+        "SF_CHKMARK": "#e09f3e",
+        "PBAR_BG": "#0a0a0a",
+        "BTN_FG": "white",
+        "HDG_FG": "white",
+        "SBAR_FG": "#960000",
+        "RCM_AFG": "white",
+        "MAIN_BG": "#1c1c21",
+        "SF_BG": "#000300",
+        "TITLE_BAR_FG": "white",
+    },
     "White & Black": {
-        "MAIN_BG": "white", "SF_BG": "white", "SF_BTN_BG": "black", "PBAR_FG": "black", "MAIN_FG": "black",
-        "SF_FG": "black", "SF_CHKMARK": "black", "THUMBNAIL_BG": "white", "THUMBNAIL_FG": "black",
-        "THUMBNAIL_BD": "black", "PBAR_BG": "white", "PBAR_TXT": "black", "ENTRY_BD_COLOR": "black", "BTN_BG": "black",
-        "BTN_FG": "white", "BTN_HBG": "white", "BTN_ABG": "white", "BTN_AFG": "black", "HDG_BG": "black",
-        "HDG_FG": "white", "SBAR_BG": "white", "SBAR_FG": "black", "RCM_BG": "white", "RCM_FG": "black",
-        "RCM_ABG": "black", "RCM_AFG": "white", "TITLE_BAR_BG": "black", "TITLE_BAR_FG": "white", "SEL_BG": "#d8d8d8",
-        "SEL_FG": "black"},
+        "MAIN_BG": "white",
+        "SF_BG": "white",
+        "SF_BTN_BG": "black",
+        "PBAR_BG": "white",
+        "ENTRY_BD_COLOR": "black",
+        "BTN_FG": "white",
+        "BTN_AFG": "black",
+        "HDG_FG": "white",
+        "RCM_FG": "black",
+        "RCM_AFG": "white",
+        "TITLE_BAR_FG": "white",
+        "SEL_BG": "#d8d8d8",
+    },
+    "White_BlueCryola": {
+        "MAIN_BG": "white",
+        "SF_BG": "white",
+        "SF_BTN_BG": "#2d82b7",
+        "SF_CHKMARK": "black",
+        "BTN_FG": "white",
+        "BTN_HBG": "black",
+        "BTN_AFG": "#2d82b7",
+        "HDG_FG": "white",
+        "SBAR_FG": "#2d82b7",
+        "RCM_FG": "black",
+        "RCM_AFG": "white",
+        "TITLE_BAR_FG": "white",
+        "SEL_BG": "#58a7d6",
+        "SEL_FG": "white",
+    },
+    "White_DimGrey_BrightYellowCrayola": {
+        "MAIN_BG": "white",
+        "SF_BG": "#716969",
+        "SF_BTN_BG": "#fbb13c",
+        "PBAR_FG": "#fbb13c",
+        "SF_CHKMARK": "white",
+        "THUMBNAIL_BG": "#fbb13c",
+        "BTN_BG": "black",
+        "BTN_FG": "white",
+        "BTN_ABG": "#fbb13c",
+        "HDG_BG": "white",
+        "RCM_FG": "black",
+        "RCM_ABG": "#716969",
+        "RCM_AFG": "white",
+        "BTN_AFG": "black",
+        "TITLE_BAR_BG": "black",
+        "TITLE_BAR_FG": "white",
+    },
+    "White_RoyalePurple_GoldFusion": {
+        "MAIN_BG": "white",
+        "SF_BG": "#7d5ba6",
+        "SF_BTN_BG": "white",
+        "PBAR_FG": "#7d5ba6",
+        "THUMBNAIL_BG": "#72705b",
+        "BTN_BG": "#72705b",
+        "BTN_FG": "white",
+        "BTN_HBG": "black",
+        "SBAR_FG": "#7d5ba6",
+        "RCM_FG": "black",
+        "RCM_ABG": "#7d5ba6",
+        "RCM_AFG": "white",
+        "SEL_BG": "black",
+        "TITLE_BAR_BG": "#72705b",
+        "TITLE_BAR_FG": "white",
+    },
+    "White_UpsdellRed_Marigold": {
+        "MAIN_BG": "white",
+        "SF_BG": "white",
+        "SF_BTN_BG": "#b10f2e",
+        "SF_CHKMARK": "#eca72c",
+        "BTN_FG": "white",
+        "BTN_HBG": "black",
+        "BTN_AFG": "#b10f2e",
+        "HDG_FG": "white",
+        "SBAR_FG": "#b10f2e",
+        "RCM_FG": "black",
+        "RCM_AFG": "white",
+        "TITLE_BAR_FG": "white",
+        "SEL_BG": "#eca72c",
+    },
+    "Yellow-Foil-covered Sneakers": {
+        "MAIN_BG": "#333652",
+        "SF_BG": "#90adc6",
+        "SF_BTN_BG": "#fad02c",
+        "PBAR_FG": "#e9eaec",
+        "MAIN_FG": "#e9eaec",
+        "SF_CHKMARK": "#e9eaec",
+        "BTN_HBG": "#e9eaec",
+        "SBAR_FG": "#90adc6",
+        "RCM_FG": "#e9eaec",
+        "THUMBNAIL_FG": "#e9eaec",
+        "THUMBNAIL_BD": "#e9eaec",
+    },
+
 }
 
 # key:(reference key, description), reference key will be used to get the color value in case of missing key, but in
 # case of some font keys, reference key is refering to background color which will be used to calculate font color
 # if reference key is None, this means it can't be calculated if missing
-theme_map = dict(
-    # main colors
-    MAIN_BG=(None, 'Main background'),
-    MAIN_FG=('MAIN_BG', 'Main text color'),
-
-    # side frame colors
-    SF_BG=(None, 'Side frame background'),
-    SF_BTN_BG=(None, 'Side frame button color'),
-    SF_FG=('SF_BG', 'Side frame text color'),
-    SF_CHKMARK=('SF_BTN_BG', 'Side Frame check mark color'),
-
-    # Thumbnails
-    THUMBNAIL_BG=('SF_BG', 'Thumbnail background'),
-    THUMBNAIL_FG=('MAIN_FG', 'Default Thumbnail image color'),
-    THUMBNAIL_BD=('MAIN_FG', 'Thumbnail border width'),
-
-    # progressbar
-    PBAR_BG=(None, 'Progressbar inactive ring color'),
-    PBAR_FG=('MAIN_FG', 'Progressbar active ring color'),
-    PBAR_TXT=('MAIN_BG', 'Progressbar text color'),
-
-    # Entry
-    ENTRY_BD_COLOR=('SF_BG', 'Entry widget border color'),
-
-    # Button
-    BTN_BG=('SF_BTN_BG', 'Button background'),
-    BTN_FG=('BTN_BG', 'Button text color'),
-    BTN_HBG=('SF_BG', 'Button highlight background'),
-    BTN_ABG=('SF_BG', 'Button active background'),
-    BTN_AFG=('BTN_ABG', 'Button active text color'),
-
-    # Heading e.g. "Network:" heading in Settings tab
-    HDG_BG=('SF_BTN_BG', 'Heading title background'),
-    HDG_FG=('HDG_BG', 'Heading title text color'),
-
-    # scrollbar
-    SBAR_BG=('MAIN_BG', 'Scrollbar background'),
-    SBAR_FG=('MAIN_FG', 'scrollbar active color'),
-
-    # right click menu
-    RCM_BG=('MAIN_BG', 'Right click menu background'),
-    RCM_FG=('RCM_BG', 'Right click menu text color'),
-    RCM_ABG=('BTN_BG', 'Right click menu active background'),
-    RCM_AFG=('RCM_ABG', 'Right click menu active text color'),
-
-    # Window titlebar
-    TITLE_BAR_BG=('BTN_BG', 'Window custom titlebar background'),
-    TITLE_BAR_FG=('BTN_FG', 'Window custom titlebar text color'),
-
-    # Download item (DItem)
-    SEL_BG=('SF_BG', 'Download item selection background'),
-    SEL_FG=('SF_FG', 'Download item selection foreground')
-)
+theme_map = {
+    'MAIN_BG': (None, 'Main background'),
+    'MAIN_FG': ('MAIN_BG', 'Main text color'),
+    'SF_BG': (None, 'Side frame background'),
+    'SF_BTN_BG': (None, 'Side frame button color'),
+    'SF_FG': ('SF_BG', 'Side frame text color'),
+    'SF_CHKMARK': ('SF_BTN_BG', 'Side Frame check mark color'),
+    'THUMBNAIL_BG': ('SF_BG', 'Thumbnail background'),
+    'THUMBNAIL_FG': ('MAIN_FG', 'Default Thumbnail image color'),
+    'THUMBNAIL_BD': ('MAIN_FG', 'Thumbnail border color'),
+    'PBAR_BG': (None, 'Progressbar inactive ring color'),
+    'PBAR_FG': ('MAIN_FG', 'Progressbar active ring color'),
+    'PBAR_TXT': ('MAIN_BG', 'Progressbar text color'),
+    'ENTRY_BD_COLOR': ('SF_BG', 'Entry widget border color'),
+    'BTN_BG': ('SF_BTN_BG', 'Button background'),
+    'BTN_FG': ('BTN_BG', 'Button text color'),
+    'BTN_HBG': ('SF_BG', 'Button highlight background'),
+    'BTN_ABG': ('SF_BG', 'Button active background'),
+    'BTN_AFG': ('BTN_ABG', 'Button active text color'),
+    'HDG_BG': ('SF_BTN_BG', 'Heading title background'),
+    'HDG_FG': ('HDG_BG', 'Heading title text color'),
+    'SBAR_BG': ('MAIN_BG', 'Scrollbar background'),
+    'SBAR_FG': ('MAIN_FG', 'scrollbar active color'),
+    'RCM_BG': ('MAIN_BG', 'Right click menu background'),
+    'RCM_FG': ('RCM_BG', 'Right click menu text color'),
+    'RCM_ABG': ('BTN_BG', 'Right click menu active background'),
+    'RCM_AFG': ('RCM_ABG', 'Right click menu active text color'),
+    'TITLE_BAR_BG': ('BTN_BG', 'Window custom titlebar background'),
+    'TITLE_BAR_FG': ('BTN_FG', 'Window custom titlebar text color'),
+    'SEL_BG': ('SF_BG', 'Download item selection background'),
+    'SEL_FG': ('SF_FG', 'Download item selection foreground')}
 
 # fonts keys in theme map
 theme_fonts_keys = ('MAIN_FG', 'SF_FG', 'BTN_FG', 'BTN_AFG', 'PBAR_TXT', 'HDG_FG', 'RCM_FG', 'RCM_AFG')
@@ -199,24 +281,52 @@ def calculate_missing_theme_keys(theme):
 
     # make sure we have main keys
     main_keys = ('MAIN_BG', 'SF_BG', 'SF_BTN_BG')
-    default_theme = builtin_themes[config.DEFAULT_THEME]
     for key in main_keys:
-        theme.setdefault(key, default_theme[key])
+        theme.setdefault(key, globals()[key])
 
     # progressbar
     theme.setdefault('PBAR_BG', atk.calc_contrast_color(theme['MAIN_BG'], 10))
 
     for key in theme_fonts_keys:
         bg_key = theme_map[key][0]
-        bg = theme.get(bg_key, default_theme[bg_key])
+        bg = theme.get(bg_key, globals()[bg_key])
         theme.setdefault(key, atk.calc_font_color(bg))
 
     for key, v in theme_map.items():
         fallback_key = v[0]
         if fallback_key is not None:
-            theme.setdefault(key, theme.get(fallback_key, default_theme[fallback_key]))
+            theme.setdefault(key, theme.get(fallback_key, globals()[fallback_key]))
+
+
+def strip_theme(theme):
+    """remove any keys that can be calculated, make user themes more compact
+        Args:
+            theme (dict): theme dictionary
+
+        Return:
+            (dict): new stripped theme
+    """
+
+    main_keys = ('MAIN_BG', 'SF_BG', 'SF_BTN_BG')
+    dummy_theme = {k: theme[k] for k in main_keys}
+    calculate_missing_theme_keys(dummy_theme)
+    # dummy_theme = {k: v for k, v in dummy_theme.items() if k not in main_keys}
+    for k in main_keys:
+        dummy_theme[k] = None
+
+    theme = {k: v for k, v in theme.items() if v != dummy_theme[k]}
+    return theme
 
 
 # calculate missing keys for builtin themes
 for t in builtin_themes.values():
     calculate_missing_theme_keys(t)
+
+if __name__ == '__main__':
+    keys = sorted(builtin_themes.keys())
+    for name in keys:
+        theme = builtin_themes[name]
+        print(f'"{name}": ', '{')
+        for k, v in strip_theme(theme).items():
+            print(f'    "{k}": "{v}",')
+        print('},')
