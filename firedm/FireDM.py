@@ -39,15 +39,16 @@ from .setting import load_setting
 from .version import __version__
 
 
-def main():
-    description = """FireDM is an open source Download Manager with multi-connections, high speed 
-    engine, it can download general files and video files from youtube and tons of other streaming websites. 
-    Developed in Python, based on "LibCurl", "youtube_dl", and "Tkinter". 
-    Source: https://github.com/firedm/FireDM """
+def pars_args(arguments):
+    """parse arguments vector
+    Args:
+        arguments(list): list contains arguments, could be sys.argv[1:] i.e. without script name
+    """
 
-    # read config file
-    if '--ignore-config' not in sys.argv:
-        load_setting()
+    description = """FireDM is an open source Download Manager with multi-connections, high speed 
+        engine, it can download general files and video files from youtube and tons of other streaming websites. 
+        Developed in Python, based on "LibCurl", "youtube_dl", and "Tkinter". 
+        Source: https://github.com/firedm/FireDM """
 
     def iterable(txt):
         # process iterable in arguments, e.g. tuple or list,
@@ -275,25 +276,63 @@ def main():
     # ------------------------------------------------------------------------------------------------------------------
     # endregion
 
-    guimode = True if len(sys.argv) == 1 or '--gui' in sys.argv else False
+    args = parser.parse_args(arguments)
+    sett = vars(args)
+
+    if args.referer_url:
+        sett['use_referer'] = True
+
+    if args.username or args.password:
+        sett['use_web_auth'] = True
+
+    if args.proxy:
+        sett['enable_proxy'] = True
+
+    if args.output:
+        fp = os.path.realpath(args.output)
+        if os.path.isdir(fp):
+            folder = fp
+        else:
+            folder = os.path.dirname(fp)
+            name = os.path.basename(fp)
+            if name:
+                sett['name'] = name
+
+        if folder:
+            sett['folder'] = folder
+
+    return sett
+
+
+def main(argv=sys.argv):
+    """
+    app main
+    Args:
+        argv(list): command line arguments vector, argv[0] is the script pathname if known
+    """
+    # read config file
     config_fp = os.path.join(config.sett_folder, 'setting.cfg')
+    if '--ignore-config' not in argv:
+        load_setting()
 
-    args = parser.parse_args()
-    custom_settings = vars(args)
+    sett = pars_args(argv[1:])
+    config.__dict__.update(sett)
 
-    if args.config:
-        for key, value in custom_settings.items():
+    guimode = True if len(argv) == 1 or '--gui' in argv else False
+
+    if sett.get('config'):
+        for key, value in sett.items():
             print(f'{key}: {value}')
         print('\nconfig file path:', config_fp)
         sys.exit(0)
 
-    if args.edit_config:
-        executable = args.edit_config
+    if sett.get('edit_config'):
+        executable = sett.get('edit_config')
         cmd = f'{executable} {config_fp}'
         subprocess.run(cmd, shell=True)
         sys.exit(0)
 
-    if args.imports_only:
+    if sett.get('imports_only'):
         import importlib, time
         total_time = 0
 
@@ -319,39 +358,14 @@ def main():
         print(f'Done, importing modules, total time: {round(total_time, 2)} sec ...')
         sys.exit(0)
 
-    if args.referer_url:
-        custom_settings['use_referer'] = True
-
-    if args.username or args.password:
-        custom_settings['use_web_auth'] = True
-
-    if args.proxy:
-        custom_settings['enable_proxy'] = True
-
-    if args.output:
-        fp = os.path.realpath(args.output)
-        if os.path.isdir(fp):
-            folder = fp
-        else:
-            folder = os.path.dirname(fp)
-            name = os.path.basename(fp)
-            if name:
-                custom_settings['name'] = name
-
-        if folder:
-            custom_settings['folder'] = folder
-
     # set ignore_dlist argument to True in cmdline mode if not explicitly used
-    if args.ignore_dlist is None and not guimode: 
-        custom_settings['ignore_dlist'] = True
-
-    # update config module with custom settings
-    config.__dict__.update(custom_settings)
+    if sett.get('ignore_dlist') is None and not guimode:
+        sett['ignore_dlist'] = True
 
     controller = None
 
     def cleanup():
-        if guimode or args.persistent:
+        if guimode or sett.get('persistent'):
             setting.save_setting()
         controller.quit()
         import time
@@ -370,33 +384,33 @@ def main():
     # if running application without arguments will start the gui, otherwise will run application in cmdline
     if guimode:
         # GUI
-        controller = Controller(view_class=MainWindow, custom_settings=custom_settings)
+        controller = Controller(view_class=MainWindow, custom_settings=sett)
         controller.run()
     else:
-        controller = Controller(view_class=CmdView, custom_settings=custom_settings)
+        controller = Controller(view_class=CmdView, custom_settings=sett)
 
-        if args.update_self:
+        if sett.get('update_self'):
             controller.check_for_update(wait=True, threaded=False)
             sys.exit(0)
 
-        urls = custom_settings.pop('url')  # list of urls or empty list
+        urls = sett.pop('url')  # list of urls or empty list
 
-        if args.batch_file:
-            text = args.batch_file.read()
+        if sett.get('batch_file'):
+            text = sett['batch_file'].read()
             urls += parse_urls(text)
 
         if not urls:
             print('No url(s) to download')
 
-        elif args.interactive:
+        elif sett.get('interactive'):
             for url in urls:
                 controller.interactive_download(url)
         else:
-            controller.batch_download(urls, **custom_settings, threaded=False)
+            controller.batch_download(urls, **sett, threaded=False)
 
     cleanup()
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
 
