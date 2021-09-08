@@ -1587,7 +1587,7 @@ class DItem(tk.Frame):
         self.status_icon.pack(side='left', padx=5, pady=5)
 
         # separator
-        ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=5)
+        ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=5, pady=(0, 5))
 
     def __repr__(self):
         return f'DItem({self.uid})'
