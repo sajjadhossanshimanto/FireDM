@@ -141,7 +141,7 @@ def save_d_map(d_map):
         downloads_fp = os.path.join(config.sett_folder, 'downloads.dat')
         with open(downloads_fp, 'w') as f:
             try:
-                json.dump(data, f)
+                json.dump(data, f, indent=4)
             except Exception as e:
                 print('error save d_list:', e)
 

@@ -3734,7 +3734,7 @@ class MainWindow(IView):
                 
             gui_font.config(**config.gui_font)
         except Exception as e:
-            log('loading user font error: e', log_level=3)
+            log('loading user font error:', e, log_level=3)
 
     def assign_font_for(self, widget):
 
