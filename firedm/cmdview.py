@@ -16,6 +16,9 @@
 
 import shutil
 
+if not __package__:
+    __package__ = 'firedm'
+
 from .view import IView
 from .utils import *
 
@@ -30,33 +33,25 @@ def get_terminal_size():
     return size
 
 
-def print_progress_bar(value, suffix='', bar_length=20, fill='█'):
-    """print progress bar to screen, value is number between 0 and 100"""
+def print_progress_bar(percent, suffix='', bar_length=20, fill='█'):
+    """print progress bar to screen, percent is number between 0 and 100"""
     try:
-        min_bar_length = 10
+
+        scale = bar_length / 100
+        filled_length = int(percent * scale)
+        bar = fill * filled_length + ' '*(bar_length - filled_length)
 
         # get screen size
         terminal_width = get_terminal_size()[0]
 
-        value = int(value)
-        percent = f'{value}%'
-        text_length = len(percent) + len(suffix) + 5
-        allowed_length = terminal_width - text_length
+        line = f'\r {percent}% [{bar}] {suffix}'
+        end_spaces = terminal_width - len(line)
+        line += ' '*end_spaces
 
-        if bar_length > allowed_length:
-            bar_length = max(min_bar_length, allowed_length)
+        # truncate line 
+        line = line[:terminal_width]
 
-        scale = bar_length / 100
-
-        filled_length = int(value * scale)
-
-        bar = fill * filled_length + ' ' * (bar_length - filled_length)
-
-        line = f'\r {percent} [{bar}] {suffix}'[:terminal_width-1]
-
-        end_spaces = terminal_width - len(line) - 1
-
-        print(f'\r{line}', end=' '*end_spaces)
+        print(f'\r{line}', end='')
         
     except:
         pass
@@ -96,11 +91,11 @@ class CmdView(IView):
         if progress > 0 and self.progress < 100:
             # print progress bar on screen
 
-            suffix = f'{format_bytes(downloaded)}'
+            suffix = f'{format_bytes(downloaded, sep="", percision=1)}'
             if self.total_size:
-                suffix += f'/{format_bytes(self.total_size)}:'
-            suffix += f" {format_bytes(speed, tail='/s')}" if speed else ''
-            suffix += f', {format_seconds(eta)}'
+                suffix += f'/{format_bytes(self.total_size, sep="", percision=1)}'
+            suffix += f" {format_bytes(speed, tail='/s', percision=1)}" if speed else ''
+            suffix += f', {format_seconds(eta, percision=0, fullunit=True)}(s)' if eta else 0
 
             print_progress_bar(progress, suffix=suffix, fill='=')
 
@@ -186,3 +181,11 @@ class CmdView(IView):
                 print('\n invalid entry, try again.\n')
 
         return response
+
+
+if __name__ == '__main__':
+    import time
+
+    for i in range(101):
+        print_progress_bar(i, suffix=100 - i, fill='=')
+        time.sleep(1)
