@@ -194,6 +194,10 @@ def pars_args(arguments):
     # --------------------------------------------------------------------------------------Workarounds-----------------
     workarounds = parser.add_argument_group(title='Workarounds')
     workarounds.add_argument(
+        '--check-certificate', dest='ignore_ssl_cert',
+        action='store_false', default=not config.ignore_ssl_cert,
+        help='validate ssl certificate, default=%(default)s')
+    workarounds.add_argument(
         '--no-check-certificate', dest='ignore_ssl_cert',
         action='store_true',
         help='ignore ssl certificate validation')
@@ -213,13 +217,25 @@ def pars_args(arguments):
         action='store_true', default=config.write_metadata,
         help='Write metadata to the video file, default=%(default)s')
     postproc.add_argument(
+        '--no-metadata', dest='write_metadata',
+        action='store_false',
+        help='Don\'t Write metadata to the video file')
+    postproc.add_argument(
         '--write-thumbnail', dest='download_thumbnail',
         action='store_true', default=config.download_thumbnail,
         help='Write thumbnail image to disk after downloading video file, default=%(default)s')
     postproc.add_argument(
-        '--checksum',
+        '--no-thumbnail', dest='download_thumbnail',
+        action='store_false',
+        help='Don\'t Write thumbnail image to disk after downloading video file')
+    postproc.add_argument(
+        '--checksum', dest='checksum',
         action='store_true', default=config.checksum,
         help='calculate checksums for completed files MD5 and SHA256, default=%(default)s')
+    postproc.add_argument(
+        '--no-checksum', dest='checksum',
+        action='store_false',
+        help='calculate checksums for completed files MD5 and SHA256')
 
     # -------------------------------------------------------------------------------------Application Update Options---
     appupdate = parser.add_argument_group(title='Application Update Options')
@@ -255,9 +271,13 @@ def pars_args(arguments):
         type=int, metavar='LEVEL', default=1,
         help='verbosity level 1, 2, or 3, default=%(default)s.')
     debug.add_argument(
-        '--keep-temp',
+        '--keep-temp', dest='keep_temp',
         action='store_true', default=config.keep_temp,
         help='keep temp files for debugging, default=%(default)s.')
+    debug.add_argument(
+        '--remove-temp', dest='keep_temp',
+        action='store_false', default=not config.keep_temp,
+        help='remove temp files after finish, default=%(default)s.')
 
     # -------------------------------------------------------------------------------------GUI options------------------
     gui = parser.add_argument_group(title='GUI Options')
@@ -269,6 +289,10 @@ def pars_args(arguments):
         '--monitor-clipboard', dest='monitor_clipboard',
         action='store_true', default=config.monitor_clipboard,
         help='monitor clipboard, and process any copied url, default=%(default)s.')
+    gui.add_argument(
+        '--no-clipboard', dest='monitor_clipboard',
+        action='store_false',
+        help='Don\'t monitor clipboard, in gui mode')
     gui.add_argument(
         '--window', dest='window_size',
         type=int_iterable, metavar='(WIDTH,HIGHT)', default=config.window_size,
