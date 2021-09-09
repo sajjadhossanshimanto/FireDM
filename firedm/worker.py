@@ -155,10 +155,11 @@ class Worker:
         # Case-2, unknown segment size, and zero downloaded data, will retry a couple of times, ignore it if failed
         elif self.seg.size == 0 and self.seg.current_size == 0:
             if self.seg.retries < max_seg_retries:
-                log('seg:', self.seg.basename, 'has zero size, will try again, number of retries:', self.seg.retries)
+                log('seg:', self.seg.basename, 'has zero size, will try again, number of retries:', self.seg.retries,
+                    log_level=2)
                 return False
             else:
-                log('seg:', self.seg.basename, 'exceeded max. retries:', self.seg.retries,
+                log('seg:', self.seg.basename, f'exceeded max. of ({max_seg_retries}) retries,',
                     'it has zero size, and will be ignored')
                 return True
 
