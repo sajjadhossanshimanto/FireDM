@@ -672,22 +672,22 @@ def open_folder(path):
         log('utils> open_folder()> ', e, log_level=2)
 
 
-def load_json(file=None):
+def load_json(fp):
     try:
-        with open(file, 'r') as f:
+        with open(fp, 'r') as f:
             data = json.load(f)
         return data
     except Exception as e:
-        log('load_json() > error: ', e)
-        return None
+        log('load_json() > error: ', e, fp)
 
 
-def save_json(file=None, data=None):
+def save_json(fp, data):
     try:
-        with open(file, 'w') as f:
+        with open(fp, 'w') as f:
             json.dump(data, f, indent=4)
+            return data
     except Exception as e:
-        log('save_json() > error: ', e)
+        log('save_json() > error: ', e, fp)
 
 
 def natural_sort(my_list):
@@ -725,22 +725,28 @@ def format_seconds(t, tail='', sep=' ', percision=1, fullunit=False):
             >>> format_seconds(90)
             '1.5 m'
         """
-    if t == -1:
-        return ''
+
+    result = ''
 
     try:
+        t = int(t)
         units = ['second', 'minute', 'hour', 'day', 'month', 'year'] if fullunit else ['s', 'm', 'h', 'D', 'M', 'Y']
         thresholds = [1, 60, 3600, 86400, 2592000, 31536000]
-        for i in range(len(units)):
-            threshold = thresholds[i + 1] if i < len(units) - 1 else t + 1
-            if t < threshold:
-                unit = units[i]
-                num = round(t / thresholds[i], percision)
-                # remove zeros after decimal point
-                num = int(num) if num % 1 == 0 else num
-                return f'{num}{sep}{unit}{tail}'
+
+        if t >= 0:
+            for i in range(len(units)):
+                threshold = thresholds[i + 1] if i < len(units) - 1 else t + 1
+                if t < threshold:
+                    unit = units[i]
+                    num = round(t / thresholds[i], percision)
+                    # remove zeros after decimal point
+                    num = int(num) if num % 1 == 0 else num
+                    result = f'{num}{sep}{unit}{tail}'
+                    break
     except:
-        return t
+        pass
+
+    return result
 
 
 def parse_bytes(bytestr):

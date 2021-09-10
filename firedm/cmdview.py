@@ -77,7 +77,7 @@ class CmdView(IView):
 
         progress = kwargs.get('progress', 0)
         speed = kwargs.get('speed')
-        eta = kwargs.get('time_left')
+        eta = kwargs.get('eta')
         downloaded = kwargs.get('downloaded')
         if total_size:
             self.total_size = total_size

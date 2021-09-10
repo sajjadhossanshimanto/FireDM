@@ -1681,7 +1681,7 @@ class DItem(tk.Frame):
         # a led like blinking button, to react with data flow
         self.toggle_blinker()
 
-    def update(self, name=None, downloaded=None, progress=None, total_size=None, time_left=None, speed=None,
+    def update(self, name=None, downloaded=None, progress=None, total_size=None, eta=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
                on_completion_command=None, video_progress=None, audio_progress=None, merge_progress=None,
@@ -1704,8 +1704,8 @@ class DItem(tk.Frame):
             if speed is not None:
                 self.speed = f'- Speed: {format_bytes(speed)}/s' if speed > 0 else ''
 
-            if time_left is not None:
-                self.eta = f'- ETA: {format_seconds(time_left, fullunit=True)}' if time_left > 0 else ''
+            if eta is not None:
+                self.eta = f'- ETA: {format_seconds(eta, fullunit=True)}' if eta else ''
 
             if progress is not None:
                 try:

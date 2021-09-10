@@ -357,16 +357,16 @@ class DownloadItem:
         return p
 
     @property
-    def time_left(self):
-        """estimated time remaining to finish download
-        Returns:
-            (int): seconds, it will return -1 if speed=0, this value will be formatted by utils.time_format()
-        """
-        if self.status == config.Status.downloading and self.total_size and self.total_size >= self.downloaded and self.speed:
-            t = (self.total_size - self.downloaded) / self.speed
-            return int(t)
-        else:
-            return -1
+    def eta(self):
+        """estimated time remaining to finish download"""
+        ret = ''
+        try:
+            if self.status == config.Status.downloading:
+                ret = int((self.total_size - self.downloaded) / self.speed)
+        except:
+            pass
+
+        return ret
 
     @property
     def status(self):

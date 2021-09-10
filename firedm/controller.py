@@ -349,7 +349,7 @@ class Controller:
                 # readonly properties will not be reported by ObservableDownloadItem
                 downloaded = kwargs.get('downloaded', None)
                 if downloaded:
-                    extra = {k: getattr(d, k, None) for k in ['progress', 'speed', 'time_left']}
+                    extra = {k: getattr(d, k, None) for k in ['progress', 'speed', 'eta']}
                     # print('extra:', extra)
 
                     kwargs.update(**extra)
