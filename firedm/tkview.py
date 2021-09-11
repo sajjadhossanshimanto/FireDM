@@ -20,8 +20,8 @@ from tkinter import ttk, filedialog, colorchooser
 from awesometkinter.version import __version__ as atk_version
 import PIL
 from queue import Queue
-import os, sys
-from packaging.version import parse as parse_version
+import os
+import sys
 import subprocess
 import signal
 
@@ -34,7 +34,7 @@ if __package__ is None:
     import firedm
 
 from .view import IView
-from .controller import Controller, set_option, get_option
+from .controller import Controller, set_option, get_option, log_runtime_info
 from .utils import *
 from . import config
 from . import iconsbase64
@@ -4344,7 +4344,7 @@ class MainWindow(IView):
         config.log_popup_callback = self.log_popup
 
         # log runtime info
-        self.controller.log_runtime_info()
+        log_runtime_info()
 
         # log extra pkgs info
         log('Tkinter version:', self.root.call("info", "patchlevel"))

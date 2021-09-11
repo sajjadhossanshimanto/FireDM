@@ -28,7 +28,7 @@ from . import config
 from .config import Status, MediaType
 from .brain import brain
 from . import video
-from .video import get_ytdl_options
+from .video import get_media_info, process_video
 from .model import ObservableDownloadItem, ObservableVideo
 
 
@@ -117,6 +117,193 @@ def notify(message='', title='', timeout=5, app_icon='', app_name='FireDM'):
         log(f'plyer notification: {e}')
 
 
+def write_timestamp(d):
+    """write 'last modified' timestamp to downloaded file
+
+    try to figure out the timestamp of the remote file, and if available make
+    the local file get that same timestamp.
+
+    Args:
+        d (ObservableDownloadItem): download item
+    """
+
+    try:
+
+        if d.status == Status.completed:
+            # get last modified timestamp from server, example: "fri, 09 oct 2020 11:11:34 gmt"
+            headers = get_headers(d.eff_url, http_headers=d.http_headers)
+            timestamp = headers.get('last-modified')
+
+            if timestamp:
+                # parse timestamp, eg.      "fri, 09 oct 2020 11:11:34 gmt"
+                t = time.strptime(timestamp, "%a, %d %b %Y %H:%M:%S %Z")
+                t = time.mktime(t)
+                log(f'writing last modified timestamp "{timestamp}" to file: {d.name}')
+                os.utime(d.target_file, (t, t))
+
+    except Exception as e:
+        log('controller._write_timestamp()> error:', e)
+        if config.test_mode:
+            raise e
+
+
+def rename(d):
+    """
+    rename download item
+    """
+    forbidden_names = os.listdir(d.folder)  # + [d.name for d in self.d_map.values()]
+    d.name = auto_rename(d.name, forbidden_names)
+    d.calculate_uid()
+
+    return d
+
+
+def download_simulator(d):
+    print('start download simulator for id:', d.uid, d.name)
+
+    speed = 200  # kb/s
+    d.status = Status.downloading
+
+    if d.downloaded >= d.total_size:
+        d.downloaded = 0
+
+    while True:
+        time.sleep(1 / 2)
+        # print(d.progress)
+
+        d.downloaded += speed // 2 * 1024
+        if d.downloaded >= d.total_size:
+            d.status = Status.completed
+            d.downloaded = d.total_size
+            print('download simulator completed for:', d.uid, d.name)
+
+            break
+
+        if d.status == Status.cancelled:
+            print('download simulator cancelled for:', d.uid, d.name)
+            break
+
+
+def download_thumbnail(d):
+    """download thumbnail
+
+    Args:
+        d (ObservableDownloadItem): download item
+    """
+
+    try:
+        # download thumbnail
+        if d.status == Status.completed and d.thumbnail_url:
+            fp = os.path.splitext(d.target_file)[0] + '.png'
+            download(d.thumbnail_url, fp=fp, decode=False)
+
+    except Exception as e:
+        log('controller._download_thumbnail()> error:', e)
+        if config.test_mode:
+            raise e
+
+
+def log_runtime_info():
+    """Print useful information about the system"""
+    log('-' * 20, 'FireDM', '-' * 20)
+
+    if config.isappimage:
+        release_type = 'AppImage'
+    elif config.FROZEN:
+        release_type = 'Frozen'
+    else:
+        release_type = 'Non-Frozen'
+
+    log('Starting FireDM version:', config.APP_VERSION, release_type)
+    log('operating system:', config.operating_system_info)
+    log('Python version:', sys.version)
+    log('current working directory:', config.current_directory)
+    log('FFMPEG:', config.ffmpeg_actual_path)
+
+
+def create_video_playlist(url, ytdloptions=None):
+    """Process url and build video object(s) and return a video playlist"""
+
+    log('creating video playlist', log_level=2)
+    playlist = []
+
+    try:
+        info = get_media_info(url, ytdloptions=ytdloptions)
+
+        _type = info.get('_type', 'video')
+
+        # check results if _type is a playlist / multi_video -------------------------------------------------
+        if _type in ('playlist', 'multi_video') or 'entries' in info:
+            log('youtube-func()> start processing playlist')
+
+            # videos info
+            pl_info = list(info.get('entries'))  # info.get('entries') is a generator
+            # log('list(info.get(entries):', pl_info)
+
+            # create initial playlist with un-processed video objects
+            for v_info in pl_info:
+                v_info['formats'] = []
+
+                # get video's url
+                vid_url = v_info.get('webpage_url', None) or v_info.get('url', None) or v_info.get('id', None)
+
+                # create video object
+                vid = ObservableVideo(vid_url, v_info)
+
+                # update info
+                vid.playlist_title = info.get('title', '')
+                vid.playlist_url = url
+
+                # add video to playlist
+                playlist.append(vid)
+
+                # vid.register_callback(self.observer)
+        else:
+
+            processed_info = get_media_info(info['url'], info=info, ytdloptions=ytdloptions)
+
+            if processed_info and processed_info.get('formats'):
+
+                # create video object
+                vid = ObservableVideo(url, processed_info)
+
+                # get thumbnail
+                vid.get_thumbnail()
+
+                # report done processing
+                vid.processed = True
+
+                # add video to playlist
+                playlist.append(vid)
+
+                # vid.register_callback(self.observer)
+            else:
+                log('no video streams detected')
+    except Exception as e:
+        playlist = []
+        log('controller._create_video_playlist:', e)
+        if config.test_mode:
+            raise e
+
+    return playlist
+
+
+def url_to_playlist(url, ytdloptions=None):
+    d = ObservableDownloadItem()
+    d.update(url)
+
+    playlist = None
+
+    # searching for videos
+    if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
+        playlist = create_video_playlist(url, ytdloptions=ytdloptions)
+
+    if not playlist:
+        playlist = [d]
+
+    return playlist
+
+
 class Controller:
     """controller class
      communicate with (view / gui) and has the logic for downloading process
@@ -141,6 +328,7 @@ class Controller:
         to tell if data belongs to the current active download item
 
     """
+
     def __init__(self, view_class, custom_settings={}):
         self.observer_q = Queue()  # queue to collect references for updated download items
 
@@ -203,7 +391,7 @@ class Controller:
 
         else:
             # process video
-            playlist = self._create_video_playlist(url)
+            playlist = create_video_playlist(url)
             if playlist:
                 refreshed_d = playlist[0]
 
@@ -235,21 +423,6 @@ class Controller:
 
         return d
 
-    def url_to_playlist(self, url, ytdloptions=None):
-        d = ObservableDownloadItem()
-        d.update(url)
-
-        playlist = None
-
-        # searching for videos
-        if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
-            playlist = self._create_video_playlist(url, ytdloptions=ytdloptions)
-
-        if not playlist:
-            playlist = [d]
-
-        return playlist
-
     @threaded
     def process_url(self, url):
         """take url and return a a list of ObservableDownloadItem objects
@@ -277,7 +450,7 @@ class Controller:
 
         # searching for videos
         if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
-            playlist = self._create_video_playlist(url)
+            playlist = create_video_playlist(url)
 
             if playlist:
                 is_video_playlist = True
@@ -415,224 +588,202 @@ class Controller:
 
             # save d_map
             setting.save_d_map(self.d_map)
+
     # endregion
 
     # region video
-    def _process_video_info(self, info):
-        """process video info for a video object
-        info: youtube-dl info dict
-        """
-        try:
-            # reset abort flag
-            config.ytdl_abort = False
+    # def _process_video_info(self, info):
+    #     """process video info for a video object
+    #     info: youtube-dl info dict
+    #     """
+    #     try:
+    #         # reset abort flag
+    #         config.ytdl_abort = False
+    #
+    #         # handle types: url and url transparent
+    #         _type = info.get('_type', 'video')
+    #         if _type in ('url', 'url_transparent'):
+    #             info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
+    #
+    #         # process info
+    #         processed_info = self.ydl.process_ie_result(info, download=False)
+    #
+    #         return processed_info
+    #
+    #     except Exception as e:
+    #         log('_process_video_info()> error:', e)
+    #         if config.test_mode:
+    #             raise e
 
-            # handle types: url and url transparent
-            _type = info.get('_type', 'video')
-            if _type in ('url', 'url_transparent'):
-                info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
-
-            # process info
-            processed_info = self.ydl.process_ie_result(info, download=False)
-
-            return processed_info
-        
-        except Exception as e:
-            log('_process_video_info()> error:', e)
-            if config.test_mode:
-                raise e
-
-    def _process_video(self, vid):
-        """process video info and refresh Video object properties, 
-        typically required when video is a part of unprocessed video playlist"""
-        try:
-            vid.busy = True  # busy flag will be used to show progress bar or a busy mouse cursor
-            vid_info = self._process_video_info(vid.vid_info)
-            
-            if vid_info:
-                vid.vid_info = vid_info
-                vid.refresh()
-
-                vid.get_thumbnail()
-
-                log('_process_video_info()> processed url:', vid.url, log_level=3)
-                vid.processed = True
-            else:
-                log('_process_video()> Failed,  url:', vid.url, log_level=3)
-        except Exception as e:
-            log('_process_video()> error:', e)
-            if config.test_mode:
-                raise e
-        finally:
-            vid.busy = False
-
-    def _create_video_playlist(self, url, ytdloptions=None):
-        """Process url and build video object(s) and return a video playlist"""
-        log('creating video playlist', log_level=2)
-        playlist = []
-
-        # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
-        if video.ytdl is None:
-            log(f'{config.active_video_extractor} module still not loaded completely, please wait')
-            while not video.ytdl:
-                time.sleep(1)  # wait until module gets imported
-
-        # todo: remove this (captcha workaround) junk and add offline webpage option
-        # override _download_webpage in Youtube-dl for captcha workaround -- experimental
-        def download_webpage_decorator(func):
-            # return data
-            def newfunc(obj, *args, **kwargs):
-                # print('-' * 20, "start download page")
-                content = func(obj, *args, **kwargs)
-
-                # search for word captcha in webpage content is not enough
-                # example webpage https://www.youtube.com/playlist?list=PLwvr71r_LHEXwKxel0_hECnTb75JHEwlf
-
-                if config.enable_captcha_workaround and isinstance(content, str) and 'captcha' in content:
-                    print('-' * 20, "captcha here!!")
-                    # get webpage offline file path from user
-                    fp = self.view.get_offline_webpage_path()
-
-                    if fp is None:
-                        log('Cancelled by user')
-                        return content
-
-                    if not os.path.isfile(fp):
-                        log('invalid file path:', fp)
-                        return content
-
-                    with open(fp, 'rb') as fh:
-                        new_content = fh.read()
-                        encoding = video.ytdl.extractor.common.InfoExtractor._guess_encoding_from_content('', new_content)
-                        content = new_content.decode(encoding=encoding)
-
-                return content
-
-            return newfunc
-
-        video.ytdl.extractor.common.InfoExtractor._download_webpage = download_webpage_decorator(
-                video.ytdl.extractor.common.InfoExtractor._download_webpage)
-
-        # get global youtube_dl options
-        options = get_ytdl_options()
-
-        if ytdloptions:
-            options.update(ytdloptions)
-
-        self.ydl = video.ytdl.YoutubeDL(options)
-
-        # reset abort flag
-        config.ytdl_abort = False
-        try:
-            # fetch info by youtube-dl
-            info = self.ydl.extract_info(url, download=False, process=False)
-
-            # print(info)
-
-            # don't process direct links, youtube-dl warning message "URL could be a direct video link, returning it as such."
-            # refer to youtube-dl/extractor/generic.py
-            if not info or info.get('direct'):
-                log('controller._create_video_playlist()> No streams found')
-                return []
-
-            """
-                _type key:
-
-                _type "playlist" indicates multiple videos.
-                    There must be a key "entries", which is a list, an iterable, or a PagedList
-                    object, each element of which is a valid dictionary by this specification.
-                    Additionally, playlists can have "id", "title", "description", "uploader",
-                    "uploader_id", "uploader_url" attributes with the same semantics as videos
-                    (see above).
-
-                _type "multi_video" indicates that there are multiple videos that
-                    form a single show, for examples multiple acts of an opera or TV episode.
-                    It must have an entries key like a playlist and contain all the keys
-                    required for a video at the same time.
-
-                _type "url" indicates that the video must be extracted from another
-                    location, possibly by a different extractor. Its only required key is:
-                    "url" - the next URL to extract.
-                    The key "ie_key" can be set to the class name (minus the trailing "IE",
-                    e.g. "Youtube") if the extractor class is known in advance.
-                    Additionally, the dictionary may have any properties of the resolved entity
-                    known in advance, for example "title" if the title of the referred video is
-                    known ahead of time.
-
-                _type "url_transparent" entities have the same specification as "url", but
-                    indicate that the given additional information is more precise than the one
-                    associated with the resolved URL.
-                    This is useful when a site employs a video service that hosts the video and
-                    its technical metadata, but that video service does not embed a useful
-                    title, description etc.
-            """
-            _type = info.get('_type', 'video')
-
-            # handle types: url and url transparent
-            if _type in ('url', 'url_transparent'):
-                # handle youtube user links ex: https://www.youtube.com/c/MOTORIZADO/videos
-                # issue: https://github.com/firedm/FireDM/issues/146
-                # info: {'_type': 'url', 'url': 'https://www.youtube.com/playlist?list=UUK32F9z7s_JhACkUdVoWdag',
-                # 'ie_key': 'YoutubePlaylist', 'extractor': 'youtube:user', 'webpage_url': 'https://www.youtube.com/c/MOTORIZADO/videos',
-                # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
-
-                info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
-                # print(info)
-
-            # check results if _type is a playlist / multi_video -------------------------------------------------
-            if _type in ('playlist', 'multi_video') or 'entries' in info:
-                log('youtube-func()> start processing playlist')
-                # log('Media info:', info)
-
-                # videos info
-                pl_info = list(info.get('entries'))  # info.get('entries') is a generator
-                # log('list(info.get(entries):', pl_info)
-
-                # create initial playlist with un-processed video objects
-                for v_info in pl_info:
-                    v_info['formats'] = []
-
-                    # get video's url
-                    vid_url = v_info.get('webpage_url', None) or v_info.get('url', None) or v_info.get('id', None)
-
-                    # create video object
-                    vid = ObservableVideo(vid_url, v_info)
-
-                    # update info
-                    vid.playlist_title = info.get('title', '')
-                    vid.playlist_url = url
-
-                    # add video to playlist
-                    playlist.append(vid)
-
-                    # vid.register_callback(self.observer)
-            else:
-
-                processed_info = self._process_video_info(info)
-
-                if processed_info and processed_info.get('formats'):
-
-                    # create video object
-                    vid = ObservableVideo(url, processed_info)
-
-                    # get thumbnail
-                    vid.get_thumbnail()
-
-                    # report done processing
-                    vid.processed = True
-
-                    # add video to playlist
-                    playlist.append(vid)
-
-                    # vid.register_callback(self.observer)
-                else:
-                    log('no video streams detected')
-        except Exception as e:
-            playlist = []
-            log('controller._create_video_playlist:', e)
-            if config.test_mode:
-                raise e
-
-        return playlist
+    # def _create_video_playlist(self, url, ytdloptions=None):
+    #     """Process url and build video object(s) and return a video playlist"""
+    #     log('creating video playlist', log_level=2)
+    #     playlist = []
+    #
+    #     # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
+    #     if video.ytdl is None:
+    #         log(f'loading {config.active_video_extractor} ...')
+    #         while not video.ytdl:
+    #             time.sleep(1)  # wait until module gets imported
+    #
+    #     # todo: remove this (captcha workaround) junk and add offline webpage option
+    #     # override _download_webpage in Youtube-dl for captcha workaround -- experimental
+    #     def download_webpage_decorator(func):
+    #         # return data
+    #         def newfunc(obj, *args, **kwargs):
+    #             # print('-' * 20, "start download page")
+    #             content = func(obj, *args, **kwargs)
+    #
+    #             # search for word captcha in webpage content is not enough
+    #             # example webpage https://www.youtube.com/playlist?list=PLwvr71r_LHEXwKxel0_hECnTb75JHEwlf
+    #
+    #             if config.enable_captcha_workaround and isinstance(content, str) and 'captcha' in content:
+    #                 print('-' * 20, "captcha here!!")
+    #                 # get webpage offline file path from user
+    #                 fp = self.view.get_offline_webpage_path()
+    #
+    #                 if fp is None:
+    #                     log('Cancelled by user')
+    #                     return content
+    #
+    #                 if not os.path.isfile(fp):
+    #                     log('invalid file path:', fp)
+    #                     return content
+    #
+    #                 with open(fp, 'rb') as fh:
+    #                     new_content = fh.read()
+    #                     encoding = video.ytdl.extractor.common.InfoExtractor._guess_encoding_from_content('', new_content)
+    #                     content = new_content.decode(encoding=encoding)
+    #
+    #             return content
+    #
+    #         return newfunc
+    #
+    #     video.ytdl.extractor.common.InfoExtractor._download_webpage = download_webpage_decorator(
+    #             video.ytdl.extractor.common.InfoExtractor._download_webpage)
+    #
+    #     # get global youtube_dl options
+    #     options = get_ytdl_options()
+    #
+    #     if ytdloptions:
+    #         options.update(ytdloptions)
+    #
+    #     self.ydl = video.ytdl.YoutubeDL(options)
+    #
+    #     # reset abort flag
+    #     config.ytdl_abort = False
+    #     try:
+    #         # fetch info by youtube-dl
+    #         info = self.ydl.extract_info(url, download=False, process=False)
+    #
+    #         # print(info)
+    #
+    #         # don't process direct links, youtube-dl warning message "URL could be a direct video link, returning it as such."
+    #         # refer to youtube-dl/extractor/generic.py
+    #         if not info or info.get('direct'):
+    #             log('controller._create_video_playlist()> No streams found')
+    #             return []
+    #
+    #         """
+    #             refer to youtube-dl/extractor/generic.py
+    #             _type key:
+    #
+    #             _type "playlist" indicates multiple videos.
+    #                 There must be a key "entries", which is a list, an iterable, or a PagedList
+    #                 object, each element of which is a valid dictionary by this specification.
+    #                 Additionally, playlists can have "id", "title", "description", "uploader",
+    #                 "uploader_id", "uploader_url" attributes with the same semantics as videos
+    #                 (see above).
+    #
+    #             _type "multi_video" indicates that there are multiple videos that
+    #                 form a single show, for examples multiple acts of an opera or TV episode.
+    #                 It must have an entries key like a playlist and contain all the keys
+    #                 required for a video at the same time.
+    #
+    #             _type "url" indicates that the video must be extracted from another
+    #                 location, possibly by a different extractor. Its only required key is:
+    #                 "url" - the next URL to extract.
+    #                 The key "ie_key" can be set to the class name (minus the trailing "IE",
+    #                 e.g. "Youtube") if the extractor class is known in advance.
+    #                 Additionally, the dictionary may have any properties of the resolved entity
+    #                 known in advance, for example "title" if the title of the referred video is
+    #                 known ahead of time.
+    #
+    #             _type "url_transparent" entities have the same specification as "url", but
+    #                 indicate that the given additional information is more precise than the one
+    #                 associated with the resolved URL.
+    #                 This is useful when a site employs a video service that hosts the video and
+    #                 its technical metadata, but that video service does not embed a useful
+    #                 title, description etc.
+    #         """
+    #         _type = info.get('_type', 'video')
+    #
+    #         # handle types: url and url transparent
+    #         if _type in ('url', 'url_transparent'):
+    #             # handle youtube user links ex: https://www.youtube.com/c/MOTORIZADO/videos
+    #             # issue: https://github.com/firedm/FireDM/issues/146
+    #             # info: {'_type': 'url', 'url': 'https://www.youtube.com/playlist?list=UUK32F9z7s_JhACkUdVoWdag',
+    #             # 'ie_key': 'YoutubePlaylist', 'extractor': 'youtube:user', 'webpage_url': 'https://www.youtube.com/c/MOTORIZADO/videos',
+    #             # 'webpage_url_basename': 'videos', 'extractor_key': 'YoutubeUser'}
+    #
+    #             info = self.ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
+    #             # print(info)
+    #
+    #         # check results if _type is a playlist / multi_video -------------------------------------------------
+    #         if _type in ('playlist', 'multi_video') or 'entries' in info:
+    #             log('youtube-func()> start processing playlist')
+    #             # log('Media info:', info)
+    #
+    #             # videos info
+    #             pl_info = list(info.get('entries'))  # info.get('entries') is a generator
+    #             # log('list(info.get(entries):', pl_info)
+    #
+    #             # create initial playlist with un-processed video objects
+    #             for v_info in pl_info:
+    #                 v_info['formats'] = []
+    #
+    #                 # get video's url
+    #                 vid_url = v_info.get('webpage_url', None) or v_info.get('url', None) or v_info.get('id', None)
+    #
+    #                 # create video object
+    #                 vid = ObservableVideo(vid_url, v_info)
+    #
+    #                 # update info
+    #                 vid.playlist_title = info.get('title', '')
+    #                 vid.playlist_url = url
+    #
+    #                 # add video to playlist
+    #                 playlist.append(vid)
+    #
+    #                 # vid.register_callback(self.observer)
+    #         else:
+    #
+    #             processed_info = self._process_video_info(info)
+    #
+    #             if processed_info and processed_info.get('formats'):
+    #
+    #                 # create video object
+    #                 vid = ObservableVideo(url, processed_info)
+    #
+    #                 # get thumbnail
+    #                 vid.get_thumbnail()
+    #
+    #                 # report done processing
+    #                 vid.processed = True
+    #
+    #                 # add video to playlist
+    #                 playlist.append(vid)
+    #
+    #                 # vid.register_callback(self.observer)
+    #             else:
+    #                 log('no video streams detected')
+    #     except Exception as e:
+    #         playlist = []
+    #         log('controller._create_video_playlist:', e)
+    #         if config.test_mode:
+    #             raise e
+    #
+    #     return playlist
 
     def _pre_download_process(self, d, **kwargs):
         """take a ObservableDownloadItem object and process any missing information before download
@@ -689,7 +840,7 @@ class Controller:
 
         # process video
         if not vid.processed:
-            self._process_video(vid)
+            process_video(vid)
 
         self._update_view(command='stream_menu', stream_menu=vid.stream_menu, video_idx=video_idx,
                           stream_idx=vid.stream_menu_map.index(vid.selected_stream))
@@ -734,6 +885,7 @@ class Controller:
         video.ytdl = None
         set_option(active_video_extractor=extractor)
         video.set_default_extractor(extractor)
+
     # endregion
 
     # region download
@@ -805,7 +957,7 @@ class Controller:
                     res = self.get_user_response(popup_id=2)
                     if res == 'Download':
                         # download ffmpeg from github
-                        self._download_ffmpeg() 
+                        self._download_ffmpeg()
                 else:
                     log('FFMPEG is missing', start='', showpopup=showpopup)
 
@@ -862,7 +1014,7 @@ class Controller:
                     return False
 
             if action == 'Rename':
-                self.rename(d)
+                rename(d)
                 log('File with the same name exist in download folder, generate new name:', d.name)
                 return self._pre_download_checks(d, silent=silent)
             elif action == 'Overwrite':
@@ -881,7 +1033,7 @@ class Controller:
                 d.downloaded = d_from_list.downloaded
             else:
                 log('Rename File')
-                self.rename(d)
+                rename(d)
                 return self._pre_download_checks(d, silent=silent)
 
         else:  # new file
@@ -897,41 +1049,6 @@ class Controller:
 
         # if above checks passed will return True
         return True
-
-    def rename(self, d):
-        """
-        rename download item
-        """
-        forbidden_names = os.listdir(d.folder) # + [d.name for d in self.d_map.values()]
-        d.name = auto_rename(d.name, forbidden_names)
-        d.calculate_uid()
-        
-        return d
-
-    def download_simulator(self, d):
-        print('start download simulator for id:', d.uid, d.name)
-
-        speed = 200  # kb/s
-        d.status = Status.downloading
-
-        if d.downloaded >= d.total_size:
-            d.downloaded = 0
-
-        while True:
-            time.sleep(1/2)
-            # print(d.progress)
-
-            d.downloaded += speed//2 * 1024
-            if d.downloaded >= d.total_size:
-                d.status = Status.completed
-                d.downloaded = d.total_size
-                print('download simulator completed for:', d.uid, d.name)
-
-                break
-
-            if d.status == Status.cancelled:
-                print('download simulator cancelled for:', d.uid, d.name)
-                break
 
     @threaded
     def download(self, d=None, uid=None, video_idx=None, silent=False, download_later=False, **kwargs):
@@ -983,7 +1100,7 @@ class Controller:
                     for n in range(config.refresh_url_retries + 1):
                         # start brain in a separate thread
                         if config.simulator:
-                            t = Thread(target=self.download_simulator, daemon=True, args=(d,))
+                            t = Thread(target=download_simulator, daemon=True, args=(d,))
                         else:
                             t = Thread(target=brain, daemon=False, args=(d,))
                         t.start()
@@ -1040,53 +1157,6 @@ class Controller:
         if d and d.status in (*Status.active_states, Status.pending):
             d.status = Status.cancelled
 
-    def _download_thumbnail(self, d):
-        """download thumbnail
-
-        Args:
-            d (ObservableDownloadItem): download item
-        """
-
-        try:
-            # download thumbnail
-            if d.status == Status.completed and d.thumbnail_url:
-                fp = os.path.splitext(d.target_file)[0] + '.png'
-                download(d.thumbnail_url, fp=fp, decode=False)
-
-        except Exception as e:
-            log('controller._download_thumbnail()> error:', e)
-            if config.test_mode:
-                raise e
-
-    def _write_timestamp(self, d):
-        """write 'last modified' timestamp to downloaded file
-
-        try to figure out the timestamp of the remote file, and if available make
-        the local file get that same timestamp.
-
-        Args:
-            d (ObservableDownloadItem): download item
-        """
-
-        try:
-
-            if d.status == Status.completed:
-                # get last modified timestamp from server, example: "fri, 09 oct 2020 11:11:34 gmt"
-                headers = get_headers(d.eff_url, http_headers=d.http_headers)
-                timestamp = headers.get('last-modified')
-
-                if timestamp:
-                    # parse timestamp, eg.      "fri, 09 oct 2020 11:11:34 gmt"
-                    t = time.strptime(timestamp, "%a, %d %b %Y %H:%M:%S %Z")
-                    t = time.mktime(t)
-                    log(f'writing last modified timestamp "{timestamp}" to file: {d.name}')
-                    os.utime(d.target_file, (t, t))
-
-        except Exception as e:
-            log('controller._write_timestamp()> error:', e)
-            if config.test_mode:
-                raise e
-
     def _post_download(self, d):
         """actions required after done downloading
 
@@ -1097,7 +1167,7 @@ class Controller:
         # on completion actions
         if d.status == Status.completed:
             if config.download_thumbnail:
-                self._download_thumbnail(d)
+                download_thumbnail(d)
 
             if config.checksum:
                 log()
@@ -1106,9 +1176,8 @@ class Controller:
                 log(f'MD5: {md5} - for {d.name}')
                 log(f'SHA256: {sha256} - for {d.name}')
 
-
             if config.use_server_timestamp:
-                self._write_timestamp(d)
+                write_timestamp(d)
 
             if d.on_completion_command:
                 err, output = run_command(d.on_completion_command)
@@ -1118,8 +1187,6 @@ class Controller:
             if d.shutdown_pc:
                 d.shutdown_pc = False
                 self.shutdown_pc()
-
-
 
     def _download_ffmpeg(self, destination=config.sett_folder):
         """download ffmpeg.exe for windows os
@@ -1158,12 +1225,12 @@ class Controller:
         """
 
         # noplaylist: fetch only the video, if the URL refers to a video and a playlist
-        playlist = self.url_to_playlist(url, ytdloptions={'noplaylist': True})
+        playlist = url_to_playlist(url, ytdloptions={'noplaylist': True})
         d = playlist[0]
         update_object(d, kwargs)
 
         if d.type == MediaType.video and not d.all_streams:
-            self._process_video(d)
+            process_video(d)
 
         # set video quality
         video_quality = kwargs.get('video_quality', None)
@@ -1230,7 +1297,7 @@ class Controller:
         if wait:
             c = 1
             while config.youtube_dl_version is None or config.yt_dlp_version is None:
-                log('\ryoutube-dl and ytdlp still loading, please wait', '.'*c, end='')
+                log('\ryoutube-dl and ytdlp still loading, please wait', '.' * c, end='')
                 c += 1
                 if c > timeout:
                     break
@@ -1300,30 +1367,30 @@ class Controller:
 
             res = self.get_user_response(msg, options)
             if res == options[0]:
-                    # start updating modules
-                    done_pkgs = {}
-                    for pkg in new_pkgs:
-                        pkg_info = info[pkg]
-                        latest_version, url = pkg_info['latest_version'], pkg_info['url']
+                # start updating modules
+                done_pkgs = {}
+                for pkg in new_pkgs:
+                    pkg_info = info[pkg]
+                    latest_version, url = pkg_info['latest_version'], pkg_info['url']
 
-                        log('Installing', pkg, latest_version)
-                        try:
-                            success = update.update_pkg(pkg, url)
-                            done_pkgs[pkg] = success
+                    log('Installing', pkg, latest_version)
+                    try:
+                        success = update.update_pkg(pkg, url)
+                        done_pkgs[pkg] = success
 
-                        except Exception as e:
-                            log(f'failed to update {pkg}:', e)
+                    except Exception as e:
+                        log(f'failed to update {pkg}:', e)
 
-                    msg = 'Update results:\n\n'
-                    for pkg, success in done_pkgs.items():
-                        msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
+                msg = 'Update results:\n\n'
+                for pkg, success in done_pkgs.items():
+                    msg += f'{pkg} - {"Updated Successfully!" if success else "Update Failed!"}\n\n'
 
-                    if any(done_pkgs.values()):
-                        msg += 'Please Restart application for update to take effect!'
-                    else:
-                        msg += 'Update failed!!!! ... try again'
+                if any(done_pkgs.values()):
+                    msg += 'Please Restart application for update to take effect!'
+                else:
+                    msg += 'Update failed!!!! ... try again'
 
-                    log(msg, showpopup=True)
+                log(msg, showpopup=True)
 
         else:
             log(msg, showpopup=True)
@@ -1356,6 +1423,7 @@ class Controller:
             run_thread(update.rollback_pkg_update, pkg, daemon=True)
         except Exception as e:
             log(f'failed to restore {pkg}:', e)
+
     # endregion
 
     # region subtitles
@@ -1440,6 +1508,7 @@ class Controller:
 
         except Exception as e:
             log('download_subtitle() error', e)
+
     # endregion
 
     # region file/folder operations
@@ -1452,7 +1521,7 @@ class Controller:
             return
 
         fp = d.target_file if os.path.isfile(d.target_file) else d.temp_file
-        
+
         open_file(fp, silent=True)
 
     def open_file(self, uid=None, video_idx=None):
@@ -1495,6 +1564,7 @@ class Controller:
 
         # delete files
         d.delete_tempfiles()
+
     # endregion
 
     # region get info
@@ -1615,23 +1685,6 @@ class Controller:
 
         return d
 
-    def log_runtime_info(self):
-        """Print useful information about the system"""
-        log('-' * 20, 'FireDM', '-' * 20)
-
-        if config.isappimage:
-            release_type = 'AppImage'
-        elif config.FROZEN:
-            release_type = 'Frozen'
-        else:
-            release_type =  'Non-Frozen'
-
-        log('Starting FireDM version:', config.APP_VERSION, release_type)
-        log('operating system:', config.operating_system_info)
-        log('Python version:', sys.version)
-        log('current working directory:', config.current_directory)
-        log('FFMPEG:', config.ffmpeg_actual_path)
-
     # endregion
 
     # region schedul
@@ -1666,11 +1719,12 @@ class Controller:
         log(f'Schedule for: {d.name} has been cancelled')
         d.status = Status.cancelled
         d.sched = None
+
     # endregion
 
     def interactive_download(self, url, **kwargs):
         """intended to be used with command line view and offer step by step choices to download an item"""
-        playlist = self.url_to_playlist(url)
+        playlist = url_to_playlist(url)
 
         d = playlist[0]
 
@@ -1805,26 +1859,26 @@ class Controller:
     def shutdown_pc(self):
         """shut down computer"""
         if config.operating_system == 'Windows':
-            cmd = 'shutdown -s -t 120'  
+            cmd = 'shutdown -s -t 120'
             abort_cmd = 'shutdown -a'
         else:
             # tested on pop os, but it might needs root privillage on other distros.
-            cmd = 'shutdown --poweroff +2' 
+            cmd = 'shutdown --poweroff +2'
             abort_cmd = 'shutdown -c'
-            
+
         # save settings
         self._save_settings()
-                
+
         err, output = run_command(cmd)
         if err:
             log('error:', output, showpopup=True)
             return
-        
+
         res = self.get_user_response('your device will shutdown after 2 minutes \n'
                                      f'{output} \n'
                                      'press "ABORT!" to cancel', options=['ABORT!'])
         if res == 'ABORT!':
-            run_command(abort_cmd)  
+            run_command(abort_cmd)
         else:
             self.view.hide()
             self.view.quit()
@@ -1838,6 +1892,7 @@ class Controller:
     def get_on_completion_command(self, uid):
         d = self.get_d(uid=uid)
         return d.on_completion_command
+
     # endregion
 
     # region general
@@ -1847,6 +1902,7 @@ class Controller:
         Args:
             msg(str): a message to show
             options (list): a list of options, example: ['yes', 'no', 'cancel']
+            popup_id(int): popup id number in config.py
 
         Returns:
             (str): response from user as a selected item from "options"
@@ -1858,7 +1914,7 @@ class Controller:
             options = popup['options']
             if not popup['show']:
                 return popup['default']
-        
+
         res = self.view.get_user_response(msg, options, popup_id=popup_id)
 
         return res

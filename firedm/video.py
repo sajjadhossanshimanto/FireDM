@@ -333,7 +333,6 @@ class Video(DownloadItem):
             except Exception as e:
                 log('vide.get_thumbnail() error:', e, log_level=2)
 
-
     def update_param(self):
         """Mainly used when select a stream for current video object"""
         # log('Video_object.update_param', log_level=3)
@@ -421,28 +420,6 @@ class Video(DownloadItem):
         """will be used in case we updated vid_info dictionary from youtube-dl"""
         # reset properties and rebuild streams
         self.setup()
-
-
-def process_video_info(vid, getthumbnail=True):
-    try:
-        vid.busy = True
-        with ytdl.YoutubeDL(get_ytdl_options()) as ydl:
-            vid_info = ydl.process_ie_result(vid.vid_info, download=False)
-            if vid_info:
-                vid.vid_info = vid_info
-                vid.refresh()
-
-                if vid and getthumbnail:
-                    vid.get_thumbnail()
-
-                log('process_video_info()> processed url:', vid.url, log_level=3)
-                vid.processed = True
-            else:
-                log('process_video_info()> Failed,  url:', vid.url, log_level=3)
-    except Exception as e:
-        log('process_video_info()> error:', e)
-    finally:
-        vid.busy = False
 
 
 class Stream:
@@ -1324,6 +1301,77 @@ class MediaPlaylist:
         return segment_list
 
 
+def get_media_info(url, info=None, ytdloptions=None):
+    """this is an adapter function for youtube-dl to extract the video(s) information the URL refers to """
+
+    # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
+    if ytdl is None:
+        log(f'loading {config.active_video_extractor} ...')
+        while not ytdl:
+            time.sleep(1)  # wait until module gets imported
+
+    # get global youtube_dl options
+    options = get_ytdl_options()
+
+    if ytdloptions:
+        options.update(ytdloptions)
+
+    ydl = ytdl.YoutubeDL(options)
+
+    # reset abort flag
+    config.ytdl_abort = False
+
+    if not info:
+        # fetch info by youtube-dl
+        info = ydl.extract_info(url, download=False, process=False)
+
+    # get media type, refer to youtube-dl/extractor/generic.py
+    # possible values: playlist, multi_video, url, and url_transparent
+    _type = info.get('_type', 'video')
+
+    # handle types: url and url transparent
+    if _type in ('url', 'url_transparent'):
+        try:
+            info = ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
+        except:
+            pass
+
+    # don't process direct links, refer to youtube-dl/extractor/generic.py
+    if info.get('direct'):
+        log('controller._create_video_playlist()> No streams found')
+        info = None
+
+    # process info, avoid playlist / multi_video -------------------------------------------------
+    if _type not in ('playlist', 'multi_video') and 'entries' not in info:
+        info = ydl.process_ie_result(info, download=False)
+
+    return info
+
+
+def process_video(vid):
+    """process video info and refresh Video object properties,
+    typically required when video is a part of unprocessed video playlist"""
+    try:
+        vid.busy = True  # busy flag will be used to show progress bar or a busy mouse cursor
+        # vid_info = self._process_video_info(vid.vid_info)
+        vid_info = get_media_info(vid.webpage_url, info=vid.vid_info)
+
+        if vid_info:
+            vid.vid_info = vid_info
+            vid.refresh()
+
+            vid.get_thumbnail()
+
+            log('_process_video_info()> processed url:', vid.url, log_level=3)
+            vid.processed = True
+        else:
+            log('_process_video()> Failed,  url:', vid.url, log_level=3)
+    except Exception as e:
+        log('_process_video()> error:', e)
+        if config.test_mode:
+            raise e
+    finally:
+        vid.busy = False
 
 
 
