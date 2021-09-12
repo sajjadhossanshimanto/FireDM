@@ -108,15 +108,14 @@ def pars_args(arguments):
         action='store_true',
         help='Do not load settings from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
     general.add_argument(
-        '--ignore-dlist', dest='ignore_dlist',
-        action='store_true', default=None,
-        help='Do not load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
-             '(APPDATA/FireDM/ on Windows), default="True in cmdline mode and False in GUI mode"')
-    general.add_argument(
         '--dlist', dest='ignore_dlist',
         action='store_false', default=None,
         help='load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
              '(APPDATA/FireDM/ on Windows), default="False in cmdline mode and True in GUI mode"')
+    general.add_argument(
+        '--ignore-dlist', dest='ignore_dlist',
+        action='store_true', default=None,
+        help='opposite of "--dlist" option')
     general.add_argument(
         '-g', '--gui',
         action='store_true',
@@ -235,7 +234,7 @@ def pars_args(arguments):
     postproc.add_argument(
         '--no-checksum', dest='checksum',
         action='store_false',
-        help='calculate checksums for completed files MD5 and SHA256')
+        help='Don\'t calculate checksums')
 
     # -------------------------------------------------------------------------------------Application Update Options---
     appupdate = parser.add_argument_group(title='Application Update Options')
