@@ -1301,8 +1301,10 @@ class MediaPlaylist:
         return segment_list
 
 
-def get_media_info(url, info=None, ytdloptions=None):
+def get_media_info(url=None, info=None, ytdloptions=None):
     """this is an adapter function for youtube-dl to extract the video(s) information the URL refers to """
+
+    url = url or info.get('url') or info.get('webpage_url')
 
     # we import youtube-dl in separate thread to minimize startup time, will wait in loop until it gets imported
     if ytdl is None:
@@ -1324,26 +1326,27 @@ def get_media_info(url, info=None, ytdloptions=None):
     if not info:
         # fetch info by youtube-dl
         info = ydl.extract_info(url, download=False, process=False)
+    try:
+        # get media type, refer to youtube-dl/extractor/generic.py
+        # possible values: playlist, multi_video, url, and url_transparent
+        _type = info.get('_type', 'video')
 
-    # get media type, refer to youtube-dl/extractor/generic.py
-    # possible values: playlist, multi_video, url, and url_transparent
-    _type = info.get('_type', 'video')
+        # handle types: url and url transparent
+        if _type in ('url', 'url_transparent'):
+            _url = info.get('url') or info.get('webpage_url') or url
+            info = ydl.extract_info(_url, download=False, ie_key=info.get('ie_key'), process=False)
+            _type = info.get('_type', 'video')
 
-    # handle types: url and url transparent
-    if _type in ('url', 'url_transparent'):
-        try:
-            info = ydl.extract_info(info['url'], download=False, ie_key=info.get('ie_key'), process=False)
-        except:
-            pass
+        # don't process direct links, refer to youtube-dl/extractor/generic.py
+        if info.get('direct'):
+            log('controller._create_video_playlist()> No streams found')
+            info = None
 
-    # don't process direct links, refer to youtube-dl/extractor/generic.py
-    if info.get('direct'):
-        log('controller._create_video_playlist()> No streams found')
-        info = None
-
-    # process info, avoid playlist / multi_video -------------------------------------------------
-    if _type not in ('playlist', 'multi_video') and 'entries' not in info:
-        info = ydl.process_ie_result(info, download=False)
+        # process info, avoid playlist / multi_video -------------------------------------------------
+        if _type not in ('playlist', 'multi_video') and 'entries' not in info:
+            info = ydl.process_ie_result(info, download=False)
+    except Exception as e:
+        log('video.get_media_info() error:', e, log_level=3)
 
     return info
 
@@ -1354,7 +1357,7 @@ def process_video(vid):
     try:
         vid.busy = True  # busy flag will be used to show progress bar or a busy mouse cursor
         # vid_info = self._process_video_info(vid.vid_info)
-        vid_info = get_media_info(vid.webpage_url, info=vid.vid_info)
+        vid_info = get_media_info(info=vid.vid_info)
 
         if vid_info:
             vid.vid_info = vid_info

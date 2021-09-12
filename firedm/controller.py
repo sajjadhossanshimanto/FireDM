@@ -227,9 +227,13 @@ def create_video_playlist(url, ytdloptions=None):
     log('creating video playlist', log_level=2)
     playlist = []
 
-    try:
-        info = get_media_info(url, ytdloptions=ytdloptions)
+    info = get_media_info(url, ytdloptions=ytdloptions)
 
+    if not info:
+        log('no video streams detected')
+        return []
+
+    try:
         _type = info.get('_type', 'video')
 
         # check results if _type is a playlist / multi_video -------------------------------------------------
@@ -259,8 +263,7 @@ def create_video_playlist(url, ytdloptions=None):
 
                 # vid.register_callback(self.observer)
         else:
-
-            processed_info = get_media_info(info['url'], info=info, ytdloptions=ytdloptions)
+            processed_info = get_media_info(info=info, ytdloptions=ytdloptions)
 
             if processed_info and processed_info.get('formats'):
 
@@ -281,7 +284,7 @@ def create_video_playlist(url, ytdloptions=None):
                 log('no video streams detected')
     except Exception as e:
         playlist = []
-        log('controller._create_video_playlist:', e)
+        log('controller.create_video_playlist:', e)
         if config.test_mode:
             raise e
 
