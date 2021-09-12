@@ -268,8 +268,8 @@ def pars_args(arguments):
     debug = parser.add_argument_group(title='Debugging Options')
     debug.add_argument(
         '-V', '--verbose', dest='verbose',
-        type=int, metavar='LEVEL', default=1,
-        help='verbosity level 1, 2, or 3, default=%(default)s.')
+        type=int, metavar='LEVEL', default=None,
+        help=f'verbosity level 1, 2, or 3, default(cmdline mode)=1, default(gui mode)={config.log_level}.')
     debug.add_argument(
         '--keep-temp', dest='keep_temp',
         action='store_true', default=config.keep_temp,
@@ -340,9 +340,16 @@ def main(argv=sys.argv):
         load_setting()
 
     sett = pars_args(argv[1:])
-    config.__dict__.update(sett)
 
     guimode = True if len(argv) == 1 or '--gui' in argv else False
+    cmdmode = not guimode
+    verbose = sett.get('verbose')
+    if verbose is None and cmdmode:
+        sett['log_level'] = 1
+    elif verbose:
+        sett['log_level'] = verbose
+
+    config.__dict__.update(sett)
 
     if sett.get('config'):
         for key, value in sett.items():
