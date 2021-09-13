@@ -251,9 +251,9 @@ reporting, feature request, or suggestions.
 ---
 
 # Some articles/reviews on this project*:
-- [ghacks](https://www.ghacks.net/2020/08/13/firedm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
-- [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/FireDM.shtml)
-- [hackermilk](https://www.hackermilk.info/2020/01/an-open-source-alternative-to-internet.html)
+- [ghacks](https://www.ghacks.net/2020/08/13/pyidm-is-an-open-source-download-manager-that-can-download-videos-and-playlists/)
+- [softpedia](https://www.softpedia.com/get/Internet/Download-Managers/PyIDM.shtml)
+- [hackermilk](http://hackermilk.info/2020/01/an_open_source_alternative_to_internet.html)
 
   *help edit this list by writing a comment in
   [this issue](https://github.com/firedm/FireDM/issues/136)
