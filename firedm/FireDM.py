@@ -333,6 +333,23 @@ def main(argv=sys.argv):
     Args:
         argv(list): command line arguments vector, argv[0] is the script pathname if known
     """
+
+    # workaround for missing stdout/stderr for windows Win32GUI app e.g. cx_freeze gui app
+    try:
+        sys.stdout.write('\n')
+        sys.stdout.flush()
+    except AttributeError:
+        # dummy class to export a "do nothing methods", expected methods to be called (read, write, flush, close) 
+        class Dummy:
+            def __getattr__(*args):
+                return lambda *args: None
+
+        for x in ('stdout', 'stderr', 'stdin'):
+            setattr(sys, x, Dummy())
+
+    guimode = True if len(argv) == 1 or '--gui' in argv else False
+    cmdmode = not guimode
+
     # read config file
     config_fp = os.path.join(config.sett_folder, 'setting.cfg')
     if '--ignore-config' not in argv:
@@ -340,8 +357,6 @@ def main(argv=sys.argv):
 
     sett = pars_args(argv[1:])
 
-    guimode = True if len(argv) == 1 or '--gui' in argv else False
-    cmdmode = not guimode
     verbose = sett.get('verbose')
     if verbose is None and cmdmode:
         sett['log_level'] = 1

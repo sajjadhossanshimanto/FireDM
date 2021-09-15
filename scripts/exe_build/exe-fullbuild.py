@@ -60,8 +60,8 @@ packages = [pkg.replace(';', '') for pkg in packages]
 
 # filter some packages
 for pkg in ['distro', 'Pillow']:
-	if pkg in packages: 
-		packages.remove(pkg)
+    if pkg in packages:
+        packages.remove(pkg)
    
 print(packages)
 
@@ -69,15 +69,13 @@ includes = []
 include_files = []
 excludes = ['numpy', 'test', 'setuptools', 'unittest', 'PySide2']
 
-target = Executable(
-    # what to build
-    script=main_script_path,
-    initScript=None,
-    base='Win32GUI',
-    targetName=f"{APP_NAME}.exe",
-    icon=icon_path,
+cmd_target_name = f'{APP_NAME.lower()}.exe'
+gui_target_name = f'{APP_NAME}-GUI.exe'
 
-)
+executables = [
+    Executable(main_script_path, base='Console', target_name=cmd_target_name),
+    Executable(main_script_path, base='Win32GUI', target_name=gui_target_name, icon=icon_path),
+]
 
 setup(
 
@@ -96,7 +94,7 @@ setup(
     }
     },
 
-    executables=[target]
+    executables=executables
 )
 
 # Post processing
@@ -137,15 +135,16 @@ if not (os.path.isfile(rcedit_fp) or os.path.isfile(os.path.join(app_folder, 'rc
 if not os.path.isfile(os.path.join(app_folder, 'rcedit.exe')):
     shutil.copy(rcedit_fp, app_folder)
 
-cmd = f'rcedit {APP_NAME}.exe --set-file-version {version} --set-product-version {version}  ' \
-      f'--set-version-string legalcopyright "copyright(c) 2019-2021 {APP_NAME}" --set-version-string  ProductName ' \
-      f'"{APP_NAME}" --set-version-string  OriginalFilename "{APP_NAME}.exe" --set-version-string FileDescription ' \
-      f'"{APP_NAME} download manager"'
+for fname in (cmd_target_name, gui_target_name):
+    cmd = f'rcedit {fname} --set-file-version {version} --set-product-version {version}  ' \
+          f'--set-version-string legalcopyright "copyright(c) 2019-2021 {APP_NAME}" --set-version-string  ProductName ' \
+          f'"{APP_NAME}" --set-version-string  OriginalFilename "{fname}" --set-version-string FileDescription ' \
+          f'"{APP_NAME} download manager"'
 
-print('-' * 50)
-print('running command:', cmd)
-os.chdir(app_folder)
-subprocess.run(cmd, shell=True)
+    print('-' * 50)
+    print('running command:', cmd)
+    os.chdir(app_folder)
+    subprocess.run(cmd, shell=True)
 
 # clean up
 os.unlink(os.path.join(app_folder, 'rcedit.exe'))
