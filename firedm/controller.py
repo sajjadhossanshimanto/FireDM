@@ -138,7 +138,7 @@ def write_timestamp(d):
                 # parse timestamp, eg.      "fri, 09 oct 2020 11:11:34 gmt"
                 t = time.strptime(timestamp, "%a, %d %b %Y %H:%M:%S %Z")
                 t = time.mktime(t)
-                log(f'writing last modified timestamp "{timestamp}" to file: {d.name}')
+                log(f'writing timestamp "{timestamp}" to file: {d.name}', log_level=2)
                 os.utime(d.target_file, (t, t))
 
     except Exception as e:
@@ -238,7 +238,7 @@ def create_video_playlist(url, ytdloptions=None):
 
         # check results if _type is a playlist / multi_video -------------------------------------------------
         if _type in ('playlist', 'multi_video') or 'entries' in info:
-            log('youtube-func()> start processing playlist')
+            log('processing playlist')
 
             # videos info
             pl_info = list(info.get('entries'))  # info.get('entries') is a generator
@@ -1247,7 +1247,7 @@ class Controller:
     @threaded
     def batch_download(self, urls, **kwargs):
         urls_ = "\n".join(urls)
-        log(f'Batch downloading the following urls:\n {urls_}')
+        log(f'Downloading the following url(s):\n{urls_}')
         # print('Batch download options:', kwargs)
 
         for url in urls:

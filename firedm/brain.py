@@ -185,7 +185,7 @@ def file_manager(d, q, keep_segments=True):
 
             # handle dash video
             if 'dash' in d.subtype_list:
-                log('handling dash videos')
+                log('handling dash videos', log_level=2)
                 # merge audio and video
                 output_file = d.target_file 
 
@@ -194,7 +194,7 @@ def file_manager(d, q, keep_segments=True):
                 error, output = merge_video_audio(d.temp_file, d.audio_file, output_file, d)
 
                 if not error:
-                    log('done merging video and audio for: ', d.target_file)
+                    log('done merging video and audio for: ', d.target_file, log_level=2)
 
                     # delete temp files
                     d.delete_tempfiles()
@@ -243,21 +243,21 @@ def file_manager(d, q, keep_segments=True):
                 input_file = d.target_file
                 output_file = f'{d.target_file}2.srt'  # must end with srt for ffmpeg to recognize output format
 
-                log('verifying "srt" subtitle:', input_file)
+                log('verifying "srt" subtitle:', input_file, log_level=2)
                 cmd = f'"{ffmpeg}" -y -i "{input_file}" "{output_file}"'
 
                 error, _ = run_command(cmd, verbose=True)
                 if not error:
                     delete_file(d.target_file)
                     rename_file(oldname=output_file, newname=input_file)
-                    log('verified subtitle successfully:', input_file)
+                    log('verified subtitle successfully:', input_file, log_level=2)
                 else:
                     # if failed to convert
                     log("couldn't convert subtitle to srt, check file format might be corrupted")
 
             # write metadata
             if d.metadata_file_content and config.write_metadata:
-                log('file manager()> writing metadata info to:', d.name)
+                log('file manager()> writing metadata info to:', d.name, log_level=2)
                 # create metadata file
                 metadata_filename = d.target_file + '.meta'
 
