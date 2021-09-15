@@ -2728,11 +2728,11 @@ class BatchWindow(tk.Toplevel):
         self.video_quality = Combobox(options_frame, values=['Best', '1080p', '720p', '480p', '360p', 'Lowest'],
                                       selection='Best', width=8)
         self.video_quality.pack(side='left')
-        self.prefere_mp4 = tk.BooleanVar(value=False)
+        self.prefer_mp4 = tk.BooleanVar(value=False)
 
         tk.Checkbutton(options_frame, text='prefer mp4 format', bg=MAIN_BG, fg=MAIN_FG, anchor='w', relief='flat',
-                        activebackground=MAIN_BG, highlightthickness=0, activeforeground=MAIN_FG, selectcolor=MAIN_BG,
-                        variable=self.prefere_mp4, onvalue=True, offvalue=False).pack(side='right', anchor='e', padx=10)
+                       activebackground=MAIN_BG, highlightthickness=0, activeforeground=MAIN_FG, selectcolor=MAIN_BG,
+                       variable=self.prefer_mp4, onvalue=True, offvalue=False).pack(side='right', anchor='e', padx=10)
         ttk.Separator(main_frame).pack(fill='x')
 
         bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
@@ -2754,7 +2754,7 @@ class BatchWindow(tk.Toplevel):
         video_quality = self.video_quality.selection
 
         self.controller.batch_download(urls, video_quality=video_quality, download_later=download_later,
-                                       folder=config.download_folder)
+                                       folder=config.download_folder, prefer_mp4=self.prefer_mp4.get())
         self.close()
 
     def add_url(self, url):

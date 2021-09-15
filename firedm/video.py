@@ -241,7 +241,7 @@ class Video(DownloadItem):
         self.video_streams = video_streams
         self.mp4_videos = mp4_videos
 
-    def select_stream(self, index=None, name=None, raw_name=None, video_quality=None, prefere_mp4=True, update=True):
+    def select_stream(self, index=None, name=None, raw_name=None, video_quality=None, prefer_mp4=True, update=True):
         """
         select video stream
         Args:
@@ -249,7 +249,7 @@ class Video(DownloadItem):
             name(str): stream name
             raw_name(str): stream raw name
             video_quality(int or str): video quality, e.g. 1080, or best, or lowest
-            prefere_mp4(bool): select mp4 format if available
+            prefer_mp4(bool): select mp4 format if available
             update(bool): if True it will update selected stream
         Return:
             stream
@@ -272,7 +272,7 @@ class Video(DownloadItem):
                 else:
                     video_quality = video_quality.lower()
 
-                if prefere_mp4 and self.mp4_videos:
+                if prefer_mp4 and self.mp4_videos:
                     streams = self.mp4_videos or self.video_streams
                 else:
                     streams = self.video_streams

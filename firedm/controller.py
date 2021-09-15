@@ -1239,7 +1239,8 @@ class Controller:
         video_quality = kwargs.get('video_quality', None)
 
         if video_quality and d.type == MediaType.video:
-            d.select_stream(video_quality=video_quality, prefere_mp4=kwargs.get('prefere_mp4', False))
+            prefer_mp4 = kwargs.get('prefer_mp4', False)
+            d.select_stream(video_quality=video_quality, prefer_mp4=prefer_mp4)
 
         # download item
         self.download(d, silent=True, **kwargs)

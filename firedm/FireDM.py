@@ -186,9 +186,9 @@ def pars_args(arguments):
         help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
              "and 'lowest'), default=%(default)s")
     vid.add_argument(
-        '--prefere-mp4',
+        '--prefer-mp4', dest='prefer_mp4',
         action='store_true', default=False,
-        help='prefere mp4 streams if available, default=%(default)s')
+        help='prefer mp4 streams if available, default=%(default)s')
 
     # --------------------------------------------------------------------------------------Workarounds-----------------
     workarounds = parser.add_argument_group(title='Workarounds')
