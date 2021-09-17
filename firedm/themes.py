@@ -232,6 +232,26 @@ builtin_themes = {
         "THUMBNAIL_BD": "#e9eaec",
     },
 
+    "White-grey-blue": {
+        "MAIN_BG": "#f6f6f6",
+        "SF_BG": "#d6cebf",
+        "SF_BTN_BG": "#368ee6",
+        "PBAR_FG": "#0085ff",
+        "BTN_FG": "white",
+        "HDG_FG": "white",
+        "RCM_FG": "black",
+        "TITLE_BAR_FG": "white"
+    },
+    "White-sky-blue": {
+        "MAIN_BG": "#ffffff",
+        "SF_BG": "#d0eaff",
+        "SF_BTN_BG": "#009ddc",
+        "PBAR_FG": "#009ddc",
+        "BTN_FG": "white",
+        "HDG_FG": "white",
+        "RCM_FG": "black",
+        "TITLE_BAR_FG": "white"
+    }
 }
 
 # key:(reference key, description), reference key will be used to get the color value in case of missing key, but in
