@@ -123,17 +123,6 @@ class ObservableVideo(Video, Observable):
         """Called when an attribute assignment is attempted."""
         self.setter(Video, key, value)
 
-    def select_audio(self, audio_stream=None):
-        """extend select audio in superclass 'Video' """
-        # call superclass method
-        Video.select_audio(self, audio_stream=audio_stream)
-
-        # re-build segments
-        self.build_segments()
-
-        # re-calculate total size
-        self.total_size = self.calculate_total_size()
-
     def prepare_subtitles(self):
         """merge subtitles and captions in one list and handle duplicated names
 

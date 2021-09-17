@@ -864,12 +864,13 @@ class Controller:
         if report:
             self.report_d(d, active=active, stream_idx=stream_idx)
 
-    def select_audio(self, audio_idx, uid=None, video_idx=None):
+    def select_audio(self, audio_idx, uid=None, video_idx=None, active=True):
         """select audio from audio menu
         Args:
             audio_idx (int): index of audio stream
             uid: unique video uid
             video_idx (int): index of video in self.playlist
+            active(bool): whether this download item is an ctive or not
         """
         # get download item
         d = self.get_d(uid, video_idx)
@@ -881,6 +882,8 @@ class Controller:
 
         d.select_audio(selected_audio_stream)
         log('Selected audio:', selected_audio_stream)
+
+        self.report_d(d, active=active)
 
     def set_video_backend(self, extractor):
         """select video extractor backend, e.g. youtube-dl, yt_dlp, ..."""

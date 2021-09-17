@@ -409,6 +409,12 @@ class Video(DownloadItem):
             self.audio_format_id = audio_stream.format_id
 
             # log('downloaditem.select_audio:', self.audio_quality, log_level=3)
+
+            # re-build segments
+            self.build_segments()
+
+            # re-calculate total size
+            self.total_size = self.calculate_total_size()
         else:
             self.audio_url = None
             self.audio_fragment_base_url = None

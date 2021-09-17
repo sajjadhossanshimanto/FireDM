@@ -74,7 +74,7 @@ def create_imgs():
     sizes = {'playlist_icon': 25}
 
     for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'dropdown_icon', 'folder_icon',
-              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon', 'bat_icon'):
+              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon', 'bat_icon', 'audio_icon'):
         v = iconsbase64.__dict__[k]
 
         if k == 'dropdown_icon':
@@ -91,7 +91,6 @@ def create_imgs():
     imgs['blinker_icon'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
     imgs['done_icon'] = atk.create_image(b64=done_icon, color=BTN_BG)
     imgs['hourglass_icon'] = atk.create_image(b64=hourglass_icon, color=BTN_BG)
-
 
 app_icon_img = None
 popup_icon_img = None
@@ -2658,8 +2657,7 @@ class AudioWindow(tk.Toplevel):
     def select_audio(self):
         idx = self.selection_var.get()
         if idx is not None:
-            self.main.controller.select_audio(int(idx))
-
+            self.selected_idx = int(idx)
         self.close()
 
 
@@ -3213,8 +3211,9 @@ class MainWindow(IView):
         self.pl_menu = MediaListBox(home_tab, bg, 'Playlist:')
         self.pl_menu.grid(row=1, column=0, rowspan=1, pady=10, padx=5, sticky='nsew')
         Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').place(relx=1, rely=0, x=-40, y=5)
-        self.stream_menu = MediaListBox(home_tab, bg, 'Stream Quality:')
+        self.stream_menu = MediaListBox(home_tab, bg, 'Streams:')
         self.stream_menu.grid(row=1, column=1, rowspan=1, padx=15, pady=10, sticky='nsew')
+        Button(self.stream_menu, image=imgs['audio_icon'], command=self.select_dash_audio, tooltip='audio quality').place(relx=1, rely=0, x=-40, y=5)
 
         # bind menu selection
         self.pl_menu.listbox.bind('<<ListboxSelect>>', self.video_select_callback)
@@ -3246,14 +3245,11 @@ class MainWindow(IView):
         later_btn.pack(side='left', fill='y', pady=1)
 
         def later_btn_handler(option):
-            if option == 'Download Later':
-                self.download_later_btn_callback()
-            else:
-                self.download_btn_callback()
+            later = (option == 'Download Later')
+            self.download_btn_callback(download_later=later)
 
         atk.RightClickMenu(later_btn, ['Download now', 'Download Later'], callback=later_btn_handler,
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG, bind_left_click=True, bind_right_click=False)
-
 
         # spacer to keep the column with a fixed size for zoomed button images to look better on mouse hover
         tk.Frame(home_tab, width=60, background=MAIN_BG).grid(row=2, column=4, padx=5, pady=10)
@@ -4020,22 +4016,11 @@ class MainWindow(IView):
     # endregion
 
     # region download
-    def download_btn_callback(self):
+    def download_btn_callback(self, download_later=False):
         """callback for download button in main tab"""
-        # select audio for dash video
-        if config.manually_select_dash_audio:
-            menu = self.controller.get_audio_menu()
-            if menu:
-                selected_audio = self.controller.get_selected_audio()
-                idx = menu.index(selected_audio) if selected_audio else 0
-
-                AudioWindow(self, menu, idx)
 
         # download
-        self.download(name=self.file_properties.name, folder=self.file_properties.folder)
-
-    def download_later_btn_callback(self):
-        self.download(name=self.file_properties.name, folder=self.file_properties.folder, download_later=True)
+        self.download(name=self.file_properties.name, folder=self.file_properties.folder, download_later=download_later)
 
     def download(self, uid=None, **kwargs):
         """Send command to controller to download an item
@@ -4517,6 +4502,19 @@ class MainWindow(IView):
 
         return fp
 
+    def select_dash_audio(self, uid=None, video_idx=None):
+        # select audio for dash video
+        menu = self.controller.get_audio_menu(uid=uid, video_idx=video_idx)
+        if menu:
+            selected_audio = self.controller.get_selected_audio(uid=uid, video_idx=video_idx)
+            idx = menu.index(selected_audio) if selected_audio else 0
+
+            aw = AudioWindow(self, menu, idx)
+            # print('aw.selected_idx:', aw.selected_idx)
+            self.controller.select_audio(aw.selected_idx, uid=uid, video_idx=video_idx)
+        else:
+            self.popup('No selections available', 'select a dash video stream and try again!')
+
     # endregion
 
     # region url, clipboard
@@ -4676,5 +4674,4 @@ if __name__ == '__main__':
         controller.run()
     except Exception as e:
         print('error:', e)
-        raise e
 
