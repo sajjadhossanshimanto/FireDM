@@ -3326,8 +3326,9 @@ class MainWindow(IView):
 
         # sorted themes names
         themes_names = natural_sort(list(builtin_themes.keys()) + list(user_themes.keys()))
+        sel_theme_name = config.current_theme if config.current_theme in themes_names else config.DEFAULT_THEME
 
-        self.themes_menu = Combobox(themes_frame, values=themes_names, selection=config.current_theme, width=35)
+        self.themes_menu = Combobox(themes_frame, values=themes_names, selection=sel_theme_name, width=35)
         self.themes_menu.pack(side='left', ipadx=5)
 
         def apply_theme():
