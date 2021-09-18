@@ -2049,6 +2049,7 @@ class PlaylistWindow(tk.Toplevel):
         self.items_per_page = min(self.playlist_count, self.max_videos_per_page)
 
         self.selected_videos = {}  # video_idx vs stream_idx
+        self.dash_audio = {}  # video_idx vs audio_idx
         self.stream_menus = {}  # video_idx vs stream menu
         self.subtitles = {}
         self.selected_subs = {}
@@ -2181,6 +2182,16 @@ class PlaylistWindow(tk.Toplevel):
 
         # stream menu
         item.combobox = Combobox(item, [], width=40, textvariable=item.stream_menu_var)
+        item.combobox.grid(row=0, column=1, padx=5, sticky='ew')
+        item.combobox.grid_remove()
+
+        def audio_btn_callback():
+            audio_idx = self.main.select_dash_audio(video_idx=item.video_idx, active=False)
+            self.dash_audio[item.video_idx] = audio_idx
+
+        item.audio_btn = Button(item, image=imgs['audio_icon'], command=audio_btn_callback, tooltip='audio quality')
+        item.audio_btn.grid(row=0, column=2, padx=5)
+        item.audio_btn.grid_remove()
 
         item.checkbutton.grid(row=0, column=0, padx=5, pady=5, sticky='ew')
 
@@ -2196,6 +2207,14 @@ class PlaylistWindow(tk.Toplevel):
         item.stop_progressbar = stoppb
 
         return item
+
+    def select_audio(self, video_idx):
+        """select dash audio"""
+        try:
+            audio_idx = int(self.dash_audio[video_idx])
+            self.controller.select_audio(video_idx=video_idx, audio_idx=audio_idx)
+        except :
+            pass
 
     def update_items(self):
         # update widgets
@@ -2223,11 +2242,12 @@ class PlaylistWindow(tk.Toplevel):
 
             if selected:
                 item.combobox.grid()
+                item.audio_btn.grid()
             else:
                 item.combobox.grid_remove()
+                item.audio_btn.grid_remove()
 
             item.bar.stop()
-
             item.grid()
 
     def next_page(self):
@@ -2422,19 +2442,22 @@ class PlaylistWindow(tk.Toplevel):
         stream_idx = item.combobox.current()
 
         if item.selected.get():
-            item.combobox.grid(row=0, column=1, padx=5, sticky='ew')
+            item.combobox.grid()
+            item.audio_btn.grid()
             item.start_progressbar()
             self.controller.get_stream_menu(video_idx=item.video_idx)
             self.selected_videos[item.video_idx] = stream_idx
         else:
             item.combobox.grid_remove()
+            item.audio_btn.grid_remove()
             item.stop_progressbar()
-            if item in self.selected_videos:
+            if item.video_idx in self.selected_videos:
                 self.selected_videos.pop(item.video_idx)
 
         self.selected_videos_num.set(len(self.selected_videos))
 
         self.update_subs_label()
+        self.update_total_size()
 
     def stream_select_callback(self, item_num):
         item = self.items[item_num]
@@ -2444,6 +2467,7 @@ class PlaylistWindow(tk.Toplevel):
             self.selected_videos[item.video_idx] = stream_idx
         self.controller.select_stream(stream_idx, video_idx=item.video_idx)
 
+        self.select_audio(item.video_idx)
         self.update_total_size()
 
     def update_total_size(self):
@@ -4518,8 +4542,9 @@ class MainWindow(IView):
 
         return fp
 
-    def select_dash_audio(self, uid=None, video_idx=None):
+    def select_dash_audio(self, uid=None, video_idx=None, active=True):
         # select audio for dash video
+        selected_idx = None
         menu = self.controller.get_audio_menu(uid=uid, video_idx=video_idx)
         if menu:
             selected_audio = self.controller.get_selected_audio(uid=uid, video_idx=video_idx)
@@ -4527,10 +4552,12 @@ class MainWindow(IView):
 
             aw = AudioWindow(self, menu, idx)
             # print('aw.selected_idx:', aw.selected_idx)
-            self.controller.select_audio(aw.selected_idx, uid=uid, video_idx=video_idx)
+            self.controller.select_audio(aw.selected_idx, uid=uid, video_idx=video_idx, active=active)
+            selected_idx = aw.selected_idx
         else:
             self.popup('No selections available', 'select a dash video stream and try again!')
 
+        return selected_idx
     # endregion
 
     # region url, clipboard
