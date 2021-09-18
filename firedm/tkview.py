@@ -10,6 +10,7 @@
         Main application gui design by tkinter
 """
 import datetime
+import json
 import re
 import time
 import pycurl
@@ -3009,6 +3010,18 @@ class MainWindow(IView):
             log(f'restarted ibus-daemon successfully, issue 256, (cmd: {" ".join(cmd)})')
 
     # region themes
+    def share_theme(self, theme_name=None):
+        theme_name = theme_name or self.themes_menu.get()
+
+        theme = user_themes.get(theme_name) or builtin_themes.get(theme_name)
+
+        if theme:
+            stripped_theme = strip_theme(theme)
+            data = {theme_name: stripped_theme}
+            data = json.dumps(data, indent=4)
+            self.copy(data)
+            self.popup(f'Theme "{theme_name}" copied to clipboard')
+
     def save_user_themes(self):
         try:
             file = os.path.join(config.sett_folder, 'user_themes.cfg')
@@ -3322,7 +3335,7 @@ class MainWindow(IView):
         themes_frame = tk.Frame(tab, bg=bg)
         themes_frame.pack(anchor='w', expand=True, fill='x')
 
-        tk.Label(themes_frame, bg=bg, fg=fg, text='Select Theme:  ').pack(side='left')
+        tk.Label(themes_frame, bg=bg, fg=fg, text='Theme:  ').pack(side='left')
 
         # sorted themes names
         themes_names = natural_sort(list(builtin_themes.keys()) + list(user_themes.keys()))
@@ -3337,7 +3350,9 @@ class MainWindow(IView):
                 self.apply_theme(theme_name)
         Button(themes_frame, text='Apply', command=apply_theme).pack(side='left', padx=5)
 
-        Button(themes_frame, text='Delete', command=self.del_theme).pack(side='right', padx=5)
+        Button(themes_frame, text='Del', command=self.del_theme, tooltip='delete theme').pack(side='right', padx=5)
+        Button(themes_frame, text='share', command=self.share_theme,
+               tooltip='copy theme to clipboard').pack(side='right', padx=5)
         Button(themes_frame, text='New', command=self.new_theme).pack(side='right', padx=5)
         Button(themes_frame, text='Edit', command=self.edit_theme).pack(side='right', padx=5)
 
