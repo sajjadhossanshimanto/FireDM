@@ -450,6 +450,16 @@ class Stream:
         self.format = stream_info.get('format', None)
         self.container = stream_info.get('container', None)
 
+        # hls stream specific
+        self.manifest_url = stream_info.get('manifest_url', '')
+
+        # get http-headers
+        self.http_headers = stream_info.get('http_headers')
+
+        # fragmented video streams
+        self.fragment_base_url = stream_info.get('fragment_base_url', None)
+        self.fragments = stream_info.get('fragments', None)
+
         # protocol
         self.protocol = stream_info.get('protocol', '')
 
@@ -458,10 +468,6 @@ class Stream:
         self._mediatype = None
         self.resolution = f'{self.width}x{self.height}' if (self.width and self.height) else ''
 
-        # fragmented video streams
-        self.fragment_base_url = stream_info.get('fragment_base_url', None)
-        self.fragments = stream_info.get('fragments', None)
-
         # get missing size
         if self.fragments or 'm3u8' in self.protocol:
             # ignore fragmented streams, since the size coming from headers is for first fragment not whole file
@@ -469,16 +475,10 @@ class Stream:
         if not isinstance(self.size, int):
             self.size = self.get_size()
 
-        # hls stream specific
-        self.manifest_url = stream_info.get('manifest_url', '')
-
-        # get http-headers
-        self.http_headers = stream_info.get('http_headers')
-
         # print(self.name, self.size, isinstance(self.size, int))
 
     def get_size(self):
-        headers = get_headers(self.url)
+        headers = get_headers(self.url, http_headers=self.http_headers)
         size = int(headers.get('content-length', 0))
         log('stream.get_size()>', self.name, log_level=3)
         return size
