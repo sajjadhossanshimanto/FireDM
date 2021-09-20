@@ -3527,7 +3527,6 @@ class MainWindow(IView):
         if config.operating_system == 'Linux':
             CheckOption(tab, 'Enable ibus workaround, to fix slow application startup.',
                         key='ibus_workaround').pack(anchor='w')
-        CheckOption(tab, 'Enable CAPTCHA! workaround', key='enable_captcha_workaround').pack(anchor='w')
 
         # cookies
         def get_cookie_file(target):
@@ -4523,24 +4522,6 @@ class MainWindow(IView):
             return
 
         self.pl_window = PlaylistWindow(self, pl)
-
-    def get_offline_webpage_path(self):
-        """get the file path of the offline webpage contents as a workaround for captcha
-        """
-
-        # todo: delete this junk, and make an offline webpage option
-
-        msg = 'Found Captcha when downloading webpage contents, you should open this link in your browser' \
-              ' and  save webpage manually on the disk (as htm or html), then press below "select file" button to ' \
-              'select your saved webpage file'
-        fp = None
-
-        btn = self.popup(msg, buttons=['Select file', 'Cancel'], title='Captcha found')
-
-        if btn == 'Select file':
-            fp = filechooser()
-
-        return fp
 
     def select_dash_audio(self, uid=None, video_idx=None, active=True):
         # select audio for dash video
