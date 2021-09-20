@@ -18,8 +18,8 @@ from .version import __version__
 settings_keys = [
     'active_video_extractor', 'auto_rename', 'autoscroll_download_tab', 'check_for_update', 'checksum', 'current_theme',
     'custom_user_agent', 'disable_log_popups', 'ditem_show_top', 'download_folder', 'download_thumbnail',
-    'enable_captcha_workaround', 'enable_proxy', 'enable_systray', 'gui_font', 'ibus_workaround', 'ignore_ssl_cert',
-    'keep_temp', 'last_update_check', 'log_level', 'manually_select_dash_audio', 'max_concurrent_downloads',
+    'enable_proxy', 'enable_systray', 'gui_font', 'ibus_workaround', 'ignore_ssl_cert',
+    'keep_temp', 'last_update_check', 'log_level', 'max_concurrent_downloads',
     'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification', 'proxy',
     'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
     'use_playlist_numbers', 'window_size', 'write_metadata']
@@ -93,7 +93,6 @@ password = ''
 ytdl_abort = False
 video_extractors_list = ['youtube_dl', 'yt_dlp']
 active_video_extractor = 'youtube_dl'
-manually_select_dash_audio = False  # if True, will prompt user to select audio format for dash video
 
 ffmpeg_actual_path = None
 ffmpeg_download_folder = sett_folder
@@ -114,7 +113,6 @@ http_headers = {
 
 use_referer = False
 referer_url = ''  # referer website url
-enable_captcha_workaround = False
 use_cookies = False
 cookie_file_path = ''
 

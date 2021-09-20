@@ -3498,8 +3498,6 @@ class MainWindow(IView):
 
         # ------------------------------------------------------------------------------------Video options-------------
         heading('Video options:')
-        CheckOption(tab, 'Manually select audio format for dash videos', key='manually_select_dash_audio').pack(
-            anchor='w')
 
         # video extractor backend -------------------------
         extractor_frame = tk.Frame(tab, bg=bg)
