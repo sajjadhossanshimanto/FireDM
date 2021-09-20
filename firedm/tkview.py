@@ -1287,7 +1287,7 @@ class FileProperties(ttk.Frame):
         
         self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))       
 
-        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True) #,
+        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True)
         browse_btn.grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
 
         self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG,
@@ -3537,7 +3537,8 @@ class MainWindow(IView):
         cookies = CheckEntryOption(cookies_frame, 'Cookies file:', check_key='use_cookies',
                                    entry_key='cookie_file_path')
         cookies.pack(side='left', expand=True, fill='x')
-        Button(cookies_frame, text='...', transparent=True, command=lambda: get_cookie_file(cookies)).pack(side='left')
+        Button(cookies_frame, image=imgs['folder_icon'],
+               command=lambda: get_cookie_file(cookies)).pack(side='left', padx=5)
         cookies_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         CheckEntryOption(tab, 'Referee url:', check_key='use_referer',
