@@ -12,9 +12,11 @@
 """
 
 # standard modules
+import sys
+sys.dont_write_bytecode = False
+
 import os
 import subprocess
-import sys
 import argparse
 import re
 import signal
@@ -127,8 +129,7 @@ def pars_args(arguments):
     general.add_argument(
         '--imports-only',
         action='store_true',
-        help='import all packages and exit, useful when building AppImage or exe releases, since it '
-             'will build pyc files and make application start faster')
+        help='import all packages and exit')
     general.add_argument(
         '--persistent',
         action='store_true', default=False,
