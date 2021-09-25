@@ -504,86 +504,6 @@ class AutofitLabel(tk.Label):
             self['text'] = self.original_text
 
 
-class CustomTitleBar(tk.Frame):
-    """custom title bar"""
-    def __init__(self, parent, bg, fg, afg, title='', minimize=False, maximize=False):
-        tk.Frame.__init__(self, parent, bg=bg)
-
-        self.bg = bg
-        self.fg = fg
-        self.afg = afg
-
-        self.x = None
-        self.y = None
-
-        # get top level
-        self.top = self.winfo_toplevel()
-
-        # remove window manager's title bar
-        self.top.overrideredirect(1)
-
-        # buttons
-        self.create_button('✖', self.top.destroy).pack(side='right', padx=3, pady=0)
-
-        if maximize:
-            self.create_button('🔺', self.toggle_maximize).pack(side='right', padx=0, pady=0)
-
-        if minimize:
-            self.create_button('🔻', self.iconify).pack(side='right', padx=0, pady=0)
-
-        # icon
-        tk.Label(self, image=popup_icon_img, bg=bg, fg=fg).pack(side='left', padx=5, pady=3)
-
-        title = tk.Label(self, text=title, bg=bg, fg=fg)
-        title.pack(side='right', padx=5, fill='x', expand=True)
-
-        # move window with mouse move, credit to https://stackoverflow.com/a/4055612/10146012
-        for w in (self, title):
-            w.bind("<ButtonPress-1>", self.start_move)
-            w.bind("<ButtonRelease-1>", self.stop_move)
-            w.bind("<B1-Motion>", self.do_move)
-
-    def start_move(self, event):
-        self.x = event.x
-        self.y = event.y
-
-    def stop_move(self, event):
-        self.x = None
-        self.y = None
-
-    def do_move(self, event):
-        deltax = event.x - self.x
-        deltay = event.y - self.y
-        x = self.top.winfo_x() + deltax
-        y = self.top.winfo_y() + deltay
-        self.top.geometry(f"+{x}+{y}")
-
-    def create_button(self, text, callback):
-        # make transparent
-        options = {}
-        options['bg'] = self.bg
-        options['fg'] = self.fg
-        options['activebackground'] = self.bg
-        options['activeforeground'] = self.afg
-        options['highlightbackground'] = self.bg
-        options['highlightthickness'] = 0
-        options['bd'] = 0
-        options['text'] = text
-        options['command'] = callback
-
-        return tk.Button(self, **options)
-        # return tk.Button(self, text=text)
-
-    def toggle_maximize(self):
-        # self.top.overrideredirect(0)
-        self.top.wm_attributes('-zoomed', not self.top.attributes('-zoomed'))
-        # self.top.overrideredirect(1)
-
-    def iconify(self):
-        # self.top.overrideredirect(0)
-        self.top.iconify()
-
-
 class Popup(tk.Toplevel):
     """popup window
     show simple messages, get user text input and save user choice "pressed button"
@@ -680,9 +600,6 @@ class Popup(tk.Toplevel):
     def create_widgets(self):
         f = tk.Frame(self, bg=SF_BG)
         f.pack(expand=True, fill='both')
-
-        # title_bar = CustomTitleBar(f, bg=TITLE_BAR_BG, fg=TITLE_BAR_FG, afg=BTN_ABG, title=self.window_title)
-        # title_bar.pack(side='top', fill='x')
 
         main_frame = tk.Frame(f, bg=self.bg)
         main_frame.pack(padx=(5, 1), pady=(5, 1), expand=True, fill='both')
