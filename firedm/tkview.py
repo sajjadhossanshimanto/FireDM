@@ -1718,6 +1718,13 @@ class DItem(tk.Frame):
         elif mode in 'standard':
             self.view_std()
 
+    def switch_view(self, mode):
+        self.mode = mode
+        self.main_frame.destroy()
+        self.view(mode)
+        self.apply_bindings()
+        self.update(**self.latest_update)
+
     def dynamic_view(self):
         """change view based on status"""
 
@@ -1758,7 +1765,7 @@ class DItem(tk.Frame):
             if self.status == config.Status.completed:
                 self.play_button.grid_remove()
 
-        if self.mode == 'standard':
+        elif self.mode == 'standard':
             if self.status == config.Status.completed:
                 self.play_button.pack_forget()
                 self.bar.grid_remove()
@@ -4120,10 +4127,8 @@ class MainWindow(IView):
     def filter_view(self, option):
         # ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending']
         all_items = self.d_items.values()
-        log(option, option == 'active')
         if option == 'active':
             items = [item for item in all_items if item.status in config.Status.active_states]
-            log(len(items))
         elif option == 'all':
             items = all_items
         else:
@@ -4135,8 +4140,6 @@ class MainWindow(IView):
 
         for item in items:
             item.show()
-
-        self.select_ditems
 
     def select_ditems(self, command):
         """select ditems in downloads tab
@@ -4368,7 +4371,10 @@ class MainWindow(IView):
 
             # update item in d_tab
             elif uid in self.d_items:
-                self.d_items[uid].update(**kwargs)
+                item = self.d_items[uid]
+                item.update(**kwargs)
+                if item.status == 'completed' and config.view_mode == 'mix':
+                    item.switch_view('compact')
 
         # handle signals for post processor callbacks
         elif command == 'signal':
