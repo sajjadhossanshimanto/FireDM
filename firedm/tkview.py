@@ -3310,8 +3310,8 @@ class MainWindow(IView):
 
         # total speed
         self.total_speed = tk.StringVar()
-        tk.Label(self.main_frame, textvariable=self.total_speed, bg=SF_BG,
-                 fg=SF_FG).grid(row=1, column=0, sticky='s', rowspan=2)
+        tk.Label(self.side_frame, textvariable=self.total_speed, bg=SF_BG,
+                 fg=SF_FG).grid(sticky='s', pady=10)
 
         ff = ExpandCollapse(self.main_frame, self.side_frame, MAIN_BG, MAIN_FG)
         ff.grid(row=1, column=1, sticky='ewns')
