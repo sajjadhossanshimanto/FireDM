@@ -8,13 +8,17 @@ info.pyidm@gmail.com
 ---
 
 Developers who contributed with code:
-
 - @Aboghazala
 - @shin-illua
 - @ryneeverett
 - @bertaga
 - @qontinuum-dev
+
+---
+
+Themes creators:
 - @ahmed-tasaly
+- @Mr-Personality
 
 ---
 
