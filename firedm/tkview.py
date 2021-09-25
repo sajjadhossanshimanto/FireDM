@@ -1866,8 +1866,8 @@ class DItem(tk.Frame):
 
             try:
                 self.dynamic_view()
-            except Exception as e:
-                print(e)
+            except:
+                pass
 
         if sched:
             if status == config.Status.scheduled:
