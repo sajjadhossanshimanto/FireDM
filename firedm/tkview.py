@@ -73,15 +73,11 @@ def create_imgs():
     """create widget's images, should be called with theme change"""
 
     sizes = {'playlist_icon': 25}
+    color = BTN_BG
 
-    for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'dropdown_icon', 'folder_icon',
+    for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'folder_icon',
               'play_icon', 'pause_icon', 'delete_icon', 'undo_icon', 'bat_icon', 'audio_icon'):
         v = iconsbase64.__dict__[k]
-
-        if k == 'dropdown_icon':
-            color = HDG_FG
-        else:
-            color = BTN_BG
 
         img = atk.create_image(b64=v, color=color, size=sizes.get(k, None))
 
@@ -92,6 +88,10 @@ def create_imgs():
     imgs['blinker_icon'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
     imgs['done_icon'] = atk.create_image(b64=done_icon, color=BTN_BG)
     imgs['hourglass_icon'] = atk.create_image(b64=hourglass_icon, color=BTN_BG)
+    imgs['select_icon'] = atk.create_image(b64=select_icon, color=HDG_FG)
+    imgs['view_icon'] = atk.create_image(b64=view_icon, color=HDG_FG)
+    imgs['filter_icon'] = atk.create_image(b64=filter_icon, color=HDG_FG)
+
 
 app_icon_img = None
 popup_icon_img = None
@@ -392,7 +392,6 @@ class Button(tk.Button):
             options['activeforeground'] = BTN_AFG
             options['padx'] = 8
 
-
         tk.Button.__init__(self, parent)
 
         if 'tooltip' in kwargs:
@@ -464,6 +463,45 @@ class AutoWrappingLabel(tk.Label):
     def __init__(self, parent=None, justify='left', anchor='w', **kwargs):
         tk.Label.__init__(self, parent, justify=justify, anchor=anchor, **kwargs)
         self.bind('<Configure>', lambda event: self.config(wraplength=self.winfo_width()))
+
+
+class AutofitLabel(tk.Label):
+    """label that fit contents by using 3 dots in place of truncated text
+    should be autoresizable, e.g. packed with expand=True and fill='x', or grid with sticky='ew'
+    """
+
+    def __init__(self, parent=None, justify='left', anchor='w', **kwargs):
+        tk.Label.__init__(self, parent, justify=justify, anchor=anchor, **kwargs)
+        self.original_text = ''
+        self.id = None
+        self.bind('<Configure>', self.schedule)
+
+    def schedule(self, *args):
+        self.unschedule()
+        self.id = self.after(500, self.update_text)
+
+    def unschedule(self):
+        if self.id:
+            self.after_cancel(self.id)
+            self.id = None
+
+    def update_text(self, *args):
+        txt = self.original_text or self['text']
+        self.original_text = txt
+        width = self.winfo_width()
+        font = tkfont.Font(font=self['font'])
+        txt_width = font.measure(txt)
+
+        if txt_width > width:
+            for i in range(0, len(txt), 2):
+                num = len(txt) - i
+                slice = num // 2
+                new_txt = txt[0:slice] + ' ... ' + txt[-slice:]
+                if font.measure(new_txt) <= width:
+                    self['text'] = new_txt
+                    break
+        else:
+            self['text'] = self.original_text
 
 
 class CustomTitleBar(tk.Frame):
@@ -1425,10 +1463,12 @@ class Thumbnail(tk.Frame):
 class Segmentbar(tk.Canvas):
     def __init__(self, master):
         self.master = master
+        master_bg = atk.get_widget_attribute(master, 'background')
+        bg = atk.calc_contrast_color(master_bg, 30)
         self.bars = {}
         self.height = 10
         self.width = 100
-        super().__init__(self.master, bg=PBAR_BG, width=self.width, height=self.height, bd=0, highlightthickness=0)
+        super().__init__(self.master, bg=bg, width=self.width, height=self.height, bd=0, highlightthickness=0)
         self.bind('<Configure>', self.redraw)
 
     def ubdate_bars(self, segments_progress):
@@ -1484,11 +1524,15 @@ class Segmentbar(tk.Canvas):
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
 
-    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None):
+    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None, mode='standard',
+                 playbtn_callback=None, delbtn_callback=None, onclick=None, ondoubleclick=None, bind_map=None,
+                 rcm=None, rcm_callback=None):
+
         self.bg = bg or atk.get_widget_attribute(parent, 'background') or MAIN_BG
         self.fg = fg or MAIN_FG
 
         self.uid = uid
+        self.parent = parent
 
         tk.Frame.__init__(self, parent, bg=self.bg, highlightthickness=0)
 
@@ -1508,7 +1552,15 @@ class DItem(tk.Frame):
         self.shutdown_pc = ''
         self.on_completion_command = ''
         self.on_toggle_callback = on_toggle_callback
+        self.playbtn_callback = playbtn_callback
+        self.delbtn_callback = delbtn_callback
+        self.onclick = onclick
+        self.ondoubleclick = ondoubleclick
+        self.bind_map = bind_map
+        self.rcm = rcm
+        self.rcm_callback = rcm_callback
         self.selected = False
+        self.progress = ''
 
         self.columnconfigure(1, weight=1)
         self.blank_img = tk.PhotoImage()
@@ -1517,80 +1569,35 @@ class DItem(tk.Frame):
         self.thumbnail_width = 160
         self.thumbnail_height = 80
 
-        # thumbnail
-        self.thumbnail_img = None
-        # should assign an image property for tkinter to use pixels for width and height instead of characters
-        self.thumbnail_label = tk.Label(self, bg='white', image=self.blank_img, text='', font='any 20 bold', fg='black',
-                                        justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=2,
-                                        compound='center', width=self.thumbnail_width, height=self.thumbnail_height)
-        self.thumbnail_label.grid(row=0, column=0, rowspan=4, padx=5, pady=5, sticky='ns')
+        self.latest_update = {}
 
-        # name text
-        self.name_lbl = AutoWrappingLabel(self, bg=self.bg, fg=self.fg, anchor='w')
-        self.name_lbl.grid(row=0, column=1, sticky='ewns')
+        self.mode = mode
+        self.view(mode=self.mode)
 
-        self.info_lbl = tk.Label(self, bg=self.bg, fg=self.fg, anchor='w', justify='left')
-        self.info_lbl.grid(row=1, column=1, sticky='w')
-
-        btns_frame = tk.Frame(self, bg=self.bg)
-        btns_frame.grid(row=2, column=1, sticky='w')
-
-        self.vbar = tk.DoubleVar()
-        self.abar = tk.DoubleVar()
-        self.mbar = tk.DoubleVar()
-
-        # for non-completed items
-        if self.status != config.Status.completed:
-            #  progressbar
-            self.bar = atk.RadialProgressbar(parent=self, size=(80, 80), fg=PBAR_FG, text_fg=PBAR_TXT,
-                                             font_size_ratio=0.16)
-            self.bar.grid(row=0, column=2, rowspan=4, padx=10, pady=5)
-
-            # blinker, it will blink with received data flow
-            self.blinker = tk.Label(self.bar, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
-                                    height=12)
-            self.blinker.on = False
-            self.blinker.place(relx=0.5, rely=0.8, anchor="center")
-
-            # processing bars
-            self.bar_fr = tk.Frame(self, bg=self.bg)
-            s = ttk.Style()
-            self.bottom_bars_style = 'bottombars.Horizontal.TProgressbar'
-            s.configure(self.bottom_bars_style, thickness=1, background=PBAR_FG, troughcolor=PBAR_BG,
-                        troughrelief=tk.FLAT, pbarrelief=tk.FLAT)
-
-            for lbl, var in zip(('Video: ', '    Audio: ', '    Output File: '), (self.vbar, self.abar, self.mbar)):
-                tk.Label(self.bar_fr, text=lbl, bg=self.bg, fg=self.fg).pack(side='left')
-                ttk.Progressbar(self.bar_fr, orient=tk.HORIZONTAL, style=self.bottom_bars_style, length=20,
-                                variable=var).pack(side='left', expand=True, fill='x')
-
-            self.bar_fr.grid(row=3, column=1, columnspan=1, sticky='ew', padx=0)
-            self.bar_fr.grid_remove()
-
-            # segments progressbar
-            self.segment_bar = Segmentbar(self)
-            self.segment_bar.grid(row=4, column=0, columnspan=3, sticky='ew', padx=5)
-
-            # create buttons
-            self.play_button = Button(btns_frame, image=imgs['play_icon'])
-            self.play_button .pack(side='left', padx=(0, 10))
-
-        self.delete_button = Button(btns_frame, image=imgs['delete_icon'])
-        self.delete_button.pack(side='left', padx=(0, 10))
-
-        # make another info label
-        self.info_lbl2 = tk.Label(btns_frame, bg=self.bg, fg=self.fg)
-        self.info_lbl2.pack(side='left', padx=(0, 10), pady=5)
-
-        # status icon
-        self.status_icon = tk.Label(btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12, height=12)
-        self.status_icon.pack(side='left', padx=5, pady=5)
-
-        # separator
-        ttk.Separator(self, orient='horizontal').grid(row=5, column=0, columnspan=3, sticky='ew', padx=5, pady=(0, 5))
+        self.apply_bindings()
 
     def __repr__(self):
         return f'DItem({self.uid})'
+
+    def apply_bindings(self):
+        if callable(self.onclick):
+            self.bind('<Button-1>', self.onclick)
+        if callable(self.ondoubleclick):
+            self.bind('<Double-Button-1>', self.ondoubleclick)
+
+        self.bind('<Control-1>', lambda event: self.toggle())
+
+        if self.rcm:
+            atk.RightClickMenu(self, self.rcm,
+                               callback=self.rcm_callback,
+                               bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
+
+        # bind mousewheel
+        atk.scroll_with_mousewheel(self, target=self.parent, apply_to_children=True)
+
+        if self.bind_map:
+            for x, y in self.bind_map:
+                self.bind(x, y)
 
     def select(self, flag=True):
         """select self"""
@@ -1604,28 +1611,37 @@ class DItem(tk.Frame):
         selection_fg = SEL_FG if flag else self.fg
         self.config(background=selection_bg)
 
-        s = ttk.Style()
+        def change_colors(w, fg, bg, children=False, recursive=False, execludes=None):
+            # execludes an iterable of execluded widgets' class name (.winfo_class())
+            atk.configure_widget(w, background=bg, foreground=fg)
 
-        def change_background(w):
-            for child in w.winfo_children():
-                try:
-
-                    if child is not self.thumbnail_label and child.winfo_class() not in ('TSeparator', 'Menu', 'Canvas'):
+            if children:
+                for child in w.winfo_children():
+                    if execludes and child.winfo_class() not in execludes:
                         atk.configure_widget(child, background=selection_bg, foreground=selection_fg)
-                    
-                    # correction for bottom bars
-                    if child.winfo_class() in ('TProgressbar', ):
-                        s.configure(self.bottom_bars_style, background=PBAR_FG, troughcolor=PBAR_BG)
-                except:
-                    pass
 
-                # recursive call
-                if child.winfo_children():
-                    change_background(child)
+                    if recursive:
+                        change_colors(child, fg, bg, children, recursive)
 
-        change_background(self)
+        change_colors(self, selection_fg, selection_bg)
 
-        # call associated callback
+        if self.mode == 'compact':
+            for name in ('status_icon', 'play_button', 'name_lbl', 'info_lbl', 'delete_button', 'blinker',
+                         'main_frame'):
+                w = getattr(self, name, None)
+                if w:
+                    change_colors(w, selection_fg, selection_bg)
+
+        elif self.mode == 'standard':
+            for name in ('btns_frame', 'bar_fr', 'blinker', 'status_icon', 'play_button', 'name_lbl', 'info_lbl',
+                         'info_lbl2', 'delete_button', 'bar', 'bar_fr', 'main_frame'):
+                w = getattr(self, name, None)
+                if w:
+                    change_colors(w, selection_fg, selection_bg,
+                                  children=True if name in ('bar', 'bar_fr') else False,
+                                  recursive=True if name == 'bar' else False,
+                                  execludes=('TProgressbar',) if name == 'bar_fr' else None)
+
         if callable(self.on_toggle_callback):
             self.on_toggle_callback()
 
@@ -1660,10 +1676,182 @@ class DItem(tk.Frame):
 
         bind_children(self)
 
+    def view_std(self):
+        self.main_frame = tk.Frame(self, bg=self.bg, highlightthickness=0, highlightbackground=BTN_BG)
+        self.main_frame.pack(expand=True, fill='x')
+        self.main_frame.columnconfigure(1, weight=1)
+
+        # thumbnail
+        self.thumbnail_img = None
+        # should assign an image property for tkinter to use pixels for width and height instead of characters
+        self.thumbnail_label = tk.Label(self.main_frame, bg='white', image=self.blank_img, text='', font='any 20 bold', fg='black',
+                                        justify='center', highlightbackground=THUMBNAIL_BD, highlightthickness=2,
+                                        compound='center', width=self.thumbnail_width, height=self.thumbnail_height)
+        self.thumbnail_label.grid(row=0, column=0, rowspan=4, padx=5, pady=5, sticky='ns')
+
+        # name text
+        self.name_lbl = AutoWrappingLabel(self.main_frame, bg=self.bg, fg=self.fg, anchor='w')
+        self.name_lbl.grid(row=0, column=1, sticky='ewns')
+
+        self.info_lbl = tk.Label(self.main_frame, bg=self.bg, fg=self.fg, anchor='w', justify='left')
+        self.info_lbl.grid(row=1, column=1, sticky='w')
+
+        self.btns_frame = tk.Frame(self.main_frame, bg=self.bg)
+        self.btns_frame.grid(row=2, column=1, sticky='w')
+
+        # for non-completed items
+        if self.status != config.Status.completed:
+            #  progressbar
+            self.bar = atk.RadialProgressbar(parent=self.main_frame, size=(80, 80), fg=PBAR_FG, text_fg=PBAR_TXT,
+                                             font_size_ratio=0.16)
+            self.bar.grid(row=0, column=2, rowspan=4, padx=10, pady=5)
+
+            # blinker, it will blink with received data flow
+            self.blinker = tk.Label(self.bar, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
+                                    height=12)
+            self.blinker.on = False
+            self.blinker.place(relx=0.5, rely=0.8, anchor="center")
+
+            # processing bars
+            self.bar_fr = tk.Frame(self.main_frame, bg=self.bg)
+            s = ttk.Style()
+            self.bottom_bars_style = 'bottombars.Horizontal.TProgressbar'
+            s.configure(self.bottom_bars_style, thickness=1, background=PBAR_FG,
+                        troughcolor=atk.calc_contrast_color(self.bg, 30),
+                        troughrelief=tk.FLAT, pbarrelief=tk.FLAT)
+
+            self.vbar = tk.IntVar()
+            self.abar = tk.IntVar()
+            self.mbar = tk.IntVar()
+
+            for lbl, var in zip(('Video: ', '    Audio: ', '    Output File: '), (self.vbar, self.abar, self.mbar)):
+                tk.Label(self.bar_fr, text=lbl, bg=self.bg, fg=self.fg).pack(side='left')
+                ttk.Progressbar(self.bar_fr, orient=tk.HORIZONTAL, style=self.bottom_bars_style, length=20,
+                                variable=var).pack(side='left', expand=True, fill='x')
+
+            self.bar_fr.grid(row=3, column=1, columnspan=1, sticky='ew', padx=0)
+            self.bar_fr.grid_remove()
+
+            # segments progressbar
+            self.segment_bar = Segmentbar(self.main_frame)
+            self.segment_bar.grid(row=4, column=0, columnspan=3, sticky='ew', padx=5, pady=(0, 5))
+
+            # create buttons
+            self.play_button = Button(self.btns_frame, image=imgs['play_icon'], command=self.playbtn_callback)
+            self.play_button.pack(side='left', padx=(0, 10))
+
+        self.delete_button = Button(self.btns_frame, image=imgs['delete_icon'], command=self.delbtn_callback)
+        self.delete_button.pack(side='left', padx=(0, 10))
+
+        # make another info label
+        self.info_lbl2 = tk.Label(self.btns_frame, bg=self.bg, fg=self.fg)
+        self.info_lbl2.pack(side='left', padx=(0, 10), pady=5)
+
+        # status icon
+        self.status_icon = tk.Label(self.btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
+                                    height=12)
+        self.status_icon.pack(side='left', padx=5, pady=5)
+
+        # self.bind('<Double-Button-1>', self.ondoubleclick, exclude=[self.play_button])
+
+    def view_compact(self):
+        self.main_frame = tk.Frame(self, bg=self.bg, highlightthickness=0, highlightbackground=BTN_BG)
+        self.main_frame.pack(expand=True, fill='both')
+        self.main_frame.columnconfigure(3, weight=1)
+
+        # status icon
+        self.status_icon = tk.Label(self.main_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12, height=12)
+        self.status_icon.grid(row=0, column=0, padx=5, sticky='w')
+        # blinker, it will blink with received data flow
+        self.blinker = tk.Label(self.main_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
+                                height=12)
+        self.blinker.on = False
+        self.blinker.grid(row=0, column=1, padx=5, sticky='w')
+
+        self.play_button = Button(self.main_frame, image=imgs['play_icon'], command=self.playbtn_callback)
+        self.play_button.grid(row=0, column=2, padx=5, sticky='w')
+
+        # self.name_lbl = tk.Label(self.fr, bg=self.bg, fg=self.fg, anchor='w')
+        self.name_lbl = AutofitLabel(self.main_frame, bg=self.bg, fg=self.fg, anchor='w')
+        self.name_lbl.grid(row=0, column=3, padx=5, sticky='ew')
+
+        self.info_lbl = tk.Label(self.main_frame, bg=self.bg, fg=self.fg, anchor='w', justify='left')
+        self.info_lbl.grid(row=0, column=4, padx=5, sticky='w')
+
+        s = ttk.Style()
+        bar_style = 'bar_style.Horizontal.TProgressbar'
+        s.configure(bar_style, thickness=1, background=PBAR_FG, troughcolor=PBAR_BG, troughrelief=tk.FLAT,
+                    pbarrelief=tk.FLAT)
+
+        self.bar = tk.IntVar(0)
+        ttk.Progressbar(self.main_frame, orient=tk.HORIZONTAL, style=bar_style, length=40,
+                        variable=self.bar).grid(row=0, column=5, padx=5, sticky='w')
+
+        self.delete_button = Button(self.main_frame, image=imgs['delete_icon'], command=self.delbtn_callback)
+        self.delete_button.grid(row=0, column=6, padx=5, sticky='w')
+
+    def view(self, mode='standard'):
+        """
+        pack/grid widgets
+        Args:
+            mode(str): standard, or compact
+        """
+        if mode == 'compact':
+            self.view_compact()
+        elif mode in 'standard':
+            self.view_std()
+
+    def dynamic_view(self):
+        """change view based on status"""
+
+        # status icon
+        if self.status == config.Status.completed:
+            status_img = imgs['done_icon']
+        elif self.status in (config.Status.pending, config.Status.scheduled):
+            status_img = imgs['hourglass_icon']
+        else:
+            status_img = self.blank_img
+
+        try:
+            self.status_icon.config(image=status_img)
+        except:
+            pass
+
+        # toggle play/pause icons
+        try:
+            if self.status in config.Status.active_states:
+                img = imgs['pause_icon']
+            else:
+                img = imgs['play_icon']
+            self.play_button.config(image=img)
+            self.play_button.bind('<Enter>', lambda e: self.play_button.config(image=img.zoomed))
+            self.play_button.bind('<Leave>', lambda e: self.play_button.config(image=img))
+        except:
+            pass
+
+        if self.mode == 'compact':
+            if self.status in config.Status.active_states:
+                self.status_icon.grid_remove()
+                self.blinker.grid()
+
+            else:
+                self.blinker.grid_remove()   
+                self.status_icon.grid()
+
+            if self.status == config.Status.completed:
+                self.play_button.grid_remove()
+
+        if self.mode == 'standard':
+            if self.status == config.Status.completed:
+                self.play_button.pack_forget()
+                self.bar.grid_remove()
+                self.bar_fr.grid_remove()
+                self.segment_bar.grid_remove()
+
     def show(self):
         """grid self"""
         side = 'bottom' if config.ditem_show_top else 'top'
-        self.pack(side=side, expand=True, fill='x', pady=5)
+        self.pack(side=side, expand=True, fill='x', pady=0)
 
     def hide(self):
         """grid self"""
@@ -1671,12 +1859,16 @@ class DItem(tk.Frame):
 
     def display_info(self):
         """display info in tkinter widgets"""
+        if self.mode == 'compact':
+            size = f'{self.total_size}' if self.status == config.Status.completed else f'{self.size}/{self.total_size}'
+            self.info_lbl.config(text=f'{size} {self.speed} {self.eta}   {self.errors} {self.progress}')
 
-        self.info_lbl.config(text=f'{self.size} of {self.total_size} {self.speed} {self.eta}   {self.errors} '
-                                  f'{self.shutdown_pc} {self.on_completion_command}')
+        elif self.mode == 'standard':
+            self.info_lbl.config(text=f'{self.size}/{self.total_size} {self.speed} {self.eta}   {self.errors} '
+                                      f'{self.shutdown_pc} {self.on_completion_command}')
 
-        self.info_lbl2.config(text=f'{self.media_subtype} {self.media_type} {self.live_connections} '
-                                   f'{self.completed_parts} - {self.status} {self.sched}')
+            self.info_lbl2.config(text=f'{self.media_subtype} {self.media_type} {self.live_connections} '
+                                       f'{self.completed_parts} - {self.status} {self.sched}')
 
         # a led like blinking button, to react with data flow
         self.toggle_blinker()
@@ -1688,132 +1880,130 @@ class DItem(tk.Frame):
                segments_progress=None, **kwargs):
         """update widgets value"""
         # print(locals())
-        try:
-
-            if name:
-                self.name = name
-                title, ext = os.path.splitext(name)
+        self.latest_update.update({k: v for k, v in locals().items() if v not in (None, self)})
+        if name:
+            self.name = name
+            title, ext = os.path.splitext(name)
+            try:
                 self.name_lbl.config(text=render_text(title) + ext)
+            except:
+                pass
 
-            if downloaded is not None:
-                self.size = format_bytes(downloaded)
+        if downloaded is not None:
+            self.size = format_bytes(downloaded, percision=1, sep='')
 
-            if total_size is not None:
-                self.total_size = format_bytes(total_size)
+        if total_size is not None:
+            self.total_size = format_bytes(total_size, percision=1, sep='')
 
-            if speed is not None:
-                self.speed = f'- Speed: {format_bytes(speed)}/s' if speed > 0 else ''
+        if speed is not None:
+            self.speed = f'- {format_bytes(speed, percision=1, sep="")}/s' if speed > 0 else ''
 
-            if eta is not None:
-                self.eta = f'- ETA: {format_seconds(eta, fullunit=True)}' if eta else ''
+        if eta is not None:
+            self.eta = f'- {format_seconds(eta, fullunit=True, percision=0, sep="")}(s)' if eta else ''
 
-            if progress is not None:
-                try:
-                    self.bar.set(progress)
-                except:
-                    pass
+        if progress is not None:
+            try:
+                self.progress = f'{progress}%'
+                self.bar.set(progress)
+            except:
+                pass
 
-            if extension:
-                ext = extension.replace('.', '').upper()
+        if extension:
+            ext = extension.replace('.', '').upper()
+            try:
                 # negative font size will force character size in pixels
                 f = f'any {int(- self.thumbnail_width * 0.8 // len(ext))} bold'
                 self.thumbnail_label.config(text=ext, font=f)
+            except:
+                pass
 
-            if thumbnail:
+        if thumbnail:
+            try:
                 self.thumbnail_img = atk.create_image(b64=thumbnail, size=self.thumbnail_width)
                 self.thumbnail_label.config(image=self.thumbnail_img, text='')
+            except:
+                pass
 
-            if 'errors' in kwargs:
-                errors = kwargs['errors']
-                self.errors = f'[{errors} errs!]' if errors else ''
+        if 'errors' in kwargs:
+            errors = kwargs['errors']
+            self.errors = f'[{errors} errs!]' if errors else ''
 
-            if live_connections is not None:
-                self.live_connections = f'- Workers: {live_connections} ' if live_connections > 0 else ''
+        if live_connections is not None:
+            self.live_connections = f'- Workers: {live_connections} ' if live_connections > 0 else ''
 
-            if total_parts:
-                self.total_parts = total_parts
+        if total_parts:
+            self.total_parts = total_parts
 
-            if remaining_parts:
-                if self.total_parts:
-                    completed = self.total_parts - remaining_parts
-                    self.completed_parts = f'- Done: {completed} of {self.total_parts}'
+        if remaining_parts:
+            if self.total_parts:
+                completed = self.total_parts - remaining_parts
+                self.completed_parts = f'- Done: {completed} of {self.total_parts}'
 
-            if status:
-                self.status = status
-                if status == config.Status.completed:
-                    self.errors = ''
-                    self.completed_parts = ''
-                    try:
-                        self.status_icon.config(image=imgs['done_icon'])
-                        self.play_button.pack_forget()
-                        self.bar.grid_forget()
-                        self.bar_fr.grid_forget()
-                        self.segment_bar.grid_forget()
-                    except:
-                        pass
+        if status:
+            self.status = status
+            if status == config.Status.completed:
+                self.errors = ''
+                self.completed_parts = ''
+            if status != config.Status.scheduled:
+                self.sched = ''
 
-                elif status in (config.Status.pending, config.Status.scheduled):
-                    self.status_icon.config(image=imgs['hourglass_icon'])
+            try:
+                self.dynamic_view()
+            except Exception as e:
+                print(e)
 
-                else:
-                    self.status_icon.config(image=self.blank_img)
-                    self.sched = ''
+        if sched:
+            if status == config.Status.scheduled:
+                self.sched = f'@{sched}'
 
-                # toggle play/pause icons
+        if type:
+            self.media_type = type
+            if type == 'video' and self.status != config.Status.completed:
                 try:
-                    if status in config.Status.active_states:
-                        img = imgs['pause_icon']
-                    else:
-                        img = imgs['play_icon']
-                    self.play_button.config(image=img)
-                    self.play_button.bind('<Enter>', lambda e: self.play_button.config(image=img.zoomed))
-                    self.play_button.bind('<Leave>', lambda e: self.play_button.config(image=img))
+                    self.bar_fr.grid()
                 except:
                     pass
 
-            if sched:
-                if status == config.Status.scheduled:
-                    self.sched = f'@{sched}'
+        if isinstance(subtype_list, list):
+            self.media_subtype = ' '.join(subtype_list)
 
-            if type:
-                self.media_type = type
-                if type == 'video' and self.status != config.Status.completed:
-                    self.bar_fr.grid()
+        if on_completion_command is not None:
+            self.on_completion_command = '[-CMD-]' if on_completion_command else ''
+        if shutdown_pc is not None:
+            self.shutdown_pc = '[-Shutdown Pc when finish-]' if shutdown_pc else ''
 
-            if isinstance(subtype_list, list):
-                self.media_subtype = ' '.join(subtype_list)
-            
-            if on_completion_command is not None:
-                self.on_completion_command = '[-CMD-]' if on_completion_command else ''
-            if shutdown_pc is not None:
-                self.shutdown_pc = '[-Shutdown Pc when finish-]' if shutdown_pc else ''
-
-            # bottom progress bars
-            if video_progress:
+        # bottom progress bars
+        if video_progress:
+            try:
                 self.vbar.set(video_progress)
+            except:
+                pass
 
-            if audio_progress:
+        if audio_progress:
+            try:
                 self.abar.set(audio_progress)
+            except:
+                pass
 
-            if merge_progress:
+        if merge_progress:
+            try:
                 self.mbar.set(merge_progress)
+            except:
+                pass
 
-            if segments_progress and hasattr(self, 'segment_bar'):
+        if segments_progress:
+            try:
                 self.segment_bar.ubdate_bars(segments_progress)
+            except:
+                pass
 
-            self.display_info()
-
-        except Exception as e:
-            log('DItem.update()> error:', e)
-            if config.test_mode:
-                raise e
+        self.display_info()
 
     def toggle_blinker(self):
         """an activity blinker "like a blinking led" """
         status = self.status
         try:
-            if not self.blinker.on and status in (config.Status.downloading, config.Status.processing,
-                                                  config.Status.refreshing_url):
+            if not self.blinker.on and status in config.Status.active_states:
                 # on blinker
                 self.blinker.config(image=imgs['blinker_icon'])
                 self.blinker.on = True
@@ -3300,16 +3490,30 @@ class MainWindow(IView):
         top_fr = tk.Frame(tab, bg=HDG_BG)
         top_fr.pack(fill='x', pady=(5, 0), padx=(5, 0))
 
-        self.select_btn = Button(top_fr, text='', image=imgs['dropdown_icon'])
+        self.select_btn = Button(top_fr, text='', image=imgs['select_icon'], tooltip='select')
         self.select_btn.pack(side='left', padx=5, pady=10)
-        self.select_lbl = tk.Label(top_fr, text='', bg=HDG_BG, fg=HDG_FG)
-        self.select_lbl.pack(side='left', padx=5, pady=10)
 
-        select_menu = atk.RightClickMenu(self.select_btn,
-                                         ['Select all', 'Select None', 'Select completed', 'Select non completed'],
-                                         callback=lambda option_name: self.select_ditems(option_name),
-                                         bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True, 
-                                         bind_right_click=False)
+        atk.RightClickMenu(self.select_btn,
+                           ['Select all', 'Select None', 'Select completed', 'Select non completed'],
+                           callback=lambda option_name: self.select_ditems(option_name),
+                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
+                           bind_right_click=False)
+
+        self.view_btn = Button(top_fr, text='', image=imgs['view_icon'], tooltip='view')
+        self.view_btn.pack(side='left', padx=5)
+        atk.RightClickMenu(self.view_btn,
+                           ['standard', 'compact', 'mix'],
+                           callback=lambda option_name: self.switch_view(option_name),
+                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
+                           bind_right_click=False)
+
+        self.filter_btn = Button(top_fr, text='', image=imgs['filter_icon'], tooltip='filter')
+        self.filter_btn.pack(side='left', padx=5)
+        atk.RightClickMenu(self.filter_btn,
+                           ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending'],
+                           callback=lambda option_name: self.filter_view(option_name),
+                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
+                           bind_right_click=False)
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
@@ -3818,58 +4022,61 @@ class MainWindow(IView):
             kwargs: key/values to update a download item
         """
         status = kwargs.get('status')
+        mode = kwargs.get('mode', config.view_mode)
+
+        if mode == 'mix':
+            mode = 'standard' if status != config.Status.completed else 'compact'
 
         # check if item already created before
         if uid in self.d_items:
             return
-        d_item = DItem(self.d_tab, uid, status, on_toggle_callback=self.update_stat_lbl)
-        excludes = []
 
-        if status != config.Status.completed:
-            # bind buttons commands
-            d_item.play_button['command'] = lambda: self.toggle_download(d_item.uid)
-
-            excludes += [d_item.play_button]
-
-        d_item.delete_button['command'] = lambda: self.delete(d_item.uid)
-
-        # bind double click to play a file
-        d_item.bind('<Double-Button-1>', lambda event, x=uid: self.controller.play_file(uid=x), exclude=excludes)
-
-        # bind delete and enter keys
-        d_item.bind('<Delete>', lambda e: self.delete_selected(), add='+')
-        d_item.bind('<Return>', lambda e: self.open_selected_file(), add='+')
+        b_map = (
+            ('<Button-2>', lambda event, x=uid: self.on_item_rightclick(x)),
+            ('<Button-3>', lambda event, x=uid: self.on_item_rightclick(x)),
+            ('<Shift-1>', lambda event, x=uid: self.on_shift_click(x)),
+            ('<Delete>', lambda event: self.delete_selected()),
+            ('<Return>', lambda event: self.open_selected_file())
+        )
 
         # right click menu
-        right_click_map = {'Open File  (Enter)': lambda uid: self.controller.play_file(uid=uid),
-                           'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
-                           'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
-                           'copy webpage url': lambda uid: self.copy(self.controller.get_property('url', uid=uid)),
-                           'copy direct url': lambda uid: self.copy(self.controller.get_property('eff_url', uid=uid)),
-                           'copy playlist url': lambda uid: self.copy(self.controller.get_property('playlist_url', uid=uid)),
-                           'Resume': lambda uid: self.resume_selected(),
-                           'Pause': lambda uid: self.stop_selected(),
-                           'Delete  (Del)': lambda uid: self.delete_selected(),
-                           'Schedule / unschedule': lambda uid: self.schedule_selected(),
-                           'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
-                           'On item completion command': lambda uid: self.set_on_completion_command(uid),
-                           'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
-                           }
+        rcm_map = {
+            'Open File  (Enter)': lambda uid: self.controller.play_file(uid=uid),
+            'Open File Location': lambda uid: self.controller.open_folder(uid=uid),
+            'Watch while downloading': lambda uid: self.controller.play_file(uid=uid),
+            'copy webpage url': lambda uid: self.copy(self.controller.get_property('url', uid=uid)),
+            'copy direct url': lambda uid: self.copy(self.controller.get_property('eff_url', uid=uid)),
+            'copy playlist url': lambda uid: self.copy(self.controller.get_property('playlist_url', uid=uid)),
+            'Resume': lambda uid: self.resume_selected(),
+            'Pause': lambda uid: self.stop_selected(),
+            'Delete  (Del)': lambda uid: self.delete_selected(),
+            'Schedule / unschedule': lambda uid: self.schedule_selected(),
+            'Toggle Shutdown Pc when finish': lambda uid: self.controller.toggle_shutdown(uid),
+            'On item completion command': lambda uid: self.set_on_completion_command(uid),
+            'Properties': lambda uid: self.msgbox(self.controller.get_properties(uid=uid)),
+        }
 
-        entries = []
-
-        for i, item in enumerate(right_click_map.keys()):
+        rcm = []
+        for i, item in enumerate(rcm_map.keys()):
             # filter options for completed items
-            if not(status == config.Status.completed and i in (2, 6, 7, 9, 10, 11)):
-                entries.append(item)
+            if not (status == config.Status.completed and i in (2, 6, 7, 9, 10, 11)):
+                rcm.append(item)
 
             # add separators
-            if i in (5, 9, 11) and entries[-1] != '---':
-                entries.append('---')
+            if i in (5, 9, 11) and rcm[-1] != '---':
+                rcm.append('---')
 
-        atk.RightClickMenu(d_item, entries,
-                           callback=lambda key, uid=d_item.uid: right_click_map[key](uid),
-                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
+        def rcm_callback(key, x=uid):
+            rcm_map[key](uid)
+
+        bg = atk.calc_contrast_color(MAIN_BG, 10) if len(self.d_items) % 2 != 0 else MAIN_BG
+        d_item = DItem(self.d_tab, uid, status, on_toggle_callback=self.update_stat_lbl, mode=mode, bg=bg,
+                       playbtn_callback=lambda *args, x=uid: self.toggle_download(x),
+                       delbtn_callback=lambda *args, x=uid: self.delete(x),
+                       onclick=lambda *args, x=uid: self.on_toggle_ditem(x),
+                       ondoubleclick=lambda *args, x=uid: self.controller.play_file(uid=x),
+                       bind_map=b_map,
+                       rcm=rcm, rcm_callback=rcm_callback)
 
         self.d_items[uid] = d_item
 
@@ -3878,15 +4085,6 @@ class MainWindow(IView):
 
         # update d_item info
         d_item.update(**kwargs)
-
-        # bind mousewheel
-        atk.scroll_with_mousewheel(d_item, target=self.d_tab, apply_to_children=True)
-
-        d_item.bind('<Button-1>', lambda event, uid=uid: self.on_toggle_ditem(uid))
-        d_item.bind('<Button-2>', lambda event, uid=uid: self.on_item_rightclick(uid), add='+')
-        d_item.bind('<Button-3>', lambda event, uid=uid: self.on_item_rightclick(uid), add='+')
-        d_item.bind('<Control-1>', lambda event: d_item.toggle())
-        d_item.bind('<Shift-1>', lambda event, uid=uid: self.on_shift_click(uid))
 
         # font
         self.assign_font_for(d_item)
@@ -3991,6 +4189,38 @@ class MainWindow(IView):
             self.root.update_idletasks()
             self.d_tab.autoscroll = True
 
+    def switch_view(self, mode):
+        set_option(view_mode=mode)
+        items = {uid: item for uid, item in self.d_items.items()}
+        self.d_items.clear()
+        for uid, item in items.items():
+            kwargs = item.latest_update
+            item.destroy()
+            self.create_ditem(uid, **kwargs, mode=mode)
+        self.update_stat_lbl()
+        self.d_tab.scrolltotop()
+
+    def filter_view(self, option):
+        # ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending']
+        all_items = self.d_items.values()
+        log(option, option == 'active')
+        if option == 'active':
+            items = [item for item in all_items if item.status in config.Status.active_states]
+            log(len(items))
+        elif option == 'all':
+            items = all_items
+        else:
+            items = [item for item in all_items if item.status == option.lower()]
+
+        for item in all_items:
+            item.hide()
+            item.select(False)
+
+        for item in items:
+            item.show()
+
+        self.select_ditems
+
     def select_ditems(self, command):
         """select ditems in downloads tab
         Args:
@@ -4039,8 +4269,9 @@ class MainWindow(IView):
         count = len(self.get_selected_items())
         s = [item.status for item in self.d_items.values()]
 
-        self.select_lbl['text'] = f'  Selected [{count} of {len(self.d_items)}]'
-        self.stat_lbl['text'] = f'Downloading: {s.count(config.Status.downloading)}, ' \
+        # self.select_lbl['text'] = f'  Selected [{count} of {len(self.d_items)}]'
+        self.stat_lbl['text'] = f'Selected: [{count} of {len(self.d_items)}] - ' \
+                                f'Active: {sum([s.count(x) for x in config.Status.active_states])}, ' \
                                 f'Completed: {s.count(config.Status.completed)},  ' \
                                 f'Cancelled: {s.count(config.Status.cancelled)},  ' \
                                 f'Sceduled: {s.count(config.Status.scheduled)}, ' \
@@ -4156,6 +4387,8 @@ class MainWindow(IView):
             # restart ibus
             if self.should_restart_ibus:
                 self.root.after(1000, self.restart_ibus)
+
+            self.update_stat_lbl()
 
         # update playlist menu
         elif command == 'playlist_menu':

@@ -22,7 +22,7 @@ settings_keys = [
     'keep_temp', 'last_update_check', 'log_level', 'max_concurrent_downloads',
     'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification', 'proxy',
     'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
-    'use_playlist_numbers', 'window_size', 'write_metadata']
+    'use_playlist_numbers', 'window_size', 'write_metadata', 'view_mode']
 
 # ----------------------------------------------------------------------------------------General ----------------------
 # CONSTANTS
@@ -59,6 +59,7 @@ appimage_update_folder = None  # will be set by AppImage run script
 shutdown = False
 
 on_download_notification = True  # show notify message when done downloading
+view_mode = 'standard'
 
 # ----------------------------------------------------------------------------------------Filesystem options------------
 # current folders
