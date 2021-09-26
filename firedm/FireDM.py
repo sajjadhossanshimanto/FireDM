@@ -308,6 +308,12 @@ def pars_args(arguments):
 
     if args.username or args.password:
         sett['use_web_auth'] = True
+    else:
+        sett['username'] = config.username
+        sett['password'] = config.password
+
+    if not(sett['username'] and sett['password']):
+        config.use_web_auth = False
 
     if args.proxy:
         sett['enable_proxy'] = True

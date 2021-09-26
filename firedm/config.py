@@ -19,10 +19,11 @@ settings_keys = [
     'active_video_extractor', 'auto_rename', 'autoscroll_download_tab', 'check_for_update', 'checksum', 'current_theme',
     'custom_user_agent', 'disable_log_popups', 'ditem_show_top', 'download_folder', 'download_thumbnail',
     'enable_proxy', 'enable_systray', 'gui_font', 'ibus_workaround', 'ignore_ssl_cert',
-    'keep_temp', 'last_update_check', 'log_level', 'max_concurrent_downloads',
-    'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification', 'proxy',
-    'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
-    'use_playlist_numbers', 'window_size', 'write_metadata', 'view_mode']
+    'keep_temp', 'last_update_check', 'log_level', 'max_concurrent_downloads', 'remember_web_auth', 'use_web_auth',
+    'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
+    'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
+    'use_playlist_numbers', 'window_size', 'write_metadata', 'view_mode'
+]
 
 # ----------------------------------------------------------------------------------------General ----------------------
 # CONSTANTS
@@ -86,6 +87,7 @@ enable_proxy = False
 
 # ---------------------------------------------------------------------------------------Authentication Options---------
 use_web_auth = False
+remember_web_auth = False
 username = ''
 password = ''
 

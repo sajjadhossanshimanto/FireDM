@@ -3641,9 +3641,10 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Authentication options----
         heading('Website Authentication options:')
         login_frame = tk.Frame(tab, bg=bg)
-        CheckOption(login_frame, 'Login', key='use_web_auth').pack(side='left')
-        LabeledEntryOption(login_frame, 'User:', entry_key='username').pack(side='left', padx=(0, 5))
+        CheckOption(login_frame, 'Enable!', key='use_web_auth').pack(side='left')
+        LabeledEntryOption(login_frame, 'User:', entry_key='username').pack(side='left', padx=10)
         LabeledEntryOption(login_frame, 'Pass:', entry_key='password', show='*').pack(side='left', padx=5)
+        CheckOption(login_frame, 'remember user/pass', key='remember_web_auth').pack(side='left')
         login_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
         separator()

@@ -187,6 +187,11 @@ def load_setting():
 
 
 def save_setting():
+    # web authentication
+    if not config.remember_web_auth:
+        config.username = ''
+        config.password = ''
+
     settings = {key: config.__dict__.get(key) for key in config.settings_keys}
 
     try:
