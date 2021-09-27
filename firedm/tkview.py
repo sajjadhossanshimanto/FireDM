@@ -2852,10 +2852,8 @@ class BatchWindow(tk.Toplevel):
                                           fg=MAIN_FG, insertbackground=MAIN_FG)
         self.urls_text.pack(expand=True, fill='both')
 
-        # have to refer to real text widget inside "ScrolledText" Frame, should correct this in awesometkinter and
-        # make "ScrolledText" inherit from "Text" widget not a Frame.
-        atk.RightClickMenu(self.urls_text.text, ['Cut', 'Copy', 'Paste'],
-                           callback=lambda selected: self.urls_text.text.event_generate(f'<<{selected}>>'),
+        atk.RightClickMenu(self.urls_text, ['Cut', 'Copy', 'Paste'],
+                           callback=lambda option: self.urls_text.event_generate(f'<<{option}>>'),
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
         main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
 
@@ -3412,7 +3410,7 @@ class MainWindow(IView):
 
         # top frame
         top_fr = tk.Frame(tab, bg=HDG_BG)
-        top_fr.pack(fill='x', pady=(5, 0), padx=(5, 0))
+        top_fr.pack(fill='x', pady=(5, 0), padx=0)
 
         self.select_btn = Button(top_fr, text='', image=imgs['select_icon'], tooltip='select')
         self.select_btn.pack(side='left', padx=5, pady=10)
@@ -3454,16 +3452,13 @@ class MainWindow(IView):
         self.resume_all_btn.bind('<Leave>', lambda e: self.resume_all_btn.config(text=self.resume_all_btn['text'].strip()))
 
         self.stat_lbl = tk.Label(tab, text='', bg=SF_BG, fg=SF_BTN_BG, anchor='w')
-        self.stat_lbl.pack(fill='x', padx=(5, 0), pady=2, ipadx=5)
+        self.stat_lbl.pack(fill='x', padx=0, pady=2, ipadx=5)
 
         # Scrollable
         self.d_tab = atk.ScrollableFrame(tab, bg=MAIN_BG, vscroll=True, hscroll=False,
                                          autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
 
         self.d_tab.pack(expand=True, fill='both')
-
-        # bind mousewheel
-        atk.scroll_with_mousewheel(self.d_tab)
 
         return tab
 
@@ -3765,6 +3760,10 @@ class MainWindow(IView):
         # around 100 KB in memory
         self.log_text = atk.ScrolledText(tab, max_chars=100000, bg=bg, fg=fg, bd=1, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG,
                                          highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5, pady=5)
+
+        atk.RightClickMenu(self.log_text, ['Cut', 'Copy', 'Paste'],
+                           callback=lambda option: self.log_text.event_generate(f'<<{option}>>'),
+                           bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
 
         def copy_log():
             self.copy(self.log_text.get(1.0, tk.END))
