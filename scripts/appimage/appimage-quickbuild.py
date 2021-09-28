@@ -150,9 +150,9 @@ for i, line in enumerate(data):
 with open(env_fp, 'w') as f:
     f.writelines(data)
 
-# Test run FireDM in cmd mode ------------------------------------------------------------------------------------------
+# Start FireDM with "--imports-only" flag to build pyc files for new packages  -----------------------------------------
 print('starting FireDM')
-subprocess.run(f'{AppDir}/AppRun --help', shell=True)
+subprocess.run(f'{AppDir}/AppRun --imports-only', shell=True)
 
 # build AppImage from current AppDir folder and using appimagetool -----------------------------------------------------
 print('build AppImage file from AppDir')
