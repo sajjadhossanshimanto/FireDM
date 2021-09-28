@@ -15,7 +15,9 @@ Developed in Python, based on "LibCurl", and "youtube_dl".
 
 [**Download Latest version!!**](https://github.com/firedm/FireDM/releases/latest)
 
-![screenshot](https://user-images.githubusercontent.com/58998813/112715559-83852f80-8ee9-11eb-8ea3-d8c0f98a0153.png)
+![screenshot](https://user-images.githubusercontent.com/58998813/134947539-0bec3cf4-fd02-47d4-b9be-e370c645d648.png)
+
+[more screenshots ...](https://github.com/firedm/FireDM/issues/13#issuecomment-928043472)
 
 ---
 **Features**:
@@ -81,7 +83,7 @@ Run FireDM without any installation (recommended)
     on Arch based distros.
 ----------------------
 
-## Manually installing FireDM with pip:
+## Manually installing FireDM with pip (Linux):
 1- check python version (minimum version required is 3.6): `python3 --version`
 
 2- install required packages first:<br>
@@ -97,7 +99,7 @@ sudo apt install fonts-symbola fonts-linuxlibertine fonts-inconsolata fonts-emoj
 python3 -m pip install firedm --user --upgrade --no-cache
 ```
 
-## Running from source code inside virtual environment:
+## Running from source code inside virtual environment (Linux):
 1- check python version (minimum version required is 3.6): `python3 --version`
 
 2- install required packages first:<br>
@@ -180,44 +182,21 @@ recommended fonts to be installed, for more info refer to [issue #200](https://g
 - [pystray](https://github.com/moses-palmer/pystray): for systray icon
 
 **Note for pycurl:** <br>
-for windows users:
-normal pip install i.e `python -m pip install pycurl` might fail on windows because you need to build libcurl on your system first which is a headache.
-your best choice if pip fail is to download exe file for pycurl from its official download [link](https://dl.bintray.com/pycurl/pycurl/), find the file that match your windows system and python version installed on your system, last checked on 12-06-2020, found available files for almost all Python versions upto version 3.8
+for windows users who wants to run from source or use pip:
+unfortunately, pycurl removed binary versions for windows and this link "https://dl.bintray.com/pycurl/pycurl/" is now dead, and one has to build pycurl from source which is not an easy task, details are here http://pycurl.io/docs/latest/install.html#windows
+normal pip install i.e `python -m pip install pycurl` probably will fail on windows, your best choice is to use FireDM standalone/portable exe version.
 
-example: if you have python 3.6 installed on windows 32bit, you should download "pycurl-7.43.0.2.win32-py3.6.exe" file and install it,
-another example: if you have python 3.7 running on windows 64 bit, you should choose and download "pycurl-7.43.0.3.win-amd64-py3.7.exe" file
-
-other download options include a wheel, zip file, or even a windows installer
 
 for linux users:
 there is no issues, since most linux distros have curl preinstalled, so pycurl will link with libcurl library to get built with no issues, checked with python versions 3.6, 3.7, and 3.8 working with no problems.
 <br>
 
 
-**Note for Youtube-dl:** <br>
-youtube website changes frequently, if this application failed to retrieve video/playlist data
-you should update youtube-dl module thru FireDM setting tab or manually by
-```
-python -m pip install youtube_dl --upgrade
-```
-
-
----
-
-**more screenshots**
-
-![screenshot](https://user-images.githubusercontent.com/58998813/92564079-e4fcee00-f278-11ea-83e1-9a272bc06b0f.png)
-![Main_tab](https://user-images.githubusercontent.com/58998813/94432366-f3af3480-0196-11eb-8449-3e35bfb13e5c.png)
-![sett_tab](https://user-images.githubusercontent.com/58998813/94432701-6f10e600-0197-11eb-9d5a-397980d8fa57.png)
-
-[See more ...](https://github.com/firedm/FireDM/issues/13#issuecomment-699985614)
-
-
 ---
 # what is the benefit of open source, compared to closed-source/Proprietary software if both are free?
 As said, **"if the product is free, then you are the product"**, most
 free closed-source software collect data about you, some of them are
-toxic and plant trojans and spy-wares in your system, with open source,
+toxic and plant trojans/spy-wares in your system, with open source,
 nothing hidden, and source code exposed to thousands of programmers, no
 one can play dirty games.
 
@@ -229,12 +208,6 @@ download managers, it is just a "hopefully useful" addition.
 
 <br>
 
-# Versions change log:
-ChangeLog.txt is included in source code.
-
-<br>
-
----
 # How to contribute to this project:
 1- by testing the application and opening
 [new issue](https://github.com/firedm/FireDM/issues/new) for bug
@@ -257,7 +230,6 @@ reporting, feature request, or suggestions.
 
   *help edit this list by writing a comment in
   [this issue](https://github.com/firedm/FireDM/issues/136)
-
 ---
 
 # contributors:
