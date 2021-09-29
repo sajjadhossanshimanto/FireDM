@@ -508,7 +508,7 @@ class DownloadItem:
         if url in ('', None):
             return
 
-        headers = get_headers(url)
+        headers = get_headers(url, http_headers=self.http_headers)
         # print('update d parameters:', headers)
 
         # update headers
@@ -547,10 +547,6 @@ class DownloadItem:
 
         # type
         content_type = headers.get('content-type', '').split(';')[0]
-        # fallback, guess type from file name extension
-        # guessed_content_type = mimetypes.guess_type(name, strict=False)[0]
-        # if not content_type:
-        #     content_type = guessed_content_type
 
         # file extension:
         ext = os.path.splitext(name)[1]
@@ -560,19 +556,31 @@ class DownloadItem:
             if ext:
                 name += ext
 
-        # resume support
-        resumable = headers.get('accept-ranges', 'none') != 'none'
-
         self.name = name
         self.extension = ext
         self.size = size
         self.type = content_type
-        self.resumable = resumable
+        self.resumable = self.is_resumable(url, headers)
 
         # build segments
         self.build_segments()
 
         log('headers:', headers, log_level=3)
+
+    def is_resumable(self, url, headers):
+        # check resume support / chunk downloading
+        resumable = headers.get('accept-ranges', 'none') != 'none'
+        size = int(headers.get('content-length', 0))
+
+        if not resumable and size > config.SEGMENT_SIZE:
+            # 'status_code': 206, 'content-length': '401', 'content-range': 'bytes 100-500/40772008'
+            seg_range = [100, 500]  # test range 401 bytes
+            h = get_headers(url, seg_range=seg_range, http_headers=self.http_headers)
+
+            if h.get('status_code') == 206 and int(h.get('content-length', 0)) == 401:
+                resumable = True
+
+        return resumable
 
     def delete_tempfiles(self, force_delete=False):
         """delete temp files and folder for a given download item"""

@@ -130,7 +130,7 @@ def set_curl_options(c, http_headers=None):
     c.setopt(pycurl.ACCEPT_ENCODING, '')
 
 
-def get_headers(url, verbose=False, http_headers=None):
+def get_headers(url, verbose=False, http_headers=None, seg_range=None):
     """return dictionary of headers"""
 
     log('get_headers()> getting headers for:', url, log_level=3)
@@ -172,6 +172,9 @@ def get_headers(url, verbose=False, http_headers=None):
     c.setopt(pycurl.URL, url)
     c.setopt(pycurl.WRITEFUNCTION, write_callback)
     c.setopt(pycurl.HEADERFUNCTION, header_callback)
+
+    if seg_range:
+        c.setopt(pycurl.RANGE, f'{seg_range[0]}-{seg_range[1]}')  # download segment only not the whole file
     # endregion
 
     try:
@@ -190,7 +193,7 @@ def get_headers(url, verbose=False, http_headers=None):
     return curl_headers
 
 
-def download(url, fp=None, verbose=True, http_headers=None, decode=True, return_buffer=False):
+def download(url, fp=None, verbose=True, http_headers=None, decode=True, return_buffer=False, seg_range=None):
     """
     simple file download, into bytesio buffer and store it on disk if file_name is given
 
@@ -201,6 +204,7 @@ def download(url, fp=None, verbose=True, http_headers=None, decode=True, return_
         http_headers: key, value dict for http headers to be sent to the server
         decode(bool): decode downloaded data, used for text / string type data
         return_buffer(bool): return io.BytesIO() buffer containing downloaded data
+        seg_range(iter): list or tuple containing start-byte, end-byte of file range, used if request part of the file
 
     Return:
         downloaded data
@@ -221,6 +225,9 @@ def download(url, fp=None, verbose=True, http_headers=None, decode=True, return_
 
         # set special curl options
         c.setopt(pycurl.URL, url)
+
+        if seg_range:
+            c.setopt(pycurl.RANGE, f'{seg_range[0]}-{seg_range[1]}')  # download segment only not the whole file
 
     # pycurl initialize
     c = pycurl.Curl()
