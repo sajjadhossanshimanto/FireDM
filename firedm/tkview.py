@@ -3604,14 +3604,28 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Network options-----------
         heading('Network options:')
         proxy_frame = tk.Frame(tab, bg=bg)
-        CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy'
-                         ).pack(side='left', expand=True, fill='x')
+        proxy_entry = CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy')
+        proxy_entry.pack(side='left', expand=True, fill='x')
+
+        def prefix_callback(scheme):
+            url = proxy_entry.get()
+            u = url.split('://', maxsplit=1)
+            netloc = u[1] if len(u) > 1 else u[0]
+            url = f'{scheme}{netloc}'
+            proxy_entry.set(url)
+
+        prefix_menu = ['http://', 'https://', 'socks4://', 'socks4a://', 'socks5://', 'socks5h://']
+        prefix_btn = Button(proxy_frame, text='prefix', tooltip='add or change prefix')
+        prefix_btn.pack(side='left', padx=5)
+        atk.RightClickMenu(prefix_btn, prefix_menu, callback=prefix_callback, bind_left_click=True, bg=RCM_BG,
+                           fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
+
         tip = ['proxy url should have one of below schemes:', 'http, https, socks4, socks4a, socks5, or socks5h', '',
                'e.g. "scheme://proxy_address:port"', '', 'if proxy server requires login',
                '"scheme://usr:pass@proxy_address:port"', '',
                'examples:', 'socks5h://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
 
-        btn = Button(proxy_frame, text='tip!');
+        btn = Button(proxy_frame, text='tip!')
         btn.pack(side='left', padx=5)
         atk.RightClickMenu(btn, tip, bind_left_click=True, bg=RCM_BG, fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
 
