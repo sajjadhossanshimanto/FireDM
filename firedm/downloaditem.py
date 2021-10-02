@@ -14,7 +14,7 @@ import mimetypes
 import time
 from collections import deque
 from threading import Lock
-from urllib.parse import urljoin
+from urllib.parse import urljoin, unquote, urlparse
 
 from .utils import (validate_file_name, get_headers, translate_server_code, log, delete_file, delete_folder, save_json,
                     load_json, get_range_list)
@@ -539,8 +539,12 @@ class DownloadItem:
             name = headers.get('file-name', '')
         
         if not name:
-            clean_url = url.split('?')[0] if '?' in url else url
-            name = clean_url.split('/')[-1].strip()
+            # extract name from url
+            basename = urlparse(url).path
+            name = basename.strip('/').split('/')[-1]
+
+            # decode percent-encoded strings, example 'silver%20bullet' >> 'silver bullet'
+            name = unquote(name)
 
         # file size
         size = int(headers.get('content-length', 0))
