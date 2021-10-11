@@ -19,6 +19,7 @@ Developers who contributed with code:
 Themes creators:
 - @ahmed-tasaly
 - @Mr-Personality
+- @tazihad
 
 ---
 
