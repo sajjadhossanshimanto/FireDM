@@ -3707,7 +3707,7 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Post-processing options---
         heading('Post-processing options:')
         CheckOption(tab, 'Show "MD5 and SHA256" checksums for downloaded files in log', key='checksum').pack(anchor='w')
-        CheckOption(tab, 'use server timestamp as a "last modified" property for downloaded file',
+        CheckOption(tab, 'Use server timestamp for downloaded files',
                     key='use_server_timestamp').pack(anchor='w')
         CheckOption(tab, 'Write metadata to media files', key='write_metadata').pack(anchor='w')
         CheckOption(tab, 'Write thumbnail image to disk', key='download_thumbnail').pack(anchor='w')

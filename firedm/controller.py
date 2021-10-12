@@ -118,7 +118,7 @@ def notify(message='', title='', timeout=5, app_icon='', app_name='FireDM'):
 
 
 def write_timestamp(d):
-    """write 'last modified' timestamp to downloaded file
+    """write server timestamp to downloaded file
 
     try to figure out the timestamp of the remote file, and if available make
     the local file get that same timestamp.
@@ -137,9 +137,27 @@ def write_timestamp(d):
             if timestamp:
                 # parse timestamp, eg.      "fri, 09 oct 2020 11:11:34 gmt"
                 t = time.strptime(timestamp, "%a, %d %b %Y %H:%M:%S %Z")
-                t = time.mktime(t)
+                t = time.mktime(t)  # seconds since the Epoch
                 log(f'writing timestamp "{timestamp}" to file: {d.name}', log_level=2)
                 os.utime(d.target_file, (t, t))
+
+                # modify creation time on windows,
+                # credit: https://github.com/Delgan/win32-setctime/blob/master/win32_setctime.py
+                if config.operating_system == 'Windows':
+                    try:
+                        from ctypes import windll, wintypes, byref
+
+                        # Convert Unix timestamp to Windows FileTime using some magic numbers
+                        # See documentation: https://support.microsoft.com/en-us/help/167296
+                        timestamp = int((t * 10000000) + 116444736000000000)
+                        ctime = wintypes.FILETIME(timestamp & 0xFFFFFFFF, timestamp >> 32)
+
+                        # Call Win32 API to modify the file creation date
+                        handle = windll.kernel32.CreateFileW(d.target_file, 256, 0, None, 3, 128, None)
+                        windll.kernel32.SetFileTime(handle, byref(ctime), None, None)
+                        windll.kernel32.CloseHandle(handle)
+                    except Exception as e:
+                        log('write_timestamp()>', e)
 
     except Exception as e:
         log('controller._write_timestamp()> error:', e)
