@@ -121,35 +121,32 @@ if not os.path.isfile(os.path.join(app_folder, 'ffmpeg.exe')):
         simpledownload(ffmpeg_url, fp=ffmpeg_path)
     shutil.copy(ffmpeg_path, os.path.join(app_folder, 'ffmpeg.exe'))
 
-# write resource fields for exe file, i.e. version, app name, copyright, etc -------------------------------------------
-# using rcedit.exe from https://github.com/electron/rcedit
 
-# check for rcedit.exe
-rcedit_fp = os.path.join(current_folder, 'rcedit.exe')
-if not (os.path.isfile(rcedit_fp) or os.path.isfile(os.path.join(app_folder, 'rcedit.exe'))):
-    # download file, will get x86 version, for x64 visit https://github.com/electron/rcedit/releases/latest
-    rcedit_url = 'https://github.com/electron/rcedit/releases/download/v1.1.1/rcedit-x86.exe'
-    simpledownload(rcedit_url, fp=rcedit_fp, return_data=False)
-
-# for some reasons rcedit must be in same directory with target file to work properly
-if not os.path.isfile(os.path.join(app_folder, 'rcedit.exe')):
-    shutil.copy(rcedit_fp, app_folder)
+# write resource fields for exe files ----------------------------------------------------------------------------------
+# install pe-tools  https://github.com/avast/pe_tools
+cmd = f'{sys.executable} -m pip install pe_tools'
+subprocess.run(cmd, shell=True)
 
 for fname in (cmd_target_name, gui_target_name):
-    cmd = f'rcedit {fname} --set-file-version {version} --set-product-version {version}  ' \
-          f'--set-version-string legalcopyright "copyright(c) 2019-2021 {APP_NAME}" --set-version-string  ProductName ' \
-          f'"{APP_NAME}" --set-version-string  OriginalFilename "{fname}" --set-version-string FileDescription ' \
-          f'"{APP_NAME} download manager"'
+    fp = os.path.join(app_folder, fname)
+    info = {
+        'Comments': 'https://github.com/firedm/FireDM',
+        'CompanyName': 'FireDM',
+        'FileDescription': 'FireDM download manager',
+        'FileVersion': version,
+        'InternalName': fname,
+        'LegalCopyright': '2019-2021 by Mahmoud Elshahat',
+        'LegalTrademarks': 'FireDM',
+        'OriginalFilename': fname,
+        'ProductName': 'FireDM',
+        'ProductVersion': version,
+        'legalcopyright': 'copyright(c) 2019-2021 by Mahmoud Elshahat'
+    }
 
-    print('-' * 50)
-    print('running command:', cmd)
-    os.chdir(app_folder)
+    param = ' -V '.join([f'"{k}={v}"' for k, v in info.items()])
+    cmd = f'peresed -V {param} {fp}'
     subprocess.run(cmd, shell=True)
 
-# clean up
-os.unlink(os.path.join(app_folder, 'rcedit.exe'))
 
 print('Done .....')
 
-# set icon
-# rcedit "FireDM.exe" --set-icon "icon.ico"
