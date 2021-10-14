@@ -82,6 +82,30 @@ subprocess.run(cmd, shell=True)
 
 # get application version ----------------------------------------------------------------------------------------------
 version = get_pkg_version(os.path.join(project_folder, 'firedm'))
+
+# edit info for exe files ----------------------------------------------------------------------------------------------
+cmd = f'{sys.executable} -m pip install pe_tools'
+subprocess.run(cmd, shell=True)
+
+for fname in ('firedm.exe', 'FireDM-GUI.exe'):
+    fp = os.path.join(app_folder, fname)
+    info = {
+        'Comments': 'https://github.com/firedm/FireDM',
+        'CompanyName': 'FireDM',
+        'FileDescription': 'FireDM download manager',
+        'FileVersion': version,
+        'InternalName': fname,
+        'LegalCopyright': '2019-2021 by Mahmoud Elshahat',
+        'LegalTrademarks': 'FireDM',
+        'OriginalFilename': fname,
+        'ProductName': 'FireDM',
+        'ProductVersion': version,
+        'legalcopyright': 'copyright(c) 2019-2021 by Mahmoud Elshahat'
+    }
+
+    param = ' -V '.join([f'"{k}={v}"' for k, v in info.items()])
+    cmd = f'peresed -V {param} {fp}'
+    subprocess.run(cmd, shell=True)
         
 # create zip file
 output_filename = f'{APP_NAME}_{version}'
