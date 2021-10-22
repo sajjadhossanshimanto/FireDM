@@ -189,6 +189,10 @@ class Worker:
     def set_options(self):
 
         # set general curl options
+
+        # don't accept compressed contents
+        self.d.http_headers['Accept-Encoding'] = '*;q=0'
+
         set_curl_options(self.c, http_headers=self.d.http_headers)
 
         self.c.setopt(pycurl.URL, self.seg.url)
