@@ -2553,6 +2553,7 @@ class PlaylistWindow(tk.Toplevel):
         self.subtitles_label['text'] = f'Total subtitles: {len(self.subtitles)}, Selected: {len(self.selected_subs)}'
     # endregion
 
+    @ignore_errors
     def video_select_callback(self, item_num):
         """ask controller to send stream menu when selecting a video"""
         item = self.items[item_num]

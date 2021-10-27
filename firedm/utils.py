@@ -48,6 +48,18 @@ def threaded(func):
     return wraper
 
 
+def ignore_errors(func):
+    """a decorator to run any function / method in a try-except block to ignore errors"""
+
+    def wraper(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except:
+            pass
+
+    return wraper
+
+
 def set_curl_options(c, http_headers=None):
     """take pycurl object as an argument and set basic options
 
@@ -59,11 +71,14 @@ def set_curl_options(c, http_headers=None):
         None
 
     Side effect:
-        change  pycurl object "c" inplace 
+        change  pycurl object "c" inplace
     """
-
     # use default headers if no http-headers assigned or passed empty headers
     http_headers = http_headers or config.http_headers
+
+    # notes for setopt:  setopt(option, value) ref: https://curl.se/libcurl/c/curl_easy_setopt.html
+    # option is an upper case constant, or a number, e.g. pycurl.HTTPPROXYTUNNEL=61
+    # curl ref: https://github.com/curl/curl/blob/master/include/curl/curl.h#L1073
 
     # c.setopt(pycurl.USERAGENT, config.USER_AGENT)
 
@@ -99,6 +114,10 @@ def set_curl_options(c, http_headers=None):
     c.setopt(pycurl.NOPROGRESS, 1)
     c.setopt(pycurl.CAINFO, certifi.where())  # for https sites and ssl cert handling
     c.setopt(pycurl.PROXY_CAINFO, certifi.where())
+
+    # /* set this to 1L to allow HTTP/0.9 responses or 0L to disallow */
+    #   CURLOPT(CURLOPT_HTTP09_ALLOWED, CURLOPTTYPE_LONG, 285)
+    # c.setopt(285, 1)  # option doesn't exist in pycurl
 
     # verifies SSL certificate
     # fix for pycurl.error: (43, 'CURLOPT_SSL_VERIFYHOST no longer supports 1 as value!'), issue #183
@@ -1215,7 +1234,7 @@ __all__ = [
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list',
     'run_thread', 'generate_unique_name', 'open_webpage', 'threaded', 'parse_urls',
-    'get_pkg_path', 'get_pkg_version', 'import_file', 'zip_extract', 'create_folder', 'simpledownload'
+    'get_pkg_path', 'get_pkg_version', 'import_file', 'zip_extract', 'create_folder', 'simpledownload', 'ignore_errors'
 ]
 
 if __name__ == '__main__':
