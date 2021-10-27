@@ -32,7 +32,7 @@ APP_VERSION = __version__
 APP_TITLE = f'{APP_NAME} version {APP_VERSION} .. an open source download manager'
 
 # minimum segment size used in auto-segmentation process, refer to brain.py>thread_manager.
-SEGMENT_SIZE = 102400  # 100 KB
+SEGMENT_SIZE = 1024 * 1024  # 1 MB
 
 APP_URL = 'https://github.com/firedm/FireDM'
 LATEST_RELEASE_URL = 'https://github.com/firedm/FireDM/releases/latest'
