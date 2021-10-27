@@ -4208,7 +4208,7 @@ class MainWindow(IView):
                                 f'Active: {sum([s.count(x) for x in config.Status.active_states])}, ' \
                                 f'Completed: {s.count(config.Status.completed)},  ' \
                                 f'Cancelled: {s.count(config.Status.cancelled)},  ' \
-                                f'Sceduled: {s.count(config.Status.scheduled)}, ' \
+                                f'Scheduled: {s.count(config.Status.scheduled)}, ' \
                                 f'Pending: {s.count(config.Status.pending)}'
 
         if s.count(config.Status.downloading) > 0:
