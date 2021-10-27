@@ -2209,6 +2209,9 @@ class PlaylistWindow(tk.Toplevel):
             # update displayed page num
             self.displayed_page_num.set(f'{self.curr_page + 1} of {self.total_pages}')
 
+            # reset "select all" checkbutton
+            self.select_all_var.set(False)
+
     def create_widgets(self):
         main_frame = tk.Frame(self, bg=MAIN_BG)
         top_frame = tk.Frame(main_frame, bg=MAIN_BG)
