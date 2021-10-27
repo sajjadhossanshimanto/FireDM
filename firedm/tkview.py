@@ -2266,10 +2266,10 @@ class PlaylistWindow(tk.Toplevel):
         main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
 
         bottom_frame.pack(side='bottom', fill='x', pady=5)
-        ttk.Separator(main_frame).pack(side='bottom', fill='x', expand=True)
+        ttk.Separator(main_frame).pack(side='bottom', fill='x')
         top_frame.pack(side='top', fill='x')
-        ttk.Separator(main_frame).pack(side='top', fill='x', expand=True)
-        videos_frame.pack(side='bottom', expand=True, fill='both')
+        ttk.Separator(main_frame).pack(side='top', fill='x')
+        videos_frame.pack(side='bottom', expand=True, fill='both', pady=10)
 
     def create_item(self, parent, num, name):
         """Create an item,
