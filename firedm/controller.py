@@ -422,11 +422,11 @@ class Controller:
 
                 # select video stream
                 try:
-                    refreshed_d.select_stream(name=d.selected_quality)
+                    refreshed_d.select_stream(format_id=d.selected_stream.format_id)
                     log('selected video:    ', d.selected_quality)
                     log('New selected video:', refreshed_d.selected_quality)
                 except:
-                    pass
+                    raise
 
                 # select audio stream
                 try:

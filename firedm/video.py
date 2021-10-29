@@ -241,10 +241,11 @@ class Video(DownloadItem):
         self.video_streams = video_streams
         self.mp4_videos = mp4_videos
 
-    def select_stream(self, index=None, name=None, raw_name=None, video_quality=None, prefer_mp4=True, update=True):
+    def select_stream(self, format_id=None, index=None, name=None, raw_name=None, video_quality=None, prefer_mp4=True, update=True):
         """
         select video stream
         Args:
+            format_id: stream id from youtube-dl
             index(int): index number from stream menu
             name(str): stream name
             raw_name(str): stream raw name
@@ -256,6 +257,8 @@ class Video(DownloadItem):
         """
         stream = None
         try:
+            if format_id is not None:
+                stream = [stream for stream in self.all_streams if stream.format_id == format_id][0]
             if index is not None:
                 stream = self.stream_menu_map[index]
 
@@ -472,7 +475,7 @@ class Stream:
         if self.fragments or 'm3u8' in self.protocol:
             # ignore fragmented streams, since the size coming from headers is for first fragment not whole file
             self.size = 0
-        if not isinstance(self.size, int):
+        if not isinstance(self.size, int) or self.size == 0:
             self.size = self.get_size()
 
         # print(self.name, self.size, isinstance(self.size, int))
@@ -480,7 +483,7 @@ class Stream:
     def get_size(self):
         headers = get_headers(self.url, http_headers=self.http_headers)
         size = int(headers.get('content-length', 0))
-        log('stream.get_size()>', self.name, log_level=3)
+        log('stream.get_size()>', self.name, format_bytes(size), log_level=3)
         return size
 
     @property
