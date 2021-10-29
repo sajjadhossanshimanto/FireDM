@@ -62,6 +62,9 @@ packages = [pkg.replace(';', '') for pkg in packages]
 for pkg in ['distro', 'Pillow']:
     if pkg in packages:
         packages.remove(pkg)
+
+# add keyring to packages
+packages.append('keyring')
    
 print(packages)
 
@@ -146,6 +149,11 @@ for fname in (cmd_target_name, gui_target_name):
     param = ' -V '.join([f'"{k}={v}"' for k, v in info.items()])
     cmd = f'peresed -V {param} {fp}'
     subprocess.run(cmd, shell=True)
+
+# create zip file
+output_filename = f'{APP_NAME}_{version}'
+print(f'prepare final zip filename: {output_filename}.zip')
+fname = shutil.make_archive(output_filename, 'zip', base_dir=APP_NAME)
 
 
 print('Done .....')
