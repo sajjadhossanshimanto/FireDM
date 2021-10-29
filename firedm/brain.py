@@ -170,6 +170,12 @@ def file_manager(d, q, keep_segments=True):
 
         # all segments already merged
         if not job_list:
+            # check file size
+            fs = os.path.getsize(d.temp_file)
+            if fs == 0:
+                log('error, nothing downloaded, file size is zero:', d.name)
+                d.status = Status.error
+                break
 
             # handle HLS streams
             if 'hls' in d.subtype_list:

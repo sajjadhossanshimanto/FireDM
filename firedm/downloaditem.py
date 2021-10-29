@@ -341,9 +341,14 @@ class DownloadItem:
             p = 100
 
         elif self.total_size == 0 and self.segments:
-            # to handle fragmented files
-            finished = len([seg for seg in self.segments if seg.completed])
-            p = round(finished * 100 / len(self.segments), 1)
+            if len(self.segments) == 1:
+                seg = self.segments[0]
+                if seg.completed and seg.current_size == 0:
+                    p = 0
+            else:
+                # to handle fragmented files
+                finished = len([seg for seg in self.segments if seg.completed])
+                p = round(finished * 100 / len(self.segments), 1)
         elif self.total_size:
             p = round(self.downloaded * 100 / self.total_size, 1)
 
