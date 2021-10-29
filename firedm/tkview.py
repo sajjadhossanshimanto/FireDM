@@ -1805,7 +1805,7 @@ class DItem(tk.Frame):
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
                on_completion_command=None, video_progress=None, audio_progress=None, merge_progress=None,
-               segments_progress=None, **kwargs):
+               segments_progress=None, _total_size=None, **kwargs):
         """update widgets value"""
         # print(locals())
         self.latest_update.update({k: v for k, v in locals().items() if v not in (None, self)})
@@ -1820,8 +1820,8 @@ class DItem(tk.Frame):
         if downloaded is not None:
             self.size = format_bytes(downloaded, percision=1, sep='')
 
-        if total_size is not None:
-            self.total_size = format_bytes(total_size, percision=1, sep='')
+        if _total_size is not None:
+            self.total_size = format_bytes(_total_size, percision=1, sep='')
 
         if speed is not None:
             self.speed = f'- {format_bytes(speed, percision=1, sep="")}/s' if speed > 0 else ''

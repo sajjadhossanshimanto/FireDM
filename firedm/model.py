@@ -26,7 +26,7 @@ class Observable:
             watch_list changes
         """
 
-        self.watch_list = ['uid', 'name', 'progress', 'speed', 'eta', 'downloaded', 'size',
+        self.watch_list = ['uid', 'name', 'progress', 'speed', 'eta', 'downloaded', 'size', '_total_size',
                            'total_size', 'status', 'busy', 'thumbnail', 'type', 'subtype_list', 'resumable', 'title',
                            'extension', 'errors', 'sched', 'remaining_parts', 'live_connections', 'total_parts',
                            'shutdown_pc', 'on_completion_command', 'video_progress', 'audio_progress', 'merge_progress',

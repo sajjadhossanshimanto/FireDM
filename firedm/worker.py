@@ -237,6 +237,11 @@ class Worker:
         if not self.seg.size and name == 'content-length':
             try:
                 self.seg.size = int(self.headers.get('content-length', 0))
+
+                seg = self.seg
+                if seg.size and len(self.d.segments) == 1:
+                    if all([x not in self.d.subtype_list for x in ('hls', 'fragmented')]) and not seg.range:
+                        seg.range = [0, seg.size - 1]
                 # print('self.seg.size = ', self.seg.size)
             except:
                 pass
