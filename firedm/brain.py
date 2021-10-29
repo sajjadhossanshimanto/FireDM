@@ -89,6 +89,13 @@ def brain(d=None):
             log(f'File {d.status}.', log_level=2)
             break
 
+    # check file size
+    fs = os.path.getsize(d.target_file)
+    if fs == 0:
+        log('error, nothing downloaded, file size is zero:', d.name)
+        d.status = Status.error
+        os.unlink(d.target_file)
+
     # report quitting
     log(f'brain {d.uid}: quitting', log_level=2)
     for q in (spr_q, fpr_q, tm_q, fm_q):
@@ -170,12 +177,6 @@ def file_manager(d, q, keep_segments=True):
 
         # all segments already merged
         if not job_list:
-            # check file size
-            fs = os.path.getsize(d.temp_file)
-            if fs == 0:
-                log('error, nothing downloaded, file size is zero:', d.name)
-                d.status = Status.error
-                break
 
             # handle HLS streams
             if 'hls' in d.subtype_list:
@@ -284,6 +285,7 @@ def file_manager(d, q, keep_segments=True):
             # at this point all done successfully
             # report all blocks
             d.update_segments_progress()
+
             d.status = Status.completed
             # print('---------file manager done merging segments---------')
             break
