@@ -24,7 +24,8 @@ from .config import MediaType
 
 class Segment:
     def __init__(self, name=None, num=None, range=None, size=0, url=None, tempfile=None, seg_type='', merge=True,
-                 media_type=MediaType.general):
+                 media_type=MediaType.general, d=None):
+        self.d = d  # reference to parent download item
         self.name = name  # full path file name
         # self.basename = os.path.basename(self.name)
         self.num = num
@@ -86,7 +87,8 @@ class Segment:
             return 'undefined'
 
     def get_size(self):
-        self.headers = get_headers(self.url)
+        http_headers = self.d.http_headers if self.d else None
+        self.headers = get_headers(self.url, http_headers=http_headers)
         try:
             self.size = int(self.headers.get('content-length', 0))
             print('Segment num:', self.num, 'getting size:', self.size)
@@ -651,6 +653,10 @@ class DownloadItem:
 
         seg_names = [f'{seg.basename}:{seg.range}' for seg in _segments]
         log(f'Segments-{self.name}, ({len(seg_names)}):', seg_names, log_level=3)
+
+        # pass additional parametrs
+        for seg in _segments:
+            seg.d = self
 
         self.segments = _segments
 
