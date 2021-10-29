@@ -60,9 +60,11 @@ if config.operating_system == 'Linux':
 config.atk_version = atk_version
 gui_font = None
 
+# all themes
+all_themes = {}
 
-# hold all user defined themes, user themes with the same names will override same builtin_themes
-user_themes = {}
+# add builtin themes
+all_themes.update(builtin_themes)
 
 
 # widget's images, it will be updated with theme change
@@ -227,8 +229,7 @@ class ThemeEditor(tk.Toplevel):
         # get theme name and current theme ----------------------------------------------------------------------------
         self.theme_name = tk.StringVar()
         self.theme_name.set(theme_name)
-        self.current_theme = user_themes.get(config.current_theme) or builtin_themes.get(config.current_theme) or \
-                             builtin_themes[config.DEFAULT_THEME]
+        self.current_theme = all_themes.get(config.current_theme) or all_themes[config.DEFAULT_THEME]
 
         # some theme keys description ---------------------------------------------------------------------------------
         self.key_description = {k: v[1] for k, v in theme_map.items()}
@@ -336,7 +337,7 @@ class ThemeEditor(tk.Toplevel):
 
         # avoid builtin theme name
         if theme_name in builtin_themes:
-            all_names = list(builtin_themes.keys()) + list(user_themes.keys())
+            all_names = list(all_themes.keys())
             i = 2
             name = f'{theme_name}{i}'
             while name in all_names:
@@ -357,7 +358,7 @@ class ThemeEditor(tk.Toplevel):
 
         kwargs = {k: v.get() for k, v in vars_map.items() if self.is_color(v.get())}
 
-        theme = user_themes[theme_name] = kwargs
+        theme = all_themes[theme_name] = kwargs
 
         # theme.update(kwargs)
         calculate_missing_theme_keys(theme)
@@ -516,6 +517,9 @@ class Popup(tk.Toplevel):
         if response == 'Yes':
             do stuff ....
 
+    return:
+        button_name, or (button_name, user_input) if get_user_input=True
+
     """
     def __init__(self, *args, buttons=None, parent=None, title='Attention', get_user_input=False, default_user_input='',
                  bg=None, fg=None, custom_widget=None, optout_id=None):
@@ -540,7 +544,7 @@ class Popup(tk.Toplevel):
         rendered_msgs = [render_text(msg) for msg in args]
         self.msg = '\n'.join(rendered_msgs)
 
-        self.buttons = buttons or ['Ok', 'Cancel']
+        self.buttons = buttons or ['Ok']
         self.bg = bg or MAIN_BG
         self.fg = fg or MAIN_FG
         self.window_title = title
@@ -3153,7 +3157,7 @@ class MainWindow(IView):
     def share_theme(self, theme_name=None):
         theme_name = theme_name or self.themes_menu.get()
 
-        theme = user_themes.get(theme_name) or builtin_themes.get(theme_name)
+        theme = all_themes.get(theme_name)
 
         if theme:
             stripped_theme = strip_theme(theme)
@@ -3162,9 +3166,105 @@ class MainWindow(IView):
             self.copy(data)
             self.popup(f'Theme "{theme_name}" copied to clipboard')
 
+    def add_theme(self, theme_name, theme_info):
+        """add theme to all_themes dict
+        args:
+            theme_name(str): theme name, e.g. "Green-Brown"
+            theme_info(dict): theme info, e.g.
+                {
+                    "MAIN_BG": "#3A6351",
+                    "SF_BG": "#F2EDD7",
+                    "SF_BTN_BG": "#A0937D",
+                    "PBAR_FG": "#5F939A",
+                    "BTN_ABG": "#446d5b",
+                }
+        """
+        # rename theme if already exist
+        if theme_name in all_themes:
+            theme_name = auto_rename(theme_name, all_themes.keys())
+
+        # remove invalid colors
+        theme_info = {k: v for k, v in theme_info.items() if self.is_color(v)}
+
+        # add missing keys
+        calculate_missing_theme_keys(theme_info)
+
+        # add theme
+        all_themes[theme_name] = theme_info
+
+    @ignore_errors
+    def manual_theme_entry(self):
+        """show popup to get themes dict from user"""
+
+        def show_window():
+            top = tk.Toplevel(master=self.root, bg=SF_BG)
+            top.title('Manual theme Entry')
+            width = int(self.root.winfo_width() * 0.9)
+            height = int(self.root.winfo_height() * 0.9)
+
+            center_window(top, width=width, height=height, reference=self.root, set_geometry_wh=False)
+            txt = """Add themes manually, example:
+{
+    "my theme": {
+        "MAIN_BG": "grey",
+        "SF_BG": "#000300",
+        "SF_BTN_BG": "#d9dc4b",
+        "THUMBNAIL_FG": "#d9dc4b",
+        "PBAR_FG": "#d9dc4b",
+        "THUMBNAIL_BD": "#d9dc4b"
+    },
+    "another theme": {
+        "MAIN_BG": "blue",
+        "SF_BG": "red",
+        "SF_BTN_BG": "#d9dc4b",
+        "THUMBNAIL_FG": "#d9dc4b",
+        "PBAR_FG": "#d9dc4b",
+        "THUMBNAIL_BD": "#d9dc4b"
+    }
+}"""
+            fr = tk.Frame(top, bg=MAIN_BG)
+            fr.pack(fill='x', padx=(10, 0), pady=5)
+            tk.Label(fr, text='Add themes manually:', bg=MAIN_BG, fg=MAIN_FG, justify='left').pack(padx=5, side='left')
+            Button(fr, text='Tip!', command=lambda: self.popup(txt, title='help')).pack(side='left', padx=5, pady=5)
+
+            st = atk.ScrolledText(top, bg=MAIN_BG, fg=MAIN_FG, bd=1, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG,
+                                  insertbackground=MAIN_FG, highlightbackground=SF_BG, highlightcolor=SF_BG, padx=5,
+                                  pady=5, hscroll=False, height=10)
+            st.pack(padx=(10, 0), pady=(10, 0), fill='both', expand=True)
+            st.focus_set()
+            x = ''
+
+            def callback():
+                nonlocal x
+                x = st.get("1.0", tk.END)
+                top.destroy()
+
+            fr2 = tk.Frame(top, bg=MAIN_BG)
+            fr2.pack(fill='x', padx=(10, 0))
+            Button(fr2, text='Cancel', command=top.destroy).pack(side='right', padx=5, pady=5)
+            Button(fr2, text='Ok', command=callback).pack(side='right', padx=5, pady=5)
+            top.wait_window()
+            return x
+
+        user_input = json.loads(show_window())
+        for theme_name, theme_info in user_input.items():
+            self.add_theme(theme_name, theme_info)
+
+        self.update_theme_menu()
+        self.themes_menu.current(tk.END)
+
+    def update_theme_menu(self):
+        sel = self.themes_menu.get()
+        values = list(all_themes.keys())
+        values = values
+        self.themes_menu.config(values=values)
+        idx = values.index(sel) if sel in values else 0
+        self.themes_menu.current(idx)
+
     def save_user_themes(self):
         try:
             file = os.path.join(config.sett_folder, 'user_themes.cfg')
+            user_themes = {k: v for k, v in all_themes.items() if k not in builtin_themes}
             stripped_user_themes = {k: strip_theme(v) for k, v in user_themes.items()}
             save_json(file, stripped_user_themes)
         except Exception as e:
@@ -3172,23 +3272,13 @@ class MainWindow(IView):
 
     def load_user_themes(self):
         try:
-            global user_themes
-            # print('load user themes')
             fp = os.path.join(config.sett_folder, 'user_themes.cfg')
             themes = load_json(fp)
-            # print(themes)
 
             if themes:
-                # remove duplicates
-                themes = {k: v for k, v in themes.items() if k not in builtin_themes}
-
-                # remove invalid colors
                 for name, theme in themes.items():
-                    themes[name] = {k: v for k, v in theme.items() if self.is_color(v)}
+                    self.add_theme(name, theme)
 
-                user_themes = themes
-            else:
-                user_themes = {}
         except Exception as e:
             log('load_themes() > error', e)
 
@@ -3214,18 +3304,16 @@ class MainWindow(IView):
         ThemeEditor(self, self.themes_menu.get())
 
     def new_theme(self):
-        ThemeEditor(self, f'custom_{len(user_themes) + 1}')
+        ThemeEditor(self, f'usertheme_{len(all_themes) + 1}')
 
     def del_theme(self):
-        try:
-            sel = self.themes_menu.get()
-            user_themes.pop(sel)
-            values = list(self.themes_menu['values'])
-            values.remove(sel)
-            self.themes_menu.config(values=values)
-            self.themes_menu.current(0)
-        except:
-            pass
+        sel = self.themes_menu.get()
+        if sel not in builtin_themes.keys():
+            all_themes.pop(sel)
+            self.update_theme_menu()
+        else:
+            self.popup('can\'t delete builtin theme', 'only user/custom themes can be deleted',
+                       title='Not allowed')
 
     def apply_theme(self, theme_name=None):
         """change global color variables
@@ -3235,17 +3323,15 @@ class MainWindow(IView):
         """
 
         theme_name = theme_name or self.themes_menu.get() or config.DEFAULT_THEME
-
-        # look first in user themes, then in builtin theme
-        theme = user_themes.get(theme_name) or builtin_themes.get(theme_name) or builtin_themes.get(config.DEFAULT_THEME)
+        theme = all_themes.get(theme_name) or all_themes.get(config.DEFAULT_THEME)
 
         if theme:
+            config.current_theme = theme_name
+
             # clean invalid color values
             theme = {k: v for k, v in theme.items() if self.is_color(v)}
 
-            config.current_theme = theme_name
-
-            # add missing keys to other builtin themes
+            # add missing keys
             calculate_missing_theme_keys(theme)
 
             # update global variables
@@ -3489,7 +3575,7 @@ class MainWindow(IView):
         tk.Label(themes_frame, bg=bg, fg=fg, text='Theme:  ').pack(side='left')
 
         # sorted themes names
-        themes_names = natural_sort(list(builtin_themes.keys()) + list(user_themes.keys()))
+        themes_names = natural_sort(list(all_themes.keys()))
         sel_theme_name = config.current_theme if config.current_theme in themes_names else config.DEFAULT_THEME
 
         self.themes_menu = Combobox(themes_frame, values=themes_names, selection=sel_theme_name, width=35)
@@ -3501,11 +3587,19 @@ class MainWindow(IView):
                 self.apply_theme(theme_name)
         Button(themes_frame, text='Apply', command=apply_theme).pack(side='left', padx=5)
 
-        Button(themes_frame, text='Del', command=self.del_theme, tooltip='delete theme').pack(side='right', padx=5)
-        Button(themes_frame, text='share', command=self.share_theme,
-               tooltip='copy theme to clipboard').pack(side='right', padx=5)
-        Button(themes_frame, text='New', command=self.new_theme).pack(side='right', padx=5)
-        Button(themes_frame, text='Edit', command=self.edit_theme).pack(side='right', padx=5)
+        theme_opt_btn = Button(themes_frame, text='Options', command=self.del_theme, tooltip='theme options')
+        theme_opt_btn.pack(side='left', padx=10)
+
+        theme_opt_map = {
+            'New theme': self.new_theme,
+            'Manual theme(s) entry': self.manual_theme_entry,
+            'Edit theme': self.edit_theme,
+            'Copy theme info': self.share_theme,
+            'Delete theme': self.del_theme,
+        }
+
+        atk.RightClickMenu(theme_opt_btn, theme_opt_map.keys(), callback=lambda option: theme_opt_map[option](),
+                           bind_left_click=True, bind_right_click=False, bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
         # font -----------------------------
         font_size_var = tk.IntVar(value=gui_font['size'])
@@ -3622,7 +3716,7 @@ class MainWindow(IView):
         prefix_btn = Button(proxy_frame, text='prefix', tooltip='add or change prefix')
         prefix_btn.pack(side='left', padx=5)
         atk.RightClickMenu(prefix_btn, prefix_menu, callback=prefix_callback, bind_left_click=True, bg=RCM_BG,
-                           fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
+                           fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
 
         tip = ['proxy url should have one of below schemes:', 'http, https, socks4, socks4a, socks5, or socks5h', '',
                'e.g. "scheme://proxy_address:port"', '', 'if proxy server requires login',
