@@ -140,6 +140,14 @@ def file_manager(d, q, keep_segments=True):
 
             # append downloaded segment to temp file, mark as completed
             try:
+                seg.merge_errors = getattr(seg, 'merge_errors', 0)
+                if seg.merge_errors > 10:
+                    log('merge max errors exceeded for:', seg.name, seg.last_merge_error)
+                    d.status = Status.error
+                    break
+                elif seg.merge_errors > 0:
+                    time.sleep(1)
+
                 if seg.merge:
 
                     # use 'rb+' mode if we use seek, 'ab' doesn't work, 'rb+' will raise error if file doesn't exist
@@ -165,13 +173,16 @@ def file_manager(d, q, keep_segments=True):
                         target_file.close()
 
                 seg.completed = True
-                log('completed segment: ',  seg.basename, log_level=2)
+                log('completed segment: ',  seg.basename, log_level=3)
 
                 if not keep_segments and not config.keep_temp:
                     delete_file(seg.name)
 
             except Exception as e:
-                log('failed to merge segment', seg.name, ' - ', e)
+                seg.merge_errors += 1
+                seg.last_merge_error = e
+                # log('failed to merge segment', seg.name, ' - ', e)
+
                 if config.test_mode:
                     raise e
 
