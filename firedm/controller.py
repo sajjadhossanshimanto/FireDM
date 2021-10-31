@@ -1228,7 +1228,9 @@ class Controller:
         else:
             log(msg, showpopup=True)
 
-        self._update_view(command='signal', signal_id=signal_id)
+        # tell view we are done
+        if signal_id:
+            self._update_view(command='signal', signal_id=signal_id)
 
         today = date.today()
         config.last_update_check = (today.year, today.month, today.day)
