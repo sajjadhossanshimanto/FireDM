@@ -60,7 +60,6 @@ appimage_update_folder = None  # will be set by AppImage run script
 shutdown = False
 
 on_download_notification = True  # show notify message when done downloading
-view_mode = 'standard'
 
 # ----------------------------------------------------------------------------------------Filesystem options------------
 # current folders
@@ -179,6 +178,7 @@ minimize_to_systray = False
 DEFAULT_WINDOW_SIZE = (780, 433)  # width, height in pixels
 window_size = DEFAULT_WINDOW_SIZE
 
+view_mode = 'mix'
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
