@@ -1458,6 +1458,7 @@ class DItem(tk.Frame):
         tk.Frame.__init__(self, parent, bg=self.bg, highlightthickness=0)
 
         self.name = ''
+        self.ext = ''
         self.status = status
         self.size = ''  # '30 MB'
         self.total_size = ''  # 'of 100 MB'
@@ -1812,7 +1813,7 @@ class DItem(tk.Frame):
             stext = 'X'
             fg = 'red'
         else:
-            text = ''
+            text = self.ext if not self.thumbnail_img else ''
             stext = ''
             fg = 'black'
 
@@ -1859,6 +1860,7 @@ class DItem(tk.Frame):
 
         if extension:
             ext = extension.replace('.', '').upper()
+            self.ext = ext
             try:
                 # negative font size will force character size in pixels
                 f = f'any {int(- self.thumbnail_width * 0.8 // len(ext))} bold'
