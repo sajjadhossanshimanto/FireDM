@@ -3522,7 +3522,7 @@ class MainWindow(IView):
         self.filter_btn = Button(top_fr, text='', image=imgs['filter_icon'], tooltip='filter')
         self.filter_btn.pack(side='left', padx=5)
         atk.RightClickMenu(self.filter_btn,
-                           ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending'],
+                           ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending', 'error', 'selected'],
                            callback=lambda option_name: self.filter_view(option_name),
                            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
                            bind_right_click=False)
@@ -4237,18 +4237,21 @@ class MainWindow(IView):
         self.d_tab.scrolltotop()
 
     def filter_view(self, option):
-        # ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending']
+        # ['all', 'active', 'Completed', 'Cancelled', 'Sceduled', 'Pending', 'error', 'selected']
         all_items = self.d_items.values()
         if option == 'active':
             items = [item for item in all_items if item.status in config.Status.active_states]
         elif option == 'all':
             items = all_items
+        elif option == 'selected':
+            items = [item for item in all_items if item.selected]
         else:
             items = [item for item in all_items if item.status == option.lower()]
 
         for item in all_items:
             item.hide()
-            item.select(False)
+            if item not in items:
+                item.select(False)
 
         for item in items:
             item.show()
