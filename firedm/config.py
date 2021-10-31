@@ -190,14 +190,14 @@ jobs_q = Queue()  # # required for failed worker jobs
 # status class as an Enum
 class Status:
     """used to identify status, work as an Enum"""
-    downloading = 'downloading'
-    cancelled = 'cancelled'
-    completed = 'completed'
-    pending = 'pending'
-    processing = 'processing'  # for any ffmpeg operations
-    error = 'error'
-    scheduled = 'scheduled'
-    refreshing_url = 'refreshing url'
+    downloading = 'Downloading'
+    cancelled = 'Paused'
+    completed = 'Completed'
+    pending = 'Pending'
+    processing = 'Processing'  # for any ffmpeg operations
+    error = 'Failed'
+    scheduled = 'Scheduled'
+    refreshing_url = 'Refreshing url'
     active_states = (downloading, processing, refreshing_url)
 
 
