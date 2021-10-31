@@ -64,6 +64,8 @@ def pars_args(arguments):
     # region cmdline arguments
     # some args' names are taken from youtube-dl, reference:
     # https://github.com/ytdl-org/youtube-dl/blob/master/youtube_dl/options.py
+    # Note: we should use "default=argparse.SUPPRESS" to discard option if not used by user,
+    # and prevent default value overwrite in config module
 
     parser = argparse.ArgumentParser(
         prog='firedm',
@@ -95,240 +97,213 @@ def pars_args(arguments):
         action='version', version='FireDM version: ' + __version__,
         help='Print program version and exit')
     general.add_argument(
-        '--config',
-        action='store_true',
+        '--show-settings',
+        action='store_true', default=argparse.SUPPRESS,
         help='show current application settings and their current values and exit')
     general.add_argument(
         '--edit-config', dest='edit_config',
-        type=str, metavar='EDITOR', default=None,  # default if argument not used
+        type=str, metavar='EDITOR', default=argparse.SUPPRESS,
         action='store', nargs='?', const='nano',  # const if use argument without value
         help='Edit config file, you should specify your text editor executable, otherwise "%(default)s" will be used')
     general.add_argument(
-        '--ignore-config', dest='ignore_config',
+        '--ignore-config', dest='ignore_config', default=argparse.SUPPRESS,
         action='store_true',
         help='Do not load settings from config file. in ~/.config/FireDM/ or (APPDATA/FireDM/ on Windows)')
     general.add_argument(
         '--dlist', dest='ignore_dlist',
-        action='store_false', default=None,
-        help='load/save "download list" from/to  d-list config file. in ~/.config/FireDM/ or '
-             '(APPDATA/FireDM/ on Windows), default="False in cmdline mode and True in GUI mode"')
+        action='store_false', default=argparse.SUPPRESS,
+        help='load/save "download list" from/to  d-list config file. '
+             'default="False in cmdline mode and True in GUI mode"')
     general.add_argument(
         '--ignore-dlist', dest='ignore_dlist',
-        action='store_true', default=None,
+        action='store_true', default=argparse.SUPPRESS,
         help='opposite of "--dlist" option')
     general.add_argument(
         '-g', '--gui',
-        action='store_true',
+        action='store_true',  default=argparse.SUPPRESS,
         help='use graphical user interface, same effect if you try running %(prog)s without any parameters')
     general.add_argument(
         '--interactive',
-        action='store_true',
+        action='store_true',  default=argparse.SUPPRESS,
         help='interactive command line')
     general.add_argument(
         '--imports-only',
-        action='store_true',
+        action='store_true',  default=argparse.SUPPRESS,
         help='import all packages and exit, useful when building AppImage or exe releases, since it '
              'will build pyc files and make application start faster')
     general.add_argument(
         '--persistent',
-        action='store_true', default=False,
+        action='store_true', default=argparse.SUPPRESS,
         help='save current options in global configuration file, used in cmdline mode.')
 
     # ----------------------------------------------------------------------------------------Filesystem options--------
     filesystem = parser.add_argument_group(title='Filesystem options')
     filesystem.add_argument(
         '-o', '--output',
-        type=str, metavar='<PATH>',
+        type=str, metavar='<PATH>', default=argparse.SUPPRESS,
         help='output file path, filename, or download folder: if input value is a file name without path, file will '
-             f'be saved in default download folder "{config.download_folder}", if input value is a folder path only, '
+             f'be saved in current folder, if input value is a folder path only, '
              'remote file name will be used, '
              'be careful with video extension in filename, since ffmpeg will convert video based on extension')
     filesystem.add_argument(
-        '-b', '--batch-file',
+        '-b', '--batch-file', default=argparse.SUPPRESS,
         type=argparse.FileType('r', encoding='UTF-8'), metavar='<PATH>',
         help='path to text file containing multiple urls to be downloaded, file should have '
              'every url in a separate line, empty lines and lines start with "#" will be ignored.')
     filesystem.add_argument(
         '--auto-rename',
-        action='store_true', default=config.auto_rename,
-        help='auto rename file if same name already exist on disk, default=%(default)s')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'auto rename file if same name already exist on disk, default={config.auto_rename}')
 
     # ---------------------------------------------------------------------------------------Network Options------------
     network = parser.add_argument_group(title='Network Options')
     network.add_argument(
         '--proxy', dest='proxy',
-        metavar='URL', default=config.proxy,
+        metavar='URL',  default=argparse.SUPPRESS,
         help='proxy url should have one of these schemes: (http, https, socks4, socks4a, socks5, or socks5h) '
              'e.g. "scheme://proxy_address:port", and if proxy server requires login '
              '"scheme://usr:pass@proxy_address:port", '
-             'examples: "socks5://127.0.0.1:8080",  "socks4://john:pazzz@127.0.0.1:1080", default="%(default)s"')
+             f'examples: "socks5://127.0.0.1:8080",  "socks4://john:pazzz@127.0.0.1:1080", default="{config.proxy}"')
 
     # ---------------------------------------------------------------------------------------Authentication Options-----
     authentication = parser.add_argument_group(title='Authentication Options')
     authentication.add_argument(
         '-u', '--username',
-        dest='username', metavar='USERNAME', default='',
+        dest='username', metavar='USERNAME', default=argparse.SUPPRESS,
         help='Login with this account ID')
     authentication.add_argument(
         '-p', '--password',
-        dest='password', metavar='PASSWORD', default='',
+        dest='password', metavar='PASSWORD', default=argparse.SUPPRESS,
         help='Account password.')
 
     # --------------------------------------------------------------------------------------Video Options---------------
     vid = parser.add_argument_group(title='Video Options')
     vid.add_argument(
         '--engine', dest='active_video_extractor',
-        type=str, metavar='ENGINE', default=config.active_video_extractor,
-        help="select video extractor engine, available choices are: ('youtube_dl', and 'yt_dlp'), default=%(default)s")
+        type=str, metavar='ENGINE', default=argparse.SUPPRESS,
+        help="select video extractor engine, available choices are: ('youtube_dl', and 'yt_dlp'), "
+             f"default={config.active_video_extractor}")
     vid.add_argument(
         '--quality', dest='video_quality',
-        type=str, metavar='QUALITY', default='best',
+        type=str, metavar='QUALITY', default=argparse.SUPPRESS,
         help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
-             "and 'lowest'), default=%(default)s")
+             "and 'lowest'), default=best")
     vid.add_argument(
         '--prefer-mp4', dest='prefer_mp4',
-        action='store_true', default=False,
-        help='prefer mp4 streams if available, default=%(default)s')
+        action='store_true', default=argparse.SUPPRESS,
+        help='prefer mp4 streams if available, default=False')
 
     # --------------------------------------------------------------------------------------Workarounds-----------------
     workarounds = parser.add_argument_group(title='Workarounds')
     workarounds.add_argument(
         '--check-certificate', dest='ignore_ssl_cert',
-        action='store_false', default=not config.ignore_ssl_cert,
-        help='validate ssl certificate, default=%(default)s')
+        action='store_false', default=argparse.SUPPRESS,
+        help=f'validate ssl certificate, default="{not config.ignore_ssl_cert}"')
     workarounds.add_argument(
         '--no-check-certificate', dest='ignore_ssl_cert',
-        action='store_true',
-        help='ignore ssl certificate validation')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'ignore ssl certificate validation, default="{config.ignore_ssl_cert}"')
     workarounds.add_argument(
         '--user-agent',
-        metavar='UA', dest='custom_user_agent',
+        metavar='UA', dest='custom_user_agent', default=argparse.SUPPRESS,
         help='Specify a custom user agent')
     workarounds.add_argument(
         '--referer', dest='referer_url',
-        metavar='URL', default=None,
+        metavar='URL', default=argparse.SUPPRESS,
         help='Specify a custom referer, use if the video access is restricted to one domain')
 
     # --------------------------------------------------------------------------------------Post-processing Options-----
     postproc = parser.add_argument_group(title='Post-processing Options')
     postproc.add_argument(
         '--add-metadata', dest='write_metadata',
-        action='store_true', default=config.write_metadata,
-        help='Write metadata to the video file, default=%(default)s')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'Write metadata to the video file, default="{config.write_metadata}"')
     postproc.add_argument(
         '--no-metadata', dest='write_metadata',
-        action='store_false',
-        help='Don\'t Write metadata to the video file')
+        action='store_false', default=argparse.SUPPRESS,
+        help=f'Don\'t Write metadata to the video file, default="{not config.write_metadata}"')
     postproc.add_argument(
         '--write-thumbnail', dest='download_thumbnail',
-        action='store_true', default=config.download_thumbnail,
-        help='Write thumbnail image to disk after downloading video file, default=%(default)s')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'Write thumbnail image to disk after downloading video file, default="{config.download_thumbnail}"')
     postproc.add_argument(
         '--no-thumbnail', dest='download_thumbnail',
-        action='store_false',
+        action='store_false', default=argparse.SUPPRESS,
         help='Don\'t Write thumbnail image to disk after downloading video file')
     postproc.add_argument(
         '--checksum', dest='checksum',
-        action='store_true', default=config.checksum,
-        help='calculate checksums for completed files MD5 and SHA256, default=%(default)s')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'calculate checksums for completed files MD5 and SHA256, default="{config.checksum}"')
     postproc.add_argument(
         '--no-checksum', dest='checksum',
-        action='store_false',
+        action='store_false', default=argparse.SUPPRESS,
         help='Don\'t calculate checksums')
 
     # -------------------------------------------------------------------------------------Application Update Options---
     appupdate = parser.add_argument_group(title='Application Update Options')
     appupdate.add_argument(
         '--update',
-        action='store_true', dest='update_self', default=False,
+        action='store_true', dest='update_self', default=argparse.SUPPRESS,
         help='Update this Application and video libraries to latest version.')
 
     # -------------------------------------------------------------------------------------Downloader Options-----------
     downloader = parser.add_argument_group(title='Downloader Options')
     downloader.add_argument(
         '-R', '--retries', dest='refresh_url_retries',
-        type=int, metavar='RETRIES', default=config.refresh_url_retries,
-        help='Number of retries to download a file, default=%(default)s.')
+        type=int, metavar='RETRIES', default=argparse.SUPPRESS,
+        help=f'Number of retries to download a file, default="{config.refresh_url_retries}".')
     downloader.add_argument(
         '-l', '--speed-limit', dest='speed_limit',
-        type=speed, metavar='LIMIT', default=config.speed_limit,
+        type=speed, metavar='LIMIT', default=argparse.SUPPRESS,
         help=f'download speed limit, in bytes per second (e.g. 100K or 5M), zero means no limit, '
              f'current value={format_bytes(config.speed_limit)}.')
     downloader.add_argument(
         '--concurrent', dest='max_concurrent_downloads',
-        type=int, metavar='NUMBER', default=config.max_concurrent_downloads,
-        help='max concurrent downloads, default=%(default)s.')
+        type=int, metavar='NUMBER', default=argparse.SUPPRESS,
+        help=f'max concurrent downloads, default="{config.max_concurrent_downloads}".')
     downloader.add_argument(
         '--connections', dest='max_connections',
-        type=int, metavar='NUMBER', default=config.max_connections,
-        help='max download connections per item, default=%(default)s.')
+        type=int, metavar='NUMBER', default=argparse.SUPPRESS,
+        help=f'max download connections per item, default="{config.max_connections}".')
 
     # -------------------------------------------------------------------------------------Debugging options------------
     debug = parser.add_argument_group(title='Debugging Options')
     debug.add_argument(
         '-V', '--verbose', dest='verbose',
-        type=int, metavar='LEVEL', default=None,
+        type=int, metavar='LEVEL', default=argparse.SUPPRESS,
         help=f'verbosity level 1, 2, or 3, default(cmdline mode)=1, default(gui mode)={config.log_level}.')
     debug.add_argument(
         '--keep-temp', dest='keep_temp',
-        action='store_true', default=config.keep_temp,
-        help='keep temp files for debugging, default=%(default)s.')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'keep temp files for debugging, default="{config.keep_temp}".')
     debug.add_argument(
         '--remove-temp', dest='keep_temp',
-        action='store_false', default=not config.keep_temp,
-        help='remove temp files after finish, default=%(default)s.')
+        action='store_false', default=argparse.SUPPRESS,
+        help='remove temp files after finish')
 
     # -------------------------------------------------------------------------------------GUI options------------------
     gui = parser.add_argument_group(title='GUI Options')
     gui.add_argument(
         '--theme', dest='current_theme',
-        type=str, metavar='THEME', default=config.current_theme,
-        help='theme name, e.g. "Dark", default=%(default)s.')
+        type=str, metavar='THEME', default=argparse.SUPPRESS,
+        help=f'theme name, e.g. "Dark", default="{config.current_theme}".')
     gui.add_argument(
         '--monitor-clipboard', dest='monitor_clipboard',
-        action='store_true', default=config.monitor_clipboard,
-        help='monitor clipboard, and process any copied url, default=%(default)s.')
+        action='store_true', default=argparse.SUPPRESS,
+        help=f'monitor clipboard, and process any copied url, default="{config.monitor_clipboard}".')
     gui.add_argument(
         '--no-clipboard', dest='monitor_clipboard',
-        action='store_false',
+        action='store_false', default=argparse.SUPPRESS,
         help='Don\'t monitor clipboard, in gui mode')
     gui.add_argument(
         '--window', dest='window_size',
-        type=int_iterable, metavar='(WIDTH,HIGHT)', default=config.window_size,
-        help='window size, example: --window=(600,400) no space allowed, default=%(default)s.')
+        type=int_iterable, metavar='(WIDTH,HIGHT)', default=argparse.SUPPRESS,
+        help=f'window size, example: --window=(600,400) no space allowed, default="{config.window_size}".')
     # ------------------------------------------------------------------------------------------------------------------
     # endregion
 
     args = parser.parse_args(arguments)
     sett = vars(args)
-
-    if args.referer_url:
-        sett['use_referer'] = True
-
-    if args.username or args.password:
-        sett['use_web_auth'] = True
-    else:
-        sett['username'] = config.username
-        sett['password'] = config.password
-
-    if not(sett['username'] and sett['password']):
-        config.use_web_auth = False
-
-    if args.proxy:
-        sett['enable_proxy'] = True
-
-    if args.output:
-        fp = os.path.realpath(args.output)
-        if os.path.isdir(fp):
-            folder = fp
-        else:
-            folder = os.path.dirname(fp)
-            name = os.path.basename(fp)
-            if name:
-                sett['name'] = name
-
-        if folder:
-            sett['folder'] = folder
 
     return sett
 
@@ -363,16 +338,39 @@ def main(argv=sys.argv):
 
     sett = pars_args(argv[1:])
 
+    if sett.get('referer_url'):
+        sett['use_referer'] = True
+
+    if any((sett.get('username'), sett.get('password'))):
+        sett['use_web_auth'] = True
+
+    if sett.get('proxy'):
+        sett['enable_proxy'] = True
+
+    if sett.get('output'):
+        fp = os.path.realpath(sett.get('output'))
+        if os.path.isdir(fp):
+            folder = fp
+        else:
+            folder = os.path.dirname(fp)
+            name = os.path.basename(fp)
+            if name:
+                sett['name'] = name
+
+        if folder:
+            sett['folder'] = folder
+    elif cmdmode:
+        sett['folder'] = os.path.realpath('.')
+
     verbose = sett.get('verbose')
     if verbose is None and cmdmode:
         sett['log_level'] = 1
-    elif verbose:
-        sett['log_level'] = verbose
 
     config.__dict__.update(sett)
 
     if sett.get('config'):
-        for key, value in sett.items():
+        for key in config.settings_keys:
+            value = getattr(config, key)
             print(f'{key}: {value}')
         print('\nconfig file path:', config_fp)
         sys.exit(0)
