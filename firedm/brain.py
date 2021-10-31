@@ -90,11 +90,12 @@ def brain(d=None):
             break
 
     # check file size
-    fs = os.path.getsize(d.target_file)
-    if fs == 0:
-        log('error, nothing downloaded, file size is zero:', d.name)
-        d.status = Status.error
-        os.unlink(d.target_file)
+    if os.path.isfile(d.target_file):
+        fs = os.path.getsize(d.target_file)
+        if fs == 0:
+            log('error, nothing downloaded, file size is zero:', d.name)
+            d.status = Status.error
+            os.unlink(d.target_file)
 
     # report quitting
     log(f'brain {d.uid}: quitting', log_level=2)
