@@ -1670,7 +1670,7 @@ class DItem(tk.Frame):
 
         # status icon
         self.status_icon = tk.Label(self.btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
-                                    height=12)
+                                    height=12, compound='center')
         self.status_icon.pack(side='left', padx=5, pady=5)
 
         # self.bind('<Double-Button-1>', self.ondoubleclick, exclude=[self.play_button])
@@ -1681,7 +1681,8 @@ class DItem(tk.Frame):
         self.main_frame.columnconfigure(3, weight=1)
 
         # status icon
-        self.status_icon = tk.Label(self.main_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12, height=12)
+        self.status_icon = tk.Label(self.main_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
+                                    height=12, compound='center')
         self.status_icon.grid(row=0, column=0, padx=5, sticky='w')
         # blinker, it will blink with received data flow
         self.blinker = tk.Label(self.main_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
@@ -1801,6 +1802,26 @@ class DItem(tk.Frame):
         # a led like blinking button, to react with data flow
         self.toggle_blinker()
 
+    def mark_as_failed(self, state=True):
+        f = tkfont.Font(self.name_lbl, self.name_lbl.cget("font"))
+        self.name_lbl.config(font=f)
+        f.configure(overstrike=state)
+
+        if state:
+            text = 'Failed'
+            stext = 'X'
+            fg = 'red'
+        else:
+            text = ''
+            stext = ''
+            fg = 'black'
+
+        if self.mode == 'compact':
+            self.status_icon.config(text=stext, fg=fg)
+
+        elif self.mode == 'standard':
+            self.thumbnail_label.config(text=text, fg=fg)
+
     def update(self, name=None, downloaded=None, progress=None, total_size=None, eta=None, speed=None,
                thumbnail=None, status=None, extension=None, sched=None, type=None, subtype_list=None,
                remaining_parts=None, live_connections=None, total_parts=None, shutdown_pc=None,
@@ -1874,6 +1895,8 @@ class DItem(tk.Frame):
                 self.completed_parts = ''
             if status != config.Status.scheduled:
                 self.sched = ''
+
+            self.mark_as_failed(status == config.Status.error)
 
             try:
                 self.dynamic_view()
@@ -4124,14 +4147,14 @@ class MainWindow(IView):
 
         self.d_items[uid] = d_item
 
+        # font
+        self.assign_font_for(d_item)
+
         # get segment progress
         kwargs['segments_progress'] = self.controller.get_segments_progress(uid=uid)
 
         # update d_item info
         d_item.update(**kwargs)
-
-        # font
-        self.assign_font_for(d_item)
 
         d_item.show()
 

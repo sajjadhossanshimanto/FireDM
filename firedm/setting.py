@@ -106,7 +106,7 @@ def load_d_map():
         for d in d_map.values():
             d.live_connections = 0
 
-            if d.status not in (config.Status.completed, config.Status.scheduled):
+            if d.status not in (config.Status.completed, config.Status.scheduled, config.Status.error):
                 d.status = config.Status.cancelled
 
             # use encode() to convert base64 string to byte, however it does work without it, will keep it to be safe
