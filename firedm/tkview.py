@@ -1484,6 +1484,8 @@ class DItem(tk.Frame):
         self.selected = False
         self.progress = ''
 
+        self.thumbnail_img = None
+
         self.columnconfigure(1, weight=1)
         self.blank_img = tk.PhotoImage()
 
