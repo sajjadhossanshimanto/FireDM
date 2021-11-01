@@ -106,6 +106,12 @@ def load_d_map():
         for d in d_map.values():
             d.live_connections = 0
 
+            # for compatibility, after change status value, will correct old stored status values
+            valid_values = [x for x in vars(config.Status).values() if isinstance(x, str)]
+            for x in valid_values:
+                if d.status.lower() == x.lower():
+                    d.status = x
+
             if d.status not in (config.Status.completed, config.Status.scheduled, config.Status.error):
                 d.status = config.Status.cancelled
 
