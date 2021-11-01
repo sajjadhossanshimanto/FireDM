@@ -3096,6 +3096,12 @@ class MainWindow(IView):
 
         center_window(self.root, width=self.width, height=self.height)
 
+        if config.window_maximized or config.force_window_maximize:
+            if config.operating_system in ('Windows', 'Darwin'):
+                self.root.wm_state('zoomed')
+            else:
+                self.root.attributes('-zoomed', True)
+
         # prevent window resize to zero
         self.root.minsize(100, 100)
         self.root.title(f'FireDM ver.{config.APP_VERSION}')
@@ -3697,6 +3703,9 @@ class MainWindow(IView):
                               key='ditem_show_top', callback=autotop_callback)
         autotop.pack(anchor='w')
 
+        CheckOption(tab, 'Maximize window on startup',
+                    key='force_window_maximize').pack(anchor='w')
+
         separator()
 
         # ------------------------------------------------------------------------------------Popup messages------------
@@ -4031,7 +4040,18 @@ class MainWindow(IView):
 
     def remember_window_size(self, *args):
         """save current window size in config.window_size"""
-        config.window_size = (self.root.winfo_width(), self.root.winfo_height())
+
+        # check if window is maximized, wm_state returns the current state of window: either normal, iconic, withdrawn,
+        # icon, or (Windows and Mac OS X only) zoomed
+        # ref https://tcl.tk/man/tcl8.6/TkCmd/wm.htm#M62
+        if config.operating_system in ('Windows', 'Darwin'):
+            try:
+                config.window_maximized = (self.root.wm_state() == 'zoomed')
+            except Exception as e:
+                log('error getting window maximize state:', e)
+
+        if not config.window_maximized:
+            config.window_size = (self.root.winfo_width(), self.root.winfo_height())
 
     def initialize_font(self):
         # get default font by creating a dummy label widget
