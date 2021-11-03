@@ -868,9 +868,6 @@ class Controller:
                 rename(d)
                 return self._pre_download_checks(d, silent=silent)
 
-        else:  # new file
-            log('fresh file download')
-
         # ------------------------------------------------------------------
 
         # warning message for non-resumable downloads
