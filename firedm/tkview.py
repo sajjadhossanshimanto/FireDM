@@ -4348,7 +4348,7 @@ class MainWindow(IView):
         Args:
             command (str): one of ['Select all', 'Select None', 'Select completed', 'Select non completed']
         """
-        items = self.d_items.values()
+        items = [item for item in self.d_items.values() if item.winfo_viewable()]
 
         # reset selection
         for item in items:
