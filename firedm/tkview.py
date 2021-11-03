@@ -3044,6 +3044,28 @@ class DatePicker(tk.Toplevel):
         self.close()
 
 
+def rcm_marker(rcm, default=None):
+    """decorator for rcm callback to let RightClick Menu mark its last selection"""
+    blank = tk.PhotoImage()
+    callback = rcm.callback
+
+    def inner(option, markonly=False):
+        last_idx = rcm.index(tk.END)
+        compound = 'right'
+        for i in range(0, last_idx + 1):
+            if rcm.entrycget(i, 'label').strip() == option:
+                rcm.entryconfig(i, image=imgs['done_icon'], compound=compound)
+            else:
+                rcm.entryconfig(i, image=blank, compound=compound)
+        if not markonly:
+            callback(option)
+
+    if default:
+        inner(default, markonly=True)
+
+    rcm.callback = inner
+
+
 class MainWindow(IView):
     """Main GUI window
 
@@ -3538,35 +3560,46 @@ class MainWindow(IView):
         self.select_btn = Button(top_fr, text='', image=imgs['select_icon'], tooltip='select')
         self.select_btn.pack(side='left', padx=5, pady=10)
 
-        atk.RightClickMenu(self.select_btn,
-                           ['Select all', 'Select None', 'Select completed', 'Select non completed'],
-                           callback=lambda option_name: self.select_ditems(option_name),
-                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
-                           bind_right_click=False)
+        self.select_btn.rcm = atk.RightClickMenu(
+            self.select_btn,
+            ['Select all', 'Select None', 'Select completed', 'Select non completed'],
+            callback=lambda option_name: self.select_ditems(option_name),
+            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
+            bind_right_click=False)
+
+        rcm_marker(self.select_btn.rcm, default='Select None')
 
         self.view_btn = Button(top_fr, text='', image=imgs['view_icon'], tooltip='view')
         self.view_btn.pack(side='left', padx=5)
-        atk.RightClickMenu(self.view_btn,
-                           ['standard', 'compact', 'mix'],
-                           callback=lambda option_name: self.switch_view(option_name),
-                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
-                           bind_right_click=False)
+        self.view_btn.rcm = atk.RightClickMenu(
+            self.view_btn,
+            ['standard', 'compact', 'mix'],
+            callback=lambda option_name: self.switch_view(option_name),
+            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
+            bind_right_click=False)
+
+        rcm_marker(self.view_btn.rcm, default=config.view_mode)
 
         self.filter_btn = Button(top_fr, text='', image=imgs['filter_icon'], tooltip='filter')
         self.filter_btn.pack(side='left', padx=5)
-        atk.RightClickMenu(self.filter_btn,
-                           ['ALL',
-                            'Selected',
-                            'Active',
-                            config.Status.completed,
-                            config.Status.cancelled,
-                            config.Status.scheduled,
-                            config.Status.pending,
-                            config.Status.error,
-                            ],
-                           callback=lambda option_name: self.filter_view(option_name),
-                           bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
-                           bind_right_click=False)
+
+        self.filter_btn.rcm = atk.RightClickMenu(
+            self.filter_btn,
+            [
+                'ALL',
+                'Selected',
+                'Active',
+                config.Status.completed,
+                config.Status.cancelled,
+                config.Status.scheduled,
+                config.Status.pending,
+                config.Status.error,
+            ],
+            callback=self.filter_view,
+            bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
+            bind_right_click=False)
+
+        rcm_marker(self.filter_btn.rcm, default='ALL')
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
