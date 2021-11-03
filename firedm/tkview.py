@@ -4334,6 +4334,10 @@ class MainWindow(IView):
         self.update_stat_lbl()
         self.d_tab.scrolltotop()
 
+        # reset filter
+        self.filter_btn.rcm.invoke(0)
+
+
     def filter_view(self, option):
         all_items = self.d_items.values()
         if option.lower() == 'active':
