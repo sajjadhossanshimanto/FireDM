@@ -1445,7 +1445,7 @@ class Segmentbar(tk.Canvas):
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
 
-    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None, mode='standard',
+    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None, mode='bulk',
                  playbtn_callback=None, delbtn_callback=None, onclick=None, ondoubleclick=None, bind_map=None,
                  rcm=None, rcm_callback=None):
 
@@ -1556,7 +1556,7 @@ class DItem(tk.Frame):
                 if w:
                     change_colors(w, selection_fg, selection_bg)
 
-        elif self.mode == 'standard':
+        elif self.mode == 'bulk':
             for name in ('btns_frame', 'bar_fr', 'blinker', 'status_icon', 'play_button', 'name_lbl', 'info_lbl',
                          'info_lbl2', 'delete_button', 'bar', 'bar_fr', 'main_frame'):
                 w = getattr(self, name, None)
@@ -1600,7 +1600,7 @@ class DItem(tk.Frame):
 
         bind_children(self)
 
-    def view_std(self):
+    def view_bulk(self):
         self.main_frame = tk.Frame(self, bg=self.bg, highlightthickness=0, highlightbackground=BTN_BG)
         self.main_frame.pack(expand=True, fill='x')
         self.main_frame.columnconfigure(1, weight=1)
@@ -1715,23 +1715,25 @@ class DItem(tk.Frame):
         self.delete_button = Button(self.main_frame, image=imgs['delete_icon'], command=self.delbtn_callback)
         self.delete_button.grid(row=0, column=6, padx=5, sticky='w')
 
-    def view(self, mode='standard'):
+    def view(self, mode='bulk'):
         """
         pack/grid widgets
         Args:
-            mode(str): standard, or compact
+            mode(str): bulk, or compact
         """
-        if mode == 'compact':
+
+        if mode in 'bulk':
+            self.view_bulk()
+        else:
             self.view_compact()
-        elif mode in 'standard':
-            self.view_std()
 
     def switch_view(self, mode):
-        self.mode = mode
-        self.main_frame.destroy()
-        self.view(mode)
-        self.apply_bindings()
-        self.update(**self.latest_update)
+        if self.mode != mode:
+            self.mode = mode
+            self.main_frame.destroy()
+            self.view(mode)
+            self.apply_bindings()
+            self.update(**self.latest_update)
 
     def dynamic_view(self):
         """change view based on status"""
@@ -1773,7 +1775,7 @@ class DItem(tk.Frame):
             if self.status == config.Status.completed:
                 self.play_button.grid_remove()
 
-        elif self.mode == 'standard':
+        elif self.mode == 'bulk':
             if self.status == config.Status.completed:
                 self.play_button.pack_forget()
                 self.bar.grid_remove()
@@ -1795,7 +1797,7 @@ class DItem(tk.Frame):
             size = f'{self.total_size}' if self.status == config.Status.completed else f'{self.size}/{self.total_size}'
             self.info_lbl.config(text=f'{size} {self.speed} {self.eta}   {self.errors} {self.progress}')
 
-        elif self.mode == 'standard':
+        elif self.mode == 'bulk':
             self.info_lbl.config(text=f'{self.size}/{self.total_size} {self.speed} {self.eta}   {self.errors} '
                                       f'{self.shutdown_pc} {self.on_completion_command}')
 
@@ -1822,7 +1824,7 @@ class DItem(tk.Frame):
         if self.mode == 'compact':
             self.status_icon.config(text=stext, fg=fg)
 
-        elif self.mode == 'standard':
+        elif self.mode == 'bulk':
             self.thumbnail_label.config(text=text, fg=fg)
 
     def update(self, name=None, downloaded=None, progress=None, total_size=None, eta=None, speed=None,
@@ -3567,16 +3569,20 @@ class MainWindow(IView):
             bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
             bind_right_click=False)
 
-        rcm_marker(self.select_btn.rcm, default='Select None')
-
         self.view_btn = Button(top_fr, text='', image=imgs['view_icon'], tooltip='view')
         self.view_btn.pack(side='left', padx=5)
+
+        view_mode_menu = ['bulk', 'compact', 'mix']
         self.view_btn.rcm = atk.RightClickMenu(
             self.view_btn,
-            ['standard', 'compact', 'mix'],
+            view_mode_menu,
             callback=lambda option_name: self.switch_view(option_name),
             bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
             bind_right_click=False)
+
+        # validate view_mode
+        if config.view_mode not in view_mode_menu:
+            config.view_mode = view_mode_menu[2]
 
         rcm_marker(self.view_btn.rcm, default=config.view_mode)
 
@@ -4149,7 +4155,7 @@ class MainWindow(IView):
         mode = kwargs.get('mode', config.view_mode)
 
         if mode == 'mix':
-            mode = 'standard' if status != config.Status.completed else 'compact'
+            mode = 'bulk' if status in config.Status.active_states else 'compact'
 
         # check if item already created before
         if uid in self.d_items:
@@ -4575,8 +4581,9 @@ class MainWindow(IView):
             elif uid in self.d_items:
                 item = self.d_items[uid]
                 item.update(**kwargs)
-                if item.status == 'completed' and config.view_mode == 'mix':
-                    item.switch_view('compact')
+                if config.view_mode == 'mix':
+                    view_mode = 'bulk' if item.status in config.Status.active_states else 'compact'
+                    item.switch_view(view_mode)
 
         # handle signals for post processor callbacks
         elif command == 'signal':
