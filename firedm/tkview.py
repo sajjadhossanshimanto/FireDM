@@ -2191,7 +2191,7 @@ class PlaylistWindow(tk.Toplevel):
         self.playlist_count = len(playlist)
         self.items = []
         self.max_videos_per_page = 100
-        self.total_pages = self.playlist_count // self.max_videos_per_page + 1 if self.playlist_count % self.max_videos_per_page else 0
+        self.total_pages = (self.playlist_count // self.max_videos_per_page) + (1 if self.playlist_count % self.max_videos_per_page else 0)
         self._current_page = 0
         self.items_per_page = min(self.playlist_count, self.max_videos_per_page)
 
@@ -2240,7 +2240,7 @@ class PlaylistWindow(tk.Toplevel):
             self.update_items()
 
             # update displayed page num
-            self.displayed_page_num.set(f'{self.curr_page + 1} of {self.total_pages}')
+            self.page_combo.set(self.curr_page + 1)
 
             # reset "select all" checkbutton
             self.select_all_var.set(False)
@@ -2252,16 +2252,20 @@ class PlaylistWindow(tk.Toplevel):
         videos_frame.columnconfigure(0, weight=1)
         bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
 
-        self.displayed_page_num = tk.StringVar(value=f'1 of {self.total_pages}')
-
         f1 = tk.Frame(top_frame, bg=MAIN_BG)
         f1.pack(fill='x', expand=True, anchor='w')
         tk.Label(f1, text=f'Total videos: {self.playlist_count}, Selected:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
         tk.Label(f1, textvariable=self.selected_videos_num, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=2, pady=5)
 
         Button(f1, text='Next', command=self.next_page).pack(side='right', padx=5, pady=5)
-        tk.Label(f1, textvariable=self.displayed_page_num, bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
-        Button(f1, text='Prev.', command=self.prev_page).pack(side='right', padx=5, pady=5)
+        Button(f1, text='Prev', command=self.prev_page).pack(side='right', padx=5, pady=5)
+
+        tk.Label(f1, text=f'of {self.total_pages}', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
+        self.page_combo = Combobox(f1, list(range(1, self.total_pages + 1)), selection=1, width=3)
+        self.page_combo.callback = lambda: setattr(self, 'curr_page', int(self.page_combo.selection) - 1)
+        self.page_combo.pack(side='right', padx=5, pady=5)
+        tk.Label(f1, text=f'Page', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
+
 
         f2 = tk.Frame(top_frame, bg=MAIN_BG)
         f2.pack(fill='x', expand=True, anchor='w')
@@ -4879,7 +4883,7 @@ class MainWindow(IView):
             self.msgbox('Playlist window already opened')
             return
 
-        # pl = ('1- #EZScience_ Preparing to Launch the Perseverance Rover to Mars', '2- #EZScience Episode 9 Part 2_ Mars Perseverance Rover Will Look for Signs of Ancient Life', "3- #EZScience Episode 9 Part 1_ Launching to Mars with NASA's Perseverance Rover", '4- #EZScience Episode 8_ Your Career Questions Answered!', '5- #EZScience Episode 7_ Your Space Science Questions Answered!', "6- #EZScience Episode 6_ NASA's Hubble Space Telescope — Our Window to the Stars", '7- #EZScience Episode 5_ Balloon Science', '8- #EZScience Episode 4_ The Path to Mars 2020', '9- #EZScience Episode 3_ Our Favorite Star — The Sun', '10- #EZScience Episode 2_ The Search for New Planets', '11- #EZScience Episode 1_ Exploring the Moon with Apollo')
+        # pl = [f'video {x}' for x in range(1, 5001)]  # test
         pl = self.pl_menu.get()
         if not pl:
             self.msgbox('No videos in playlist')
