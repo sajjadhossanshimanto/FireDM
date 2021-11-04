@@ -1228,7 +1228,7 @@ class Controller:
             log(msg, showpopup=True)
 
         # tell view we are done
-        if signal_id:
+        if signal_id is not None:
             self._update_view(command='signal', signal_id=signal_id)
 
         today = date.today()
