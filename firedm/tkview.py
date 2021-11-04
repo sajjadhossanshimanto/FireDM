@@ -3782,8 +3782,11 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Filesystem options--------
         heading('Filesystem options:')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
-        CheckOption(tab, 'Add numbers to filenames when downloading thru playlist menu',
-                    key='use_playlist_numbers').pack(anchor='w')
+        fr = tk.Frame(tab, bg=bg)
+        fr.pack(anchor='w', expand=True, fill='x')
+        CheckOption(fr, 'Auto number playlist filenames', key='use_playlist_numbers').pack(side='left', anchor='w')
+        CheckOption(fr, 'Reverse numbers (requires manual url refresh)',
+                    key='reverse_playlist').pack(side='left', anchor='w', padx=5)
 
         separator()
         # ------------------------------------------------------------------------------------Network options-----------

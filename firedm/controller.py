@@ -262,6 +262,8 @@ def create_video_playlist(url, ytdloptions=None):
             pl_info = list(info.get('entries'))  # info.get('entries') is a generator
             # log('list(info.get(entries):', pl_info)
 
+            pl_info = reversed(pl_info) if config.reverse_playlist else pl_info
+
             # create initial playlist with un-processed video objects
             for v_info in pl_info:
                 v_info['formats'] = []
