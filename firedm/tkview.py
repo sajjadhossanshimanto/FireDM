@@ -4324,7 +4324,7 @@ class MainWindow(IView):
             self.d_tab.autoscroll = True
 
     def switch_view(self, mode):
-        set_option(view_mode=mode)
+        config.view_mode = mode
         items = {uid: item for uid, item in self.d_items.items()}
         self.d_items.clear()
         for uid, item in items.items():
@@ -4337,7 +4337,6 @@ class MainWindow(IView):
         # reset filter
         self.filter_btn.rcm.invoke(0)
 
-
     def filter_view(self, option):
         all_items = self.d_items.values()
         if option.lower() == 'active':
@@ -4349,12 +4348,12 @@ class MainWindow(IView):
         else:
             items = [item for item in all_items if item.status.lower() == option.lower()]
 
-        for item in all_items:
+        # hide unwanted items
+        for item in [x for x in all_items if x not in items]:
             item.hide()
-            if item not in items:
-                item.select(False)
+            item.select(False)
 
-        for item in items:
+        for item in [x for x in items if not x.winfo_viewable()]:
             item.show()
 
     def select_ditems(self, command):
