@@ -96,7 +96,7 @@ password = ''
 # youtube-dl abort flag, will be used by decorated YoutubeDl.urlopen(), see video.set_interrupt_switch()
 ytdl_abort = False
 video_extractors_list = ['youtube_dl', 'yt_dlp']
-active_video_extractor = 'youtube_dl'
+active_video_extractor = 'yt_dlp'
 
 ffmpeg_actual_path = None
 ffmpeg_download_folder = sett_folder
