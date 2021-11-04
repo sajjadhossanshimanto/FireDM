@@ -104,7 +104,7 @@ def pars_args(arguments):
         '--edit-config', dest='edit_config',
         type=str, metavar='EDITOR', default=argparse.SUPPRESS,
         action='store', nargs='?', const='nano',  # const if use argument without value
-        help='Edit config file, you should specify your text editor executable, otherwise "%(default)s" will be used')
+        help='Edit config file, you should specify your text editor executable, otherwise "nano" will be used')
     general.add_argument(
         '--ignore-config', dest='ignore_config', default=argparse.SUPPRESS,
         action='store_true',
