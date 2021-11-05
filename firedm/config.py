@@ -23,7 +23,7 @@ settings_keys = [
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
     'use_playlist_numbers', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode', 'window_maximized',
-    'force_window_maximize', 'reverse_playlist'
+    'force_window_maximize', 'reverse_playlist', 'view_filter'
 ]
 
 # ----------------------------------------------------------------------------------------General ----------------------
@@ -183,6 +183,8 @@ window_maximized = False
 force_window_maximize = False
 
 view_mode = 'mix'
+view_filter = 'ALL'  # show all
+
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -203,6 +205,18 @@ class Status:
     scheduled = 'Scheduled'
     refreshing_url = 'Refreshing url'
     active_states = (downloading, processing, refreshing_url)
+    all_states = (downloading, cancelled, completed, pending, processing, error, scheduled, refreshing_url)
+
+
+view_filter_map = {
+    'ALL': Status.all_states,
+    'Selected': (),
+    'Active': Status.active_states,
+    'Uncompleted': [s for s in Status.all_states if s != Status.completed]
+}
+
+for status in [x for x in Status.all_states if x not in Status.active_states]:
+    view_filter_map[status] = (status,)
 
 
 # media type class

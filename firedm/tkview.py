@@ -1782,6 +1782,16 @@ class DItem(tk.Frame):
                 self.bar_fr.grid_remove()
                 self.segment_bar.grid_remove()
 
+    def dynamic_show_hide(self):
+        """show / hide item based on global view filter"""
+        if config.view_filter.lower() == 'selected' and self.selected:
+            self.show()
+        elif self.status in config.view_filter_map.get(config.view_filter, ()):
+            self.show()
+        else:
+            self.hide()
+            self.select(False)
+
     def show(self):
         """grid self"""
         side = 'bottom' if config.ditem_show_top else 'top'
@@ -1908,6 +1918,8 @@ class DItem(tk.Frame):
                 self.dynamic_view()
             except:
                 pass
+
+            self.dynamic_show_hide()
 
         if sched:
             if status == config.Status.scheduled:
@@ -3568,7 +3580,7 @@ class MainWindow(IView):
 
         self.select_btn.rcm = atk.RightClickMenu(
             self.select_btn,
-            ['Select all', 'Select None', 'Select completed', 'Select non completed'],
+            ['Select all', 'Select None', 'Select completed', 'Select Uncompleted'],
             callback=lambda option_name: self.select_ditems(option_name),
             bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
             bind_right_click=False)
@@ -3595,21 +3607,12 @@ class MainWindow(IView):
 
         self.filter_btn.rcm = atk.RightClickMenu(
             self.filter_btn,
-            [
-                'ALL',
-                'Selected',
-                'Active',
-                config.Status.completed,
-                config.Status.cancelled,
-                config.Status.scheduled,
-                config.Status.pending,
-                config.Status.error,
-            ],
+            config.view_filter_map.keys(),
             callback=self.filter_view,
             bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
             bind_right_click=False)
 
-        rcm_marker(self.filter_btn.rcm, default='ALL')
+        rcm_marker(self.filter_btn.rcm, default=config.view_filter)
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
@@ -4226,8 +4229,6 @@ class MainWindow(IView):
         # update d_item info
         d_item.update(**kwargs)
 
-        d_item.show()
-
     def on_shift_click(self, uid):
         """batch select ditems in downloads tab"""
         current_item = self.d_items[uid]
@@ -4246,7 +4247,7 @@ class MainWindow(IView):
             self.controller.open_file(uid=item.uid)
 
     def resume_selected(self):
-        """resume downloading selected and non completed items in downloads tab"""
+        """resume downloading selected and Uncompleted items in downloads tab"""
         for item in self.get_selected_items():
             if item.status in (config.Status.cancelled, config.Status.error):
                 self.resume_download(item.uid)
@@ -4330,39 +4331,28 @@ class MainWindow(IView):
         config.view_mode = mode
         items = {uid: item for uid, item in self.d_items.items()}
         self.d_items.clear()
+
+        # todo: should fix errors when using item.switch_view() instead of recreating items
         for uid, item in items.items():
             kwargs = item.latest_update
+            selected = item.selected
             item.destroy()
             self.create_ditem(uid, **kwargs, mode=mode)
+            new_item = self.d_items[uid]
+            new_item.select(selected)
+            new_item.dynamic_show_hide()
         self.update_stat_lbl()
         self.d_tab.scrolltotop()
 
-        # reset filter
-        self.filter_btn.rcm.invoke(0)
-
     def filter_view(self, option):
-        all_items = self.d_items.values()
-        if option.lower() == 'active':
-            items = [item for item in all_items if item.status in config.Status.active_states]
-        elif option.lower() == 'all':
-            items = all_items
-        elif option.lower() == 'selected':
-            items = [item for item in all_items if item.selected]
-        else:
-            items = [item for item in all_items if item.status.lower() == option.lower()]
-
-        # hide unwanted items
-        for item in [x for x in all_items if x not in items]:
-            item.hide()
-            item.select(False)
-
-        for item in [x for x in items if not x.winfo_viewable()]:
-            item.show()
+        config.view_filter = option
+        for item in self.d_items.values():
+            item.dynamic_show_hide()
 
     def select_ditems(self, command):
         """select ditems in downloads tab
         Args:
-            command (str): one of ['Select all', 'Select None', 'Select completed', 'Select non completed']
+            command (str): one of ['Select all', 'Select None', 'Select completed', 'Select Uncompleted']
         """
         items = [item for item in self.d_items.values() if item.winfo_viewable()]
 
@@ -4376,7 +4366,7 @@ class MainWindow(IView):
         if command == 'Select completed':
             items = [item for item in self.d_items.values() if item.status == config.Status.completed]
 
-        elif command == 'Select non completed':
+        elif command == 'Select Uncompleted':
             items = [item for item in self.d_items.values() if item.status != config.Status.completed]
 
         # set selection
