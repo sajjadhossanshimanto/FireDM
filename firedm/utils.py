@@ -23,6 +23,7 @@ import json
 import zipfile
 import urllib.request
 import platform
+import subprocess
 
 # 3rd party
 try:
@@ -1228,12 +1229,33 @@ def create_folder(folder_path):
     os.makedirs(folder_path, exist_ok=True)
 
 
+def get_media_duration(filename):
+    time.sleep(0.1) # make it easy for threading accessing
+    """
+        Function to get file duration of a video or audio
+        Args:
+        filename: file path/ URL of a file
+    """
+    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                             "format=duration", "-of",
+                             "default=noprint_wrappers=1:nokey=1","-sexagesimal", filename],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT)
+
+    output=result.stdout.decode("utf-8")
+    duration=[ int(float(i)) for i in output.split(':') ]
+    hours,minutes,seconds = duration[0],duration[1],duration[2]
+
+    return (hours,minutes,seconds) # return tuple hours,minutes and seconds from file 
+
+
+
 __all__ = [
     'get_headers', 'download', 'format_bytes', 'format_seconds', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list',
-    'run_thread', 'generate_unique_name', 'open_webpage', 'threaded', 'parse_urls',
+    'run_thread', 'generate_unique_name', 'open_webpage', 'threaded', 'parse_urls','get_media_duration',
     'get_pkg_path', 'get_pkg_version', 'import_file', 'zip_extract', 'create_folder', 'simpledownload', 'ignore_errors'
 ]
 
