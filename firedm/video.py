@@ -385,22 +385,32 @@ class Video(DownloadItem):
         self.http_headers = stream.http_headers or self.http_headers or config.http_headers
 
     def select_audio(self, audio_stream=None):
-        stream = self.selected_stream
+        video_stream = self.selected_stream
 
         # select an audio to embed if our stream is dash video
         audio_streams = sorted([stream for stream in self.all_streams if stream.mediatype == 'audio'],
                                key=lambda stream: stream.quality, reverse=True)
 
-        if stream.mediatype == 'dash' and audio_streams:
+        if video_stream.mediatype == 'dash' and audio_streams:
             # auto select audio stream if no parameter given
             if not audio_stream:
-                # todo: select best audio
-                matching_stream = [audio for audio in audio_streams if audio.extension == stream.extension
-                                   or (audio.extension == 'm4a' and stream.extension == 'mp4')]
-                # if failed to find a matching audio, choose any one
-                if matching_stream:
-                    audio_stream = matching_stream[0]
+                # filter for matching extension/format
+                matching_streams = [audio for audio in audio_streams if audio.extension == video_stream.extension
+                                    or (audio.extension == 'm4a' and video_stream.extension == 'mp4')]
+
+                if matching_streams:
+
+                    # check fragmented types
+                    fragmented_audios = [x for x in matching_streams if x.fragments]
+                    unfragmented_audios = [x for x in matching_streams if not x.fragments]
+                    if video_stream.fragments and fragmented_audios:
+                        audio_stream = fragmented_audios[0]
+                    elif unfragmented_audios:
+                        audio_stream = unfragmented_audios[0]
+                    else:
+                        audio_stream = matching_streams[0]
                 else:
+                    # if failed to find a matching audio, choose any one
                     audio_stream = audio_streams[0]
 
             self.audio_stream = audio_stream
