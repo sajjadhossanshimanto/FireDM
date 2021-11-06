@@ -24,7 +24,8 @@ Themes creators:
 ---
 
 People who contributed with Testing, ideas, and bug reports:
-- Toni (@Ton1A)
+- @Ton1A (Toni)
 - @smaragdus
 - @hongyi-zhao
+- @jdaniele71 (Daniele)
 
