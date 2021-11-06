@@ -126,8 +126,13 @@ def file_manager(d, q, keep_segments=True):
         job_list = [seg for seg in d.segments if not seg.completed]
 
         # sort segments based on ranges, faster in writing to target file
-        if job_list and job_list[0].range:
-            job_list = sorted(job_list, key=lambda seg: seg.range[0])
+        try:
+            if job_list and job_list[0].range:
+                # it will raise "TypeError: 'NoneType' object is not subscriptable" if for example video is normal
+                # and audio is fragmented, the latter will have range=None
+                job_list = sorted(job_list, key=lambda seg: seg.range[0])
+        except:
+            pass
 
         for seg in job_list:
 
@@ -182,7 +187,7 @@ def file_manager(d, q, keep_segments=True):
             except Exception as e:
                 seg.merge_errors += 1
                 seg.last_merge_error = e
-                # log('failed to merge segment', seg.name, ' - ', e)
+                log('failed to merge segment', seg.name, ' - ', e)
 
                 if config.test_mode:
                     raise e
