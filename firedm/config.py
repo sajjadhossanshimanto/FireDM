@@ -23,7 +23,7 @@ settings_keys = [
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
     'use_playlist_numbers', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode', 'window_maximized',
-    'force_window_maximize', 'reverse_playlist', 'view_filter'
+    'force_window_maximize', 'reverse_playlist'
 ]
 
 # ----------------------------------------------------------------------------------------General ----------------------
