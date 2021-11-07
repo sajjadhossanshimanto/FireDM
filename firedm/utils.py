@@ -6,6 +6,7 @@
     :copyright: (c) 2019-2021 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
+import datetime
 import os
 import io
 import hashlib
@@ -1229,24 +1230,16 @@ def create_folder(folder_path):
     os.makedirs(folder_path, exist_ok=True)
 
 
-def get_media_duration(filename):
-    time.sleep(0.1) # make it easy for threading accessing
+def get_media_duration(seconds):
     """
         Function to get file duration of a video or audio
         Args:
-        filename: file path/ URL of a file
+        seconds: seconds to be converted to time format
     """
-    result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
-                             "format=duration", "-of",
-                             "default=noprint_wrappers=1:nokey=1","-sexagesimal", filename],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT)
+    conversion = datetime.timedelta(seconds=seconds)
+    result = str(conversion)
 
-    output=result.stdout.decode("utf-8")
-    duration=[ int(float(i)) for i in output.split(':') ]
-    hours,minutes,seconds = duration[0],duration[1],duration[2]
-
-    return (hours,minutes,seconds) # return tuple hours,minutes and seconds from file 
+    return result 
 
 
 
