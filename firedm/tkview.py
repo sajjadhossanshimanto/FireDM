@@ -1142,6 +1142,8 @@ class FileProperties(ttk.Frame):
         self.type = tk.StringVar()
         self.subtype = tk.StringVar()
         self.resumable = tk.StringVar()
+        self.duration = tk.StringVar()
+
 
         # show default folder value
         self.update(folder=config.download_folder)
@@ -1184,7 +1186,7 @@ class FileProperties(ttk.Frame):
             return ttk.Separator(self, orient='horizontal').grid(sticky='ew', pady=0, row=r, column=0, columnspan=3)
 
         # order of properties
-        fields = ('name', 'extension', 'folder', 'size', 'misc')
+        fields = ('name', 'extension', 'folder', 'size', 'misc','duration')
         row = {k: fields.index(k)*2+1 for k in fields}
 
         for n in row.values():
@@ -1221,6 +1223,9 @@ class FileProperties(ttk.Frame):
         # size ---------------------------------------------------------------------------------------------------------
         label('Size:', r=row['size'], c=0)
         label('540 MB', textvariable=self.size, r=row['size'], c=1)
+        
+        label('Duration:', r=row['duration_string'], c=0)
+        label('N/A',r=row['duration'],textvariable=self.duration,c=1)
 
         # misc ---------------------------------------------------------------------------------------------------------
         misc_frame = tk.Frame(self, bg=self.bg)

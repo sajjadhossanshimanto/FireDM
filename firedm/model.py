@@ -30,7 +30,7 @@ class Observable:
                            'total_size', 'status', 'busy', 'thumbnail', 'type', 'subtype_list', 'resumable', 'title',
                            'extension', 'errors', 'sched', 'remaining_parts', 'live_connections', 'total_parts',
                            'shutdown_pc', 'on_completion_command', 'video_progress', 'audio_progress', 'merge_progress',
-                           'segments_progress']
+                           'segments_progress','duration','duration_string']
 
         # list of callbacks to be executed on properties change
         self.observer_callbacks = observer_callbacks or []

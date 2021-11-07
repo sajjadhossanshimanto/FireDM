@@ -6,6 +6,7 @@
     :copyright: (c) 2019-2021 by Mahmoud Elshahat.
     :license: GNU LGPLv3, see LICENSE for more details.
 """
+import datetime
 import os
 import io
 import hashlib
@@ -23,6 +24,7 @@ import json
 import zipfile
 import urllib.request
 import platform
+import subprocess
 
 # 3rd party
 try:
@@ -1228,12 +1230,25 @@ def create_folder(folder_path):
     os.makedirs(folder_path, exist_ok=True)
 
 
+def get_media_duration(seconds):
+    """
+        Function to get file duration of a video or audio
+        Args:
+        seconds: seconds to be converted to time format
+    """
+    conversion = datetime.timedelta(seconds=seconds)
+    result = str(conversion)
+
+    return result 
+
+
+
 __all__ = [
     'get_headers', 'download', 'format_bytes', 'format_seconds', 'log', 'validate_file_name', 'delete_folder',
     'run_command', 'print_object', 'update_object', 'translate_server_code', 'open_file', 'delete_file', 'rename_file',
     'load_json', 'save_json', 'natural_sort', 'is_pkg_exist', 'parse_bytes', 'set_curl_options', 'open_folder',
     'auto_rename', 'calc_md5', 'calc_md5_sha256', 'calc_sha256', 'get_range_list',
-    'run_thread', 'generate_unique_name', 'open_webpage', 'threaded', 'parse_urls',
+    'run_thread', 'generate_unique_name', 'open_webpage', 'threaded', 'parse_urls','get_media_duration',
     'get_pkg_path', 'get_pkg_version', 'import_file', 'zip_extract', 'create_folder', 'simpledownload', 'ignore_errors'
 ]
 

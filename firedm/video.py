@@ -18,7 +18,7 @@ import base64
 from . import config
 from .downloaditem import DownloadItem, Segment
 from .utils import (log, validate_file_name, get_headers, format_bytes, run_command, delete_file, download, rename_file,
-                    run_thread, import_file)
+                    run_thread, import_file,get_media_duration)
 
 
 # todo: change docstring to google format and clean unused code
@@ -97,7 +97,7 @@ class Video(DownloadItem):
         self.type = 'video'
         self.resumable = True
         self.vid_info = vid_info  # a youtube-dl dictionary contains video information
-
+        self.vid_info['duration_string']=get_media_duration(vid_info['duration'])
         # let youtube-dl fetch video info
         if self.vid_info is None:
             with ytdl.YoutubeDL(get_ytdl_options()) as ydl:
