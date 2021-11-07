@@ -13,6 +13,7 @@ Developers who contributed with code:
 - @ryneeverett
 - @bertaga
 - @qontinuum-dev
+- @fidele000 (Fidele K.Cyisa)
 
 ---
 
