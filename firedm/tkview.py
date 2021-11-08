@@ -1144,7 +1144,6 @@ class FileProperties(ttk.Frame):
         self.resumable = tk.StringVar()
         self.duration = tk.StringVar()
 
-
         # show default folder value
         self.update(folder=config.download_folder)
 
@@ -1186,7 +1185,7 @@ class FileProperties(ttk.Frame):
             return ttk.Separator(self, orient='horizontal').grid(sticky='ew', pady=0, row=r, column=0, columnspan=3)
 
         # order of properties
-        fields = ('name', 'extension', 'folder', 'size', 'misc','duration')
+        fields = ('name', 'extension', 'folder', 'size', 'misc')
         row = {k: fields.index(k)*2+1 for k in fields}
 
         for n in row.values():
@@ -1223,14 +1222,11 @@ class FileProperties(ttk.Frame):
         # size ---------------------------------------------------------------------------------------------------------
         label('Size:', r=row['size'], c=0)
         label('540 MB', textvariable=self.size, r=row['size'], c=1)
-        
-        label('Duration:', r=row['duration_string'], c=0)
-        label('N/A',r=row['duration'],textvariable=self.duration,c=1)
 
         # misc ---------------------------------------------------------------------------------------------------------
         misc_frame = tk.Frame(self, bg=self.bg)
         misc_frame.grid(row=row['misc'], column=0, columnspan=3, sticky='ew')
-        for var in (self.type, self.subtype, self.resumable):
+        for var in (self.type, self.subtype, self.duration, self.resumable):
             tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
 
         # download folder -------------------------------------------------------------------------------------------
@@ -1312,6 +1308,8 @@ class FileProperties(ttk.Frame):
         type_ = kwargs.get('type', '')
         subtype_list = kwargs.get('subtype_list', '')
         resumable = kwargs.get('resumable', None)
+        duration = kwargs.get('duration', None)
+        duration_string = get_media_duration(duration)
 
         if title:
             rendered_title = render_text(title)
@@ -1329,7 +1327,10 @@ class FileProperties(ttk.Frame):
         if subtype_list:
             self.subtype.set(', '.join(subtype_list))
 
-        self.resumable.set(f'- Resumable: {resumable}' if resumable is not None else '')
+        self.resumable.set(f' - Resumable: {resumable}' if resumable is not None else '')
+
+        if duration_string:
+            self.duration.set(f' - duration: {duration_string}')
 
     def reset(self):
         self.title.set('')
@@ -1339,6 +1340,7 @@ class FileProperties(ttk.Frame):
         self.type.set('')
         self.subtype.set('')
         self.resumable.set('')
+        self.duration.set('')
 
     def start_name_edit(self):
         """remove label and show edit entry with raw name"""
