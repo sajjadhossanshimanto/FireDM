@@ -16,6 +16,72 @@ import os
 from packaging.version import parse
 import sys
 import shutil
+import re
+
+
+def get_pkg_version(pkg):
+    """parse version number for a package
+    using .dist-info folder or version.py/version.pyc files
+
+    Args:
+        pkg(str): name or path of the package
+
+    Returns:
+        (str): version number or empty string
+    """
+
+    if os.path.isdir(pkg):
+        pkg_path = pkg
+    else:
+        pkg_name = os.path.basename(pkg)
+        pkg_path = get_pkg_path(pkg_name)
+
+    if not pkg_path:
+        return ''
+
+    version = ''
+
+    # read version.py file
+    try:
+        version_module = {}
+        fp = os.path.join(pkg_path, 'version.py')
+        with open(fp) as f:
+            txt = f.read()
+            exec(txt, version_module)  # then we can use it as: version_module['__version__']
+            version = version_module.get('__version__')
+            if not version:
+                match = re.search(r'_*version_*=[\'\"](.*?)[\'\"]', txt.replace(' ', ''), re.IGNORECASE)
+                version = match.groups()[0]
+    except:
+        pass
+
+    if not version:
+        # read version.pyc file, will be limited to specific versions format, e.g. 2.3.4, or 2021.8.30
+        try:
+            fp = os.path.join(pkg_path, 'version.pyc')
+            with open(fp, 'rb') as f:
+                text = f.read()
+                match = re.search(rb'\d+\.\d+\.\d+', text)
+                version = match.group().decode('utf-8')
+        except:
+            pass
+
+    if not version:
+        # parse .dist-info folder e.g: youtube_dl-2021.5.16.dist-info or FireDM-2021.2.9.dist-info
+        try:
+            parent_folder = os.path.dirname(pkg_path)
+            pkg_name = os.path.basename(pkg_path)
+
+            for folder_name in os.listdir(parent_folder):
+                match = re.match(pkg_name + r'-(.*?)\.dist-info', folder_name, re.IGNORECASE)
+                if match:
+                    version = match.groups()[0]
+                    break
+        except:
+            pass
+
+    return version
+
 
 home_folder = os.path.expanduser('~')
 fp = os.path.realpath(__file__)
@@ -27,7 +93,6 @@ firedm_src = os.path.join(AppDir, 'usr/src')
 
 os.makedirs(appimage_update_folder, exist_ok=True)
 sys.path.insert(0, firedm_src)
-from firedm.utils import get_pkg_version
 
 pkgs = []
 for d in os.listdir(appimage_update_folder):
@@ -54,9 +119,12 @@ for pkg in pkgs[:]:
     if origver > ver:
         pkgs.remove(pkg)
 
-# add pkgs to sys.path
-for pkg in pkgs:
-    sys.path.insert(0, os.path.dirname(pkg))
+if pkgs:
+    print('sourcing updated packages:')
+    # add pkgs to sys.path
+    for pkg in pkgs:
+        sys.path.insert(0, os.path.dirname(pkg))
+        print(pkg)
 
 from firedm import FireDM, config
 
