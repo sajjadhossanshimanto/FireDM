@@ -534,9 +534,9 @@ class DownloadItem:
 
             try:
                 content = headers['content-disposition'].split(';')
-                match = [x for x in content if 'filename*' in x]
+                match = [x for x in content if 'filename*' in x.lower()]
                 if not match:
-                    match = [x for x in content if 'filename' in x]
+                    match = [x for x in content if 'filename' in x.lower()]
 
                 name = match[0].split('=')[1].strip('"')
             except:

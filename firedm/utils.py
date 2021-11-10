@@ -160,17 +160,17 @@ def get_headers(url, verbose=False, http_headers=None, seg_range=None):
 
     def header_callback(header_line):
         header_line = header_line.decode('iso-8859-1')
-        header_line = header_line.lower()
+        header_line = header_line
 
         if ':' not in header_line:
             return
 
-        name, value = header_line.split(':', 1)
-        name = name.strip()
-        value = value.strip()
-        curl_headers[name] = value
+        key, value = header_line.split(':', 1)
+        key = key.strip().lower()  # lower() key for easy comparison
+        value = value.strip()  # don't lower(), it will affect important values, e.g. filename, issue #330
+        curl_headers[key] = value
         if verbose:
-            print(name, ':', value)
+            print(key, ':', value)
 
     def write_callback(data):
         return -1  # send terminate flag

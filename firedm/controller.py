@@ -382,7 +382,7 @@ class Controller:
             eff_url = headers.get('eff_url')
             content_type = headers.get('content-type', '').split(';')[0]
 
-            if content_type != 'text/html':
+            if content_type.lower() != 'text/html':
                 d.eff_url = eff_url
 
         else:
