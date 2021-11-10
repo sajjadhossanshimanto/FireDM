@@ -1530,12 +1530,13 @@ class DItem(tk.Frame):
             for x, y in self.bind_map:
                 self.bind(x, y)
 
-    def select(self, flag=True):
+    def select(self, flag=True, refresh=False):
         """select self"""
-        if flag == self.selected:
+
+        if refresh != (flag == self.selected):
             return
-        else:
-            self.selected = flag
+
+        self.selected = flag
 
         # change highlight color
         selection_bg = SEL_BG if flag else self.bg
@@ -1543,16 +1544,19 @@ class DItem(tk.Frame):
         self.config(background=selection_bg)
 
         def change_colors(w, fg, bg, children=False, recursive=False, execludes=None):
-            # execludes an iterable of execluded widgets' class name (.winfo_class())
-            atk.configure_widget(w, background=bg, foreground=fg)
+            try:
+                # execludes an iterable of execluded widgets' class name (.winfo_class())
+                atk.configure_widget(w, background=bg, foreground=fg)
 
-            if children:
-                for child in w.winfo_children():
-                    if execludes and child.winfo_class() not in execludes:
-                        atk.configure_widget(child, background=selection_bg, foreground=selection_fg)
+                if children:
+                    for child in w.winfo_children():
+                        if execludes and child.winfo_class() not in execludes:
+                            atk.configure_widget(child, background=selection_bg, foreground=selection_fg)
 
-                    if recursive:
-                        change_colors(child, fg, bg, children, recursive)
+                        if recursive:
+                            change_colors(child, fg, bg, children, recursive)
+            except:
+                pass
 
         change_colors(self, selection_fg, selection_bg)
 
@@ -1729,7 +1733,7 @@ class DItem(tk.Frame):
             mode(str): bulk, or compact
         """
 
-        if mode in 'bulk':
+        if mode == 'bulk':
             self.view_bulk()
         else:
             self.view_compact()
@@ -1741,6 +1745,8 @@ class DItem(tk.Frame):
             self.view(mode)
             self.apply_bindings()
             self.update(**self.latest_update)
+            # refresh selected items
+            self.select(flag=True, refresh=True)
 
     def dynamic_view(self):
         """change view based on status"""
@@ -4336,18 +4342,9 @@ class MainWindow(IView):
 
     def switch_view(self, mode):
         config.view_mode = mode
-        items = {uid: item for uid, item in self.d_items.items()}
-        self.d_items.clear()
 
-        # todo: should fix errors when using item.switch_view() instead of recreating items
-        for uid, item in items.items():
-            kwargs = item.latest_update
-            selected = item.selected
-            item.destroy()
-            self.create_ditem(uid, **kwargs, mode=mode)
-            new_item = self.d_items[uid]
-            new_item.select(selected)
-            new_item.dynamic_show_hide()
+        for uid, item in self.d_items.items():
+            item.switch_view(mode=mode)
         self.update_stat_lbl()
         self.d_tab.scrolltotop()
 
