@@ -582,7 +582,6 @@ class Popup(tk.Toplevel):
         width = int(self.parent.winfo_width() * 0.5)
         height = int(self.parent.winfo_height() * 0.3)
         self.minsize(width, height)
-        self.maxsize(self.parent.winfo_width(), self.parent.winfo_height())
 
         center_window(self, width=width, height=height, reference=self.parent, set_geometry_wh=False)
 
@@ -643,12 +642,12 @@ class Popup(tk.Toplevel):
         msg_height = len(self.msg.splitlines())
         if msg_height < 4:
             AutoWrappingLabel(main_frame, text=self.msg, bg=self.bg, fg=self.fg,
-                              width=40).pack(side='top', fill='x', expand=True, padx=5, pady=5)
+                              width=40).pack(side='top', fill='both', expand=True, padx=5, pady=5)
         else:
             txt = atk.ScrolledText(main_frame, bg=self.bg, fg=self.fg, wrap=True, autoscroll=False, hscroll=False,
                                    height=min(15, msg_height + 1))
             txt.set(self.msg)
-            txt.pack(side='top', fill='x', expand=True, padx=5, pady=5)
+            txt.pack(side='top', fill='both', expand=True, padx=5, pady=5)
 
         self.bind('<Escape>', lambda event: self.close())
 
