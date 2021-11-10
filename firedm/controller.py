@@ -21,7 +21,11 @@ from threading import Thread
 from queue import Queue
 from datetime import date
 from email.utils import parsedate_to_datetime
-from ctypes import windll, wintypes, byref
+
+try:
+    from ctypes import windll, wintypes, byref
+except:
+    pass
 
 from . import update
 from .utils import *
