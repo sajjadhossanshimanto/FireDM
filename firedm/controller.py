@@ -20,6 +20,8 @@ from copy import copy
 from threading import Thread
 from queue import Queue
 from datetime import date
+from email.utils import parsedate_to_datetime
+from ctypes import windll, wintypes, byref
 
 from . import update
 from .utils import *
@@ -108,32 +110,27 @@ def write_timestamp(d):
             timestamp = headers.get('last-modified')
 
             if timestamp:
-                # parse timestamp, eg.      "fri, 09 oct 2020 11:11:34 gmt"
-                t = time.strptime(timestamp, "%a, %d %b %Y %H:%M:%S %Z")
-                t = time.mktime(t)  # seconds since the Epoch
+                # parse timestamp, eg.      'last-modified': 'Fri, 22 Feb 2019 09:30:09 GMT'
+                dt = parsedate_to_datetime(timestamp)
+                t = dt.timestamp()  # will correct for local time
+
                 log(f'writing timestamp "{timestamp}" to file: {d.name}', log_level=2)
                 os.utime(d.target_file, (t, t))
 
                 # modify creation time on windows,
                 # credit: https://github.com/Delgan/win32-setctime/blob/master/win32_setctime.py
                 if config.operating_system == 'Windows':
-                    try:
-                        from ctypes import windll, wintypes, byref
+                    # Convert Unix timestamp to Windows FileTime using some magic numbers
+                    timestamp = int((t * 10000000) + 116444736000000000)
+                    ctime = wintypes.FILETIME(timestamp & 0xFFFFFFFF, timestamp >> 32)
 
-                        # Convert Unix timestamp to Windows FileTime using some magic numbers
-                        # See documentation: https://support.microsoft.com/en-us/help/167296
-                        timestamp = int((t * 10000000) + 116444736000000000)
-                        ctime = wintypes.FILETIME(timestamp & 0xFFFFFFFF, timestamp >> 32)
-
-                        # Call Win32 API to modify the file creation date
-                        handle = windll.kernel32.CreateFileW(d.target_file, 256, 0, None, 3, 128, None)
-                        windll.kernel32.SetFileTime(handle, byref(ctime), None, None)
-                        windll.kernel32.CloseHandle(handle)
-                    except Exception as e:
-                        log('write_timestamp()>', e)
+                    # Call Win32 API to modify the file creation date
+                    handle = windll.kernel32.CreateFileW(d.target_file, 256, 0, None, 3, 128, None)
+                    windll.kernel32.SetFileTime(handle, byref(ctime), None, None)
+                    windll.kernel32.CloseHandle(handle)
 
     except Exception as e:
-        log('controller._write_timestamp()> error:', e)
+        log('controller.write_timestamp()> error:', e)
         if config.test_mode:
             raise e
 
