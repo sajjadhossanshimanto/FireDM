@@ -4506,6 +4506,13 @@ class MainWindow(IView):
         if 'status' in kwargs:
             self.root.after(100, self.update_stat_lbl)
 
+            # os notification for completed downloads
+            if config.on_download_notification and kwargs['status'] == config.Status.completed:
+                name = self.controller.get_property('name', uid=uid)
+                folder = self.controller.get_property('folder', uid=uid)
+                notification = f"File: {name} \nsaved at: {folder}"
+                self.systray.notify(notification, title=f'{config.APP_NAME} - Download completed')
+
         # load previous download items in d_tab, needed at startup
         if command == 'd_list':
             d_list = kwargs.get('d_list')

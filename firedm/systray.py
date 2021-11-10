@@ -83,12 +83,11 @@ class SysTray:
 
                 APPINDICATOR_ID = config.APP_NAME
 
-                # we can use notify system, example below
-                # gi.require_version('Notify', '0.7')
-                # from gi.repository import Notify as notify
-                # self.Gtk_notify = notify  # get reference for later deinitialize when quit systray
-                # notify.init(APPINDICATOR_ID)  # initialize first
-                # notify.Notification.new("Joke", 'silly joke ...', self.tray_icon_path).show()  # to show notification
+                # setup notify system, will be used in self.notify()
+                gi.require_version('Notify', '0.7')
+                from gi.repository import Notify as notify
+                self.Gtk_notify = notify  # get reference for later deinitialize when quit systray
+                self.Gtk_notify.init(APPINDICATOR_ID)  # initialize first
 
                 # try appindicator
                 try:
@@ -153,15 +152,32 @@ class SysTray:
             pass
 
         try:
-            # Gtk.main_quit(), if called from a thread might raise 
-            # (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
-            # should call this from main thread
-            self.Gtk.main_quit()
-
             # if we use Gtk notify we should deinitialize
             self.Gtk_notify.uninit()
         except:
             pass
+
+        try:
+            # Gtk.main_quit(), if called from a thread might raise 
+            # (Gtk-CRITICAL **:gtk_main_quit: assertion 'main_loops != NULL' failed)
+            # should call this from main thread
+            self.Gtk.main_quit()
+        except:
+            pass
+
+    def notify(self, msg, title=None):
+        """show os notifications, e.g. balloon pop up at systray icon on windows"""
+        if getattr(self.icon, 'HAS_NOTIFICATION', False):
+            self.icon.notify(msg, title=title)
+
+        else:
+            try:
+                self.Gtk_notify.Notification.new(title, msg, self.tray_icon_path).show()  # to show notification
+            except:
+                # fallback to plyer
+                import plyer
+                plyer.notification.notify(message=msg, title=title, app_name=config.APP_NAME,
+                                          app_icon=self.tray_icon_path, timeout=5)
 
     def quit(self, *args):
         """callback when selecting quit from systray menu"""
