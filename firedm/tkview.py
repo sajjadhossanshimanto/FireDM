@@ -4498,12 +4498,16 @@ class MainWindow(IView):
         active = kwargs.get('active', None)
         video_idx = kwargs.get('video_idx', None)
         stream_idx = kwargs.get('stream_idx', None)
+        status = kwargs.get('status', None)
 
-        if 'status' in kwargs:
+        if status:
             self.root.after(100, self.update_stat_lbl)
 
+            item = self.d_items.get(uid)
+            last_status = item.status if item else None
+
             # os notification for completed downloads
-            if config.on_download_notification and kwargs['status'] == config.Status.completed:
+            if status != last_status and config.on_download_notification and status == config.Status.completed:
                 name = self.controller.get_property('name', uid=uid)
                 folder = self.controller.get_property('folder', uid=uid)
                 notification = f"File: {name} \nsaved at: {folder}"
