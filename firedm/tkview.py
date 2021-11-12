@@ -93,7 +93,7 @@ def create_imgs():
     imgs['select_icon'] = atk.create_image(b64=select_icon, color=HDG_FG)
     imgs['view_icon'] = atk.create_image(b64=view_icon, color=HDG_FG)
     imgs['filter_icon'] = atk.create_image(b64=filter_icon, color=HDG_FG)
-    imgs['wmap_icon'] = atk.create_image(b64=wmap_icon, color=HDG_FG, size=(160, 80))
+    imgs['wmap'] = atk.create_image(b64=wmap, color=HDG_FG, size=(160, 80))
 
 
 app_icon_img = None
@@ -1360,7 +1360,7 @@ class Thumbnail(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent, bg=THUMBNAIL_BG)
 
-        self.default_img = atk.create_image(b64=wmap_icon, color=THUMBNAIL_FG)
+        self.default_img = atk.create_image(b64=wmap, color=THUMBNAIL_FG)
         self.current_img = None
 
         tk.Label(self, text='Thumbnail:', bg=MAIN_BG, fg=MAIN_FG).pack(padx=5, pady=(5, 0), anchor='w')
@@ -4202,7 +4202,7 @@ class MainWindow(IView):
         p = DItem(self.downloads_frame, None, '', mode='bulk', bg=MAIN_BG)
         p.config(highlightthickness=5, highlightbackground=BTN_BG, highlightcolor=BTN_BG)
         p.name_lbl['text'] = 'Select an item from above list to preview here'
-        p.thumbnail_label['image'] = imgs['wmap_icon']
+        p.thumbnail_label['image'] = imgs['wmap']
         p.dynamic_show_hide = lambda *args: None
         p.mark_as_failed = lambda *args: None
         p.switch_view = lambda *args: None
