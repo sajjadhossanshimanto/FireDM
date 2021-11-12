@@ -93,6 +93,7 @@ def create_imgs():
     imgs['select_icon'] = atk.create_image(b64=select_icon, color=HDG_FG)
     imgs['view_icon'] = atk.create_image(b64=view_icon, color=HDG_FG)
     imgs['filter_icon'] = atk.create_image(b64=filter_icon, color=HDG_FG)
+    imgs['wmap_icon'] = atk.create_image(b64=wmap_icon, color=HDG_FG, size=(160, 80))
 
 
 app_icon_img = None
@@ -1674,6 +1675,7 @@ class DItem(tk.Frame):
             # segments progressbar
             self.segment_bar = Segmentbar(self.main_frame)
             self.segment_bar.grid(row=4, column=0, columnspan=3, sticky='ew', padx=5, pady=(0, 5))
+            self.segment_bar.grid_remove()
 
             # create buttons
             self.play_button = Button(self.btns_frame, image=imgs['play_icon'], command=self.playbtn_callback)
@@ -1835,11 +1837,12 @@ class DItem(tk.Frame):
             self.info_lbl.config(text=f'{size} {self.speed} {self.eta}   {self.errors} {self.progress}')
 
         elif self.mode == 'bulk':
-            self.info_lbl.config(text=f'{self.size}/{self.total_size} {self.speed} {self.eta}   {self.errors} '
+            size = f'{self.size}/{self.total_size}' if self.size or self.total_size else ''
+            self.info_lbl.config(text=f'{size} {self.speed} {self.eta}   {self.errors} '
                                       f'{self.shutdown_pc} {self.on_completion_command}')
 
             self.info_lbl2.config(text=f'{self.media_subtype} {self.media_type} {self.live_connections} '
-                                       f'{self.completed_parts} - {self.status} {self.sched}')
+                                       f'{self.completed_parts}  {self.status} {self.sched}')
 
         # a led like blinking button, to react with data flow
         self.toggle_blinker()
@@ -4198,6 +4201,8 @@ class MainWindow(IView):
     def create_d_preview(self):
         p = DItem(self.downloads_frame, None, '', mode='bulk', bg=MAIN_BG)
         p.config(highlightthickness=5, highlightbackground=BTN_BG, highlightcolor=BTN_BG)
+        p.name_lbl['text'] = 'Select an item from above list to preview here'
+        p.thumbnail_label['image'] = imgs['wmap_icon']
         p.dynamic_show_hide = lambda *args: None
         p.mark_as_failed = lambda *args: None
         p.switch_view = lambda *args: None
