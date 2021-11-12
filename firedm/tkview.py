@@ -1447,11 +1447,16 @@ class Segmentbar(tk.Canvas):
 
         self.update_idletasks()
 
+    def reset(self):
+        """delete all bars"""
+        self.bars.clear()
+        self.delete('all')
+
 
 class DItem(tk.Frame):
     """representation view of one download item in downloads tab"""
 
-    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None, mode='bulk',
+    def __init__(self, parent, uid, status, bg=None, fg=None, on_toggle_callback=None, mode='compact',
                  playbtn_callback=None, delbtn_callback=None, onclick=None, ondoubleclick=None, bind_map=None,
                  rcm=None, rcm_callback=None):
 
@@ -1501,8 +1506,8 @@ class DItem(tk.Frame):
 
         self.latest_update = {}
 
-        self.mode = mode
-        self.view(mode=self.mode)
+        self.mode = self.validate_viewmode(mode)
+        self.view(mode=mode)
 
         self.apply_bindings()
 
@@ -1672,21 +1677,19 @@ class DItem(tk.Frame):
 
             # create buttons
             self.play_button = Button(self.btns_frame, image=imgs['play_icon'], command=self.playbtn_callback)
-            self.play_button.pack(side='left', padx=(0, 10))
+            self.play_button.grid(column=0, row=0, padx=(0, 10))
 
         self.delete_button = Button(self.btns_frame, image=imgs['delete_icon'], command=self.delbtn_callback)
-        self.delete_button.pack(side='left', padx=(0, 10))
+        self.delete_button.grid(column=1, row=0, padx=(0, 10))
 
         # make another info label
         self.info_lbl2 = tk.Label(self.btns_frame, bg=self.bg, fg=self.fg)
-        self.info_lbl2.pack(side='left', padx=(0, 10), pady=5)
+        self.info_lbl2.grid(column=2, row=0, padx=(0, 10), pady=5)
 
         # status icon
         self.status_icon = tk.Label(self.btns_frame, bg=self.bg, text='', fg=self.fg, image=self.blank_img, width=12,
                                     height=12, compound='center')
-        self.status_icon.pack(side='left', padx=5, pady=5)
-
-        # self.bind('<Double-Button-1>', self.ondoubleclick, exclude=[self.play_button])
+        self.status_icon.grid(column=3, row=0, padx=5, pady=5)
 
     def view_compact(self):
         self.main_frame = tk.Frame(self, bg=self.bg, highlightthickness=0, highlightbackground=BTN_BG)
@@ -1725,19 +1728,31 @@ class DItem(tk.Frame):
         self.delete_button = Button(self.main_frame, image=imgs['delete_icon'], command=self.delbtn_callback)
         self.delete_button.grid(row=0, column=6, padx=5, sticky='w')
 
-    def view(self, mode='bulk'):
+    def view(self, mode='compact'):
         """
         pack/grid widgets
         Args:
             mode(str): bulk, or compact
         """
 
+        mode = self.validate_viewmode(mode)
+
         if mode == 'bulk':
             self.view_bulk()
         else:
             self.view_compact()
 
+    def validate_viewmode(self, mode):
+        if mode == 'mix':
+            mode = 'bulk' if self.status in config.Status.active_states else 'compact'
+        elif mode not in ('bulk', 'compact'):
+            mode = 'compact'
+
+        return mode
+
     def switch_view(self, mode):
+        mode = self.validate_viewmode(mode)
+
         if self.mode != mode:
             self.mode = mode
             self.main_frame.destroy()
@@ -1788,11 +1803,11 @@ class DItem(tk.Frame):
                 self.play_button.grid_remove()
 
         elif self.mode == 'bulk':
-            if self.status == config.Status.completed:
-                self.play_button.pack_forget()
-                self.bar.grid_remove()
-                self.bar_fr.grid_remove()
-                self.segment_bar.grid_remove()
+            for widget in (self.play_button, self.bar, self.bar_fr, self.segment_bar):
+                if self.status == config.Status.completed:
+                    widget.grid_remove()
+                else:
+                    widget.grid()
 
     def dynamic_show_hide(self):
         """show / hide item based on global view filter"""
@@ -1807,7 +1822,7 @@ class DItem(tk.Frame):
     def show(self):
         """grid self"""
         side = 'bottom' if config.ditem_show_top else 'top'
-        self.pack(side=side, expand=True, fill='x', pady=0)
+        self.pack(side=side, fill='x', pady=0)
 
     def hide(self):
         """grid self"""
@@ -1932,6 +1947,8 @@ class DItem(tk.Frame):
                 pass
 
             self.dynamic_show_hide()
+
+            self.switch_view(config.view_mode)
 
         if sched:
             if status == config.Status.scheduled:
@@ -3464,6 +3481,7 @@ class MainWindow(IView):
 
         # downloads tab
         self.downloads_frame = self.create_downloads_tab()
+        self.d_preview = self.create_d_preview()
 
         # log tab
         self.log_tab = self.create_log_tab()
@@ -3600,7 +3618,7 @@ class MainWindow(IView):
         self.view_btn = Button(top_fr, text='', image=imgs['view_icon'], tooltip='view')
         self.view_btn.pack(side='left', padx=5)
 
-        view_mode_menu = ['bulk', 'compact', 'mix']
+        view_mode_menu = ['compact', 'mix']
         self.view_btn.rcm = atk.RightClickMenu(
             self.view_btn,
             view_mode_menu,
@@ -3610,7 +3628,7 @@ class MainWindow(IView):
 
         # validate view_mode
         if config.view_mode not in view_mode_menu:
-            config.view_mode = view_mode_menu[2]
+            config.view_mode = view_mode_menu[2]  # 'mix' view
 
         rcm_marker(self.view_btn.rcm, default=config.view_mode)
 
@@ -3625,6 +3643,17 @@ class MainWindow(IView):
             bind_right_click=False)
 
         rcm_marker(self.filter_btn.rcm, default=config.view_filter)
+
+        preview_var = tk.IntVar()
+
+        def preview_callback(*args):
+            if preview_var.get():
+                self.d_preview.show()
+            else:
+                self.d_preview.hide()
+
+        preview_var.trace_add('write', preview_callback )
+        atk.Checkbutton(top_fr, text='Preview', variable=preview_var).pack(side='left', padx=10)
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
@@ -4165,6 +4194,43 @@ class MainWindow(IView):
 
     # endregion
 
+    # region d_preview
+    def create_d_preview(self):
+        p = DItem(self.downloads_frame, None, '', mode='bulk', bg=MAIN_BG)
+        p.config(highlightthickness=5, highlightbackground=BTN_BG, highlightcolor=BTN_BG)
+        p.dynamic_show_hide = lambda *args: None
+        p.mark_as_failed = lambda *args: None
+        p.switch_view = lambda *args: None
+        p.show = lambda: p.pack(pady=5, fill='x')
+        return p
+
+    def switch_d_preview(self, uid):
+        ci = self.d_items[uid]
+        dp = self.d_preview
+
+        dp.uid = uid
+        dp.segment_bar.reset()
+
+        dp.thumbnail_label.config(
+            text=ci.ext if not ci.thumbnail_img else '',
+            image=ci.blank_img if not ci.thumbnail_img else ci.thumbnail_img
+        )
+
+        dp.update(**ci.latest_update)
+        dp.dynamic_view()
+
+        dp.bind('<Double-Button-1>', lambda *args, x=uid: self.controller.play_file(uid=x))
+        dp.delete_button['command'] = lambda *args, x=uid: self.delete(x)
+        dp.play_button['command'] = lambda *args, x=uid: self.toggle_download(x)
+
+    def reset_d_preview(self):
+        # the easiest way is to delete and create new one
+        self.d_preview.destroy()
+        self.d_preview = self.create_d_preview()
+        self.d_preview.show()
+
+    # endregion
+
     # region DItem
     def create_ditem(self, uid, **kwargs):
         """create new DItem and show it in downloads tab
@@ -4175,9 +4241,6 @@ class MainWindow(IView):
         """
         status = kwargs.get('status')
         mode = kwargs.get('mode', config.view_mode)
-
-        if mode == 'mix':
-            mode = 'bulk' if status in config.Status.active_states else 'compact'
 
         # check if item already created before
         if uid in self.d_items:
@@ -4293,6 +4356,9 @@ class MainWindow(IView):
             self.root.update_idletasks()
             self.d_tab.autoscroll = True
 
+        if self.d_preview.uid == uid:
+            self.reset_d_preview()
+
     def delete_selected(self):
         """remove selected download items from downloads tab
         only temp files will be removed, completed files on disk will never be deleted"""
@@ -4390,6 +4456,9 @@ class MainWindow(IView):
                 item.select(False)
 
         current_item.select()
+
+        if current_item.selected:
+            self.switch_d_preview(uid)
 
     def get_selected_items(self):
         """return a list of selected items"""
@@ -4595,9 +4664,7 @@ class MainWindow(IView):
             elif uid in self.d_items:
                 item = self.d_items[uid]
                 item.update(**kwargs)
-                if config.view_mode == 'mix':
-                    view_mode = 'bulk' if item.status in config.Status.active_states else 'compact'
-                    item.switch_view(view_mode)
+                self.d_preview.update(**kwargs)
 
         # handle signals for post processor callbacks
         elif command == 'signal':
