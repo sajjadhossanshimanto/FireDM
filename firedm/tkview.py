@@ -3628,7 +3628,7 @@ class MainWindow(IView):
 
         # validate view_mode
         if config.view_mode not in view_mode_menu:
-            config.view_mode = view_mode_menu[2]  # 'mix' view
+            config.view_mode = view_mode_menu[1]  # 'mix' view
 
         rcm_marker(self.view_btn.rcm, default=config.view_mode)
 
