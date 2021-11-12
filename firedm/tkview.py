@@ -3484,7 +3484,6 @@ class MainWindow(IView):
 
         # downloads tab
         self.downloads_frame = self.create_downloads_tab()
-        self.d_preview = self.create_d_preview()
 
         # log tab
         self.log_tab = self.create_log_tab()
@@ -3647,15 +3646,7 @@ class MainWindow(IView):
 
         rcm_marker(self.filter_btn.rcm, default=config.view_filter)
 
-        preview_var = tk.IntVar()
-
-        def preview_callback(*args):
-            if preview_var.get():
-                self.d_preview.show()
-            else:
-                self.d_preview.hide()
-
-        preview_var.trace_add('write', preview_callback )
+        preview_var = tk.BooleanVar()
         atk.Checkbutton(top_fr, text='Preview', variable=preview_var).pack(side='left', padx=10)
 
         def resume_all_handler():
@@ -3680,6 +3671,19 @@ class MainWindow(IView):
                                          autoscroll=config.autoscroll_download_tab, sbar_fg=SBAR_FG, sbar_bg=SBAR_BG)
 
         self.d_tab.pack(expand=True, fill='both')
+
+        self.d_preview = self.create_d_preview(tab)
+
+        def preview_callback(*args):
+            selected = preview_var.get()
+            config.d_preview = selected
+            if selected:
+                self.d_preview.show()
+            else:
+                self.d_preview.hide()
+
+        preview_var.trace_add('write', preview_callback)
+        preview_var.set(config.d_preview)
 
         return tab
 
@@ -4198,10 +4202,11 @@ class MainWindow(IView):
     # endregion
 
     # region d_preview
-    def create_d_preview(self):
-        p = DItem(self.downloads_frame, None, '', mode='bulk', bg=MAIN_BG)
+    def create_d_preview(self, parent=None):
+        parent = parent or self.downloads_frame
+        p = DItem(parent, None, '', mode='bulk', bg=MAIN_BG)
         p.config(highlightthickness=5, highlightbackground=BTN_BG, highlightcolor=BTN_BG)
-        p.name_lbl['text'] = 'Select an item from above list to preview here'
+        p.name_lbl['text'] = 'Select an item to preview here'
         p.thumbnail_label['image'] = imgs['wmap']
         p.dynamic_show_hide = lambda *args: None
         p.mark_as_failed = lambda *args: None
