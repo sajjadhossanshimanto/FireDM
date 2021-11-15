@@ -837,6 +837,11 @@ class Controller:
 
             # if match ---> resume, else rename
             if d.total_size == d_from_list.total_size:
+                # don't resume active items'
+                if d_from_list.status in Status.active_states:
+                    log('download is already in progress for this item')
+                    return False
+
                 log('resume is possible')
                 d.downloaded = d_from_list.downloaded
             else:
