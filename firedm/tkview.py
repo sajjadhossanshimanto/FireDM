@@ -1227,7 +1227,7 @@ class FileProperties(ttk.Frame):
         # variables
         self.title = tk.StringVar()
         self.extension = tk.StringVar()
-        self.foldervar = tk.StringVar()
+        self.size = tk.StringVar()
         self.type = tk.StringVar()
         self.subtype = tk.StringVar()
         self.resumable = tk.StringVar()
@@ -2330,7 +2330,6 @@ class PlaylistWindow(tk.Toplevel):
         self.page_combo.callback = lambda: setattr(self, 'curr_page', int(self.page_combo.selection) - 1)
         self.page_combo.pack(side='right', padx=5, pady=5)
         tk.Label(f1, text=f'Page', bg=MAIN_BG, fg=MAIN_FG).pack(side='right', padx=5, pady=5)
-
 
         f2 = tk.Frame(top_frame, bg=MAIN_BG)
         f2.pack(fill='x', expand=True, anchor='w')
