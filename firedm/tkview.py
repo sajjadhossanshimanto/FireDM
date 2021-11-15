@@ -1114,6 +1114,96 @@ filechooser = FileDialog().run
 folderchooser = FileDialog(foldersonly=True).run
 
 
+class Browse(tk.Frame):
+    """a frame contains an entry widget and browse button to browse for folders"""
+    def __init__(self, parent=None, bg=None, fg=None, label=None):
+        bg = bg or MAIN_BG
+        fg = fg or MAIN_FG
+
+        tk.Frame.__init__(self, parent, bg=bg)
+
+        # download folder -------------------------------------------------------------------------------------------
+        tk.Label(self, text=label or 'Folder:', bg=bg, fg=fg).pack(side='left')
+
+        self.foldervar = tk.StringVar()
+        folder_entry = tk.Entry(self, textvariable=self.foldervar, bg=bg, fg=fg, highlightthickness=0,
+                                relief='flat')
+        folder_entry.pack(side='left', padx=5, fill='x', expand=True)
+
+        add_bidi_support(folder_entry, render_copy_paste=True, copy_paste_menu=True, ispath=True)
+
+        # colors
+        folder_entry.bind('<FocusIn>', lambda event: folder_entry.config(bg='white', fg='black'), add='+')
+        folder_entry.bind('<FocusOut>', lambda event: folder_entry.config(bg=bg, fg=fg), add='+')
+
+        folder_entry.bind('<FocusOut>', self.update_recent_folders, add='+')
+        folder_entry.bind('<1>', self.update_recent_folders, add='+')
+
+        self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))
+
+        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True)
+        browse_btn.pack(side='left', padx=5)
+
+        self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG,
+                                              bind_left_click=True, bind_right_click=False)
+        self.recent_menu.add_command(label='Browse ...', command=self.change_folder)
+
+        self.update_recent_menu()
+
+    @property
+    def folder(self):
+        path = self.foldervar.get()
+
+        if config.operating_system == 'Linux':
+            path = derender_text(path, ispath=True)
+        return path
+
+    @folder.setter
+    def folder(self, path):
+        if config.operating_system == 'Linux':
+            path = render_text(path, ispath=True)
+
+        self.foldervar.set(path)
+
+    def on_menu_selection(self, x):
+        self.foldervar.set(x)
+        self.update_recent_folders()
+
+    def update_recent_menu(self):
+
+        if self.recent_menu.index(tk.END) >= 1:
+            self.recent_menu.delete(1, tk.END)
+
+        if config.recent_folders:
+            self.recent_menu.add_separator()
+
+            for item in config.recent_folders:
+                self.recent_menu.add_command(label=item, command=lambda x=item: self.on_menu_selection(x))
+
+    def update_recent_folders(self, *args):
+        value = self.foldervar.get().strip()
+        try:
+            if config.recent_folders[0] == value:
+                return
+
+            config.recent_folders.remove(value)
+        except:
+            pass
+
+        # add current folder value at the beginning of the list and limit list size to 10 items
+        if value:
+            config.recent_folders = [value] + config.recent_folders[:9]
+
+            self.update_recent_menu()
+
+    def change_folder(self, *args):
+        """select folder from system and update folder field"""
+        folder = folderchooser()
+        if folder:
+            self.folder = folder
+            self.update_recent_folders()
+
+
 class FileProperties(ttk.Frame):
     """file info display
 
@@ -1138,16 +1228,15 @@ class FileProperties(ttk.Frame):
         self.title = tk.StringVar()
         self.extension = tk.StringVar()
         self.foldervar = tk.StringVar()
-        self.size = tk.StringVar()
         self.type = tk.StringVar()
         self.subtype = tk.StringVar()
         self.resumable = tk.StringVar()
         self.duration = tk.StringVar()
 
+        self.create_widgets()
+
         # show default folder value
         self.update(folder=config.download_folder)
-
-        self.create_widgets()
 
     @property
     def name(self):
@@ -1162,18 +1251,12 @@ class FileProperties(ttk.Frame):
 
     @property
     def folder(self):
-        path = self.foldervar.get()
-
-        if config.operating_system == 'Linux':
-            path = derender_text(path, ispath=True)
-        return path
+        return self.browse.folder
 
     @folder.setter
-    def folder(self, path):
-        if config.operating_system == 'Linux':
-            path = render_text(path, ispath=True)
-
-        self.foldervar.set(path)
+    def folder(self, fp):
+        self.browse.folder = fp
+        set_option(download_folder=fp)
 
     def create_widgets(self):
 
@@ -1230,70 +1313,8 @@ class FileProperties(ttk.Frame):
             tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
 
         # download folder -------------------------------------------------------------------------------------------
-        label('Folder:', r=row['folder'], c=0)
-
-        folder_entry = tk.Entry(self, textvariable=self.foldervar, bg=self.bg, fg=self.fg, highlightthickness=0,
-                                  relief='flat')
-        folder_entry.grid(row=row['folder'], column=1, sticky='we', pady=5)
-
-        add_bidi_support(folder_entry, render_copy_paste=True, copy_paste_menu=True, ispath=True)
-
-        # colors
-        folder_entry.bind('<FocusIn>', lambda event: folder_entry.config(bg='white', fg='black'), add='+')
-        folder_entry.bind('<FocusOut>', lambda event: folder_entry.config(bg=self.bg, fg=self.fg), add='+')
-
-        folder_entry.bind('<FocusOut>', self.update_recent_folders, add='+')
-        folder_entry.bind('<1>', self.update_recent_folders, add='+') 
-        
-        self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))       
-
-        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True)
-        browse_btn.grid(row=row['folder'], column=2, padx=(8, 1), pady=0)
-
-        self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG,
-                                              bind_left_click=True, bind_right_click=False)
-        self.recent_menu.add_command(label='Browse ...', command=self.change_folder)
-        
-        self.update_recent_menu()
-
-    def on_menu_selection(self, x):
-        self.foldervar.set(x)
-        self.update_recent_folders()
-
-    def update_recent_menu(self):
-
-        if self.recent_menu.index(tk.END) >= 1:
-            self.recent_menu.delete(1, tk.END)
-
-        if config.recent_folders:
-            self.recent_menu.add_separator()
-        
-            for item in config.recent_folders:
-                self.recent_menu.add_command(label=item, command=lambda x=item: self.on_menu_selection(x))
-
-    def update_recent_folders(self, *args):
-        value = self.foldervar.get().strip()
-        try:
-            if config.recent_folders[0] == value:
-                return
-
-            config.recent_folders.remove(value)
-        except:
-            pass
-
-        # add current folder value at the beginning of the list and limit list size to 10 items
-        if value:
-            config.recent_folders = [value] + config.recent_folders[:9]
-
-            self.update_recent_menu()
-
-    def change_folder(self, *args):
-        """select folder from system and update folder field"""
-        folder = folderchooser()
-        if folder:
-            self.folder = folder
-            set_option(download_folder=folder)
-            self.update_recent_folders()
+        self.browse = Browse(self)
+        self.browse.grid(row=row['folder'], column=0, columnspan=3, sticky='we', pady=5)
 
     def update(self, **kwargs):
         """update widget's variable
@@ -4497,7 +4518,6 @@ class MainWindow(IView):
     # region download
     def download_btn_callback(self, download_later=False):
         """callback for download button in main tab"""
-
         # download
         self.download(name=self.file_properties.name, folder=self.file_properties.folder, download_later=download_later)
 
