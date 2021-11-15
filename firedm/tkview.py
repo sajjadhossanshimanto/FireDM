@@ -4031,7 +4031,7 @@ class MainWindow(IView):
         Button(btn_frame, text='Clear', command=self.log_text.clear).pack(side='right', padx=5)
         Button(btn_frame, text='copy Log', command=copy_log).pack(side='right', padx=5)
 
-        btn_frame.pack(pady=5, expand=True, fill='x')
+        btn_frame.pack(pady=5, fill='x')
         self.log_text.pack(expand=True, fill='both')
 
         return tab
