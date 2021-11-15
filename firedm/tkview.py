@@ -4674,7 +4674,9 @@ class MainWindow(IView):
             elif uid in self.d_items:
                 item = self.d_items[uid]
                 item.update(**kwargs)
-                self.d_preview.update(**kwargs)
+
+                if self.d_preview.uid == item.uid:
+                    self.d_preview.update(**kwargs)
 
         # handle signals for post processor callbacks
         elif command == 'signal':
