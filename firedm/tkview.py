@@ -83,9 +83,6 @@ def create_imgs():
         v = iconsbase64.__dict__[k]
 
         img = atk.create_image(b64=v, color=color, size=sizes.get(k, None))
-
-        # on mouse hover image
-        img.zoomed = atk.create_image(b64=v, color=color, size=img.width() + 5)
         imgs[k] = img
 
     imgs['blinker_icon'] = atk.create_image(b64=download_icon, color=BTN_BG, size=12)
@@ -383,7 +380,7 @@ class Button(tk.Button):
             options['fg'] = atk.calc_font_color(parent_bg)
             options['activebackground'] = parent_bg
             options['highlightbackground'] = parent_bg
-            options['highlightthickness'] = 0
+            options['highlightthickness'] = 2
             options['activeforeground'] = atk.calc_font_color(parent_bg)
             options['bd'] = 0
 
@@ -408,9 +405,9 @@ class Button(tk.Button):
         atk.configure_widget(self, **options)
 
         # on mouse hover effect
-        if image and hasattr(image, 'zoomed'):
-            self.bind('<Enter>', lambda e: self.config(image=image.zoomed), add='+')
-            self.bind('<Leave>', lambda e: self.config(image=image), add='+')
+        if image:
+            self.bind('<Enter>', lambda e: self.config(highlightbackground=options['fg']), add='+')
+            self.bind('<Leave>', lambda e: self.config(highlightbackground=options['bg']), add='+')
 
 
 class Combobox(ttk.Combobox):
@@ -792,7 +789,7 @@ class SideFrame(tk.Frame):
 
         # create image from specified path
         img = atk.create_image(fp=fp, color=color, size=size, b64=b64)
-        img.zoomed = atk.create_image(b64=b64, color=color, size=int(img.width() * 1.2))
+        img.inverted = atk.create_image(b64=b64, color=SF_FG)
 
         # create frame to hold custom widget
         f = tk.Frame(self, bg=SF_BG)
@@ -812,7 +809,7 @@ class SideFrame(tk.Frame):
         btn.grid(row=0, column=1, sticky='ewns', padx=5, pady=10)
 
         # on mouse hover effect, bind frame instead of button for smoother animation transition between side buttons
-        f.bind('<Enter>', lambda e: btn.config(image=img.zoomed))
+        f.bind('<Enter>', lambda e: btn.config(image=img.inverted))
         f.bind('<Leave>', lambda e: btn.config(image=img))
 
         # make some references
