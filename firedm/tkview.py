@@ -3199,7 +3199,7 @@ class MainWindow(IView):
                 self.root.attributes('-zoomed', True)
 
         # prevent window resize to zero
-        self.root.minsize(100, 100)
+        self.root.minsize(750, 455)
         self.root.title(f'FireDM ver.{config.APP_VERSION}')
         self.main_frame = None
 
