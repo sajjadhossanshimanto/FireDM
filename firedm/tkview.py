@@ -1806,8 +1806,6 @@ class DItem(tk.Frame):
             else:
                 img = imgs['play_icon']
             self.play_button.config(image=img)
-            self.play_button.bind('<Enter>', lambda e: self.play_button.config(image=img.zoomed))
-            self.play_button.bind('<Leave>', lambda e: self.play_button.config(image=img))
         except:
             pass
 
