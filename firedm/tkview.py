@@ -91,7 +91,7 @@ def create_imgs():
     imgs['select_icon'] = atk.create_image(b64=select_icon, color=HDG_FG)
     imgs['view_icon'] = atk.create_image(b64=view_icon, color=HDG_FG)
     imgs['filter_icon'] = atk.create_image(b64=filter_icon, color=HDG_FG)
-    imgs['wmap'] = atk.create_image(b64=wmap, color=HDG_FG, size=(160, 80))
+    imgs['wmap'] = atk.create_image(b64=wmap, color='black', size=(160, 80))
 
 
 app_icon_img = None
@@ -382,7 +382,9 @@ class Button(tk.Button):
             options['highlightbackground'] = parent_bg
             options['highlightthickness'] = 2
             options['activeforeground'] = atk.calc_font_color(parent_bg)
-            options['bd'] = 0
+            options['bd'] = 2
+            options['relief'] = 'flat'
+            options['overrelief'] = 'raised'
 
         else:
             options['bg'] = BTN_BG
@@ -391,13 +393,15 @@ class Button(tk.Button):
             options['activebackground'] = BTN_ABG
             options['activeforeground'] = BTN_AFG
             options['padx'] = 8
+            options['bd'] = 2
+            options['relief'] = 'raised'
 
         tk.Button.__init__(self, parent)
 
         if 'tooltip' in kwargs:
             tooltip_text = kwargs.pop('tooltip')
             try:
-                atk.tooltip(self, tooltip_text, xoffset=15, yoffset=15, waittime=100)
+                atk.tooltip(self, tooltip_text, xoffset=15, yoffset=15)
             except Exception as e:
                 print(e)
 
@@ -3676,8 +3680,9 @@ class MainWindow(IView):
         rcm_marker(self.filter_btn.rcm, default=config.view_filter)
 
         preview_var = tk.BooleanVar()
-        tk.Checkbutton(top_fr, text='Preview ', variable=preview_var, relief='flat', highlightthickness=0, fg=HDG_FG,
-                       bg=HDG_BG, activebackground=HDG_FG, activeforeground=HDG_BG).pack(side='left', padx=10)
+
+        Checkbutton(top_fr, text=' Preview ', variable=preview_var, fg=HDG_FG, activeforeground=HDG_FG,
+                    bg=HDG_BG, activebackground=HDG_BG, ).pack(side='left', padx=10)
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
@@ -3687,11 +3692,8 @@ class MainWindow(IView):
             else:
                 self.stop_all()
 
-        self.resume_all_btn = Button(top_fr, text='Resume All', bg=SF_BG, fg=SF_BTN_BG, command=resume_all_handler)
+        self.resume_all_btn = Button(top_fr, text='Resume All', bg=HDG_BG, fg=HDG_FG, command=resume_all_handler)
         self.resume_all_btn.pack(side='right', padx=5)
-
-        self.resume_all_btn.bind('<Enter>', lambda e: self.resume_all_btn.config(text=' ' + self.resume_all_btn['text'] + ' '))
-        self.resume_all_btn.bind('<Leave>', lambda e: self.resume_all_btn.config(text=self.resume_all_btn['text'].strip()))
 
         self.stat_lbl = tk.Label(tab, text='', bg=SF_BG, fg=SF_BTN_BG, anchor='w')
         self.stat_lbl.pack(fill='x', padx=0, pady=2, ipadx=5)
