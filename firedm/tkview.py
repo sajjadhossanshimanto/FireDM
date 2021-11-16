@@ -4014,13 +4014,17 @@ class MainWindow(IView):
         separator()
 
         # ------------------------------------------------------------------------------------Debugging options---------
-        heading('Debugging:')
-        CheckOption(tab, 'keep temp files / folders after done downloading for debugging.',
-                    key='keep_temp').pack(anchor='w')
-        CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"',
-                    key='TEST_MODE').pack(anchor='w')
-
-        separator()
+        # debugging shouldn't be available for normal users
+        # will reset these options in case it is previously stored in user config file
+        config.TEST_MODE = False
+        config.keep_temp = False
+        # heading('Debugging:')
+        # CheckOption(tab, 'keep temp files / folders after done downloading for debugging.',
+        #             key='keep_temp').pack(anchor='w')
+        # CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"',
+        #             key='TEST_MODE').pack(anchor='w')
+        #
+        # separator()
 
         # add padding
         for w in tab.pack_slaves():
