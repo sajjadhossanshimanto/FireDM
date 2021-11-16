@@ -150,32 +150,6 @@ def rename(d):
     return d
 
 
-def download_simulator(d):
-    print('start download simulator for id:', d.uid, d.name)
-
-    speed = 200  # kb/s
-    d.status = Status.downloading
-
-    if d.downloaded >= d.total_size:
-        d.downloaded = 0
-
-    while True:
-        time.sleep(1 / 2)
-        # print(d.progress)
-
-        d.downloaded += speed // 2 * 1024
-        if d.downloaded >= d.total_size:
-            d.status = Status.completed
-            d.downloaded = d.total_size
-            print('download simulator completed for:', d.uid, d.name)
-
-            break
-
-        if d.status == Status.cancelled:
-            print('download simulator cancelled for:', d.uid, d.name)
-            break
-
-
 def download_thumbnail(d):
     """download thumbnail
 
@@ -909,10 +883,7 @@ class Controller:
                     # retry multiple times to download and auto refresh expired url
                     for n in range(config.refresh_url_retries + 1):
                         # start brain in a separate thread
-                        if config.simulator:
-                            t = Thread(target=download_simulator, daemon=True, args=(d,))
-                        else:
-                            t = Thread(target=brain, daemon=False, args=(d,))
+                        t = Thread(target=brain, daemon=False, args=(d,))
                         t.start()
 
                         # wait thread to end

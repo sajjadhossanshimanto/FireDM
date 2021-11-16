@@ -204,13 +204,6 @@ segment files for errors.
 crash application and show detailed error description, useful when
 running FireDM from source.
 
-### ThreadPoolExecuter vs individual threads:
-ThreadPoolExecuter could have less memory footprint but not much,
-however individual threads are more flexible to use.
-
-### Download Simulator:
-from name, FireDM will fake downloading a file without writing to disk or
-access network, for testing only.
 
 ---
 

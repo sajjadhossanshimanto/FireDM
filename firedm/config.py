@@ -157,7 +157,6 @@ log_level = 2  # standard=1, verbose=2, debug=3
 log_callbacks = []
 log_popup_callback = None
 test_mode = False
-simulator = False
 
 # ---------------------------------------------------------------------------------------GUI options--------------------
 DEFAULT_THEME = 'Dark'

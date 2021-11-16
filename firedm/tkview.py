@@ -4019,7 +4019,6 @@ class MainWindow(IView):
                     key='keep_temp').pack(anchor='w')
         CheckOption(tab, 'Re-raise all caught exceptions / errors for debugging "Application will crash on any Error"',
                     key='TEST_MODE').pack(anchor='w')
-        CheckOption(tab, 'Use Download Simulator', key='SIMULATOR').pack(anchor='w')
 
         separator()
 
