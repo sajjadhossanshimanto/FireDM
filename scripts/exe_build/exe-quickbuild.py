@@ -72,6 +72,7 @@ print('update packages')
 # update firedm pkg
 src_folder = os.path.join(project_folder, 'firedm')
 target_folder = os.path.join(lib_folder, 'firedm')
+shutil.rmtree(target_folder, ignore_errors=True)
 shutil.copytree(src_folder, target_folder,  dirs_exist_ok=True)
 
 # update other packages
