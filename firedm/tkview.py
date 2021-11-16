@@ -78,7 +78,8 @@ def create_imgs():
     color = BTN_BG
 
     for k in ('refresh_icon', 'playlist_icon', 'subtitle_icon', 'about_icon', 'folder_icon',
-              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon', 'bat_icon', 'audio_icon'):
+              'play_icon', 'pause_icon', 'delete_icon', 'undo_icon', 'bat_icon', 'audio_icon',
+              'clear_icon', 'paste_icon'):
         v = iconsbase64.__dict__[k]
 
         img = atk.create_image(b64=v, color=color, size=sizes.get(k, None))
@@ -3561,13 +3562,20 @@ class MainWindow(IView):
         self.url_var = tk.StringVar()
         self.url_var.trace_add('write', self.url_entry_callback)
 
-        self.url_entry = tk.Entry(home_tab, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR, insertbackground=MAIN_FG,
+        urlfr = tk.Frame(home_tab, bg=MAIN_BG)
+        urlfr.grid(row=0, column=0, columnspan=4, padx=5, pady=(45, 5), sticky='ew')
+        self.url_entry = tk.Entry(urlfr, bg=MAIN_BG, highlightcolor=ENTRY_BD_COLOR, insertbackground=MAIN_FG,
                                   highlightbackground=ENTRY_BD_COLOR, fg=MAIN_FG, textvariable=self.url_var)
-        self.url_entry.grid(row=0, column=0, columnspan=4, padx=5, pady=(45, 5), sticky='ew', ipady=8, ipadx=5)
+        self.url_entry.pack(side='left', fill='x', expand=True, ipady=8, ipadx=5)
 
         atk.RightClickMenu(self.url_entry, ['Cut', 'Copy', 'Paste'],
                            callback=lambda selected: self.url_entry.event_generate(f'<<{selected}>>'),
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
+
+        Button(urlfr, image=imgs['paste_icon'], command=lambda: self.url_var.set(self.paste()),
+               tooltip='clear and paste').pack(side='left', padx=10)
+        Button(urlfr, image=imgs['clear_icon'], command=lambda: self.url_var.set(''),
+               tooltip='clear').pack(side='left')
 
         # retry button -------------------------------------------------------------------------------------------------
         self.retry_btn = Button(home_tab, image=imgs['refresh_icon'], command=lambda: self.refresh_url(self.url), tooltip='Retry')
