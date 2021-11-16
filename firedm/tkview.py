@@ -399,7 +399,7 @@ class Button(tk.Button):
         if 'tooltip' in kwargs:
             tooltip_text = kwargs.pop('tooltip')
             try:
-                atk.tooltip(self, tooltip_text, xoffset=15, yoffset=15)
+                atk.tooltip(self, tooltip_text, xoffset=15, yoffset=15, waittime=100)
             except Exception as e:
                 print(e)
 
