@@ -3673,7 +3673,8 @@ class MainWindow(IView):
         rcm_marker(self.filter_btn.rcm, default=config.view_filter)
 
         preview_var = tk.BooleanVar()
-        atk.Checkbutton(top_fr, text='Preview', variable=preview_var).pack(side='left', padx=10)
+        tk.Checkbutton(top_fr, text='Preview ', variable=preview_var, relief='flat', highlightthickness=0, fg=HDG_FG,
+                       bg=HDG_BG, activebackground=HDG_FG, activeforeground=HDG_BG).pack(side='left', padx=10)
 
         def resume_all_handler():
             caption = self.resume_all_btn['text'].strip()
