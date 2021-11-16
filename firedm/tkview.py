@@ -1141,7 +1141,7 @@ class Browse(tk.Frame):
 
         self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))
 
-        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True)
+        browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True, tooltip='change folder')
         browse_btn.pack(side='left', padx=5)
 
         self.recent_menu = atk.RightClickMenu(browse_btn, [], bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG,
@@ -2282,8 +2282,8 @@ class PlaylistWindow(tk.Toplevel):
         # bind window close action
         self.protocol("WM_DELETE_WINDOW", self.close)
 
-        width = 580
-        height = 345
+        width = int(main.root.winfo_width())
+        height = int(main.root.winfo_height())
         center_window(self, width=width, height=height, reference=self.parent)
 
         self.title('Playlist download window')
@@ -2313,13 +2313,14 @@ class PlaylistWindow(tk.Toplevel):
     def create_widgets(self):
         main_frame = tk.Frame(self, bg=MAIN_BG)
         top_frame = tk.Frame(main_frame, bg=MAIN_BG)
-        videos_frame = atk.ScrollableFrame(main_frame, bg=MAIN_BG, hscroll=False)
+        videos_frame = atk.ScrollableFrame(main_frame, bg=MAIN_BG, hscroll=False, sbar_bg=SBAR_BG, sbar_fg=SBAR_FG)
         videos_frame.columnconfigure(0, weight=1)
         bottom_frame = tk.Frame(main_frame, bg=MAIN_BG)
 
         f1 = tk.Frame(top_frame, bg=MAIN_BG)
         f1.pack(fill='x', expand=True, anchor='w')
-        tk.Label(f1, text=f'Total videos: {self.playlist_count}, Selected:', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+        tk.Label(f1, text=f'Total videos: {self.playlist_count}, Selected:', bg=MAIN_BG,
+                 fg=MAIN_FG).pack(side='left', padx=5, pady=5)
         tk.Label(f1, textvariable=self.selected_videos_num, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=2, pady=5)
 
         Button(f1, text='Next', command=self.next_page).pack(side='right', padx=5, pady=5)
@@ -2364,8 +2365,12 @@ class PlaylistWindow(tk.Toplevel):
                command=lambda: self.download(download_later=True)).pack(side='right', padx=5)
         Button(bottom_frame, text='Download', command=self.download).pack(side='right', padx=5)
 
-        self.total_size = tk.StringVar()
-        tk.Label(bottom_frame, textvariable=self.total_size, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5)
+        self.browse = Browse(bottom_frame)
+        self.browse.pack(side='left', padx=5, fill='x', expand=True)
+        self.browse.folder = config.download_folder
+
+        self.total_size = tk.StringVar(value='Total Size ≈ 0')
+        tk.Label(bottom_frame, textvariable=self.total_size, bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=5, pady=5, fill='x', expand=True)
 
         main_frame.pack(expand=True, fill='both', padx=(10, 0), pady=(10, 0))
 
@@ -2499,7 +2504,8 @@ class PlaylistWindow(tk.Toplevel):
 
     def download(self, **kwargs):
         selected_videos = sorted(self.selected_videos.keys())
-        self.controller.download_playlist(selected_videos, subtitles=self.selected_subs, **kwargs)
+        self.controller.download_playlist(selected_videos, subtitles=self.selected_subs,
+                                          folder=self.browse.folder, **kwargs)
         self.close()
 
     def update_view(self, video_idx=None, stream_menu=None, stream_idx=None):

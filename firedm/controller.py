@@ -1067,16 +1067,18 @@ class Controller:
               selected_videos (iterable): indexes of selected videos in self.playlist
               subtitles (dict): key=language, value=selected extension
         """
+
+        kwargs.setdefault('folder', config.download_folder)
+
         for vid_idx in selected_videos:
             d = self.playlist[vid_idx]
-            kwargs['folder'] = config.download_folder
 
             # add number to name
             if config.use_playlist_numbers:
                 kwargs['name'] = f'{vid_idx + 1}- {d.name}'
 
             self.download(d, silent=True, **kwargs)
-            time.sleep(0.5)
+            time.sleep(1)
 
             if subtitles:
                 self.download_subtitles(subtitles, d=d)
