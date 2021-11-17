@@ -572,12 +572,8 @@ class Controller:
         # # update config module with custom settings
         # config.__dict__.update(**kwargs)
 
-    def _save_settings(self):
+    def save_d_map(self):
         if not self.ignore_dlist:
-            # Save setting to disk
-            # setting.save_setting()
-
-            # save d_map
             setting.save_d_map(self.d_map)
 
     # endregion
@@ -1668,7 +1664,7 @@ class Controller:
             abort_cmd = 'shutdown -c'
 
         # save settings
-        self._save_settings()
+        self.save_d_map()
 
         err, output = run_command(cmd)
         if err:
@@ -1732,7 +1728,7 @@ class Controller:
         for d in self.d_map.values():
             self.stop_download(d.uid)
 
-        self._save_settings()
+        self.save_d_map()
 
     def reset(self):
         """reset controller and cancel ongoing operation"""
