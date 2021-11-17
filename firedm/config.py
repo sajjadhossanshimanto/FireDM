@@ -182,9 +182,9 @@ window_size = DEFAULT_WINDOW_SIZE
 window_maximized = False
 force_window_maximize = False
 
-view_mode = 'compact'
+view_mode = 'mix'
 view_filter = 'ALL'  # show all
-d_preview = True  # preview for download items
+d_preview = False  # preview for download items
 
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
