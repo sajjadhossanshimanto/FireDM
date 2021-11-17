@@ -4684,12 +4684,11 @@ class MainWindow(IView):
                 ditem.destroy()
                 self.d_items.pop(uid)
                 ditem = None
-
+            
             if not ditem:
                 self.select_tab('Downloads')
 
             self.create_ditem(**kwargs)
-            self.on_toggle_ditem(uid)
 
         # update current item
         elif command == 'update':
