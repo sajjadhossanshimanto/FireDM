@@ -1205,18 +1205,25 @@ class Controller:
         """auto check for firedm update"""
         if config.check_for_update and not config.disable_update_feature:
             today = date.today()
-            try:
-                last_check = date(*config.last_update_check)
-            except:
-                last_check = today
-                config.last_update_check = (today.year, today.month, today.day)
 
-            delta = today - last_check
-            if delta.days >= config.update_frequency:
-                res = self.get_user_response(f'Check for FireDM update?\nLast check was {delta.days} days ago',
-                                             options=['Ok', 'Cancel'])
-                if res == 'Ok':
-                    self.check_for_update()
+            if update.parse_version(config.APP_VERSION) > update.parse_version(config.updater_version):
+                config.last_update_check = (today.year, today.month, today.day)
+                config.updater_version = config.APP_VERSION
+                # log('Running newer FireDM version, reset last_update_check')
+
+            else:
+                try:
+                    last_check = date(*config.last_update_check)
+                except:
+                    last_check = today
+                    config.last_update_check = (today.year, today.month, today.day)
+
+                delta = today - last_check
+                if delta.days >= config.update_frequency:
+                    res = self.get_user_response(f'Check for FireDM update?\nLast check was {delta.days} days ago',
+                                                 options=['Ok', 'Cancel'])
+                    if res == 'Ok':
+                        self.check_for_update()
 
     def rollback_pkg_update(self, pkg):
         try:

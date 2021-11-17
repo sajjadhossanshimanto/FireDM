@@ -23,7 +23,7 @@ settings_keys = [
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
     'use_playlist_numbers', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode', 'window_maximized',
-    'force_window_maximize', 'reverse_playlist', 'd_preview'
+    'force_window_maximize', 'reverse_playlist', 'd_preview', 'updater_version'
 ]
 
 # ----------------------------------------------------------------------------------------General ----------------------
@@ -135,6 +135,7 @@ disable_update_feature = False
 check_for_update = not disable_update_feature
 update_frequency = 7  # days
 last_update_check = None  # date format (year, month, day)
+updater_version = ''  # application version that did last update check
 
 youtube_dl_version = None
 yt_dlp_version = None
