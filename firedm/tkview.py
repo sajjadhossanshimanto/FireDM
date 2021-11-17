@@ -3695,7 +3695,7 @@ class MainWindow(IView):
         self.resume_all_btn = Button(top_fr, text='Resume All', bg=HDG_BG, fg=HDG_FG, command=resume_all_handler)
         self.resume_all_btn.pack(side='right', padx=5, pady=1)
 
-        self.stat_lbl = tk.Label(tab, text='', bg=MAIN_FG, fg=MAIN_BG, anchor='w')
+        self.stat_lbl = tk.Label(tab, text='', bg=HDG_BG, fg=HDG_FG, anchor='w')
         self.stat_lbl.pack(fill='x', padx=0, pady=2, ipadx=5)
 
         # Scrollable
@@ -4514,7 +4514,9 @@ class MainWindow(IView):
         count = len(self.get_selected_items())
         s = [item.status for item in self.d_items.values()]
 
-        # self.select_lbl['text'] = f'  Selected [{count} of {len(self.d_items)}]'
+        size = 3 * int(gui_font['size']) // 4
+        self.stat_lbl['font'] = f'any {size}'
+
         self.stat_lbl['text'] = f'Selected: [{count} of {len(self.d_items)}] - ' \
                                 f'Active: {sum([s.count(x) for x in config.Status.active_states])}, ' \
                                 f'Completed: {s.count(config.Status.completed)},  ' \
