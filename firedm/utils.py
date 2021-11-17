@@ -439,7 +439,8 @@ def rename_file(oldname=None, newname=None, verbose=False):
         return False
 
 
-def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblocking=False, ignore_stderr=False):
+def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblocking=False,
+                ignore_stderr=False, striplines=True):
     """
     run command in a subprocess
 
@@ -492,7 +493,8 @@ def run_command(cmd, verbose=True, shell=False, hide_window=True, d=None, nonblo
         output = ''
 
         for line in process.stdout:
-            line = line.strip()
+            if striplines:
+                line = line.strip()
             output += line
             if verbose:
                 log(line)

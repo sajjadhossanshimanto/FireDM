@@ -14,6 +14,7 @@
         Model and controller has an observer system where model will notify controller when changed, in turn
         controller will update the current view
 """
+import re
 from datetime import datetime
 import os, sys, time
 from copy import copy
@@ -64,16 +65,17 @@ def check_ffmpeg():
 
     # search in current app directory then default setting folder
     try:
-        if config.operating_system == 'Windows':
-            for folder in [config.current_directory, config.global_sett_folder]:
-                for file in os.listdir(folder):
-                    # print(file)
-                    if file == 'ffmpeg.exe':
-                        found = True
-                        config.ffmpeg_actual_path = os.path.join(folder, file)
-                        break
-                if found:  # break outer loop
+        fn = 'ffmpeg.exe' if config.operating_system == 'Windows' else 'ffmpeg'
+        # if config.operating_system == 'Windows':
+        for folder in [config.current_directory, config.global_sett_folder]:
+            for file in os.listdir(folder):
+                # print(file)
+                if file == fn:
+                    found = True
+                    config.ffmpeg_actual_path = os.path.join(folder, file)
                     break
+            if found:  # break outer loop
+                break
     except:
         pass
 
@@ -89,7 +91,20 @@ def check_ffmpeg():
             config.ffmpeg_actual_path = os.path.realpath(output)
 
     if found:
-        log('ffmpeg checked ok! - at: ', config.ffmpeg_actual_path, log_level=2)
+        msg = f'ffmpeg checked ok! - at: {config.ffmpeg_actual_path}'
+
+        # get version
+        cmd = f'"{config.ffmpeg_actual_path}" -version'
+        error, out = run_command(cmd, verbose=False, striplines=False)
+        if not error:
+            try:
+                # ffmpeg version 4.3.2-0+deb11u1ubuntu1 Copyright (c) 2000-2021 the FFmpeg developers
+                match = re.match(r'ffmpeg version (.*?) Copyright', out, re.IGNORECASE)
+                config.ffmpeg_version = match.groups()[0]
+                msg += f', version: {config.ffmpeg_version}'
+            except:
+                pass
+        log(msg, log_level=2)
         return True
     else:
         log(f'can not find ffmpeg!!, install it, or add executable location to PATH, or copy executable to ',
@@ -184,7 +199,7 @@ def log_runtime_info():
     log('operating system:', config.operating_system_info)
     log('Python version:', sys.version)
     log('current working directory:', config.current_directory)
-    log('FFMPEG:', config.ffmpeg_actual_path)
+    log(f'FFMPEG: {config.ffmpeg_actual_path}, version: {config.ffmpeg_version}')
 
 
 def create_video_playlist(url, ytdloptions=None):

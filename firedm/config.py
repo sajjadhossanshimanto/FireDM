@@ -99,6 +99,7 @@ video_extractors_list = ['youtube_dl', 'yt_dlp']
 active_video_extractor = 'yt_dlp'
 
 ffmpeg_actual_path = None
+ffmpeg_version = ''
 ffmpeg_download_folder = sett_folder
 
 # ---------------------------------------------------------------------------------------Workarounds--------------------
