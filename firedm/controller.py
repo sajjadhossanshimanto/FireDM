@@ -1165,6 +1165,14 @@ class Controller:
 
             res = self.get_user_response(msg, options)
             if res == options[0]:
+
+                # check write permission
+                tf = update.get_target_folder('firedm')
+                if tf and not check_write_permission(tf):
+                    log('Permission error:',
+                        'Run FireDM as admin to install updates', showpopup=True)
+                    return
+
                 # start updating modules
                 done_pkgs = {}
                 for pkg in new_pkgs:
@@ -1227,6 +1235,13 @@ class Controller:
 
     def rollback_pkg_update(self, pkg):
         try:
+            # check write permission
+            tf = update.get_target_folder(pkg)
+            if tf and not check_write_permission(tf):
+                log('Permission error:',
+                    'Run FireDM as admin to rollback updates', showpopup=True)
+                return
+
             run_thread(update.rollback_pkg_update, pkg, daemon=True)
         except Exception as e:
             log(f'failed to restore {pkg}:', e)
