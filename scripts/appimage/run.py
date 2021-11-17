@@ -130,6 +130,7 @@ from firedm import FireDM, config
 
 config.isappimage = True
 config.appimage_update_folder = appimage_update_folder
+config.ffmpeg_actual_path = os.path.join(AppDir, 'usr/bin/ffmpeg')
 
 # fix second argument is an empty string
 if len(sys.argv) > 1 and not sys.argv[1]:

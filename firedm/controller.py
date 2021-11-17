@@ -62,22 +62,27 @@ def check_ffmpeg():
 
     log('check ffmpeg availability?', log_level=2)
     found = False
+    fn = 'ffmpeg.exe' if config.operating_system == 'Windows' else 'ffmpeg'
+
+    # check in predefined path
+    if os.path.isfile(config.ffmpeg_actual_path):
+        found = True
 
     # search in current app directory then default setting folder
-    try:
-        fn = 'ffmpeg.exe' if config.operating_system == 'Windows' else 'ffmpeg'
-        # if config.operating_system == 'Windows':
-        for folder in [config.current_directory, config.global_sett_folder]:
-            for file in os.listdir(folder):
-                # print(file)
-                if file == fn:
-                    found = True
-                    config.ffmpeg_actual_path = os.path.join(folder, file)
+    if not found:
+        try:
+            # if config.operating_system == 'Windows':
+            for folder in [config.current_directory, config.global_sett_folder]:
+                for file in os.listdir(folder):
+                    # print(file)
+                    if file == fn:
+                        found = True
+                        config.ffmpeg_actual_path = os.path.join(folder, file)
+                        break
+                if found:  # break outer loop
                     break
-            if found:  # break outer loop
-                break
-    except:
-        pass
+        except:
+            pass
 
     # Search in the system
     if not found:
