@@ -3641,7 +3641,7 @@ class MainWindow(IView):
         top_fr.pack(fill='x', pady=(5, 0), padx=0)
 
         self.select_btn = Button(top_fr, text='', image=imgs['select_icon'], tooltip='select')
-        self.select_btn.pack(side='left', padx=5, pady=10)
+        self.select_btn.pack(side='left', padx=5)
 
         self.select_btn.rcm = atk.RightClickMenu(
             self.select_btn,
@@ -3693,9 +3693,9 @@ class MainWindow(IView):
                 self.stop_all()
 
         self.resume_all_btn = Button(top_fr, text='Resume All', bg=HDG_BG, fg=HDG_FG, command=resume_all_handler)
-        self.resume_all_btn.pack(side='right', padx=5)
+        self.resume_all_btn.pack(side='right', padx=5, pady=1)
 
-        self.stat_lbl = tk.Label(tab, text='', bg=SF_BG, fg=SF_BTN_BG, anchor='w')
+        self.stat_lbl = tk.Label(tab, text='', bg=MAIN_FG, fg=MAIN_BG, anchor='w')
         self.stat_lbl.pack(fill='x', padx=0, pady=2, ipadx=5)
 
         # Scrollable
