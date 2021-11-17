@@ -886,6 +886,9 @@ class Controller:
                 # add to download map
                 self.d_map[d.uid] = d
 
+                # save on disk
+                self.save_d_map()
+
                 if not download_later:
 
                     # if max concurrent downloads exceeded, this download job will be added to pending queue
