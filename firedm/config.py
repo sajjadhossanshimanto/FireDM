@@ -161,7 +161,7 @@ log_popup_callback = None
 test_mode = False
 
 # ---------------------------------------------------------------------------------------GUI options--------------------
-DEFAULT_THEME = 'Dark'
+DEFAULT_THEME = 'Orange_Black'
 current_theme = DEFAULT_THEME
 gui_font = {}
 gui_font_size_default = 10
