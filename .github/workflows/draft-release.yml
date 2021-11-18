@@ -66,7 +66,7 @@ jobs:
 
           **Linux: [.AppImage file]**
           - AppImage file, portable, no installation needed, download and make file executable by right clicking the file>Properties>Permissions>Allow executing file as a program, or from terminal by `chmod +x FireDM_xxx.AppImage`
-          - ffmpeg is included, [why?](https://github.com/firedm/FireDM/issues/360).
+          - ffmpeg is not included in this image and must be available on your system, to install ffmpeg you can `sudo apt install ffmpeg` on debian based or ` sudo pacman -S ffmpeg` on Arch based
           - The binary version ".AppImage" is prepared by "appimage-builder" on linuxmint, and tested on ubuntu 20.04 and Manjaro kde
           ---
 
