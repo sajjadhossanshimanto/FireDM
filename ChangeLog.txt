@@ -1,3 +1,27 @@
+2021.11.18:
+- dynamic view filter, issue #333
+- fix video stuck at 99%, issue  #336
+- fix os notification on windows, to originate from App icon instead of a side blank icon, issue #330.
+- respect original filename case, issue #330
+- create timezone aware server timestamp, issue #286
+- fix AppImage doesn't update to newer FireDM version, issue #334.
+- fix log tab expand.
+- prevent downloading an item which already in progress #350 - e.g. press download button twice
+- CMD blinking on screen while retrieving information from the given link #344, #330
+- choose download folder in playlist window, issue #316
+- set playlist window to match main window size.
+- add Paste & Clear buttons for link bar #341 and #349
+- replace button's zoom on mouse hover by highlight rectangle
+- set FireDM window minimum width and height #340
+- included updated and fixed ffmpeg version in windows release.
+- save dlist on every change. #295.
+- fix last update check closes #339.
+- [install updates] ask user to run App with admin privilege, in case of permission error, closes #302
+- add video/audio duration to home tab, closes #296, thanks to @fidele000
+- remove max size limit for popup and fix widgets expand
+- [downloads tab] add download item preview and remove bulk view for better performance
+- fix log tab expand
+
 2021.11.4:
 - fix resume support identification for missing "accept-ranges" header, issue #143.
 - add helper button to set proxy scheme/prefix, issue #285.
