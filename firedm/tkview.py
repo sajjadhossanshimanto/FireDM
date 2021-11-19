@@ -4296,6 +4296,8 @@ class MainWindow(IView):
             ('<Button-3>', lambda event, x=uid: self.on_item_rightclick(x)),
             ('<Shift-1>', lambda event, x=uid: self.on_shift_click(x)),
             ('<Delete>', lambda event: self.delete_selected()),
+            # delete downloaded file on disk
+            ('<d><e><l><Delete>', lambda event: self.delete_selected(deltarget=True)),
             ('<Return>', lambda event: self.open_selected_file())
         )
 
@@ -4377,78 +4379,52 @@ class MainWindow(IView):
         for item in self.get_selected_items():
             self.stop_download(item.uid)
 
-    def delete(self, uid):
-        """delete download item"""
-
-        res = self.show_popup(7)
-
-        if res != 'Yes':
-            return
-
-        # temporarily disable autoscroll
-        if config.autoscroll_download_tab:
-            self.d_tab.autoscroll = False
-
-        # pop d
-        d = self.d_items.pop(uid)
-
-        d.destroy()
-
-        self.controller.delete(uid)
-
-        if config.autoscroll_download_tab:
-            # enable autoscroll
-            self.root.update_idletasks()
-            self.d_tab.autoscroll = True
-
-        if self.d_preview.uid == uid:
-            self.reset_d_preview()
-
-    def delete_selected(self):
+    def delitems(self, items, deltarget=False):
         """remove selected download items from downloads tab
-        only temp files will be removed, completed files on disk will never be deleted"""
-        selected_items = self.get_selected_items()
-        num = len(selected_items)
-        if not num:
-            return
+        temp files will be removed, completed files on disk will also get deleted if deltarget=True
 
-        elif num == 1:
-            item = selected_items[0]
-            self.delete(item.uid)
-            return
-
-        # get user confirmation
+        Args:
+            items(iterable): list or tuple of DItems
+            deltarget(bool): if True it will delete target file on disk
+        """
         res = self.show_popup(7)
 
-        if res != 'Yes':
-            return
+        if res == 'Yes':
+            # actions before delete
+            # temporarily disable autoscroll
+            if config.autoscroll_download_tab:
+                self.d_tab.autoscroll = False
 
-        # temporarily disable autoscroll
-        if config.autoscroll_download_tab:
-            self.d_tab.autoscroll = False
-
-        deleted = []
-        # remove from gui
-        for uid, item in self.d_items.items():
-            if item.selected:
-                deleted.append(uid)
+            for item in items:
                 item.destroy()
+                self.controller.delete(item.uid, deltarget=deltarget)
 
-        self.d_items = {k: v for k, v in self.d_items.items() if k not in deleted}
+            # rebuild d_items dict
+            self.d_items = {uid: item for uid, item in self.d_items.items() if item not in items}
 
-        self.update_stat_lbl()
+            # actions after delete
+            # solve canvas doesn't auto resize itself
+            self.d_tab.scrolltotop()
 
-        # actual DownloadItem remove by controller
-        for uid in deleted:
-            self.controller.delete(uid)
-
-        # solve canvas doesn't auto resize itself
-        self.d_tab.scrolltotop()
-
-        if config.autoscroll_download_tab:
             # enable autoscroll
-            self.root.update_idletasks()
-            self.d_tab.autoscroll = True
+            if config.autoscroll_download_tab:
+                self.root.update_idletasks()
+                self.d_tab.autoscroll = True
+
+            if self.d_preview.uid in [item.uid for item in items]:
+                self.reset_d_preview()
+
+            self.update_stat_lbl()
+
+    def delete(self, uid, deltarget=False):
+        """delete download item"""
+        self.delitems((self.d_items[uid],), deltarget=deltarget)
+
+    def delete_selected(self, deltarget=False):
+        """delete selected download items
+        """
+        selected_items = self.get_selected_items()
+        self.delitems(selected_items, deltarget=deltarget)
 
     def switch_view(self, mode):
         config.view_mode = mode

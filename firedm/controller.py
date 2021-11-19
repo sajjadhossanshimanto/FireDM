@@ -1374,10 +1374,11 @@ class Controller:
         open_folder(d.folder)
 
     @threaded
-    def delete(self, uid):
+    def delete(self, uid, deltarget=False):
         """delete download item from the list
         Args:
             uid (str): unique identifier property for a download item in self.d_map
+            deltarget(bool): if True it will delete target file on disk
         """
 
         d = self.d_map.pop(uid)
@@ -1386,6 +1387,10 @@ class Controller:
 
         # delete files
         d.delete_tempfiles()
+
+        # delete target file
+        if deltarget:
+            delete_file(d.target_file)
 
     # endregion
 
