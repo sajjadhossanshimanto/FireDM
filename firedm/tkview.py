@@ -525,7 +525,7 @@ class Popup(tk.Toplevel):
 
     """
     def __init__(self, *args, buttons=None, parent=None, title='Attention', get_user_input=False, default_user_input='',
-                 bg=None, fg=None, custom_widget=None, optout_id=None):
+                 bg=None, fg=None, custom_widget=None, optout_id=None, font=None):
         """initialize
 
         Args:
@@ -550,6 +550,7 @@ class Popup(tk.Toplevel):
         self.buttons = buttons or ['Ok']
         self.bg = bg or MAIN_BG
         self.fg = fg or MAIN_FG
+        self.font = font
         self.window_title = title
         self.get_user_input = get_user_input
         self.default_user_input = default_user_input
@@ -645,7 +646,7 @@ class Popup(tk.Toplevel):
         msg_height = len(self.msg.splitlines())
         if msg_height < 4:
             AutoWrappingLabel(main_frame, text=self.msg, bg=self.bg, fg=self.fg,
-                              width=40).pack(side='top', fill='both', expand=True, padx=5, pady=5)
+                              width=40, font=self.font).pack(side='top', fill='both', expand=True, padx=5, pady=5)
         else:
             txt = atk.ScrolledText(main_frame, bg=self.bg, fg=self.fg, wrap=True, autoscroll=False, hscroll=False,
                                    height=min(15, msg_height + 1))
@@ -4299,7 +4300,7 @@ class MainWindow(IView):
             ('<Shift-1>', lambda event, x=uid: self.on_shift_click(x)),
             ('<Delete>', lambda event: self.delete_selected()),
             # delete downloaded file on disk
-            ('<d><e><l><Delete>', lambda event: self.delete_selected(deltarget=True)),
+            ('<Shift-Delete>', lambda event: self.delete_selected(deltarget=True)),
             ('<Return>', lambda event: self.open_selected_file())
         )
 
@@ -4389,7 +4390,12 @@ class MainWindow(IView):
             items(iterable): list or tuple of DItems
             deltarget(bool): if True it will delete target file on disk
         """
-        res = self.show_popup(7)
+
+        if deltarget:
+            res = self.popup('SHIFT-DELETE file(s) permanently????', title='WARNING', buttons=('Yes', 'No'),
+                             bg='white', fg='red', font='any 14 bold')
+        else:
+            res = self.show_popup(7)
 
         if res == 'Yes':
             # actions before delete

@@ -281,7 +281,7 @@ popups = {
 
     7: {'tag': 'delete-item',
         'description': 'Confirm when deleting an item from download list.',
-        'body': 'Remove item(s) from the list?\nAre you sure',
+        'body': 'Remove item(s) from the list?',
         'options': ['Yes', 'Cancel'],
         'default': 'Yes',
         'show': True
