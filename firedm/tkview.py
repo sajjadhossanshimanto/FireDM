@@ -4270,9 +4270,11 @@ class MainWindow(IView):
 
     def reset_d_preview(self):
         # the easiest way is to delete and create new one
+        shown = self.d_preview.winfo_viewable()
         self.d_preview.destroy()
         self.d_preview = self.create_d_preview()
-        self.d_preview.show()
+        if shown:
+            self.d_preview.show()
 
     # endregion
 
