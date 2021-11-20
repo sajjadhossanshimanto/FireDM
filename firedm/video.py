@@ -483,14 +483,13 @@ class Stream:
         self._mediatype = None
         self.resolution = f'{self.width}x{self.height}' if (self.width and self.height) else ''
 
-        # get missing size
+        # ignore fragmented streams, and hls (m3u8), the size coming from headers is not correct
         if self.fragments or 'm3u8' in self.protocol:
-            # ignore fragmented streams, since the size coming from headers is for first fragment not whole file
             self.size = 0
-        if not isinstance(self.size, int) or self.size == 0:
-            self.size = self.get_size()
 
-        # print(self.name, self.size, isinstance(self.size, int))
+        # get missing size
+        elif not isinstance(self.size, int) or self.size == 0:
+            self.size = self.get_size()
 
     def get_size(self):
         headers = get_headers(self.url, http_headers=self.http_headers)
