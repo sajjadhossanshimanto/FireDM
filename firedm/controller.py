@@ -391,12 +391,9 @@ class Controller:
                 refreshed_d.folder = folder
 
                 # select video stream
-                try:
-                    refreshed_d.select_stream(format_id=d.selected_stream.format_id)
-                    log('selected video:    ', d.selected_quality)
-                    log('New selected video:', refreshed_d.selected_quality)
-                except:
-                    raise
+                refreshed_d.select_stream(format_id=d.format_id)
+                log('selected video:    ', d.selected_quality)
+                log('New selected video:', refreshed_d.selected_quality)
 
                 # select audio stream
                 try:
