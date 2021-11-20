@@ -2287,6 +2287,8 @@ class PlaylistWindow(tk.Toplevel):
         height = int(main.root.winfo_height())
         center_window(self, width=width, height=height, reference=self.parent)
 
+        self.minsize(*main.root.minsize())
+
         self.title('Playlist download window')
         self.config(bg=SF_BG)
 
