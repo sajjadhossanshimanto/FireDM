@@ -329,7 +329,7 @@ class Controller:
         # d_map is a dictionary that map uid to download item object
         self.d_map = {}
 
-        self.pending_downloads_q = Queue()
+        self.download_q = Queue()
         self.ignore_dlist = custom_settings.get('ignore_dlist', False)
 
         # load application settings
@@ -349,8 +349,8 @@ class Controller:
         # import youtube-dl in a separate thread
         Thread(target=video.load_extractor_engines, daemon=True).start()
 
-        # handle pending downloads
-        Thread(target=self._pending_downloads_handler, daemon=True).start()
+        # handle download queue
+        Thread(target=self.download_q_handler, daemon=True).start()
 
         # handle scheduled downloads
         Thread(target=self._scheduled_downloads_handler, daemon=True).start()
@@ -684,17 +684,17 @@ class Controller:
     # endregion
 
     # region download
-    def _pending_downloads_handler(self):
-        """handle pending downloads, should run in a dedicated thread"""
+    def download_q_handler(self):
+        """handle downloads, should run in a dedicated thread"""
 
         while True:
             active_downloads = len([d for d in self.d_map.values() if d.status in Status.active_states])
             if active_downloads < config.max_concurrent_downloads:
-                d = self.pending_downloads_q.get()
+                d = self.download_q.get()
                 if d.status == Status.pending:
-                    self.download(d, silent=True)
+                    self._download(d)
 
-            time.sleep(3)
+            time.sleep(1)
 
     def _scheduled_downloads_handler(self):
         """handle scheduled downloads, should run in a dedicated thread"""
@@ -849,20 +849,14 @@ class Controller:
 
     @threaded
     def download(self, d=None, uid=None, video_idx=None, silent=False, download_later=False, **kwargs):
-        """start downloading an item, it will run in a separate thread automatically unless you pass
-        threaded=False option
-
-        Args:
-            d (ObservableDownloadItem): download item
-            silent (bool): if True, hide all a warning dialogues and select default
-            kwargs: key/value for any legit attributes in DownloadItem
-        """
-
         showpopup = not silent
 
         d = d or self.get_d(uid, video_idx)
         if not d:
             log('Nothing to download', showpopup=showpopup)
+            return
+        if d.status == Status.pending:
+            log('item already pending ...')
             return
 
         # make a copy of d to prevent changes in self.playlist items
@@ -870,73 +864,62 @@ class Controller:
 
         update_object(d, kwargs)
 
-        try:
-            pre_checks = self._pre_download_checks(d, silent=silent)
+        pre_checks = self._pre_download_checks(d, silent=silent)
 
-            if pre_checks:
-                # update view
-                self.report_d(d, command='new')
+        if pre_checks:
+            # update view
+            self.report_d(d, command='new')
 
-                # register observer
-                d.register_callback(self.observer)
+            # register observer
+            d.register_callback(self.observer)
 
-                # add to download map
-                self.d_map[d.uid] = d
+            # add to download map
+            self.d_map[d.uid] = d
 
-                # save on disk
-                self.save_d_map()
+            # save on disk
+            self.save_d_map()
 
-                if not download_later:
+            if not download_later:
+                d.status = Status.pending
+                self.download_q.put(d)
 
-                    # if max concurrent downloads exceeded, this download job will be added to pending queue
-                    active_downloads = len(
-                        [d for d in self.d_map.values() if d.status in Status.active_states])
-                    if active_downloads >= config.max_concurrent_downloads:
-                        d.status = Status.pending
-                        self.pending_downloads_q.put(d)
-                        return
+    @threaded
+    def _download(self, d, **kwargs):
 
-                    # retry multiple times to download and auto refresh expired url
-                    for n in range(config.refresh_url_retries + 1):
-                        # start brain in a separate thread
-                        t = Thread(target=brain, daemon=False, args=(d,))
-                        t.start()
+        # retry multiple times to download and auto refresh expired url
+        for n in range(config.refresh_url_retries + 1):
+            # start brain in a separate thread
+            t = Thread(target=brain, daemon=False, args=(d,))
+            t.start()
 
-                        # wait thread to end
-                        t.join()
+            # wait thread to end
+            t.join()
 
-                        if d.status != Status.error:
-                            break
+            if d.status != Status.error:
+                break
 
-                        elif n >= config.refresh_url_retries:
-                            log('controller: too many connection errors', 'maybe network problem or expired link',
-                                start='', sep='\n', showpopup=showpopup)
-                        else:  # try auto refreshing url
-
-                            # reset errors and change status
-                            d.status = Status.refreshing_url
-                            d.errors = 0
-
-                            # update view
-                            self.report_d(d)
-
-                            # refresh url
-                            self.auto_refresh_url(d)
+            elif n >= config.refresh_url_retries:
+                log('controller: too many connection errors', 'maybe network problem or expired link')
+            else:  # try auto refreshing url
+                # reset errors and change status
+                d.status = Status.refreshing_url
+                d.errors = 0
 
                 # update view
                 self.report_d(d)
 
-                # actions to be done after completing download
-                self._post_download(d)
+                # refresh url
+                self.auto_refresh_url(d)
 
-                # report completion
-                if d.status == Status.completed:
-                    log(f"File: {d.name}, saved at: {d.folder}")
+        # update view
+        self.report_d(d)
 
-        except Exception as e:
-            log('download()> error:', e)
-            if config.test_mode:
-                raise e
+        # actions to be done after completing download
+        self._post_download(d)
+
+        # report completion
+        if d.status == Status.completed:
+            log(f"File: {d.name}, saved at: {d.folder}")
 
     def stop_download(self, uid):
         """stop downloading
