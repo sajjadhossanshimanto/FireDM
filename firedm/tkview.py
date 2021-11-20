@@ -1806,7 +1806,7 @@ class DItem(tk.Frame):
 
         # toggle play/pause icons
         try:
-            if self.status in config.Status.active_states:
+            if self.status in config.Status.active_states or self.status == config.Status.pending:
                 img = imgs['pause_icon']
             else:
                 img = imgs['play_icon']
@@ -4499,18 +4499,23 @@ class MainWindow(IView):
         """update the number of selected download items and display it on a label in downloads tab"""
         count = len(self.get_selected_items())
         s = [item.status for item in self.d_items.values()]
+        active = sum([s.count(x) for x in config.Status.active_states])
+        completed = s.count(config.Status.completed)
+        paused = s.count(config.Status.cancelled)
+        scheduled = s.count(config.Status.scheduled)
+        pending = s.count(config.Status.pending)
 
         size = 3 * int(gui_font['size']) // 4
         self.stat_lbl['font'] = f'any {size}'
 
         self.stat_lbl['text'] = f'Selected: [{count} of {len(self.d_items)}] - ' \
-                                f'Active: {sum([s.count(x) for x in config.Status.active_states])}, ' \
-                                f'Completed: {s.count(config.Status.completed)},  ' \
-                                f'Paused: {s.count(config.Status.cancelled)},  ' \
-                                f'Scheduled: {s.count(config.Status.scheduled)}, ' \
-                                f'Pending: {s.count(config.Status.pending)}'
+                                f'Active: {active}, ' \
+                                f'Completed: {completed},  ' \
+                                f'Paused: {paused},  ' \
+                                f'Scheduled: {scheduled}, ' \
+                                f'Pending: {pending}'
 
-        if s.count(config.Status.downloading) > 0:
+        if active or pending:
             self.resume_all_btn['text'] = 'Stop All'
         else:
             self.resume_all_btn['text'] = 'Resume All'
@@ -4539,7 +4544,7 @@ class MainWindow(IView):
     def toggle_download(self, uid):
         item = self.d_items[uid]
 
-        if item.status in config.Status.active_states:
+        if item.status in config.Status.active_states or item.status == config.Status.pending:
             self.stop_download(uid)
         else:
             self.resume_download(uid)
