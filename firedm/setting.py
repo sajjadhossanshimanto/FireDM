@@ -159,7 +159,7 @@ def save_d_map(d_map):
             except Exception as e:
                 print('error save thumbnails file:', e)
 
-        log('downloads items list saved in:', downloads_fp)
+        log('downloads items list saved in:', downloads_fp, log_level=2)
     except Exception as e:
         log('save_d_map()> ', e)
 
