@@ -184,7 +184,7 @@ def pars_args(arguments):
         help="select video extractor engine, available choices are: ('youtube_dl', and 'yt_dlp'), "
              f"default={config.active_video_extractor}")
     vid.add_argument(
-        '--quality', dest='video_quality',
+        '--quality', dest='quality',
         type=str, metavar='QUALITY', default=argparse.SUPPRESS,
         help="select video quality, available choices are: ('best', '1080p', '720p', '480p', '360p', "
              "and 'lowest'), default=best")

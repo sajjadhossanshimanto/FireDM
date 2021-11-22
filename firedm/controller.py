@@ -391,7 +391,7 @@ class Controller:
                 refreshed_d.folder = folder
 
                 # select video stream
-                refreshed_d.select_stream(format_id=d.format_id)
+                refreshed_d.select_stream(format_id=d.format_id, extension=d.extension)
                 log('selected video:    ', d.selected_quality)
                 log('New selected video:', refreshed_d.selected_quality)
 
@@ -1008,11 +1008,11 @@ class Controller:
             process_video(d)
 
         # set video quality
-        video_quality = kwargs.get('video_quality', None)
+        quality = kwargs.get('quality', None)
 
-        if video_quality and d.type == MediaType.video:
+        if quality and d.type == MediaType.video:
             prefer_mp4 = kwargs.get('prefer_mp4', False)
-            d.select_stream(video_quality=video_quality, prefer_mp4=prefer_mp4)
+            d.select_stream(quality=quality, extension=('mp4' if prefer_mp4 else None))
 
         # download item
         self.download(d, silent=True, **kwargs)

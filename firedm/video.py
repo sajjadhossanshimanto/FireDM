@@ -243,7 +243,8 @@ class Video(DownloadItem):
         self.video_streams = video_streams
         self.mp4_videos = mp4_videos
 
-    def select_stream(self, format_id=None, index=None, name=None, raw_name=None, video_quality=None, prefer_mp4=True, update=True):
+    def select_stream(self, format_id=None, index=None, name=None, raw_name=None, quality=None,
+                      extension=None, update=True):
         """
         select video stream
         Args:
@@ -251,47 +252,49 @@ class Video(DownloadItem):
             index(int): index number from stream menu
             name(str): stream name
             raw_name(str): stream raw name
-            video_quality(int or str): video quality, e.g. 1080, or best, or lowest
-            prefer_mp4(bool): select mp4 format if available
+            quality(int or str): video quality, e.g. 1080, or best, or lowest
+            extension(str): extension
             update(bool): if True it will update selected stream
         Return:
             stream
         """
         stream = None
+        streams = self.all_streams
         try:
             if format_id is not None:
-                stream = [stream for stream in self.all_streams if stream.format_id == format_id][0]
+                streams = [stream for stream in streams if stream.format_id == format_id] or streams
+
+            if name:  # select first match
+                streams = [stream for stream in streams if name == stream.name] or streams
+
+            if raw_name:
+                streams = [stream for stream in streams if raw_name == stream.raw_name] or streams
+
+            if extension:
+                streams = [stream for stream in streams if stream.extension == extension] or streams
+
+            # select stream
             if index is not None:
                 stream = self.stream_menu_map[index]
 
-            elif name:  # select first match
-                stream = [stream for stream in self.all_streams if name == stream.name][0]
-
-            elif raw_name:
-                stream = [stream for stream in self.all_streams if raw_name == stream.raw_name][0]
-
-            elif video_quality:
+            # in case of video quality is given
+            elif quality:
                 # validate
-                if video_quality.endswith('p'):  # e.g. 360p
-                    video_quality = int(video_quality[:-1])
-                else:
-                    video_quality = video_quality.lower()
+                quality = quality.lower().replace('p', '')
 
-                if prefer_mp4 and self.mp4_videos:
-                    streams = self.mp4_videos or self.video_streams
-                else:
-                    streams = self.video_streams
-
-                if video_quality == 'best':
+                if quality == 'best':
                     stream = streams[0]
-                elif video_quality == 'lowest':
+                elif quality == 'lowest':
                     stream = streams[-1]
                 else:
+                    q = int(quality)
                     qualities = [s.quality for s in streams]
                     # get nearest quality value
-                    x = list(map(lambda item: abs(video_quality - item), qualities))
+                    x = list(map(lambda item: abs(q - item), qualities))
                     stream = streams[x.index(min(x))]
 
+            else:
+                stream = streams[0]
         except:
             stream = None
 
@@ -299,7 +302,6 @@ class Video(DownloadItem):
             # update selected stream
             if update and stream:
                 self.selected_stream = stream
-            # print('select stream', stream)
 
             return stream
 
