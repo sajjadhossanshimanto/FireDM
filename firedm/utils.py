@@ -1234,11 +1234,15 @@ def create_folder(folder_path):
 
 def get_media_duration(seconds):
     """
-        Function to get file duration of a video or audio
+        function to convert time (in seconds) to duration of a video or audio
         Args:
-        seconds: seconds to be converted to time format
+            seconds: seconds to be converted to time format
+        Return:
+            (str): duration string, e.g. 2:46:30
     """
     try:
+        # seconds' fraction should be neglected e.g 977.92 should converted to 0:16:17 instead of 0:16:17.920000
+        seconds = int(seconds)
         conversion = datetime.timedelta(seconds=seconds)
         result = str(conversion)
     except:
