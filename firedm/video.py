@@ -244,9 +244,9 @@ class Video(DownloadItem):
         self.mp4_videos = mp4_videos
 
     def select_stream(self, format_id=None, index=None, name=None, raw_name=None, quality=None,
-                      extension=None, update=True):
+                      extension=None, mediatype=None):
         """
-        select video stream
+        select main stream
         Args:
             format_id: stream id from youtube-dl
             index(int): index number from stream menu
@@ -254,7 +254,31 @@ class Video(DownloadItem):
             raw_name(str): stream raw name
             quality(int or str): video quality, e.g. 1080, or best, or lowest
             extension(str): extension
-            update(bool): if True it will update selected stream
+            mediatype(str): video or audio
+        Return:
+            stream
+
+        Side effect:
+            set self.selected_stream
+        """
+
+        stream = self.get_stream(format_id=format_id, index=index, name=name, raw_name=raw_name, quality=quality,
+                                 extension=extension, mediatype=mediatype)
+
+        self.selected_stream = stream
+
+    def get_stream(self, format_id=None, index=None, name=None, raw_name=None, quality=None,
+                   extension=None, mediatype=None):
+        """
+        get video or audio stream
+        Args:
+            format_id: stream id from youtube-dl
+            index(int): index number from stream menu
+            name(str): stream name
+            raw_name(str): stream raw name
+            quality(int or str): video quality, e.g. 1080, or best, or lowest
+            extension(str): extension
+            mediatype(str): video or audio
         Return:
             stream
         """
@@ -265,6 +289,9 @@ class Video(DownloadItem):
                 stream = self.stream_menu_map[index]
             else:
                 # filter streams ---------------------------------------------------------------------------------------
+                if mediatype in (config.MediaType.video, config.MediaType.audio):
+                    streams = [stream for stream in streams if stream.mediatype == mediatype] or streams
+
                 if format_id is not None:
                     streams = [stream for stream in streams if stream.format_id == format_id] or streams
 
@@ -294,12 +321,7 @@ class Video(DownloadItem):
         except:
             stream = None
 
-        finally:
-            # update selected stream
-            if update and stream:
-                self.selected_stream = stream
-
-            return stream
+        return stream
 
     @property
     def selected_stream(self):
