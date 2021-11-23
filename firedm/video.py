@@ -261,40 +261,36 @@ class Video(DownloadItem):
         stream = None
         streams = self.all_streams
         try:
-            if format_id is not None:
-                streams = [stream for stream in streams if stream.format_id == format_id] or streams
-
-            if name:  # select first match
-                streams = [stream for stream in streams if name == stream.name] or streams
-
-            if raw_name:
-                streams = [stream for stream in streams if raw_name == stream.raw_name] or streams
-
-            if extension:
-                streams = [stream for stream in streams if stream.extension == extension] or streams
-
-            # select stream
             if index is not None:
                 stream = self.stream_menu_map[index]
-
-            # in case of video quality is given
-            elif quality:
-                # validate
-                quality = quality.lower().replace('p', '')
-
-                if quality == 'best':
-                    stream = streams[0]
-                elif quality == 'lowest':
-                    stream = streams[-1]
-                else:
-                    q = int(quality)
-                    qualities = [s.quality for s in streams]
-                    # get nearest quality value
-                    x = list(map(lambda item: abs(q - item), qualities))
-                    stream = streams[x.index(min(x))]
-
             else:
+                # filter streams ---------------------------------------------------------------------------------------
+                if format_id is not None:
+                    streams = [stream for stream in streams if stream.format_id == format_id] or streams
+
+                if name:
+                    streams = [stream for stream in streams if name == stream.name] or streams
+
+                if raw_name:
+                    streams = [stream for stream in streams if raw_name == stream.raw_name] or streams
+
+                if extension:
+                    streams = [stream for stream in streams if stream.extension == extension] or streams
+
+                if quality:
+                    quality = quality.lower().replace('p', '')
+
+                    if quality == 'best':
+                        streams = sorted(streams, key=lambda item: max(item.quality))
+                    elif quality == 'lowest':
+                        streams = sorted(streams, key=lambda item: min(item.quality))
+                    else:
+                        quality = int(quality)
+                        streams = sorted(streams, key=lambda item: abs(quality - item.quality))
+
+                # select stream ----------------------------------------------------------------------------------------
                 stream = streams[0]
+
         except:
             stream = None
 
