@@ -380,23 +380,31 @@ def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **k
         print(e)
 
 
-def validate_file_name(f_name):
-    # filter for tkinter safe character range
-    f_name = ''.join([c for c in f_name if ord(c) in range(65536)])
-    safe_string = str()
-    char_count = 1
-    for c in str(f_name):
-        if c in ['\\', '/', ':', '?', '<', '>', '"', '|', '*']:
-            safe_string += '_'
-        else:
-            safe_string += c
+def validate_file_name(fname):
+    """clean file name"""
 
-        if char_count >= 245:  # max. allowed filename length 255 on windows, https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN
-            safe_string += f_name[-10:]  # add last 10 characters "including file extension"
-            break
+    def replace(c):
+        # filter for tkinter safe character range
+        if ord(c) not in range(65536):
+            return ''
+        # The first 32 characters in the ASCII-table are unprintable control codes, 127 epresents the command DEL.
+        elif ord(c) < 32 or ord(c) == 127:
+            return ''
+        elif c in '\'"':
+            return ''
+        elif c in '~`#$&*()\\|[]{};<>/?!^,:':
+            return '_'
         else:
-            char_count += 1
-    return safe_string
+            return c
+
+    clean_name = ''.join(map(replace, fname))
+
+    # max. allowed filename length 255 on windows,
+    # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN
+    if len(clean_name) > 255:
+        clean_name = clean_name[0:245] + clean_name[-10:]  # add last 10 characters "including file extension"
+
+    return clean_name
 
 
 def delete_folder(folder, verbose=False):
