@@ -2784,8 +2784,8 @@ class SimplePlaylist(tk.Toplevel):
         video_fr.pack(anchor='w', fill='x', expand=True, side='left')
         Combobox(video_fr, values=config.video_ext_choices, selection=config.media_presets['video_ext'], width=5,
                  textvariable=self.video_ext).pack(side='left', padx=(0, 3))
-        Combobox(video_fr, values=config.video_quality_choices, selection=config.media_presets['video_quality'], width=6,
-                 textvariable=self.video_quality).pack(side='left', padx=(0, 3))
+        Combobox(video_fr, values=config.video_quality_choices, selection=config.media_presets['video_quality'],
+                 width=6, textvariable=self.video_quality).pack(side='left', padx=(0, 3))
         tk.Label(video_fr, text='audio quality: ', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=(10, 0))
         Combobox(video_fr, values=config.dash_audio_choices, width=6, selection=config.media_presets['dash_audio'],
                  textvariable=self.dash_audio_quality).pack(side='left', padx=(0, 3))
@@ -2794,8 +2794,8 @@ class SimplePlaylist(tk.Toplevel):
         audio_fr = tk.Frame(av_fr, bg=MAIN_BG)
         Combobox(audio_fr, values=config.audio_ext_choices, selection=config.media_presets['audio_ext'],
                  width=7, textvariable=self.audio_ext).pack(side='left', padx=(0, 3))
-        Combobox(audio_fr, values=config.audio_quality_choices, width=6, selection=config.media_presets['audio_quality'],
-                 textvariable=self.audio_quality).pack(side='left', padx=(0, 3))
+        Combobox(audio_fr, values=config.audio_quality_choices, selection=config.media_presets['audio_quality'],
+                 textvariable=self.audio_quality, width=6).pack(side='left', padx=(0, 3))
 
         # subtitle -----------------------------------------------------------------------------------------------------
         sub_fr = tk.Frame(video_fr, bg=MAIN_BG)
@@ -2840,17 +2840,26 @@ class SimplePlaylist(tk.Toplevel):
 
         select_fr = tk.Frame(top_fr, bg=MAIN_BG)
         select_fr.pack(anchor='w', pady=(5, 0))
-        Checkbutton(select_fr, variable=select_all_var, textvariable=select_lbl_var, command=select_all_callback).pack(side='left')
+        Checkbutton(select_fr, variable=select_all_var, textvariable=select_lbl_var,
+                    command=select_all_callback).pack(side='left')
 
         # table --------------------------------------------------------------------------------------------------------
-        self.table = ttk.Treeview(middle_fr, selectmode='extended', show='tree', takefocus=True)
-        self.table.pack(side='left', fill='both', expand=True)
-
+        self.table = ttk.Treeview(middle_fr, selectmode='extended', show='tree', takefocus=True, padding=0)
+        self.table.pack(side='left', fill='both', expand=True, anchor='ne')
         self.table.column("#0", anchor='w', stretch=True)
+
+        s = ttk.Style()
+        s.map('Treeview', background=[('selected', SEL_BG)], foreground=[('selected', SEL_FG)],
+              fieldbackground=[('', MAIN_BG)])
 
         # Insert the data in Treeview widget
         for i, lbl in enumerate(self.playlist):
-            self.table.insert('', 'end', iid=i, text=lbl)
+            tagnum = i % 2
+            self.table.insert('', 'end', iid=i, text=lbl, tag=tagnum)
+        bg1 = atk.calc_contrast_color(MAIN_BG, 5)
+        bg2 = atk.calc_contrast_color(MAIN_BG, 10)
+        self.table.tag_configure(0, background=bg1, foreground=MAIN_FG)
+        self.table.tag_configure(1, background=bg2, foreground=MAIN_FG)
 
         def update_selection_lbl(*args):
             total = len(self.table.get_children())
