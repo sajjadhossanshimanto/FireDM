@@ -23,7 +23,7 @@ settings_keys = [
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
     'use_playlist_numbers', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode', 'window_maximized',
-    'force_window_maximize', 'reverse_playlist', 'd_preview', 'updater_version'
+    'force_window_maximize', 'reverse_playlist', 'd_preview', 'updater_version', 'media_presets',
 ]
 
 # ----------------------------------------------------------------------------------------General ----------------------
@@ -101,6 +101,21 @@ active_video_extractor = 'yt_dlp'
 ffmpeg_actual_path = ''
 ffmpeg_version = ''
 ffmpeg_download_folder = sett_folder
+
+# media presets
+media_presets = dict(
+    video_ext='mp4',
+    video_quality='best',
+    dash_audio='best',
+    audio_ext='mp3',
+    audio_quality='best'
+)
+
+video_ext_choices = ('mp4', 'webm')
+video_quality_choices = ('best', '1080p', '720p', '480p', '360p', '240p', 'lowest')
+dash_audio_choices = ('best', 'lowest')
+audio_ext_choices = ('mp3', 'aac', 'wav', 'm4a', 'vorbis', 'opus', 'flac', 'ogg', 'webm')
+audio_quality_choices = ('best', 'lowest')
 
 # ---------------------------------------------------------------------------------------Workarounds--------------------
 ibus_workaround = False  # issue 256: https://github.com/firedm/FireDM/issues/256

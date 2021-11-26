@@ -451,7 +451,7 @@ class Controller:
 
             if is_video_playlist:
                 log('controller> playlist ready')
-                self._update_playlist_menu([str(i + 1) + '- ' + vid.name for i, vid in enumerate(self.playlist)])
+                self._update_playlist_menu([str(i + 1) + '- ' + vid.title for i, vid in enumerate(self.playlist)])
             else:
                 self._update_playlist_menu([])
 
@@ -1048,6 +1048,44 @@ class Controller:
                 kwargs['name'] = f'{vid_idx + 1}- {d.name}'
 
             self.download(d, silent=True, **kwargs)
+            time.sleep(1)
+
+            if subtitles:
+                self.download_subtitles(subtitles, d=d)
+
+    @threaded
+    def download_playlist2(self, download_info, **kwargs):
+        """download playlist
+          Args:
+              download_info (dict): example
+                  {
+                  'selected_items': {1: 'video 2', 2: 'video 3'},
+                  'stream_options': {'mediatype': 'video', 'extension': 'mp4', 'quality': 'best', 'dashaudio': 'auto'},
+                  'download_options': {'download_later': False, 'folder': '/test'},
+                  'subtitles': None
+                  }
+
+        """
+        print('download playlist 2')
+        selected_items = download_info.get('selected_items', {})
+        stream_options = download_info.setdefault('stream_options', {})
+        download_options = download_info.setdefault('download_options', {})
+        subtitles = download_info.get('subtitles', {})
+
+        for idx, title in selected_items.items():
+            d = self.playlist[idx]
+
+            # process video
+            if not d.all_streams:
+                process_video(d)
+
+            # select stream
+            d.select_stream(**stream_options)
+
+            # update name
+            d.name = title + '.' + stream_options['extension']
+
+            self.download(d, silent=True, **download_options, **kwargs)
             time.sleep(1)
 
             if subtitles:

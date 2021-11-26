@@ -415,10 +415,12 @@ class Button(tk.Button):
 
 
 class Combobox(ttk.Combobox):
-    def __init__(self, parent, values, selection=None, callback=None, **kwargs):
+    def __init__(self, parent, values, selection=None, callback=None, ps=False, **kwargs):
+        # ps: pass selection as a parameter to callback
         self.selection = selection
         self.selection_idx = None
         self.callback = callback
+        self.ps = ps
 
         # style
         s = ttk.Style()
@@ -457,7 +459,10 @@ class Combobox(ttk.Combobox):
         self.selection_idx = widget.current()
 
         if callable(self.callback):
-            self.callback()
+            if self.ps:
+                self.callback(self.selection)
+            else:
+                self.callback()
 
 
 class AutoWrappingLabel(tk.Label):
@@ -1119,11 +1124,11 @@ folderchooser = FileDialog(foldersonly=True).run
 
 class Browse(tk.Frame):
     """a frame contains an entry widget and browse button to browse for folders"""
-    def __init__(self, parent=None, bg=None, fg=None, label=None):
+    def __init__(self, parent=None, bg=None, fg=None, label=None, **kwargs):
         bg = bg or MAIN_BG
         fg = fg or MAIN_FG
 
-        tk.Frame.__init__(self, parent, bg=bg)
+        tk.Frame.__init__(self, parent, bg=bg, **kwargs)
 
         # download folder -------------------------------------------------------------------------------------------
         tk.Label(self, text=label or 'Folder:', bg=bg, fg=fg).pack(side='left')
@@ -2711,6 +2716,222 @@ class PlaylistWindow(tk.Toplevel):
         self.total_size.set(f'Total Size ≈ {format_bytes(total_size)}')
 
 
+class SimplePlaylist(tk.Toplevel):
+    """class for downloading video playlist
+        """
+    def __init__(self, parent, playlist=None, subtitles=None):
+        """initialize
+
+        Args:
+            parent: parent window (root)
+            playlist (iterable): video names only in a playlist, e.g. ('1- cats in the wild', '2- car racing', ...)
+                in case we have a huge playlist
+                e.g. https://www.youtube.com/watch?v=BZyjT5TkWw4&list=PL2aBZuCeDwlT56jTrxQ3FExn-dtchIwsZ
+                has 4000 videos, we will show 40 page each page has 100 video
+        """
+
+        self.playlist = playlist
+
+        # Example: {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
+        self.subtitles = subtitles
+        self.download_info = None
+
+        # initialize super
+        tk.Toplevel.__init__(self, parent)
+
+        width = int(parent.winfo_width())
+        height = int(parent.winfo_height())
+        self.minsize(*parent.minsize())
+        center_window(self, width=width, height=height, reference=parent)
+
+        self.title('Playlist download window')
+
+        self.mediatype = tk.StringVar()
+        self.video_ext = tk.StringVar()
+        self.video_quality = tk.StringVar()
+        self.dash_audio_quality = tk.StringVar()
+        self.audio_ext = tk.StringVar()
+        self.audio_quality = tk.StringVar()
+        self.sub_var = tk.BooleanVar()
+
+        self.create_widgets()
+
+        self.wait_window()
+
+    def create_widgets(self):
+        main_fr = tk.Frame(self, bg=MAIN_BG)
+        main_fr.pack(fill='both', expand=True)
+        top_fr = tk.Frame(main_fr, bg=MAIN_BG)
+        middle_fr = tk.Frame(main_fr, bg=MAIN_BG)
+        bottom_fr = tk.Frame(main_fr, bg=MAIN_BG)
+
+        av_fr = tk.Frame(top_fr, bg=MAIN_BG)
+        av_fr.pack(anchor='w', fill='x', expand=True)
+
+        def av_callback(option):
+            if option.lower() == 'video':
+                audio_fr.pack_forget()
+                video_fr.pack(anchor='w', fill='x', expand=True, side='left')
+            else:
+                video_fr.pack_forget()
+                audio_fr.pack(anchor='w', fill='x', expand=True, side='left')
+
+        Combobox(av_fr, values=('Video', 'Audio only'), selection='Video', callback=av_callback, ps=True, width=11,
+                 textvariable=self.mediatype).pack(side='left', padx=(0, 3))
+
+        # video --------------------------------------------------------------------------------------------------------
+        video_fr = tk.Frame(av_fr, bg=MAIN_BG)
+        video_fr.pack(anchor='w', fill='x', expand=True, side='left')
+        Combobox(video_fr, values=config.video_ext_choices, selection=config.media_presets['video_ext'], width=5,
+                 textvariable=self.video_ext).pack(side='left', padx=(0, 3))
+        Combobox(video_fr, values=config.video_quality_choices, selection=config.media_presets['video_quality'], width=6,
+                 textvariable=self.video_quality).pack(side='left', padx=(0, 3))
+        tk.Label(video_fr, text='audio quality: ', bg=MAIN_BG, fg=MAIN_FG).pack(side='left', padx=(10, 0))
+        Combobox(video_fr, values=config.dash_audio_choices, width=6, selection=config.media_presets['dash_audio'],
+                 textvariable=self.dash_audio_quality).pack(side='left', padx=(0, 3))
+
+        # audio --------------------------------------------------------------------------------------------------------
+        audio_fr = tk.Frame(av_fr, bg=MAIN_BG)
+        Combobox(audio_fr, values=config.audio_ext_choices, selection=config.media_presets['audio_ext'],
+                 width=7, textvariable=self.audio_ext).pack(side='left', padx=(0, 3))
+        Combobox(audio_fr, values=config.audio_quality_choices, width=6, selection=config.media_presets['audio_quality'],
+                 textvariable=self.audio_quality).pack(side='left', padx=(0, 3))
+
+        # subtitle -----------------------------------------------------------------------------------------------------
+        sub_fr = tk.Frame(video_fr, bg=MAIN_BG)
+        sub_fr.pack(side='right', padx=(10, 0))
+        Checkbutton(sub_fr, text='Subtitle: ', variable=self.sub_var).pack(side='left')
+
+        def sub_lang_callback(lang):
+            exts = self.subtitles.get(lang, [])
+            self.sub_ext['values'] = exts
+            ext_width = max([len(ext) for ext in exts]) or 4
+            self.sub_ext['width'] = ext_width
+
+            if exts:
+                self.sub_ext.set(exts[0])
+
+        self.sub_lang = Combobox(sub_fr, values=[], callback=sub_lang_callback, ps=True, width=4)
+        self.sub_lang.pack(side='left', padx=(0, 3))
+        self.sub_ext = Combobox(sub_fr, values=[], width=4)
+        self.sub_ext.pack(side='left')
+
+        if self.subtitles:
+            langs = list(self.subtitles.keys())
+            lang_width = max([len(lang) for lang in langs]) or 4
+
+            if langs:
+                lang = langs[0]
+                self.sub_lang.config(values=langs, width=lang_width)
+                self.sub_lang.set(lang)
+                sub_lang_callback(lang)
+
+        # select frame -------------------------------------------------------------------------------------------------
+        select_lbl_var = tk.StringVar()
+        select_all_var = tk.BooleanVar()
+
+        def select_all_callback(*args, flag=None):
+            selected = flag if flag is not None else select_all_var.get()
+            allitems = self.table.get_children()
+            if selected:
+                self.table.selection_set(allitems)
+            else:
+                self.table.selection_remove(allitems)
+
+        select_fr = tk.Frame(top_fr, bg=MAIN_BG)
+        select_fr.pack(anchor='w', pady=(5, 0))
+        Checkbutton(select_fr, variable=select_all_var, textvariable=select_lbl_var, command=select_all_callback).pack(side='left')
+
+        # table --------------------------------------------------------------------------------------------------------
+        self.table = ttk.Treeview(middle_fr, selectmode='extended', show='tree', takefocus=True)
+        self.table.pack(side='left', fill='both', expand=True)
+
+        self.table.column("#0", anchor='w', stretch=True)
+
+        # Insert the data in Treeview widget
+        for i, lbl in enumerate(self.playlist):
+            self.table.insert('', 'end', iid=i, text=lbl)
+
+        def update_selection_lbl(*args):
+            total = len(self.table.get_children())
+            num = len(self.table.selection())
+            select_lbl_var.set(f' Selcted {num} of {total}')
+            select_all_var.set(num == total)
+
+        self.table.bind('<<TreeviewSelect>>', update_selection_lbl)
+
+        # Scrollbar ----------------------------------------------------------------------------------------------------
+        sb = atk.SimpleScrollbar(middle_fr, orient='vertical', width=20, command=self.table.yview, bg=SBAR_BG,
+                                 slider_color=SBAR_FG)
+        sb.pack(side='right', fill='y')
+        self.table['yscrollcommand'] = sb.set
+
+        # buttons ------------------------------------------------------------------------------------------------------
+        Button(bottom_fr, text='Cancel', command=self.destroy).pack(side='right', padx=5)
+        Button(bottom_fr, text='Download Later', command=lambda: self.download(download_later=True)).pack(side='right')
+        Button(bottom_fr, text='Download', command=self.download).pack(side='right', padx=5)
+
+        # download folder ----------------------------------------------------------------------------------------------
+        self.browse = Browse(bottom_fr, label='>')
+        self.browse.pack(side='left', padx=5)
+        self.browse.folder = config.download_folder
+
+        top_fr.pack(fill='x', padx=5, pady=5)
+        middle_fr.pack(fill='both', expand=True, padx=5, pady=5)
+        bottom_fr.pack(fill='x', padx=5, pady=5)
+
+        update_selection_lbl()
+
+    def download(self, download_later=False):
+        # selected e.g. {2: 'entry - 2', 4: 'entry - 4', 8: 'entry - 8'}
+        selected_items = {int(x): self.table.item(x, 'text') for x in self.table.selection()}
+
+        download_options = dict(
+            download_later=download_later,
+            folder=self.browse.folder
+        )
+
+        # get other options
+        mediatype = self.mediatype.get().lower()
+
+        if mediatype == config.MediaType.video:
+            # {'mediatype': 'video', 'extension': 'webm', 'quality': '720p', 'dashaudio': 'auto'}
+            stream_options = dict(
+                mediatype=mediatype,
+                extension=self.video_ext.get(),
+                quality=self.video_quality.get(),
+                dashaudio=self.dash_audio_quality.get()
+            )
+
+        else:
+            # {'mediatype': 'audio', 'extension': 'opus', 'quality': 'best'}
+            stream_options = dict(
+                mediatype=config.MediaType.audio,
+                extension=self.audio_ext.get(),
+                quality=self.audio_quality.get(),
+            )
+
+        # lower case
+        stream_options = {k.lower(): v.lower() for k, v in stream_options.items()}
+
+        # subtitles
+        lang = self.sub_lang.selection
+        ext = self.sub_ext.selection
+        if self.sub_var.get() and lang and ext:
+            subtitles = {lang: ext}
+        else:
+            subtitles = None
+
+        self.download_info = dict(
+            selected_items=selected_items,
+            stream_options=stream_options,
+            download_options=download_options,
+            subtitles=subtitles
+        )
+
+        self.destroy()
+
+
 class SubtitleWindow(tk.Toplevel):
     """Download subtitles window"""
 
@@ -3590,7 +3811,8 @@ class MainWindow(IView):
         # video menus --------------------------------------------------------------------------------------------------
         self.pl_menu = MediaListBox(home_tab, bg, 'Playlist:')
         self.pl_menu.grid(row=1, column=0, rowspan=1, pady=10, padx=5, sticky='nsew')
-        Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').place(relx=1, rely=0, x=-40, y=5)
+        # Button(self.pl_menu, image=imgs['playlist_icon'], command=self.show_pl_window, tooltip='Download Playlist').place(relx=1, rely=0, x=-40, y=5)
+        Button(self.pl_menu, image=imgs['playlist_icon'], command=self.download_playlist, tooltip='Download Playlist').place(relx=1, rely=0, x=-40, y=5)
         self.stream_menu = MediaListBox(home_tab, bg, 'Streams:')
         self.stream_menu.grid(row=1, column=1, rowspan=1, padx=15, pady=10, sticky='nsew')
         Button(self.stream_menu, image=imgs['audio_icon'], command=self.select_dash_audio, tooltip='audio quality').place(relx=1, rely=0, x=-40, y=5)
@@ -4993,6 +5215,20 @@ class MainWindow(IView):
             return
 
         self.batch_window = BatchWindow(self)
+
+    def download_playlist(self):
+        # pl = [f'video {x}' for x in range(1, 5)]  # test
+        pl = self.pl_menu.get()
+        if pl:
+            # get subtitles
+            # Example: {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
+            sub = self.controller.get_subtitles(video_idx=0)
+
+            s = SimplePlaylist(self.root, pl, sub)
+            if s.download_info:
+                self.controller.download_playlist2(s.download_info)
+        else:
+            self.msgbox('No videos in playlist')
 
     def show_pl_window(self):
         if self.pl_window:

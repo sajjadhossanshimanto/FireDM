@@ -244,7 +244,7 @@ class Video(DownloadItem):
         self.mp4_videos = mp4_videos
 
     def select_stream(self, format_id=None, index=None, name=None, raw_name=None, quality=None,
-                      extension=None, mediatype=None):
+                      extension=None, mediatype=None, dashaudio='best'):
         """
         select main stream
         Args:
@@ -255,6 +255,7 @@ class Video(DownloadItem):
             quality(int or str): video quality, e.g. 1080, or best, or lowest
             extension(str): extension
             mediatype(str): video or audio
+            dashaudio(str): dash audio quality (best, lowest)
         Return:
             stream
 
@@ -265,10 +266,14 @@ class Video(DownloadItem):
         stream = self.get_stream(format_id=format_id, index=index, name=name, raw_name=raw_name, quality=quality,
                                  extension=extension, mediatype=mediatype)
 
-        self.selected_stream = stream
+        if stream:
+            self.selected_stream = stream
+
+            if stream.mediatype == 'dash' and dashaudio != 'best':
+                self.select_audio(quality=dashaudio)
 
     def get_stream(self, format_id=None, index=None, name=None, raw_name=None, quality=None,
-                   extension=None, mediatype=None):
+                   extension=None, mediatype=None, fragmented=None):
         """
         get video or audio stream
         Args:
@@ -279,10 +284,10 @@ class Video(DownloadItem):
             quality(int or str): video quality, e.g. 1080, or best, or lowest
             extension(str): extension
             mediatype(str): video or audio
+            fragmented(bool): True for fragmented streams
         Return:
             stream
         """
-        stream = None
         streams = self.all_streams
         try:
             if index is not None:
@@ -290,7 +295,11 @@ class Video(DownloadItem):
             else:
                 # filter streams ---------------------------------------------------------------------------------------
                 if mediatype in (config.MediaType.video, config.MediaType.audio):
-                    streams = [stream for stream in streams if stream.mediatype == mediatype] or streams
+                    # stream mediatype = (audio, dash, normal)
+                    _mediatype = ('dash', 'normal') if mediatype == config.MediaType.video else (config.MediaType.audio,)
+                    streams = [stream for stream in streams if stream.mediatype in _mediatype] or streams
+                else:
+                    pass
 
                 if format_id is not None:
                     streams = [stream for stream in streams if stream.format_id == format_id] or streams
@@ -304,13 +313,16 @@ class Video(DownloadItem):
                 if extension:
                     streams = [stream for stream in streams if stream.extension == extension] or streams
 
+                if fragmented is not None:
+                    streams = [stream for stream in streams if stream.fragments] or streams
+
                 if quality:
                     quality = quality.lower().replace('p', '')
 
                     if quality == 'best':
-                        streams = sorted(streams, key=lambda item: max(item.quality))
+                        streams = sorted(streams, key=lambda item: item.quality, reverse=True)
                     elif quality == 'lowest':
-                        streams = sorted(streams, key=lambda item: min(item.quality))
+                        streams = sorted(streams, key=lambda item: item.quality)
                     else:
                         quality = int(quality)
                         streams = sorted(streams, key=lambda item: abs(quality - item.quality))
@@ -406,42 +418,37 @@ class Video(DownloadItem):
         # update http-headers
         self.http_headers = stream.http_headers or self.http_headers or config.http_headers
 
-    def select_audio(self, audio_stream=None):
+    def select_audio(self, audio_stream=None, quality='best'):
         video_stream = self.selected_stream
 
-        # select an audio to embed if our stream is dash video
-        audio_streams = sorted([stream for stream in self.all_streams if stream.mediatype == 'audio'],
-                               key=lambda stream: stream.quality, reverse=True)
+        if video_stream.mediatype == 'dash':
+            # sort dash audios with highest quality first
+            streams = sorted([stream for stream in self.all_streams if stream.mediatype == 'audio'],
+                             key=lambda stream: stream.quality, reverse=True)
 
-        if video_stream.mediatype == 'dash' and audio_streams:
-            # auto select audio stream if no parameter given
-            if not audio_stream:
-                # filter for matching extension/format
-                matching_streams = [audio for audio in audio_streams if audio.extension == video_stream.extension
-                                    or (audio.extension == 'm4a' and video_stream.extension == 'mp4')]
+            if streams and not audio_stream:
+                # filter based on fragmented flag
+                streams = [stream for stream in streams if stream.isfragmented == video_stream.isfragmented] or streams
 
-                if matching_streams:
+                # filter for compatible extension, faster muxing by ffmpeg,
+                # also to avoid errors when muxing m4a audio with webm video using "-c copy" flag, example ffmpeg error
+                # [webm@xx] Only VP8 or VP9 or AV1 video and Vorbis or Opus audio and WebVTT subtitles are supported for WebM.
+                ext = 'm4a' if video_stream.extension == 'mp4' else video_stream.extension
+                streams = [stream for stream in streams if stream.extension == ext] or streams
 
-                    # check fragmented types
-                    fragmented_audios = [x for x in matching_streams if x.fragments]
-                    unfragmented_audios = [x for x in matching_streams if not x.fragments]
-                    if video_stream.fragments and fragmented_audios:
-                        audio_stream = fragmented_audios[0]
-                    elif unfragmented_audios:
-                        audio_stream = unfragmented_audios[0]
-                    else:
-                        audio_stream = matching_streams[0]
+                if quality == 'lowest':
+                    audio_stream = streams[-1]
                 else:
-                    # if failed to find a matching audio, choose any one
-                    audio_stream = audio_streams[0]
+                    audio_stream = streams[0]
 
-            self.audio_stream = audio_stream
-            self.audio_quality = self.audio_stream.name
-            self.audio_url = audio_stream.url
-            self.audio_size = audio_stream.size
-            self.audio_fragment_base_url = audio_stream.fragment_base_url
-            self.audio_fragments = audio_stream.fragments
-            self.audio_format_id = audio_stream.format_id
+            if audio_stream:
+                self.audio_stream = audio_stream
+                self.audio_quality = self.audio_stream.name
+                self.audio_url = audio_stream.url
+                self.audio_size = audio_stream.size
+                self.audio_fragment_base_url = audio_stream.fragment_base_url
+                self.audio_fragments = audio_stream.fragments
+                self.audio_format_id = audio_stream.format_id
 
             # log('downloaditem.select_audio:', self.audio_quality, log_level=3)
 
@@ -516,6 +523,10 @@ class Stream:
         size = int(headers.get('content-length', 0))
         log('stream.get_size()>', self.name, format_bytes(size), log_level=3)
         return size
+
+    @property
+    def isfragmented(self):
+        return True if self.fragments else False
 
     @property
     def name(self):
