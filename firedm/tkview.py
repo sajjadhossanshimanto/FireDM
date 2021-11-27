@@ -2377,6 +2377,7 @@ class SimplePlaylist(tk.Toplevel):
 
         # Insert the data in Treeview widget
         for i, lbl in enumerate(self.playlist):
+            lbl = render_text(lbl)  # bidi support
             tagnum = i % 2
             self.table.insert('', 'end', iid=i, text=lbl, tag=tagnum)
         bg1 = atk.calc_contrast_color(MAIN_BG, 5)
@@ -2416,7 +2417,8 @@ class SimplePlaylist(tk.Toplevel):
 
     def download(self, download_later=False):
         # selected e.g. {2: 'entry - 2', 4: 'entry - 4', 8: 'entry - 8'}
-        selected_items = {int(x): self.table.item(x, 'text') for x in self.table.selection()}
+        selected_idx = [int(x) for x in self.table.selection()]
+        selected_items = {x: self.playlist[x] for x in selected_idx}
 
         download_options = dict(
             download_later=download_later,
@@ -4749,7 +4751,7 @@ class MainWindow(IView):
             self.msgbox('Playlist window already opened')
         else:
             # pl = [f'video {x}' for x in range(1, 5)]  # test
-            pl = self.pl_menu.get()
+            pl = self.controller.get_playlist_titles()
             if pl:
                 # get subtitles
                 # Example: {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
