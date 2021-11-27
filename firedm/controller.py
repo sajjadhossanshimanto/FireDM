@@ -684,6 +684,56 @@ class Controller:
 
     # endregion
 
+    # region video playlist
+    def get_playlist_titles(self):
+        if self.last_active_playlist:
+            titles = [d.title for d in self.last_active_playlist]
+            return titles
+        else:
+            return None
+
+    def prepare_playlist(self):
+        if self.playlist:
+            self.last_active_playlist = self.playlist
+
+    @threaded
+    def download_playlist(self, download_info, **kwargs):
+        """download playlist
+          Args:
+              download_info (dict): example
+                  {
+                  'selected_items': {1: 'video 2', 2: 'video 3'},
+                  'stream_options': {'mediatype': 'video', 'extension': 'mp4', 'quality': 'best', 'dashaudio': 'auto'},
+                  'download_options': {'download_later': False, 'folder': '/test'},
+                  'subtitles': None
+                  }
+
+        """
+        selected_items = download_info.get('selected_items', {})
+        stream_options = download_info.setdefault('stream_options', {})
+        download_options = download_info.setdefault('download_options', {})
+        subtitles = download_info.get('subtitles', {})
+
+        for idx, title in selected_items.items():
+            d = self.last_active_playlist[idx]
+
+            # process video
+            if not d.all_streams:
+                process_video(d)
+
+            # select stream
+            d.select_stream(**stream_options)
+
+            # update name
+            d.name = title + '.' + stream_options['extension']
+
+            self.download(d, silent=True, **download_options, **kwargs)
+            time.sleep(1)
+
+            if subtitles:
+                self.download_subtitles(subtitles, d=d)
+    # endregion
+
     # region download
     def download_q_handler(self):
         """handle downloads, should run in a dedicated thread"""
@@ -1030,43 +1080,6 @@ class Controller:
                 break
             self.autodownload(url, **kwargs)
             time.sleep(0.5)
-
-    @threaded
-    def download_playlist(self, download_info, **kwargs):
-        """download playlist
-          Args:
-              download_info (dict): example
-                  {
-                  'selected_items': {1: 'video 2', 2: 'video 3'},
-                  'stream_options': {'mediatype': 'video', 'extension': 'mp4', 'quality': 'best', 'dashaudio': 'auto'},
-                  'download_options': {'download_later': False, 'folder': '/test'},
-                  'subtitles': None
-                  }
-
-        """
-        selected_items = download_info.get('selected_items', {})
-        stream_options = download_info.setdefault('stream_options', {})
-        download_options = download_info.setdefault('download_options', {})
-        subtitles = download_info.get('subtitles', {})
-
-        for idx, title in selected_items.items():
-            d = self.last_active_playlist[idx]
-
-            # process video
-            if not d.all_streams:
-                process_video(d)
-
-            # select stream
-            d.select_stream(**stream_options)
-
-            # update name
-            d.name = title + '.' + stream_options['extension']
-
-            self.download(d, silent=True, **download_options, **kwargs)
-            time.sleep(1)
-
-            if subtitles:
-                self.download_subtitles(subtitles, d=d)
 
     # endregion
 
@@ -1506,17 +1519,6 @@ class Controller:
             d = None
 
         return d
-
-    def get_playlist_titles(self):
-        if self.last_active_playlist:
-            titles = [d.title for d in self.last_active_playlist]
-            return titles
-        else:
-            return None
-
-    def prepare_playlist(self):
-        if self.playlist:
-            self.last_active_playlist = self.playlist
 
     # endregion
 
