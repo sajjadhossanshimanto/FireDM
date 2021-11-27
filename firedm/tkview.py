@@ -4750,6 +4750,9 @@ class MainWindow(IView):
         if self.pl_window:
             self.msgbox('Playlist window already opened')
         else:
+            # must call
+            self.controller.prepare_playlist()
+
             # pl = [f'video {x}' for x in range(1, 5)]  # test
             pl = self.controller.get_playlist_titles()
             if pl:
@@ -4767,7 +4770,6 @@ class MainWindow(IView):
                     self.controller.download_playlist2(download_info)
             else:
                 self.msgbox('No videos in playlist')
-
 
     def select_dash_audio(self, uid=None, video_idx=None, active=True):
         # select audio for dash video

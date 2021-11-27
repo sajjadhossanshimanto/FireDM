@@ -337,6 +337,7 @@ class Controller:
 
         self.url = ''
         self.playlist = []
+        self.last_active_playlist = None  # for playlist download
         self._playlist_menu = []
         self._stream_menu = []
 
@@ -1066,14 +1067,13 @@ class Controller:
                   }
 
         """
-        print('download playlist 2')
         selected_items = download_info.get('selected_items', {})
         stream_options = download_info.setdefault('stream_options', {})
         download_options = download_info.setdefault('download_options', {})
         subtitles = download_info.get('subtitles', {})
 
         for idx, title in selected_items.items():
-            d = self.playlist[idx]
+            d = self.last_active_playlist[idx]
 
             # process video
             if not d.all_streams:
@@ -1531,11 +1531,15 @@ class Controller:
         return d
 
     def get_playlist_titles(self):
-        if self.playlist:
-            titles = [d.title for d in self.playlist]
+        if self.last_active_playlist:
+            titles = [d.title for d in self.last_active_playlist]
             return titles
         else:
             return None
+
+    def prepare_playlist(self):
+        if self.playlist:
+            self.last_active_playlist = self.playlist
 
     # endregion
 
