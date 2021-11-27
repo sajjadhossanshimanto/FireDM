@@ -1032,7 +1032,7 @@ class Controller:
             time.sleep(0.5)
 
     @threaded
-    def download_playlist2(self, download_info, **kwargs):
+    def download_playlist(self, download_info, **kwargs):
         """download playlist
           Args:
               download_info (dict): example

@@ -4767,7 +4767,7 @@ class MainWindow(IView):
                 self.pl_window = None
 
                 if download_info:
-                    self.controller.download_playlist2(download_info)
+                    self.controller.download_playlist(download_info)
             else:
                 self.msgbox('No videos in playlist')
 
