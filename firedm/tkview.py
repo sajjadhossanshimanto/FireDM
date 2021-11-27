@@ -2447,8 +2447,8 @@ class SimplePlaylist(tk.Toplevel):
         stream_options = {k.lower(): v.lower() for k, v in stream_options.items()}
 
         # subtitles
-        lang = self.sub_lang.selection
-        ext = self.sub_ext.selection
+        lang = self.sub_lang.get()
+        ext = self.sub_ext.get()
         if self.sub_var.get() and lang and ext:
             subtitles = {lang: ext}
         else:

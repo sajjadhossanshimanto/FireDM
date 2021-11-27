@@ -727,6 +727,11 @@ class Controller:
             # update name
             d.name = title + '.' + stream_options['extension']
 
+            # update download folder
+            folder = download_options.get('folder', None)
+            if folder:
+                d.folder = folder
+
             self.download(d, silent=True, **download_options, **kwargs)
             time.sleep(1)
 
