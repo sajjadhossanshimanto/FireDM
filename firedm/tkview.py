@@ -1147,8 +1147,6 @@ class Browse(tk.Frame):
         folder_entry.bind('<FocusOut>', self.update_recent_folders, add='+')
         folder_entry.bind('<1>', self.update_recent_folders, add='+')
 
-        self.foldervar.trace_add('write', lambda *args: set_option(download_folder=self.folder))
-
         browse_btn = Button(self, text='', image=imgs['folder_icon'], transparent=True, tooltip='change folder')
         browse_btn.pack(side='left', padx=5)
 
