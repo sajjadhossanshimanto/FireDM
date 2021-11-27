@@ -1032,29 +1032,6 @@ class Controller:
             time.sleep(0.5)
 
     @threaded
-    def download_playlist(self, selected_videos, subtitles=None, **kwargs):
-        """download playlist
-          Args:
-              selected_videos (iterable): indexes of selected videos in self.playlist
-              subtitles (dict): key=language, value=selected extension
-        """
-
-        kwargs.setdefault('folder', config.download_folder)
-
-        for vid_idx in selected_videos:
-            d = self.playlist[vid_idx]
-
-            # add number to name
-            if config.use_playlist_numbers:
-                kwargs['name'] = f'{vid_idx + 1}- {d.name}'
-
-            self.download(d, silent=True, **kwargs)
-            time.sleep(1)
-
-            if subtitles:
-                self.download_subtitles(subtitles, d=d)
-
-    @threaded
     def download_playlist2(self, download_info, **kwargs):
         """download playlist
           Args:
