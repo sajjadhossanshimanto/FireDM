@@ -1530,6 +1530,13 @@ class Controller:
 
         return d
 
+    def get_playlist_titles(self):
+        if self.playlist:
+            titles = [d.title for d in self.playlist]
+            return titles
+        else:
+            return None
+
     # endregion
 
     # region schedul
