@@ -2756,8 +2756,6 @@ class SimplePlaylist(tk.Toplevel):
 
         self.create_widgets()
 
-        self.wait_window()
-
     def create_widgets(self):
         main_fr = tk.Frame(self, bg=MAIN_BG)
         main_fr.pack(fill='both', expand=True)
@@ -5226,18 +5224,26 @@ class MainWindow(IView):
         self.batch_window = BatchWindow(self)
 
     def download_playlist(self):
-        # pl = [f'video {x}' for x in range(1, 5)]  # test
-        pl = self.pl_menu.get()
-        if pl:
-            # get subtitles
-            # Example: {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
-            sub = self.controller.get_subtitles(video_idx=0)
-
-            s = SimplePlaylist(self.root, pl, sub)
-            if s.download_info:
-                self.controller.download_playlist2(s.download_info)
+        if self.pl_window:
+            self.msgbox('Playlist window already opened')
         else:
-            self.msgbox('No videos in playlist')
+            pl = [f'video {x}' for x in range(1, 5)]  # test
+            # pl = self.pl_menu.get()
+            if pl:
+                # get subtitles
+                # Example: {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
+                sub = self.controller.get_subtitles(video_idx=0)
+
+                self.pl_window = SimplePlaylist(self.root, pl, sub)
+                self.pl_window.wait_window()
+
+                download_info = self.pl_window.download_info
+                self.pl_window = None
+
+                if download_info:
+                    self.controller.download_playlist2(download_info)
+            else:
+                self.msgbox('No videos in playlist')
 
     def show_pl_window(self):
         if self.pl_window:
