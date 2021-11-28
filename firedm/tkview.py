@@ -1565,6 +1565,9 @@ class DItem(tk.Frame):
     def select(self, flag=True, refresh=False):
         """select self"""
 
+        # set focus, required for any "keyboard binding" to work
+        self.focus_set()
+
         if refresh != (flag == self.selected):
             return
 
@@ -1613,9 +1616,6 @@ class DItem(tk.Frame):
             self.on_toggle_callback()
 
         self.update_idletasks()
-
-        # set focus, required for any "keyboard binding" to work
-        self.focus_set()
 
     def toggle(self):
         """toggle item selection"""
