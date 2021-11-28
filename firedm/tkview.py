@@ -1873,7 +1873,8 @@ class DItem(tk.Frame):
         self.toggle_blinker()
 
     def mark_as_failed(self, state=True):
-        f = tkfont.Font(self.name_lbl, **config.gui_font)
+        f = tkfont.Font(self.name_lbl, font=self.name_lbl['font'])
+        f.config(**config.gui_font)
         self.name_lbl.config(font=f)
         f.configure(overstrike=state)
 
