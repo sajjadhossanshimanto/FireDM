@@ -2353,6 +2353,7 @@ class SimplePlaylist(tk.Toplevel):
 
         # select frame -------------------------------------------------------------------------------------------------
         select_lbl_var = tk.StringVar()
+        itemid_var = tk.StringVar()
         select_all_var = tk.BooleanVar()
 
         def select_all_callback(*args, flag=None):
@@ -2367,6 +2368,7 @@ class SimplePlaylist(tk.Toplevel):
         select_fr.pack(anchor='w', pady=(20, 0), fill='x')
         Checkbutton(select_fr, variable=select_all_var, textvariable=select_lbl_var,
                     command=select_all_callback).pack(side='left')
+        tk.Label(select_fr, bg=MAIN_BG, fg=MAIN_FG, textvariable=itemid_var).pack(side='left', padx=20)
 
         # filenames frame ----------------------------------------------------------------------------------------------
         fn_frame = tk.Frame(select_fr, bg=MAIN_BG)
@@ -2398,6 +2400,10 @@ class SimplePlaylist(tk.Toplevel):
             num = len(self.table.selection())
             select_lbl_var.set(f' Selcted {num} of {total}')
             select_all_var.set(num == total)
+            if num == 1 and self.table.focus():
+                itemid_var.set(f'item #{int(self.table.focus()) + 1}')
+            else:
+                itemid_var.set('')
 
         self.table.bind('<<TreeviewSelect>>', update_selection_lbl)
 
