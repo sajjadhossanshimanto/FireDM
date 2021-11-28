@@ -2464,8 +2464,8 @@ class SimplePlaylist(tk.Toplevel):
         reversevar = tk.BooleanVar(value=opt.get('reverse', False))
         paddingvar = tk.BooleanVar(value=opt.get('zeropadding', False))
 
-        startnumvar = tk.IntVar(value=opt.get('startnum', False))
-        startitemvar = tk.IntVar(value=opt.get('startitem', False))
+        startnumvar = tk.IntVar()
+        startitemvar = tk.IntVar()
 
         Checkbutton(fr, text='add numbers to filenames', variable=enablevar).pack(anchor='w', padx=5, pady=5)
         Checkbutton(fr, text='reverse order', variable=reversevar).pack(anchor='w', padx=5, pady=5)
@@ -2490,15 +2490,14 @@ class SimplePlaylist(tk.Toplevel):
                 enable=enablevar.get(),
                 reverse=reversevar.get(),
                 zeropadding=paddingvar.get(),
-                startnum=startnumvar.get(),
-                startitem=startitemvar.get()
             )
             top.destroy()
 
             config.playlist_num_options = self.num_options
 
             # set titles
-            self.titles = self.add_numbers(self.playlist, **self.num_options)
+            self.titles = self.add_numbers(self.playlist, startnum=startnumvar.get(), startitem=startitemvar.get(),
+                                           **self.num_options)
 
             for i, lbl in enumerate(self.titles):
                 lbl = render_text(lbl)  # bidi support
