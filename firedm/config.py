@@ -113,7 +113,7 @@ media_presets = dict(
 video_ext_choices = ('mp4', 'webm')
 video_quality_choices = ('best', '1080p', '720p', '480p', '360p', '240p', 'lowest')
 dash_audio_choices = ('best', 'lowest')
-audio_ext_choices = ('mp3', 'aac', 'wav', 'm4a', 'vorbis', 'opus', 'flac', 'ogg', 'webm')
+audio_ext_choices = ('mp3', 'aac', 'wav', 'm4a', 'opus', 'flac', 'ogg', 'webm')
 audio_quality_choices = ('best', 'lowest')
 
 # ---------------------------------------------------------------------------------------Workarounds--------------------

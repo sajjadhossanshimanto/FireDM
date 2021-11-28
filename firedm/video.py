@@ -197,25 +197,36 @@ class Video(DownloadItem):
         mp4_videos = [stream for stream in video_streams if stream.extension == 'mp4']
         other_videos = [stream for stream in video_streams if stream.extension != 'mp4']
 
-        # add another audio formats, mp3, aac, wav, ogg
+        # add extra audio formats
         if audio_streams:
-            webm = [stream for stream in audio_streams if stream.extension == 'webm']
-            m4a = [stream for stream in audio_streams if stream.extension in ('m4a')]
+            # sort audio streams from best to lowest
+            audio_streams = sorted(audio_streams, key=lambda stream: stream.quality, reverse=True)
+            bestaudio = audio_streams[0]
+            webms = [stream for stream in audio_streams if stream.extension == 'webm']
+            webm = webms[0] if webms else bestaudio
 
-            aac = m4a[0] if m4a else audio_streams[0]
-            aac = copy.copy(aac)
-            aac.extension = 'aac'
+            m4as = [stream for stream in audio_streams if stream.extension == 'm4a']
+            m4a = m4as[0] if m4as else bestaudio
 
-            ogg = webm[0] if webm else audio_streams[0]
-            ogg = copy.copy(ogg)
-            ogg.extension = 'ogg'
+            existing_extensions = [stream.extension for stream in audio_streams]
 
-            mp3 = copy.copy(aac)
-            mp3.extension = 'mp3'
-            mp3.abr = 128
+            print(m4a, webm, bestaudio)
+            print(existing_extensions)
 
-            extra_audio = [aac, ogg, mp3]
-            audio_streams = extra_audio + audio_streams
+            for ext in config.audio_ext_choices:
+                if ext in existing_extensions:
+                    continue
+                elif ext in ('aac', 'mp3'):
+                    source = m4a
+                elif ext in ('opus', 'ogg'):
+                    source = webm
+                else:
+                    source = bestaudio
+                if not source:
+                    continue
+                aud = copy.copy(source)
+                aud.extension = ext
+                audio_streams.append(aud)
 
         # update all streams with sorted ones
         all_streams = video_streams + audio_streams + extra_streams
