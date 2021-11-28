@@ -2279,6 +2279,7 @@ class SimplePlaylist(tk.Toplevel):
         self.sub_var = tk.BooleanVar()
 
         self.num_options = config.playlist_num_options
+        self.load_global_presets()
 
         self.create_widgets()
 
@@ -2503,6 +2504,25 @@ class SimplePlaylist(tk.Toplevel):
 
         top.wait_window()
 
+    def save_global_presets(self):
+        # update global settings
+        config.media_presets = dict(
+            video_ext=self.video_ext.get(),
+            video_quality=self.video_quality.get(),
+            dash_audio=self.dash_audio_quality.get(),
+            audio_ext=self.audio_ext.get(),
+            audio_quality=self.audio_quality.get()
+        )
+
+    def load_global_presets(self):
+        p = config.media_presets
+        if p:
+            self.video_ext.set(p.get('video_ext'))
+            self.video_quality.set(p.get('video_quality'))
+            self.dash_audio_quality.set(p.get('dash_audio'))
+            self.audio_ext.set(p.get('audio_ext'))
+            self.audio_quality.set(p.get('audio_quality'))
+
     def download(self, download_later=False):
         # selected e.g. {2: 'entry - 2', 4: 'entry - 4', 8: 'entry - 8'}
         selected_idx = [int(x) for x in self.table.selection()]
@@ -2550,6 +2570,8 @@ class SimplePlaylist(tk.Toplevel):
             download_options=download_options,
             subtitles=subtitles
         )
+
+        self.save_global_presets()
 
         self.destroy()
 
