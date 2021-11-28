@@ -192,7 +192,7 @@ ditem_show_top = True
 enable_systray = True if operating_system == 'Windows' else False
 minimize_to_systray = False
 
-DEFAULT_WINDOW_SIZE = (780, 433)  # width, height in pixels
+DEFAULT_WINDOW_SIZE = (800, 433)  # width, height in pixels
 window_size = DEFAULT_WINDOW_SIZE
 window_maximized = False
 force_window_maximize = False
@@ -304,7 +304,7 @@ popups = {
 
 for k in popups.keys():
     var_name = f'popup_{k}'
-    globals()[var_name] = True
+    globals()[var_name] = True if k in (2, 4, 6, 7) else False
     settings_keys.append(var_name)
 
 
@@ -316,3 +316,5 @@ def get_popup(k):
 
 def enable_popup(k, value):
     globals()[f'popup_{k}'] = value  # True or false
+
+# disable some popups
