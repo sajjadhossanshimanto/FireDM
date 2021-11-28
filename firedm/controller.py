@@ -1260,6 +1260,7 @@ class Controller:
     # endregion
 
     # region subtitles
+    @ignore_errors
     def get_subtitles(self, uid=None, video_idx=None):
         """send subtitles info for view
         # subtitles stored in download item in a dictionary format
