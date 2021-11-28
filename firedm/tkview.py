@@ -2254,6 +2254,7 @@ class SimplePlaylist(tk.Toplevel):
         """
 
         self.playlist = playlist
+        self.titles = [x for x in playlist]
 
         # Example: {'en': ['srt', 'vtt', ...], 'ar': ['vtt', ...], ..}}
         self.subtitles = subtitles
@@ -2276,6 +2277,8 @@ class SimplePlaylist(tk.Toplevel):
         self.audio_ext = tk.StringVar()
         self.audio_quality = tk.StringVar()
         self.sub_var = tk.BooleanVar()
+
+        self.num_options = config.playlist_num_options
 
         self.create_widgets()
 
@@ -2360,9 +2363,14 @@ class SimplePlaylist(tk.Toplevel):
                 self.table.selection_remove(allitems)
 
         select_fr = tk.Frame(top_fr, bg=MAIN_BG)
-        select_fr.pack(anchor='w', pady=(5, 0))
+        select_fr.pack(anchor='w', pady=(20, 0), fill='x')
         Checkbutton(select_fr, variable=select_all_var, textvariable=select_lbl_var,
                     command=select_all_callback).pack(side='left')
+
+        # filenames frame ----------------------------------------------------------------------------------------------
+        fn_frame = tk.Frame(select_fr, bg=MAIN_BG)
+        Button(fn_frame, text='Numbers', command=self.numbers_window).pack(side='left', padx=5)
+        fn_frame.pack(side='right')
 
         # table --------------------------------------------------------------------------------------------------------
         self.table = ttk.Treeview(middle_fr, selectmode='extended', show='tree', takefocus=True, padding=0)
@@ -2374,7 +2382,8 @@ class SimplePlaylist(tk.Toplevel):
               fieldbackground=[('', MAIN_BG)])
 
         # Insert the data in Treeview widget
-        for i, lbl in enumerate(self.playlist):
+        self.titles = self.add_numbers(self.playlist, **self.num_options)
+        for i, lbl in enumerate(self.titles):
             lbl = render_text(lbl)  # bidi support
             tagnum = i % 2
             self.table.insert('', 'end', iid=i, text=lbl, tag=tagnum)
@@ -2413,10 +2422,91 @@ class SimplePlaylist(tk.Toplevel):
 
         update_selection_lbl()
 
+    @staticmethod
+    def add_numbers(titles, reverse=False, startnum=0, startitem=0, zeropadding=False, enable=True, **kwargs):
+        if enable:
+            startnum = startnum or (len(titles) if reverse else 1)
+            startitem = startitem or 1
+            result = []
+
+            maxnum = len(titles)
+            paddingwidth = len(str(maxnum))
+            n = startnum
+            for i, title in enumerate(titles):
+                itemnum = i + 1
+
+                if itemnum >= startitem and n > 0:
+                    num = str(n).zfill(paddingwidth) if zeropadding else n
+                    title = f'{num}-{title}'
+                    n = n - 1 if reverse else n + 1
+
+                result.append(title)
+        else:
+            result = titles
+        return result
+
+    def numbers_window(self):
+        top = tk.Toplevel(self)
+        top.title('Naming options')
+        fr = tk.Frame(top, bg=MAIN_BG)
+        fr.pack(fill='both', expand=True)
+
+        opt = self.num_options
+
+        enablevar = tk.BooleanVar(value=opt.get('enable', False))
+        reversevar = tk.BooleanVar(value=opt.get('reverse', False))
+        paddingvar = tk.BooleanVar(value=opt.get('zeropadding', False))
+
+        startnumvar = tk.IntVar(value=opt.get('startnum', False))
+        startitemvar = tk.IntVar(value=opt.get('startitem', False))
+
+        Checkbutton(fr, text='add numbers to filenames', variable=enablevar).pack(anchor='w', padx=5, pady=5)
+        Checkbutton(fr, text='reverse order', variable=reversevar).pack(anchor='w', padx=5, pady=5)
+        Checkbutton(fr, text='zero padding', variable=paddingvar).pack(anchor='w', padx=5, pady=5)
+
+        fr2 = tk.Frame(fr, bg=MAIN_BG)
+        fr2.pack(anchor='w', padx=10, pady=5)
+        tk.Label(fr2, text='starting number', bg=MAIN_BG, fg=MAIN_FG).pack(side='left')
+        tk.Entry(fr2, width=5, textvariable=startnumvar).pack(padx=5, side='left')
+        tk.Label(fr2, text='*zero for default', bg=MAIN_BG, fg=MAIN_FG).pack(side='left')
+
+        fr3 = tk.Frame(fr, bg=MAIN_BG)
+        fr3.pack(anchor='w', padx=10, pady=5)
+        tk.Label(fr3, text='start from item #', bg=MAIN_BG, fg=MAIN_FG).pack(side='left')
+        tk.Entry(fr3, width=5, textvariable=startitemvar).pack(padx=5, side='left')
+        tk.Label(fr3, text='*zero for default', bg=MAIN_BG, fg=MAIN_FG).pack(side='left')
+
+        ttk.Separator(fr, orient='horizontal').pack(fill='x', padx=5)
+
+        def apply():
+            self.num_options = dict(
+                enable=enablevar.get(),
+                reverse=reversevar.get(),
+                zeropadding=paddingvar.get(),
+                startnum=startnumvar.get(),
+                startitem=startitemvar.get()
+            )
+            top.destroy()
+
+            config.playlist_num_options = self.num_options
+
+            # set titles
+            self.titles = self.add_numbers(self.playlist, **self.num_options)
+
+            for i, lbl in enumerate(self.titles):
+                lbl = render_text(lbl)  # bidi support
+                self.table.item(i, text=lbl)
+
+        Button(fr, text='Cancel', command=top.destroy).pack(side='right', padx=5, pady=5)
+        Button(fr, text='Apply', command=apply).pack(side='right', padx=5, pady=5)
+        top.minsize(width=400, height=205)
+
+        top.wait_window()
+
     def download(self, download_later=False):
         # selected e.g. {2: 'entry - 2', 4: 'entry - 4', 8: 'entry - 8'}
         selected_idx = [int(x) for x in self.table.selection()]
-        selected_items = {x: self.playlist[x] for x in selected_idx}
+        selected_items = {x: self.titles[x] for x in selected_idx}
 
         download_options = dict(
             download_later=download_later,
@@ -3622,11 +3712,6 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Filesystem options--------
         heading('Filesystem options:')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
-        fr = tk.Frame(tab, bg=bg)
-        fr.pack(anchor='w', expand=True, fill='x')
-        CheckOption(fr, 'Auto number playlist filenames', key='use_playlist_numbers').pack(side='left', anchor='w')
-        CheckOption(fr, 'Reverse numbers (requires manual url refresh)',
-                    key='reverse_playlist').pack(side='left', anchor='w', padx=5)
 
         separator()
         # ------------------------------------------------------------------------------------Network options-----------
@@ -4751,7 +4836,7 @@ class MainWindow(IView):
             # must call
             self.controller.prepare_playlist()
 
-            # pl = [f'video {x}' for x in range(1, 5)]  # test
+            # pl = [f'video {x}' for x in range(1, 1000)]  # test
             pl = self.controller.get_playlist_titles()
             if pl:
                 # get subtitles
