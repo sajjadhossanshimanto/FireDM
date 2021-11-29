@@ -4519,6 +4519,8 @@ class MainWindow(IView):
 
                 self.stream_menu.start_progressbar()
                 self.controller.get_stream_menu(video_idx=0)
+
+                self.focus()
             else:
                 self.pl_menu.reset()
 
@@ -4921,8 +4923,6 @@ class MainWindow(IView):
 
             # select home tab
             self.select_tab('Home')
-
-            self.focus()
 
         return "break"
 
