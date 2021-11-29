@@ -3528,17 +3528,16 @@ class MainWindow(IView):
         self.view_btn = Button(top_fr, text='', image=imgs['view_icon'], tooltip='view')
         self.view_btn.pack(side='left', padx=5)
 
-        view_mode_menu = ['compact', 'mix']
         self.view_btn.rcm = atk.RightClickMenu(
             self.view_btn,
-            view_mode_menu,
+            config.view_mode_choices,
             callback=lambda option_name: self.switch_view(option_name),
             bg=RCM_BG, fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG, bind_left_click=True,
             bind_right_click=False)
 
         # validate view_mode
-        if config.view_mode not in view_mode_menu:
-            config.view_mode = view_mode_menu[1]  # 'mix' view
+        if config.view_mode not in config.view_mode_choices:
+            config.view_mode = config.DEFAULT_VIEW_MODE
 
         rcm_marker(self.view_btn.rcm, default=config.view_mode)
 
