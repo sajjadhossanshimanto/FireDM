@@ -328,6 +328,7 @@ class Video(DownloadItem):
                     streams = [stream for stream in streams if raw_name == stream.raw_name] or streams
 
                 if extension:
+                    extension = extension.replace('.', '')
                     streams = [stream for stream in streams if stream.extension == extension] or streams
 
                 if fragmented is not None:

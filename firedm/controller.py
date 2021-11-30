@@ -390,19 +390,20 @@ class Controller:
                 refreshed_d.folder = folder
 
                 # select video stream
-                refreshed_d.select_stream(format_id=d.format_id, extension=d.extension)
-                log('selected video:    ', d.selected_quality)
-                log('New selected video:', refreshed_d.selected_quality)
+                refreshed_d.select_stream(format_id=d.format_id, extension=d.extension, mediatype=d.type)
+                log('selected stream:    ', d.selected_quality)
+                log('New selected stream:', refreshed_d.selected_quality)
 
                 # select audio stream
-                try:
-                    match = [s for s in refreshed_d.audio_streams if s.name == d.audio_quality]
-                    selected_audio_stream = match[0] if match else None
-                    refreshed_d.select_audio(selected_audio_stream)
-                    log('selected audio:    ', d.audio_quality)
-                    log('New selected audio:', refreshed_d.audio_quality)
-                except:
-                    pass
+                if d.type == MediaType.video and 'dash' in d.subtype_list:
+                    try:
+                        match = [s for s in refreshed_d.audio_streams if s.name == d.audio_quality]
+                        selected_audio_stream = match[0] if match else None
+                        refreshed_d.select_audio(selected_audio_stream)
+                        log('selected audio:    ', d.audio_quality)
+                        log('New selected audio:', refreshed_d.audio_quality)
+                    except:
+                        pass
 
                 # update old object
                 d.__dict__.update(refreshed_d.__dict__)
