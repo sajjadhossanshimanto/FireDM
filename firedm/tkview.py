@@ -2113,7 +2113,8 @@ class LabeledEntryOption(tk.Frame):
         self.var = tk.StringVar()
 
         # entry
-        self.entry = tk.Entry(self, bg=bg, fg=fg, highlightbackground=ENTRY_BD_COLOR, textvariable=self.var, **kwargs)
+        self.entry = tk.Entry(self, bg=bg, fg=fg, highlightbackground=ENTRY_BD_COLOR, textvariable=self.var,
+                              insertbackground=fg, **kwargs)
         self.entry.pack(side='left', fill='both', expand=True)
 
         # help button
@@ -2163,7 +2164,7 @@ class CheckEntryOption(tk.Frame):
     """a check button with entry for options in setting tab that will update global settings in config.py"""
 
     def __init__(self, parent, text, entry_key=None, check_key=None, set_text_validator=None, get_text_validator=None,
-                 entry_disabled_value='', bg=None, callback=None, fg=None, **kwargs):
+                 entry_disabled_value='', bg=None, callback=None, fg=None, helpmsg=None, **kwargs):
         bg = bg or atk.get_widget_attribute(parent, 'background')
         fg = fg or MAIN_FG
 
@@ -2190,8 +2191,14 @@ class CheckEntryOption(tk.Frame):
         # bind trace
         self.entry_var.trace_add('write', self.update_sett)
 
-        self.entry = tk.Entry(self, bg=bg, fg=fg, highlightbackground=ENTRY_BD_COLOR, textvariable=self.entry_var, **kwargs)
-        self.entry.pack(side='left', fill='x', expand=True)
+        self.entry = tk.Entry(self, bg=bg, fg=fg, highlightbackground=ENTRY_BD_COLOR, textvariable=self.entry_var,
+                              insertbackground=fg, **kwargs)
+        self.entry.pack(side='left', fill='both', expand=True)
+
+        # help button
+        if helpmsg:
+            Button(self, text='?', bg=BTN_BG, fg=BTN_FG, transparent=False,
+                   command=lambda: Popup(helpmsg, parent=self.winfo_toplevel()).show()).pack(side='left', padx=(0, 5))
 
         # Load previous values -----------------------------------------------------------------------------------------
         text = get_option(entry_key, '')
@@ -3754,7 +3761,14 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Network options-----------
         heading('Network options:')
         proxy_frame = tk.Frame(tab, bg=bg)
-        proxy_entry = CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy')
+
+        tip = ['proxy url should have one of below schemes:', 'http, https, socks4, socks4a, socks5, or socks5h', '',
+               'e.g. "scheme://proxy_address:port"', '', 'if proxy server requires login',
+               '"scheme://usr:pass@proxy_address:port"', '',
+               'examples:', 'socks5h://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
+
+        proxy_entry = CheckEntryOption(proxy_frame, 'Proxy:', check_key='enable_proxy', entry_key='proxy',
+                                       helpmsg='\n'.join(tip))
         proxy_entry.pack(side='left', expand=True, fill='x')
 
         def prefix_callback(scheme):
@@ -3769,15 +3783,6 @@ class MainWindow(IView):
         prefix_btn.pack(side='left', padx=5)
         atk.RightClickMenu(prefix_btn, prefix_menu, callback=prefix_callback, bind_left_click=True, bg=RCM_BG,
                            fg=RCM_FG, abg=RCM_ABG, afg=RCM_AFG)
-
-        tip = ['proxy url should have one of below schemes:', 'http, https, socks4, socks4a, socks5, or socks5h', '',
-               'e.g. "scheme://proxy_address:port"', '', 'if proxy server requires login',
-               '"scheme://usr:pass@proxy_address:port"', '',
-               'examples:', 'socks5h://127.0.0.1:8080', 'socks4://john:pazzz@127.0.0.1:1080']
-
-        btn = Button(proxy_frame, text='tip!')
-        btn.pack(side='left', padx=5)
-        atk.RightClickMenu(btn, tip, bind_left_click=True, bg=RCM_BG, fg=RCM_FG, abg=RCM_BG, afg=RCM_FG)
 
         proxy_frame.pack(anchor='w', fill='x', expand=True, padx=(0, 5))
 
