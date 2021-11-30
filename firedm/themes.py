@@ -269,6 +269,16 @@ builtin_themes = {
         "HDG_FG": "white",
         "RCM_FG": "black",
         "TITLE_BAR_FG": "white"
+    },
+
+    "Light-Orange": {
+        "MAIN_BG": "white",
+        "SF_BG": "#ffad00",
+        "SF_BTN_BG": "#006cff",
+        "PBAR_FG": "#006cff",
+        "THUMBNAIL_FG": "#006cff",
+        "HDG_FG": "white",
+        "RCM_FG": "black"
     }
 }
 
@@ -325,15 +335,16 @@ def calculate_missing_theme_keys(theme):
     # progressbar
     theme.setdefault('PBAR_BG', atk.calc_contrast_color(theme['MAIN_BG'], 10))
 
+    for k, v in theme_map.items():
+        if k not in theme_fonts_keys:
+            fallback_key = v[0]
+            if fallback_key is not None:
+                theme.setdefault(k, theme.get(fallback_key, globals()[fallback_key]))
+
     for key in theme_fonts_keys:
         bg_key = theme_map[key][0]
         bg = theme.get(bg_key, globals()[bg_key])
         theme.setdefault(key, atk.calc_font_color(bg))
-
-    for key, v in theme_map.items():
-        fallback_key = v[0]
-        if fallback_key is not None:
-            theme.setdefault(key, theme.get(fallback_key, globals()[fallback_key]))
 
 
 def strip_theme(theme):
