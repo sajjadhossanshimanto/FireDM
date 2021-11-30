@@ -22,7 +22,7 @@ settings_keys = [
     'keep_temp', 'last_update_check', 'log_level', 'max_concurrent_downloads', 'remember_web_auth', 'use_web_auth',
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
-    'playlist_autonum_options', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode',
+    'playlist_autonum_options', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode', 'temp_folder',
     'window_maximized', 'force_window_maximize', 'd_preview', 'updater_version', 'media_presets', 'video_title_template'
 ]
 
@@ -88,6 +88,7 @@ playlist_autonum_options = dict(
 # video file title template, ref: https://github.com/ytdl-org/youtube-dl#output-template
 video_title_template = ''  # '%(title)s'
 
+temp_folder = ''
 # ---------------------------------------------------------------------------------------Network Options----------------
 proxy = ''  # must be string example: 127.0.0.1:8080
 enable_proxy = False

@@ -400,8 +400,9 @@ class DownloadItem:
 
     @property
     def temp_folder(self):
+        fp = config.temp_folder if os.path.isdir(config.temp_folder) else self.folder
         name = f'firedm_{self.uid}'
-        return os.path.join(self.folder, name)
+        return os.path.join(fp, name)
 
     @property
     def target_file(self):

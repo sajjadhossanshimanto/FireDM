@@ -1125,7 +1125,8 @@ folderchooser = FileDialog(foldersonly=True).run
 
 class Browse(tk.Frame):
     """a frame contains an entry widget and browse button to browse for folders"""
-    def __init__(self, parent=None, bg=None, fg=None, label=None, **kwargs):
+    def __init__(self, parent=None, bg=None, fg=None, label=None, callback=None, **kwargs):
+        self.callback = callback
         bg = bg or MAIN_BG
         fg = fg or MAIN_FG
 
@@ -1156,6 +1157,9 @@ class Browse(tk.Frame):
         self.recent_menu.add_command(label='Browse ...', command=self.change_folder)
 
         self.update_recent_menu()
+
+        if callable(self.callback):
+            self.foldervar.trace_add('write', lambda *args: self.callback(self.folder))
 
     @property
     def folder(self):
@@ -3757,6 +3761,9 @@ class MainWindow(IView):
             helpmsg='video title template \n''example: %(title)s-%(uploader)s-%(resolution)s \n\n'
                     'check below link for more details \n''https://github.com/ytdl-org/youtube-dl#output-template '
             ).pack(anchor='w', padx=5, fill='x')
+
+        Browse(tab, label='Temp folder:',
+               callback=lambda value: set_option(temp_folder=value)).pack(anchor='w', padx=5, fill='x')
 
         separator()
         # ------------------------------------------------------------------------------------Network options-----------
