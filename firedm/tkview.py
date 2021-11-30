@@ -2444,7 +2444,7 @@ class SimplePlaylist(tk.Toplevel):
         update_selection_lbl()
 
     @staticmethod
-    def add_numbers(titles, reverse=False, startnum=0, startitem=0, zeropadding=False, enable=True, **kwargs):
+    def add_numbers(titles, reverse=False, startnum=0, startitem=0, zeropadding=True, enable=True, **kwargs):
         if enable:
             startnum = startnum or (len(titles) if reverse else 1)
             startitem = startitem or 1
@@ -2474,9 +2474,9 @@ class SimplePlaylist(tk.Toplevel):
 
         opt = self.num_options
 
-        enablevar = tk.BooleanVar(value=opt.get('enable', False))
+        enablevar = tk.BooleanVar(value=opt.get('enable', True))
         reversevar = tk.BooleanVar(value=opt.get('reverse', False))
-        paddingvar = tk.BooleanVar(value=opt.get('zeropadding', False))
+        paddingvar = tk.BooleanVar(value=opt.get('zeropadding', True))
 
         startnumvar = tk.IntVar()
         startitemvar = tk.IntVar()

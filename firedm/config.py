@@ -79,7 +79,11 @@ recent_folders = []
 
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 checksum = False  # calculate checksums for completed files MD5 and SHA256
-playlist_num_options = {}
+playlist_num_options = dict(
+    enable=True,
+    reverse=False,
+    zeropadding=True,
+    )
 
 # video file title template, ref: https://github.com/ytdl-org/youtube-dl#output-template
 video_title_template = ''  # '%(title)s'
