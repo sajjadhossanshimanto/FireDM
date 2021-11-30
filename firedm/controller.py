@@ -723,6 +723,13 @@ class Controller:
             # select stream
             d.select_stream(**stream_options)
 
+            # respect video title template set by user
+            if config.video_title_template:
+                # get number if any
+                match = re.match(r'\d+-', title)
+                num = match.group() if match else ''
+                title = num + d.title
+
             # update name
             d.name = title + '.' + stream_options['extension']
 

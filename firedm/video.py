@@ -147,7 +147,8 @@ class Video(DownloadItem):
         # After processing will get webpage url = https://www.youtube.com/watch?v=C4C8JsgGrrY
         self.url = self.vid_info.get('webpage_url', None) or self.url
 
-        self.name = self.title = validate_file_name(self.vid_info.get('title_template', f'video{int(time.time())}'))
+        self.name = self.title = validate_file_name(self.vid_info.get('title_template', self.vid_info.get('title')) or
+                                                    f'video{int(time.time())}')
 
         # video duration
         self.duration = self.vid_info.get('duration', None)
