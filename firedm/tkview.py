@@ -2096,7 +2096,7 @@ class CheckOption(tk.Checkbutton):
 class LabeledEntryOption(tk.Frame):
     """an entry with a label for options in setting tab that will update global settings in config.py"""
     def __init__(self, parent, text, entry_key=None, set_text_validator=None, get_text_validator=None, bg=None, fg=None,
-                 callback=None, **kwargs):
+                 callback=None, helpmsg=None, **kwargs):
         bg = bg or atk.get_widget_attribute(parent, 'background')
         fg = fg or MAIN_FG
 
@@ -2114,7 +2114,12 @@ class LabeledEntryOption(tk.Frame):
 
         # entry
         self.entry = tk.Entry(self, bg=bg, fg=fg, highlightbackground=ENTRY_BD_COLOR, textvariable=self.var, **kwargs)
-        self.entry.pack(side='left', fill='x', expand=True)
+        self.entry.pack(side='left', fill='both', expand=True)
+
+        # help button
+        if helpmsg:
+            Button(self, text='?', bg=BTN_BG, fg=BTN_FG, transparent=False,
+                   command=lambda: Popup(helpmsg, parent=self.winfo_toplevel()).show()).pack(side='left', padx=(0, 5))
 
         # set current setting value
         current_value = get_option(self.key, '')
@@ -3739,6 +3744,11 @@ class MainWindow(IView):
         # ------------------------------------------------------------------------------------Filesystem options--------
         heading('Filesystem options:')
         CheckOption(tab, 'Auto rename file if same name exists in download folder', key='auto_rename').pack(anchor='w')
+        LabeledEntryOption(
+            tab, text='video title template', entry_key='video_title_template',
+            helpmsg='video title template \n''example: %(title)s-%(uploader)s-%(resolution)s \n\n'
+                    'check below link for more details \n''https://github.com/ytdl-org/youtube-dl#output-template '
+            ).pack(anchor='w', padx=5, fill='x')
 
         separator()
         # ------------------------------------------------------------------------------------Network options-----------

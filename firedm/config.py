@@ -23,7 +23,7 @@ settings_keys = [
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
     'playlist_num_options', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode',
-    'window_maximized', 'force_window_maximize', 'd_preview', 'updater_version', 'media_presets',
+    'window_maximized', 'force_window_maximize', 'd_preview', 'updater_version', 'media_presets', 'video_title_template'
 ]
 
 # ----------------------------------------------------------------------------------------General ----------------------
@@ -80,6 +80,9 @@ recent_folders = []
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 checksum = False  # calculate checksums for completed files MD5 and SHA256
 playlist_num_options = {}
+
+# video file title template, ref: https://github.com/ytdl-org/youtube-dl#output-template
+video_title_template = ''  # '%(title)s'
 
 # ---------------------------------------------------------------------------------------Network Options----------------
 proxy = ''  # must be string example: 127.0.0.1:8080

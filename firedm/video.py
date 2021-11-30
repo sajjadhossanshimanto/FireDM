@@ -86,6 +86,13 @@ def get_ytdl_options():
     # elif config.log_level <= 1:
     #     ydl_opts['quiet'] = True  # it doesn't work
 
+    # get video title template
+    outtmpl = config.video_title_template or '%(title)s'
+
+    # remove extension, it will be added later depend on stream type
+    outtmpl = outtmpl.replace('.%(ext)s', '')
+    ydl_opts['outtmpl'] = outtmpl
+
     return ydl_opts
 
 
@@ -140,8 +147,7 @@ class Video(DownloadItem):
         # After processing will get webpage url = https://www.youtube.com/watch?v=C4C8JsgGrrY
         self.url = self.vid_info.get('webpage_url', None) or self.url
 
-        # self.webpage_url = url  # self.vid_info.get('webpage_url')
-        self.name = self.title = validate_file_name(self.vid_info.get('title', f'video{int(time.time())}'))
+        self.name = self.title = validate_file_name(self.vid_info.get('title_template', f'video{int(time.time())}'))
 
         # video duration
         self.duration = self.vid_info.get('duration', None)
@@ -1409,6 +1415,12 @@ def get_media_info(url=None, info=None, ytdloptions=None):
             info = ydl.process_ie_result(info, download=False)
     except Exception as e:
         log('video.get_media_info() error:', e, log_level=3)
+
+    try:
+        # get video title template
+        info['title_template'] = ydl.prepare_filename(info)
+    except:
+        pass
 
     return info
 
