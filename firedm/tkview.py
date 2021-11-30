@@ -654,7 +654,8 @@ class Popup(tk.Toplevel):
                               width=40, font=self.font).pack(side='top', fill='both', expand=True, padx=5, pady=5)
         else:
             txt = atk.ScrolledText(main_frame, bg=self.bg, fg=self.fg, wrap=True, autoscroll=False, hscroll=False,
-                                   height=min(15, msg_height + 1))
+                                   height=min(15, msg_height + 1), sbar_fg=SBAR_FG, sbar_bg=SBAR_BG, bd=0,
+                                   exportselection=False, highlightthickness=0)
             txt.set(self.msg)
             txt.pack(side='top', fill='both', expand=True, padx=5, pady=5)
 
