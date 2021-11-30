@@ -216,9 +216,6 @@ class Video(DownloadItem):
 
             existing_extensions = [stream.extension for stream in audio_streams]
 
-            print(m4a, webm, bestaudio)
-            print(existing_extensions)
-
             for ext in config.audio_ext_choices:
                 if ext in existing_extensions:
                     continue
