@@ -397,12 +397,15 @@ def validate_file_name(fname):
         else:
             return c
 
-    clean_name = ''.join(map(replace, fname))
+    try:
+        clean_name = ''.join(map(replace, fname))
 
-    # max. allowed filename length 255 on windows,
-    # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN
-    if len(clean_name) > 255:
-        clean_name = clean_name[0:245] + clean_name[-10:]  # add last 10 characters "including file extension"
+        # max. allowed filename length 255 on windows,
+        # https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file?redirectedfrom=MSDN
+        if len(clean_name) > 255:
+            clean_name = clean_name[0:245] + clean_name[-10:]  # add last 10 characters "including file extension"
+    except:
+        clean_name = fname
 
     return clean_name
 

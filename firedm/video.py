@@ -86,13 +86,6 @@ def get_ytdl_options():
     # elif config.log_level <= 1:
     #     ydl_opts['quiet'] = True  # it doesn't work
 
-    # get video title template
-    outtmpl = config.video_title_template or '%(title)s'
-
-    # remove extension, it will be added later depend on stream type
-    outtmpl = outtmpl.replace('.%(ext)s', '')
-    ydl_opts['outtmpl'] = outtmpl
-
     return ydl_opts
 
 
@@ -114,7 +107,8 @@ class Video(DownloadItem):
         # set url
         self.url = self.webpage_url
 
-        self.title = validate_file_name(self.vid_info.get('title', f'video{int(time.time())}'))
+        self.simpletitle = validate_file_name(self.vid_info.get('title') or f'video{int(time.time())}')
+        self.title = self.simpletitle
         self.name = self.title
 
         # streams
@@ -147,8 +141,9 @@ class Video(DownloadItem):
         # After processing will get webpage url = https://www.youtube.com/watch?v=C4C8JsgGrrY
         self.url = self.vid_info.get('webpage_url', None) or self.url
 
-        self.name = self.title = validate_file_name(self.vid_info.get('title_template', self.vid_info.get('title')) or
-                                                    f'video{int(time.time())}')
+        self.simpletitle = validate_file_name(self.vid_info.get('title') or f'video{int(time.time())}')
+        self.title = validate_file_name(self.get_title()) or self.simpletitle
+        self.name = self.title
 
         # video duration
         self.duration = self.vid_info.get('duration', None)
@@ -179,6 +174,28 @@ class Video(DownloadItem):
         # select default stream
         if self.all_streams:
             self.select_stream(index=1)
+
+    def get_title(self, outtmpl=None):
+        # get video title template
+        outtmpl = outtmpl or config.video_title_template or '%(title)s'
+
+        # remove extension, it will be added later depend on stream type
+        outtmpl = outtmpl.replace('.%(ext)s', '')
+
+        # get global youtube_dl options
+        options = get_ytdl_options()
+        options['outtmpl'] = outtmpl
+
+        ydl = ytdl.YoutubeDL(options)
+
+        # get video title template
+        if self.all_streams:
+            info = self.vid_info
+            if self.audio_stream:
+                info.update(**self.audio_stream.stream_info)
+            info.update(**self.selected_stream.stream_info)
+            title = ydl.prepare_filename(info)
+            return title
 
     def _process_streams(self):
         all_streams = [Stream(x) for x in self.vid_info['formats']]
@@ -392,6 +409,7 @@ class Video(DownloadItem):
         # reset segments first
         self.segments.clear()
         self.total_size = 0
+        self.title = self.get_title() or self.title
 
         # do some parameters updates
         stream = self.selected_stream
@@ -489,6 +507,7 @@ class Video(DownloadItem):
 class Stream:
     def __init__(self, stream_info):
         # fetch data from youtube-dl stream_info dictionary
+        self.stream_info = stream_info
         self.format_id = stream_info.get('format_id', '')
         self.url = stream_info.get('url', None)
         self.player_url = stream_info.get('player_url', None)
@@ -1414,12 +1433,6 @@ def get_media_info(url=None, info=None, ytdloptions=None):
             info = ydl.process_ie_result(info, download=False)
     except Exception as e:
         log('video.get_media_info() error:', e, log_level=3)
-
-    try:
-        # get video title template
-        info['title_template'] = ydl.prepare_filename(info)
-    except:
-        pass
 
     return info
 

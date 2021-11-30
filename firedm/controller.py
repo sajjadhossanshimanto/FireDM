@@ -686,7 +686,7 @@ class Controller:
     # region video playlist
     def get_playlist_titles(self):
         if self.last_active_playlist:
-            titles = [d.title for d in self.last_active_playlist]
+            titles = [d.simpletitle for d in self.last_active_playlist]
             return titles
         else:
             return None
