@@ -2292,7 +2292,7 @@ class SimplePlaylist(tk.Toplevel):
         self.audio_quality = tk.StringVar()
         self.sub_var = tk.BooleanVar()
 
-        self.num_options = config.playlist_num_options
+        self.num_options = config.playlist_autonum_options
         self.load_global_presets()
 
         self.create_widgets()
@@ -2386,7 +2386,7 @@ class SimplePlaylist(tk.Toplevel):
 
         # filenames frame ----------------------------------------------------------------------------------------------
         fn_frame = tk.Frame(select_fr, bg=MAIN_BG)
-        Button(fn_frame, text='Numbers', command=self.numbers_window).pack(side='left', padx=5)
+        Button(fn_frame, text='Numbers', command=self.auto_num_window).pack(side='left', padx=5)
         fn_frame.pack(side='right')
 
         # table --------------------------------------------------------------------------------------------------------
@@ -2399,7 +2399,7 @@ class SimplePlaylist(tk.Toplevel):
               fieldbackground=[('', MAIN_BG)])
 
         # Insert the data in Treeview widget
-        self.titles = self.add_numbers(self.playlist, **self.num_options)
+        self.titles = self.auto_num(self.playlist, **self.num_options)
         for i, lbl in enumerate(self.titles):
             lbl = render_text(lbl)  # bidi support
             tagnum = i % 2
@@ -2444,7 +2444,7 @@ class SimplePlaylist(tk.Toplevel):
         update_selection_lbl()
 
     @staticmethod
-    def add_numbers(titles, reverse=False, startnum=0, startitem=0, zeropadding=True, enable=True, **kwargs):
+    def auto_num(titles, reverse=False, startnum=0, startitem=0, zeropadding=True, enable=True, **kwargs):
         if enable:
             startnum = startnum or (len(titles) if reverse else 1)
             startitem = startitem or 1
@@ -2466,7 +2466,7 @@ class SimplePlaylist(tk.Toplevel):
             result = titles
         return result
 
-    def numbers_window(self):
+    def auto_num_window(self):
         top = tk.Toplevel(self)
         top.title('Naming options')
         fr = tk.Frame(top, bg=MAIN_BG)
@@ -2507,11 +2507,11 @@ class SimplePlaylist(tk.Toplevel):
             )
             top.destroy()
 
-            config.playlist_num_options = self.num_options
+            config.playlist_autonum_options = self.num_options
 
             # set titles
-            self.titles = self.add_numbers(self.playlist, startnum=startnumvar.get(), startitem=startitemvar.get(),
-                                           **self.num_options)
+            self.titles = self.auto_num(self.playlist, startnum=startnumvar.get(), startitem=startitemvar.get(),
+                                        **self.num_options)
 
             for i, lbl in enumerate(self.titles):
                 lbl = render_text(lbl)  # bidi support

@@ -22,7 +22,7 @@ settings_keys = [
     'keep_temp', 'last_update_check', 'log_level', 'max_concurrent_downloads', 'remember_web_auth', 'use_web_auth',
     'username', 'password', 'max_connections', 'minimize_to_systray', 'monitor_clipboard', 'on_download_notification',
     'proxy', 'recent_folders', 'refresh_url_retries', 'scrollbar_width', 'speed_limit', 'update_frequency',
-    'playlist_num_options', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode',
+    'playlist_autonum_options', 'use_server_timestamp', 'window_size', 'write_metadata', 'view_mode',
     'window_maximized', 'force_window_maximize', 'd_preview', 'updater_version', 'media_presets', 'video_title_template'
 ]
 
@@ -79,7 +79,7 @@ recent_folders = []
 
 auto_rename = False  # auto rename file if there is an existing file with same name at download folder
 checksum = False  # calculate checksums for completed files MD5 and SHA256
-playlist_num_options = dict(
+playlist_autonum_options = dict(
     enable=True,
     reverse=False,
     zeropadding=True,
