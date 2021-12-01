@@ -278,7 +278,8 @@ builtin_themes = {
         "PBAR_FG": "#006cff",
         "THUMBNAIL_FG": "#006cff",
         "HDG_FG": "white",
-        "RCM_FG": "black"
+        "RCM_FG": "black",
+        "SBAR_FG": "#ffad00"
     }
 }
 
