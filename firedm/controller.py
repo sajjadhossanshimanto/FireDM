@@ -909,18 +909,17 @@ class Controller:
         # if above checks passed will return True
         return True
 
-    @threaded
     def download(self, d=None, uid=None, video_idx=None, silent=False, download_later=False, **kwargs):
         showpopup = not silent
 
         d = d or self.get_d(uid, video_idx)
         if not d:
             log('Nothing to download', showpopup=showpopup)
-            return
+            return False
         status = d.status
         if status == Status.pending:
             log('item already pending ...')
-            return
+            return False
 
         # make a copy of d to prevent changes in self.playlist items
         d = copy(d)
@@ -946,6 +945,10 @@ class Controller:
             if not download_later:
                 d.status = Status.pending
                 self.download_q.put(d)
+
+            return True
+        else:
+            return False
 
     @threaded
     def _download(self, d, **kwargs):

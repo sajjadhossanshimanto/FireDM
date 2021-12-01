@@ -4432,7 +4432,9 @@ class MainWindow(IView):
         if uid is None:
             kwargs['video_idx'] = self.pl_menu.select()
 
-        self.controller.download(uid=uid, **kwargs)
+        success = self.controller.download(uid=uid, **kwargs)
+        if success:
+            self.select_tab('Downloads')
 
     def toggle_download(self, uid):
         item = self.d_items[uid]
@@ -4567,10 +4569,6 @@ class MainWindow(IView):
             if ditem and ditem.status == config.Status.completed:
                 ditem.destroy()
                 self.d_items.pop(uid)
-                ditem = None
-            
-            if not ditem:
-                self.select_tab('Downloads')
 
             self.create_ditem(**kwargs)
 
