@@ -1324,7 +1324,7 @@ class FileProperties(ttk.Frame):
             tk.Label(misc_frame, textvariable=var, bg=self.bg, fg=self.fg, anchor='w').pack(sid='left')
 
         # download folder -------------------------------------------------------------------------------------------
-        self.browse = Browse(self)
+        self.browse = Browse(self, callback=lambda fp: set_option(download_folder=fp))
         self.browse.grid(row=row['folder'], column=0, columnspan=3, sticky='we', pady=5)
 
     def update(self, **kwargs):
