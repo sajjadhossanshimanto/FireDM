@@ -441,7 +441,7 @@ def rename_file(oldname=None, newname=None, verbose=False):
         log('rename_file()>  destination file already exist')
         return False
     try:
-        os.rename(oldname, newname)
+        shutil.move(oldname, newname)
         log('done renaming file:', oldname, '... to:', newname, start='\n', log_level=3)
         return True
     except Exception as e:
