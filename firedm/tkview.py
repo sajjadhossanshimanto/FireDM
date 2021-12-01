@@ -2551,6 +2551,10 @@ class SimplePlaylist(tk.Toplevel):
         selected_idx = [int(x) for x in self.table.selection()]
         selected_items = {x: self.titles[x] for x in selected_idx}
 
+        if not selected_items:
+            Popup('No items selected', parent=self).show()
+            return
+
         download_options = dict(
             download_later=download_later,
             folder=self.browse.folder
