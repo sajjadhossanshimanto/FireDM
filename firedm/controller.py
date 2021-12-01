@@ -917,12 +917,14 @@ class Controller:
         if not d:
             log('Nothing to download', showpopup=showpopup)
             return
-        if d.status == Status.pending:
+        status = d.status
+        if status == Status.pending:
             log('item already pending ...')
             return
 
         # make a copy of d to prevent changes in self.playlist items
         d = copy(d)
+        d.status = status
 
         update_object(d, kwargs)
 
