@@ -1125,7 +1125,7 @@ folderchooser = FileDialog(foldersonly=True).run
 
 class Browse(tk.Frame):
     """a frame contains an entry widget and browse button to browse for folders"""
-    def __init__(self, parent=None, bg=None, fg=None, label=None, callback=None, **kwargs):
+    def __init__(self, parent=None, value='', bg=None, fg=None, label=None, callback=None, **kwargs):
         self.callback = callback
         bg = bg or MAIN_BG
         fg = fg or MAIN_FG
@@ -1135,7 +1135,7 @@ class Browse(tk.Frame):
         # download folder -------------------------------------------------------------------------------------------
         tk.Label(self, text=label or 'Folder:', bg=bg, fg=fg).pack(side='left')
 
-        self.foldervar = tk.StringVar()
+        self.foldervar = tk.StringVar(value=value)
         folder_entry = tk.Entry(self, textvariable=self.foldervar, bg=bg, fg=fg, highlightthickness=0,
                                 relief='flat')
         folder_entry.pack(side='left', padx=5, fill='x', expand=True)
@@ -3762,7 +3762,7 @@ class MainWindow(IView):
                     'check below link for more details \n''https://github.com/ytdl-org/youtube-dl#output-template '
             ).pack(anchor='w', padx=5, fill='x')
 
-        Browse(tab, label='Temp folder:',
+        Browse(tab, label='Temp folder:', value=config.temp_folder,
                callback=lambda value: set_option(temp_folder=value)).pack(anchor='w', padx=5, fill='x')
 
         separator()
