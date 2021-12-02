@@ -174,10 +174,13 @@ class SysTray:
             try:
                 self.Gtk_notify.Notification.new(title, msg, self.tray_icon_path).show()  # to show notification
             except:
-                # fallback to plyer
-                import plyer
-                plyer.notification.notify(message=msg, title=title, app_name=config.APP_NAME,
-                                          app_icon=self.tray_icon_path, timeout=5)
+                try:
+                    # fallback to plyer
+                    import plyer
+                    plyer.notification.notify(message=msg, title=title, app_name=config.APP_NAME,
+                                              app_icon=self.tray_icon_path, timeout=5)
+                except:
+                    pass
 
     def quit(self, *args):
         """callback when selecting quit from systray menu"""
