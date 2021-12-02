@@ -444,7 +444,7 @@ class Controller:
             if playlist:
                 is_video_playlist = True
 
-        if not playlist:
+        if not playlist and d.type:
             playlist = [d]
 
         if url == self.url:
