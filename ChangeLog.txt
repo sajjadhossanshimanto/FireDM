@@ -1,3 +1,6 @@
+2021.12.2.post1:
+- hotfix for playlist download in AppImage release
+
 2021.12.2:
 - new playlist window design, with presets, lighter, faster, and can handle heavy playlists.
 - add auto-numbering presets to playlist window.
