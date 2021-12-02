@@ -369,8 +369,9 @@ def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **k
         print(start + text + end, end='', **kwargs)
 
         # execute registered log callbacks
-        for f in config.log_callbacks:
-            f(start, text, end)
+        if log_level == 1:  # pass only log level 1 messages to gui
+            for f in config.log_callbacks:
+                f(start, text, end)
 
         # popup
         if showpopup and config.log_popup_callback:
