@@ -1505,6 +1505,7 @@ class DItem(tk.Frame):
         self.ext = ''
         self.status = status
         self.size = ''  # '30 MB'
+        self.raw_total_size = 0
         self.total_size = ''  # 'of 100 MB'
         self.speed = ''  # '- Speed: 1.5 MB/s'
         self.eta = ''  # '- ETA: 30 seconds'
@@ -1918,6 +1919,7 @@ class DItem(tk.Frame):
             self.size = format_bytes(downloaded, percision=1, sep='')
 
         if _total_size is not None:
+            self.raw_total_size = _total_size
             self.total_size = format_bytes(_total_size, percision=1, sep='')
 
         if speed is not None:
@@ -4397,8 +4399,9 @@ class MainWindow(IView):
         paused = s.count(config.Status.cancelled)
         scheduled = s.count(config.Status.scheduled)
         pending = s.count(config.Status.pending)
+        sizes = sum([item.raw_total_size for item in self.d_items.values() if item.selected])
 
-        size = 3 * int(gui_font['size']) // 4
+        size = int(gui_font['size']) - 1
         self.stat_lbl['font'] = f'any {size}'
 
         self.stat_lbl['text'] = f'Selected: [{count} of {len(self.d_items)}] - ' \
@@ -4406,7 +4409,8 @@ class MainWindow(IView):
                                 f'Completed: {completed},  ' \
                                 f'Paused: {paused},  ' \
                                 f'Scheduled: {scheduled}, ' \
-                                f'Pending: {pending}'
+                                f'Pending: {pending}' \
+                                f'  ... Size = {format_bytes(sizes, percision=1)}'
 
         if active or pending:
             self.resume_all_btn['text'] = 'Stop All'
