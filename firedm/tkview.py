@@ -1930,7 +1930,7 @@ class DItem(tk.Frame):
 
         if eta is not None:
             self.raw_eta = eta
-            self.eta = f'- {format_seconds(eta, fullunit=True, percision=0, sep="")}(s)' if eta else ''
+            self.eta = f'- {format_seconds(eta, fullunit=True, percision=0, sep="")}' if eta else ''
 
         if progress is not None:
             try:

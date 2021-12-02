@@ -95,7 +95,7 @@ class CmdView(IView):
             if self.total_size:
                 suffix += f'/{format_bytes(self.total_size, sep="", percision=1)}'
             suffix += f" {format_bytes(speed, tail='/s', percision=1)}" if speed else ''
-            suffix += f', {format_seconds(eta, percision=0, fullunit=True)}(s)' if eta else ''
+            suffix += f', {format_seconds(eta, percision=0, fullunit=True)}' if eta else ''
 
             print_progress_bar(progress, suffix=suffix, fill='=')
 

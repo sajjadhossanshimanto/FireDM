@@ -782,7 +782,8 @@ def format_seconds(t, tail='', sep=' ', percision=1, fullunit=False):
                     num = round(t / thresholds[i], percision)
                     # remove zeros after decimal point
                     num = int(num) if num % 1 == 0 else num
-                    result = f'{num}{sep}{unit}{tail}'
+                    s = 's' if num > 1 and fullunit else ''
+                    result = f'{num}{sep}{unit}{s}{tail}'
                     break
     except:
         pass
