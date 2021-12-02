@@ -2413,7 +2413,7 @@ class SimplePlaylist(tk.Toplevel):
         for i, lbl in enumerate(self.titles):
             lbl = render_text(lbl)  # bidi support
             tagnum = i % 2
-            self.table.insert('', 'end', iid=i, text=lbl, tag=tagnum)
+            self.table.insert('', 'end', iid=str(i), text=lbl, tag=tagnum)
         bg1 = atk.calc_contrast_color(MAIN_BG, 5)
         bg2 = atk.calc_contrast_color(MAIN_BG, 10)
         self.table.tag_configure(0, background=bg1, foreground=MAIN_FG)
