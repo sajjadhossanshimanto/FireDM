@@ -1507,7 +1507,9 @@ class DItem(tk.Frame):
         self.size = ''  # '30 MB'
         self.raw_total_size = 0
         self.total_size = ''  # 'of 100 MB'
+        self.raw_speed = 0
         self.speed = ''  # '- Speed: 1.5 MB/s'
+        self.raw_eta = 0
         self.eta = ''  # '- ETA: 30 seconds'
         self.live_connections = ''  # '8'
         self.total_parts = ''
@@ -1923,9 +1925,11 @@ class DItem(tk.Frame):
             self.total_size = format_bytes(_total_size, percision=1, sep='')
 
         if speed is not None:
+            self.raw_speed = speed
             self.speed = f'- {format_bytes(speed, percision=1, sep="")}/s' if speed > 0 else ''
 
         if eta is not None:
+            self.raw_eta = eta
             self.eta = f'- {format_seconds(eta, fullunit=True, percision=0, sep="")}(s)' if eta else ''
 
         if progress is not None:
@@ -4603,10 +4607,13 @@ class MainWindow(IView):
             signal_id = kwargs.get('signal_id')
             self.execute_post_processor(signal_id)
 
-        # total speed
-        elif command == 'total_speed':
-            ts = format_bytes(kwargs.get('total_speed'), tail='/s')
-            self.total_speed.set(ts)
+        # total speed and total eta
+        total_speed = sum([item.raw_speed for item in self.d_items.values() if item.status == config.Status.downloading])
+        total_eta = sum([item.raw_eta for item in self.d_items.values()
+                         if item.status == config.Status.downloading and isinstance(item.raw_eta, int)])
+        ts = format_bytes(total_speed, tail='/s')
+        eta = f'{format_seconds(total_eta, fullunit=True, percision=0, sep=" ")}' if total_eta else ''
+        self.total_speed.set(f'{ts} \n{eta}')
 
     # endregion
 
