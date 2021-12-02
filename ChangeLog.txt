@@ -1,3 +1,27 @@
+2021.12.2:
+- new playlist window design, with presets, lighter, faster, and can handle heavy playlists.
+- add auto-numbering presets to playlist window.
+- fix playlist download in order.
+- customize video title template, issues #316, #373.
+- extra audio formats (opus, flac, and wav), issue #362
+- customize temp folder, to enhance performance while downloading on usb flash drive, closes #284.
+- fix hls slow metadata fetching, closes #345.
+- fix auto refresh url to select correct file extension issues #369, and #372
+- use [shift-delete] to delete download items and target file on disk.
+- fix "Resume" doesn't respect concurrent downloads limit #320,
+- add ability to cancel pending state.
+- ignore fraction of second in displayed video duration.
+- fix ffmpeg fail if "comma" found in video file name.
+- fix ditem font and response to keyboard shortcuts.
+- switch focus to firedm after parsing url issue #376.
+- re-enable bulk view (with thumbnails).
+- fix font color calculation for new themes.
+- show total size of selected items in "Downloads tab"
+- show total eta under total speed
+- limit gui log messages to level-1 messages only, other log messages will stay intact in terminal window.
+- fix AppImage update, closes #378
+- multiple fixes and tweaks.
+
 2021.11.18:
 - dynamic view filter, issue #333
 - fix video stuck at 99%, issue  #336
