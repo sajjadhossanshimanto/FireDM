@@ -691,9 +691,6 @@ def load_extractor_engines(reload=False):
         if not config.custom_user_agent:
             config.http_headers['User-Agent'] = youtube_dl.utils.random_user_agent()
 
-        # set interrupt / kill switch
-        set_interrupt_switch(youtube_dl)
-
         # set default extractor
         if config.active_video_extractor == 'youtube_dl':
             set_default_extractor('youtube_dl')
@@ -717,9 +714,6 @@ def load_extractor_engines(reload=False):
         load_time = time.time() - start
         log(f'yt_dlp version: {config.yt_dlp_version}, load_time= {int(load_time)} seconds', log_level=2)
 
-        # set interrupt / kill switch
-        set_interrupt_switch(yt_dlp)
-
         # set default extractor
         if config.active_video_extractor == 'yt_dlp':
             set_default_extractor('yt_dlp')
@@ -739,8 +733,11 @@ def set_default_extractor(extractor=None):
     log('set default extractor engine to:', extractor, ytdl, log_level=2)
 
 
-def set_interrupt_switch(extractor):
-    # override urlopen in Youtube-dl or yt_dlp for interrupting session anytime
+def set_interrupt_switch(ydl):
+    """ set interrupt / kill switch for youtube-dl
+    Args:
+        ydl: an instance of YoutubeDL class
+    """
 
     def urlopen_decorator(func):
         def newfunc(self, *args):
@@ -755,7 +752,8 @@ def set_interrupt_switch(extractor):
         return newfunc
 
     try:
-        extractor.YoutubeDL.urlopen = urlopen_decorator(extractor.YoutubeDL.urlopen)
+        # override urlopen in Youtube-dl or yt_dlp for interrupting session anytime
+        ydl.urlopen = urlopen_decorator(ydl.urlopen)
     except Exception as e:
         log('video.set_interrupt_switch() error:', e)
 
@@ -1387,7 +1385,7 @@ class MediaPlaylist:
         return segment_list
 
 
-def get_media_info(url=None, info=None, ytdloptions=None):
+def get_media_info(url=None, info=None, ytdloptions=None, interrupt=False):
     """this is an adapter function for youtube-dl to extract the video(s) information the URL refers to """
 
     url = url or info.get('url') or info.get('webpage_url')
@@ -1406,8 +1404,9 @@ def get_media_info(url=None, info=None, ytdloptions=None):
 
     ydl = ytdl.YoutubeDL(options)
 
-    # reset abort flag
-    config.ytdl_abort = False
+    # set interrupt / kill switch
+    if interrupt:
+        set_interrupt_switch(ydl)
 
     if not info:
         # fetch info by youtube-dl

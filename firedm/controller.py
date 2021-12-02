@@ -207,13 +207,13 @@ def log_runtime_info():
     log(f'FFMPEG: {config.ffmpeg_actual_path}, version: {config.ffmpeg_version}')
 
 
-def create_video_playlist(url, ytdloptions=None):
+def create_video_playlist(url, ytdloptions=None, interrupt=False):
     """Process url and build video object(s) and return a video playlist"""
 
     log('creating video playlist', log_level=2)
     playlist = []
 
-    info = get_media_info(url, ytdloptions=ytdloptions)
+    info = get_media_info(url, ytdloptions=ytdloptions, interrupt=interrupt)
 
     if not info:
         log('no video streams detected')
@@ -438,7 +438,8 @@ class Controller:
 
         # searching for videos
         if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
-            playlist = create_video_playlist(url)
+            config.ytdl_abort = False
+            playlist = create_video_playlist(url, interrupt=True)
 
             if playlist:
                 is_video_playlist = True
@@ -590,9 +591,6 @@ class Controller:
 
             try:
                 vid.busy = False
-
-                # reset abort flag
-                config.ytdl_abort = False
 
                 # process info
                 processed_info = self.ydl.process_ie_result(vid.vid_info, download=False)
