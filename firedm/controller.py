@@ -427,8 +427,8 @@ class Controller:
         if not url:
             return
 
-        self.url = url
         self.reset()
+        self.url = url
 
         playlist = []
         is_video_playlist = False
@@ -1788,6 +1788,7 @@ class Controller:
     def reset(self):
         """reset controller and cancel ongoing operation"""
         # stop youyube-dl
+        self.url = ''
         config.ytdl_abort = True
         self.playlist = []
 
