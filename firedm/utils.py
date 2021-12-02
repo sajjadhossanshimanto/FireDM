@@ -1264,17 +1264,20 @@ def get_media_duration(seconds):
     return result
 
 
-def check_write_permission(target):
+def check_write_permission(target_folder, create_dirs=True):
     """check target folder for write permission"""
 
-    fn = 'firedm-testfile'
-    existing_names = os.listdir(target)
-    if fn in existing_names:
-        fn = auto_rename(fn, existing_names)
-
-    fp = os.path.join(target, fn)
-
     try:
+        if create_dirs:
+            os.makedirs(target_folder, exist_ok=True)
+
+        fn = 'firedm-testfile'
+        existing_names = os.listdir(target_folder)
+        if fn in existing_names:
+            fn = auto_rename(fn, existing_names)
+
+        fp = os.path.join(target_folder, fn)
+
         with open(fp, 'w') as f:
             f.write('#')
 
