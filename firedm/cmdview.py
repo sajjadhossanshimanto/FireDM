@@ -51,7 +51,7 @@ def print_progress_bar(percent, suffix='', bar_length=20, fill='█'):
         # truncate line 
         line = line[:terminal_width]
 
-        print(f'\r{line}', end='')
+        print(line, end='\r')
         
     except:
         pass
