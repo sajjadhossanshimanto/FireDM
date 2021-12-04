@@ -129,23 +129,33 @@ def write_timestamp(d):
     try:
 
         if d.status == Status.completed:
-            # get last modified timestamp from server, example: "fri, 09 oct 2020 11:11:34 gmt"
-            headers = get_headers(d.eff_url, http_headers=d.http_headers)
-            timestamp = headers.get('last-modified')
+            timestamp = ''
 
+            try:
+                # assume this is a video file, get upload date
+                upload_date = d.vid_info.get('upload_date')  # YYYYMMDD e.g. 20201009
+                timestamp = time.mktime(time.strptime(upload_date, '%Y%m%d'))
+            except:
+                pass
+
+            if not timestamp:
+                # get last modified timestamp from server,  eg.    'last-modified': 'Fri, 22 Feb 2019 09:30:09 GMT'
+                headers = get_headers(d.eff_url, http_headers=d.http_headers)
+                last_modified = headers.get('last-modified')
+
+                if last_modified:
+                    # parse timestamp
+                    dt = parsedate_to_datetime(last_modified)
+                    timestamp = dt.timestamp()  # will correct for local time
             if timestamp:
-                # parse timestamp, eg.      'last-modified': 'Fri, 22 Feb 2019 09:30:09 GMT'
-                dt = parsedate_to_datetime(timestamp)
-                t = dt.timestamp()  # will correct for local time
-
                 log(f'writing timestamp "{timestamp}" to file: {d.name}', log_level=2)
-                os.utime(d.target_file, (t, t))
+                os.utime(d.target_file, (timestamp, timestamp))
 
                 # modify creation time on windows,
                 # credit: https://github.com/Delgan/win32-setctime/blob/master/win32_setctime.py
                 if config.operating_system == 'Windows':
                     # Convert Unix timestamp to Windows FileTime using some magic numbers
-                    timestamp = int((t * 10000000) + 116444736000000000)
+                    timestamp = int((timestamp * 10000000) + 116444736000000000)
                     ctime = wintypes.FILETIME(timestamp & 0xFFFFFFFF, timestamp >> 32)
 
                     # Call Win32 API to modify the file creation date
@@ -287,7 +297,7 @@ def url_to_playlist(url, ytdloptions=None):
     if d.type == 'text/html' or d.size < 1024 * 1024:  # 1 MB as a max size
         playlist = create_video_playlist(url, ytdloptions=ytdloptions)
 
-    if not playlist:
+    if not playlist and d.type:
         playlist = [d]
 
     return playlist
@@ -921,6 +931,7 @@ class Controller:
         update_object(d, kwargs)
 
         pre_checks = self._pre_download_checks(d, silent=silent)
+        print('precheck:', pre_checks)
 
         if pre_checks:
             # update view
@@ -1786,3 +1797,46 @@ class Controller:
         self.playlist = []
 
     # endregion
+
+    # region cmdline
+    def cmdline_download(self, urls, **kwargs):
+        """handle command line downloads"""
+        for url in urls:
+            # noplaylist: fetch only the video, if the URL refers to a video and a playlist
+            playlist = url_to_playlist(url, ytdloptions={'noplaylist': True})
+            d = playlist[0]
+            update_object(d, kwargs)
+
+            if d.type == MediaType.video and not d.all_streams:
+                process_video(d)
+
+            # set video quality
+            quality = kwargs.get('quality', None)
+
+            if quality and d.type == MediaType.video:
+                prefer_mp4 = kwargs.get('prefer_mp4', False)
+                d.select_stream(quality=quality, extension=('mp4' if prefer_mp4 else None))
+                print('selected stream=', d.selected_stream)
+                print('selected audio=', d.audio_stream)
+
+            # download d
+            pre_checks = self._pre_download_checks(d, silent=True)
+
+            if pre_checks:
+                # update view
+                self.report_d(d, command='new')
+
+                # register observer
+                d.register_callback(self.observer)
+
+                # add to download map
+                self.d_map[d.uid] = d
+
+                self._download(d, **kwargs)
+
+                # update view
+                self.report_d(d)
+
+                sys.stdout.flush()
+
+
