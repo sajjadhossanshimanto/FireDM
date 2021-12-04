@@ -3136,6 +3136,8 @@ class MainWindow(IView):
         self.root.bind('<<urlChangeEvent>>', self.url_change_handler)
         self.root.bind("<<updateViewEvent>>", self.update_view_handler)
         self.root.bind("<<runMethodEvent>>", self.run_method_handler)
+        self.root.bind("<Control-Shift-v>", lambda *args: self.refresh_url(self.paste()))
+        self.root.bind("<Control-Shift-V>", lambda *args: self.refresh_url(self.paste()))
 
         # remember window size
         self.root.bind('<Configure>', self.remember_window_size)
@@ -3473,7 +3475,7 @@ class MainWindow(IView):
                            bg=RCM_BG, fg=RCM_FG, afg=RCM_AFG, abg=RCM_ABG)
 
         Button(urlfr, image=imgs['paste_icon'], command=lambda: self.url_var.set(self.paste()),
-               tooltip='clear and paste').pack(side='left', padx=10)
+               tooltip='clear and paste [Ctrl-Shift-V]').pack(side='left', padx=10)
         Button(urlfr, image=imgs['clear_icon'], command=lambda: self.url_var.set(''),
                tooltip='clear').pack(side='left')
 
@@ -4334,6 +4336,7 @@ class MainWindow(IView):
         """
         selected_items = self.get_selected_items()
         self.delitems(selected_items, deltarget=deltarget)
+        return 'break'
 
     def switch_view(self, mode):
         config.view_mode = mode
