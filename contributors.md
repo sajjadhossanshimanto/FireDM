@@ -14,6 +14,7 @@ Developers who contributed with code:
 - @bertaga
 - @qontinuum-dev
 - @fidele000 (Fidele K.Cyisa)
+- @sajjadhossanshimanto
 
 ---
 
