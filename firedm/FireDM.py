@@ -455,7 +455,7 @@ def main(argv=sys.argv):
             for url in urls:
                 controller.interactive_download(url)
         else:
-            controller.batch_download(urls, **sett, threaded=False)
+            controller.cmdline_download(urls, **sett)
 
     cleanup()
 
