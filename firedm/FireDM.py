@@ -453,7 +453,7 @@ def main(argv=sys.argv):
 
         elif sett.get('interactive'):
             for url in urls:
-                controller.interactive_download(url)
+                controller.interactive_download(url, **sett)
         else:
             controller.cmdline_download(urls, **sett)
 
