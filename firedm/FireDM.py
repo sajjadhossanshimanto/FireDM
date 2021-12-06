@@ -437,6 +437,7 @@ def main(argv=sys.argv):
         controller.run()
     else:
         controller = Controller(view_class=CmdView, custom_settings=sett)
+        controller.run()
 
         if sett.get('update_self'):
             controller.check_for_update(wait=True, threaded=False)

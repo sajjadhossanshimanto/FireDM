@@ -14,9 +14,10 @@
 """
 
 
-from queue import Queue
-import shutil
+import os
 import sys
+import shutil
+from queue import Queue
 from threading import Event
 from collections import namedtuple
 
@@ -25,7 +26,8 @@ if not __package__:
 
 from firedm.view import IView
 from firedm import utils
-from firedm.utils import format_bytes, write, format_seconds
+from firedm.utils import format_bytes, format_seconds
+from firedm import config 
 
 
 def write(s, end=''):
@@ -40,7 +42,7 @@ def get_terminal_size():
     except:
         # default fallback values
         size = (100, 20)
-    return terminal_size(size)
+    return terminal_size(*size)
 
 class CmdView(IView):
     """concrete class for terminal user interface"""
@@ -57,10 +59,10 @@ class CmdView(IView):
     def reserve_last_line(self):
         self.printing_bar.set()
 
-        self.write("\0337")  # Save cursor position
-        self.write(f"\033[0;{self.terminal_size.height-1}r")  # Reserve the bottom line
-        self.write("\0338")  # Restore the cursor position
-        self.write("\033[1A")  # Move up one line
+        write("\0337")  # Save cursor position
+        write(f"\033[0;{self.terminal_size.height-1}r")  # Reserve the bottom line
+        write("\0338")  # Restore the cursor position
+        write("\033[1A")  # Move up one line
 
         self.printing_bar.clear()
 
@@ -77,6 +79,11 @@ class CmdView(IView):
 
     def run(self):
         """setup terminal for progress bar"""
+        if config.operating_system=='Windows':
+            # on windows terminal escape sequence doesn't work without 'cls'
+            os.system('cls')
+        else:
+            os.system('clear')
 
         utils.my_print=self.normal_print
         self.terminal_size=get_terminal_size()
@@ -158,7 +165,8 @@ class CmdView(IView):
             try:
                 self.print_progress_bar(progress, suffix=suffix, fill='=')
             except:
-                pass
+                if config.test_mode:
+                    raise
 
 
             # to ignore repeated updates after 100%

@@ -1673,6 +1673,7 @@ class Controller:
             self.stop_download(d.uid)
 
         self.save_d_map()
+        self.view.quit()
 
     def reset(self):
         """reset controller and cancel ongoing operation"""
