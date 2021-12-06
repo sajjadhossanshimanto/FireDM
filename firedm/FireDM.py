@@ -453,9 +453,9 @@ def main(argv=sys.argv):
 
         elif sett.get('interactive'):
             for url in urls:
-                controller.interactive_download(url)
+                controller.interactive_download(url, **sett)
         else:
-            controller.batch_download(urls, **sett, threaded=False)
+            controller.cmdline_download(urls, **sett)
 
     cleanup()
 

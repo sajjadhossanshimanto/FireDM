@@ -583,45 +583,6 @@ class Controller:
 
     # region video
 
-    def _pre_download_process(self, d, **kwargs):
-        """take a ObservableDownloadItem object and process any missing information before download
-        return a processed ObservableDownloadItem object"""
-
-        # update user preferences
-        d.__dict__.update(kwargs)
-
-        # video
-        if d.type == 'video' and not d.processed:
-            vid = d
-
-            try:
-                vid.busy = False
-
-                # process info
-                processed_info = self.ydl.process_ie_result(vid.vid_info, download=False)
-
-                if processed_info:
-                    vid.vid_info = processed_info
-                    vid.refresh()
-
-                    # get thumbnail
-                    vid.get_thumbnail()
-
-                    log('_pre_download_process()> processed url:', vid.url, log_level=3)
-                    vid.processed = True
-                else:
-                    log('_pre_download_process()> Failed,  url:', vid.url, log_level=3)
-
-            except Exception as e:
-                log('_pre_download_process()> error:', e)
-                if config.test_mode:
-                    raise e
-
-            finally:
-                vid.busy = False
-
-        return d
-
     def _update_playlist_menu(self, pl_menu):
         """update playlist menu and send notification to view"""
         self.playlist_menu = pl_menu
@@ -1578,82 +1539,6 @@ class Controller:
 
     # endregion
 
-    def interactive_download(self, url, **kwargs):
-        """intended to be used with command line view and offer step by step choices to download an item"""
-        playlist = url_to_playlist(url)
-
-        d = playlist[0]
-
-        if len(playlist) > 1:
-            msg = 'The url you provided is a playlist of multi-files'
-            options = ['Show playlist content', 'Cancel']
-            response = self.get_user_response(msg, options)
-
-            if response == options[1]:
-                log('Cancelled by user')
-                return
-
-            elif response == options[0]:
-                if len(playlist) > 50:
-                    msg = f'This is a big playlist with {len(playlist)} files, \n' \
-                          f'Are you sure?'
-                    options = ['Continue', 'Cancel']
-                    r = self.get_user_response(msg, options)
-                    if r == options[1]:
-                        log('Cancelled by user')
-                        return
-
-                msg = 'Playlist files names, select item to download:'
-                options = [d.name for d in playlist]
-                response = self.get_user_response(msg, options)
-
-                idx = options.index(response)
-                d = playlist[idx]
-
-        # pre-download process missing information, and update user preferences
-        self._pre_download_process(d, **kwargs)
-
-        # select format if video
-        if d.type == 'video':
-            if not d.all_streams:
-                log('no streams available')
-                return
-
-            # ffmpeg check
-            if not check_ffmpeg():
-                log('ffmpeg missing, abort')
-                return
-
-            msg = f'Available streams:'
-            options = [f'{s.mediatype} {"video" if s.mediatype != "audio" else "only"}: {str(s)}' for s in
-                       d.all_streams]
-            selection = self.get_user_response(msg, options)
-            idx = options.index(selection)
-            d.selected_stream = d.all_streams[idx]
-
-            if 'dash' in d.subtype_list:
-                msg = f'Audio Formats:'
-                options = d.audio_streams
-                audio = self.get_user_response(msg, options)
-                d.select_audio(audio)
-
-        msg = f'Item: {d.name} with size {format_bytes(d.total_size)}\n'
-        if d.type == 'video':
-            msg += f'selected video stream: {d.selected_stream}\n'
-            msg += f'selected audio stream: {d.audio_stream}\n'
-
-        msg += 'folder:' + d.folder + '\n'
-        msg += f'Start Downloading?'
-        options = ['Ok', 'Cancel']
-        r = self.get_user_response(msg, options)
-        if r == options[1]:
-            log('Cancelled by user')
-            return
-
-        # download
-        self.download(d, threaded=False)
-        self.report_d(d, threaded=False)
-
     # region on completion command / shutdown
     def _on_completion_watchdog(self):
         """a separate thread to watch when "ALL" download items are completed and execute on completion action if
@@ -1805,10 +1690,11 @@ class Controller:
             # noplaylist: fetch only the video, if the URL refers to a video and a playlist
             playlist = url_to_playlist(url, ytdloptions={'noplaylist': True})
             d = playlist[0]
-            update_object(d, kwargs)
 
             if d.type == MediaType.video and not d.all_streams:
                 process_video(d)
+
+            update_object(d, kwargs)
 
             # set video quality
             quality = kwargs.get('quality', None)
@@ -1816,27 +1702,118 @@ class Controller:
             if quality and d.type == MediaType.video:
                 prefer_mp4 = kwargs.get('prefer_mp4', False)
                 d.select_stream(quality=quality, extension=('mp4' if prefer_mp4 else None))
-                print('selected stream=', d.selected_stream)
-                print('selected audio=', d.audio_stream)
+                log('selected stream=', d.selected_stream)
+                log('selected audio=', d.audio_stream)
 
-            # download d
-            pre_checks = self._pre_download_checks(d, silent=True)
+            # precheck
+            if os.path.isfile(d.target_file) and config.auto_rename:
+                d.name = auto_rename(d.name, forbidden_names=os.listdir(d.folder))
+                log('file already exist, auto-rename to:', d.name)
 
-            if pre_checks:
-                # update view
-                self.report_d(d, command='new')
+            # update view
+            self.report_d(d, command='new', threaded=False)
 
-                # register observer
-                d.register_callback(self.observer)
+            # register observer
+            d.register_callback(self.observer)
 
-                # add to download map
-                self.d_map[d.uid] = d
+            # add to download map
+            self.d_map[d.uid] = d
 
-                self._download(d, **kwargs)
+            self._download(d, **kwargs, threaded=False)
 
-                # update view
-                self.report_d(d)
+            # update view
+            self.report_d(d, threaded=False)
 
-                sys.stdout.flush()
+    def interactive_download(self, url, **kwargs):
+        """intended to be used with command line view and offer step by step choices to download an item"""
+        playlist = url_to_playlist(url)
 
+        d = playlist[0]
+
+        if len(playlist) > 1:
+            msg = 'The url you provided is a playlist of multi-files'
+            options = ['Show playlist content', 'Cancel']
+            response = self.get_user_response(msg, options)
+
+            if response == options[1]:
+                log('Cancelled by user')
+                return
+
+            elif response == options[0]:
+                msg = 'Playlist files names, select item to download:'
+                options = [d.name for d in playlist]
+                response = self.get_user_response(msg, options)
+
+                idx = options.index(response)
+                d = playlist[idx]
+
+        if d.type == MediaType.video and not d.all_streams:
+            process_video(d)
+
+        update_object(d, kwargs)
+
+        # select format if video
+        if d.type == 'video':
+            if not d.all_streams:
+                log('no streams available')
+                return
+
+            # ffmpeg check
+            if not check_ffmpeg():
+                log('ffmpeg missing, abort')
+                return
+
+            msg = f'Available streams:'
+            options = [f'{s.mediatype} {"video" if s.mediatype != "audio" else "only"}: {str(s)}' for s in
+                       d.all_streams]
+            selection = self.get_user_response(msg, options)
+            idx = options.index(selection)
+            d.selected_stream = d.all_streams[idx]
+
+            if 'dash' in d.subtype_list:
+                msg = f'Audio Formats:'
+                options = d.audio_streams
+                audio = self.get_user_response(msg, options)
+                d.select_audio(audio)
+
+        # check if file exist
+        if os.path.isfile(d.target_file):
+            msg = f'file with the same name already exist:'
+            options = ['Overwrite', 'Rename', 'Cancel']
+            r = self.get_user_response(msg, options)
+            if r == options[0]:
+                delete_file(d.target_file)
+            elif r == options[1]:
+                d.name = auto_rename(d.name, forbidden_names=os.listdir(d.folder))
+                print('file auto-renamed to:', d.name)
+            if r == options[2]:
+                log('Cancelled by user')
+                return
+
+        msg = f'Item: {d.name} with size {format_bytes(d.total_size)}\n'
+        if d.type == 'video':
+            msg += f'selected video stream: {d.selected_stream}\n'
+            msg += f'selected audio stream: {d.audio_stream}\n'
+
+        msg += 'folder:' + d.folder + '\n'
+        msg += f'Start Downloading?'
+        options = ['Ok', 'Cancel']
+        r = self.get_user_response(msg, options)
+        if r == options[1]:
+            log('Cancelled by user')
+            return
+
+        # update view
+        self.report_d(d, command='new', threaded=False)
+
+        # register observer
+        d.register_callback(self.observer)
+
+        # add to download map
+        self.d_map[d.uid] = d
+
+        self._download(d, **kwargs, threaded=False)
+
+        # update view
+        self.report_d(d, threaded=False)
 
