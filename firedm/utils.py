@@ -345,6 +345,7 @@ def simpledownload(url, fp=None, return_data=True, overwrite=False):
         return True
 
 
+my_print=print# replaced on cli mode
 def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **kwargs):
     """print messages to stdout and execute any function or method in config.log_callbacks
 
@@ -366,7 +367,7 @@ def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **k
     text = sep.join(map(str, args))
 
     try:
-        print(start + text + end, end='', **kwargs)
+        my_print(start + text + end, end='', **kwargs)
 
         # execute registered log callbacks
         if log_level == 1:  # pass only log level 1 messages to gui
@@ -378,7 +379,7 @@ def log(*args, log_level=1, start='>> ', end='\n', sep=' ', showpopup=False, **k
             config.log_popup_callback(start, text, end)
 
     except Exception as e:
-        print(e)
+        my_print(e)
 
 
 def validate_file_name(fname):

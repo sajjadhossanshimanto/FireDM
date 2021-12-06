@@ -14,15 +14,25 @@
 """
 
 
+from queue import Queue
 import shutil
+import sys
+from threading import Event
+from collections import namedtuple
 
 if not __package__:
     __package__ = 'firedm'
 
-from .view import IView
-from .utils import *
+from firedm.view import IView
+from firedm import utils
+from firedm.utils import format_bytes, write, format_seconds
 
 
+def write(s, end=''):
+    sys.stdout.write(s+end)
+    sys.stdout.flush()
+
+terminal_size=namedtuple('terminal_size', ('width', 'height'))
 def get_terminal_size():
     """get terminal window size, return 2-tuple (width, height)"""
     try:
@@ -30,32 +40,7 @@ def get_terminal_size():
     except:
         # default fallback values
         size = (100, 20)
-    return size
-
-
-def print_progress_bar(percent, suffix='', bar_length=20, fill='█'):
-    """print progress bar to screen, percent is number between 0 and 100"""
-    try:
-
-        scale = bar_length / 100
-        filled_length = int(percent * scale)
-        bar = fill * filled_length + ' '*(bar_length - filled_length)
-
-        # get screen size
-        terminal_width = get_terminal_size()[0]
-
-        line = f'\r {percent}% [{bar}] {suffix}'
-        end_spaces = terminal_width - len(line)
-        line += ' '*end_spaces
-
-        # truncate line 
-        line = line[:terminal_width]
-
-        print(line, end='\r')
-        
-    except:
-        pass
-
+    return terminal_size(size)
 
 class CmdView(IView):
     """concrete class for terminal user interface"""
@@ -63,14 +48,87 @@ class CmdView(IView):
         self.controller = controller
         self.total_size = None
         self.progress = 0
+        self.terminal_size = None
+        self.printing_bar = Event()
+        self.sdt_buffer=Queue()
+        
+        self.printing_bar.clear()
+
+    def reserve_last_line(self):
+        self.printing_bar.set()
+
+        self.write("\0337")  # Save cursor position
+        self.write(f"\033[0;{self.terminal_size.height-1}r")  # Reserve the bottom line
+        self.write("\0338")  # Restore the cursor position
+        self.write("\033[1A")  # Move up one line
+
+        self.printing_bar.clear()
+
+    def release_last_line(self):
+        self.printing_bar.set()
+
+        write("\0337")  # Save cursor position
+        write(f"\033[0;{self.terminal_size.height}r")  # Drop margin reservation
+        write(f"\033[{self.terminal_size.height};0f")  # Move the cursor to the bottom line
+        write("\033[0K")  # Clean that line
+        write("\0338")
+
+        self.printing_bar.clear()
 
     def run(self):
-        """intended to be used in gui as a mainloop not in terminal views"""
-        pass
+        """setup terminal for progress bar"""
 
+        utils.my_print=self.normal_print
+        self.terminal_size=get_terminal_size()
+        self.reserve_last_line()
+    
     def quit(self):
-        """intended to be used in gui as a mainloop not in terminal views"""
-        pass
+        """reset terminal"""
+        self.release_last_line()
+        utils.my_print=print
+
+    def print_progress_bar(self, percent, suffix='', bar_length=20, fill='█'):
+        """print progress bar to screen, percent is number between 0 and 100"""
+    
+        scale = bar_length / 100
+        filled_length = int(percent * scale)
+        bar = fill * filled_length + ' '*(bar_length - filled_length)
+
+        # get screen size
+        terminal = get_terminal_size()
+
+        line = f'\r {percent}% [{bar}] {suffix}'
+        end_spaces = terminal.width - len(line)
+        line += ' '*end_spaces
+
+        # truncate line 
+        line = line[:terminal.width]
+
+        # terminal size has changed
+        if terminal != self.terminal_size:
+            self.release_last_line()
+            self.terminal_size=terminal
+            self.reserve_last_line()
+            
+        self.print_onlast(line)
+
+    def print_onlast(self, s):
+        self.printing_bar.set()
+
+        write("\0337")  # Save cursor position
+        write(f"\033[{self.terminal_size.height};0f")  # Move cursor to the bottom margin
+        write(s, end='\r')  # Write the data
+        write("\0338")  # Restore cursor position
+
+        self.printing_bar.clear()
+
+    def normal_print(self, s, end='\n'):
+        self.sdt_buffer.put(s)
+        if self.printing_bar.is_set():
+            return
+        
+        for _ in range(self.sdt_buffer.qsize()):
+            write(self.sdt_buffer.get(), end=end)
 
     def update_view(self, total_size=None, **kwargs):
         """update view"""
@@ -97,10 +155,11 @@ class CmdView(IView):
             suffix += f" {format_bytes(speed, tail='/s', percision=1)}" if speed else ''
             suffix += f', {format_seconds(eta, percision=0, fullunit=True)}' if eta else ''
 
-            print_progress_bar(progress, suffix=suffix, fill='=')
+            try:
+                self.print_progress_bar(progress, suffix=suffix, fill='=')
+            except:
+                pass
 
-            if progress >= 100:
-                print()  # print empty line
 
             # to ignore repeated updates after 100%
             self.progress = progress
@@ -182,10 +241,3 @@ class CmdView(IView):
 
         return response
 
-
-if __name__ == '__main__':
-    import time
-
-    for i in range(101):
-        print_progress_bar(i, suffix=100 - i, fill='=')
-        time.sleep(1)
