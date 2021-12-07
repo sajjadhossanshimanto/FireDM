@@ -80,10 +80,7 @@ class CmdView(IView):
     def run(self):
         """setup terminal for progress bar"""
         if config.operating_system=='Windows':
-            # on windows terminal escape sequence doesn't work without 'cls'
-            os.system('cls')
-        else:
-            os.system('clear')
+            return
 
         utils.my_print=self.normal_print
         self.terminal_size=get_terminal_size()
@@ -91,6 +88,9 @@ class CmdView(IView):
     
     def quit(self):
         """reset terminal"""
+        if config.operating_system=='Windows':
+            return
+    
         self.release_last_line()
         utils.my_print=print
 
@@ -110,6 +110,10 @@ class CmdView(IView):
 
         # truncate line 
         line = line[:terminal.width]
+
+        if config.operating_system=='windows':
+            write(line, end='\r')
+            return
 
         # terminal size has changed
         if terminal != self.terminal_size:
